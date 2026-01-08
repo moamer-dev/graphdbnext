@@ -4,125 +4,18 @@ import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import {
-  Network,
-  Upload,
-  Plus,
-  FileCode,
-  Database,
-  Search,
-  BarChart,
-  Settings,
-  Grid,
-  Sparkles,
-  ArrowRight,
-  FileDown
+  ArrowRight
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { downloadTemplate } from '@/lib/utils/downloadTemplate'
+import { quickActionNavItems } from '@/config/quickAction-nav'
 
 export default function DashboardPage() {
   const { data: session } = useSession()
   const userName = session?.user?.name || 'User'
   const [activeGroupIndex, setActiveGroupIndex] = useState(0)
 
-  const groups = [
-    {
-      title: 'Model Schema',
-      description: 'Manage and visualize your graph data models',
-      icon: Network,
-      items: [
-        {
-          label: 'Browse Models',
-          href: '/dashboard/graph/model?view=grid',
-          icon: Grid,
-          description: 'View your existing models'
-        },
-        {
-          label: 'Upload Schema',
-          href: '/dashboard/graph/model?action=upload',
-          icon: Upload,
-          description: 'Import JSON or Markdown schema'
-        },
-
-        {
-          label: 'Create Model',
-          href: '/dashboard/graph/model/new',
-          icon: Plus,
-          description: 'Design a new graph model'
-        },
-        {
-          label: 'Download JSON Template',
-          onClick: () => downloadTemplate('json'),
-          icon: FileDown,
-          description: 'Get the JSON schema template'
-        },
-        {
-          label: 'Download MD Template',
-          onClick: () => downloadTemplate('md'),
-          icon: FileDown,
-          description: 'Get the Markdown schema template'
-        }
-      ]
-    },
-    {
-      title: 'XML to Graph',
-      description: 'Convert XML documents into graph structures',
-      icon: FileCode,
-      items: [
-        {
-          label: 'Convert XML',
-          href: '/dashboard/graph/model/new/from-xml',
-          icon: FileCode,
-          description: 'Transform XML files to graph'
-        }
-      ]
-    },
-    {
-      title: 'Graph Data Management',
-      description: 'Interact with your graph database',
-      icon: Database,
-      items: [
-        {
-          label: 'Manage Data',
-          href: '/dashboard/database',
-          icon: Database,
-          description: 'Explorer and manage nodes'
-        },
-        {
-          label: 'Query UI',
-          href: '/dashboard/database/queries?mode=library',
-          icon: Search,
-          description: 'Execute Cypher queries'
-        },
-        {
-          label: 'Analytics',
-          href: '/dashboard/database/analytics',
-          icon: BarChart,
-          description: 'View graph statistics'
-        }
-      ]
-    },
-    {
-      title: 'Settings',
-      description: 'Configure your application',
-      icon: Settings,
-      items: [
-        {
-          label: 'AI Settings',
-          href: '/dashboard/settings/ai',
-          icon: Sparkles,
-          description: 'Configure AI models and agents'
-        },
-        {
-          label: 'Modules',
-          href: '/dashboard/settings/modules',
-          icon: Settings,
-          description: 'Manage optional features'
-        }
-      ]
-    }
-  ]
+  const groups = quickActionNavItems
 
   return (
     <div className="space-y-6 mt-6">

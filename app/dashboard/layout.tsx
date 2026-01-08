@@ -18,6 +18,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { QuickActions } from '@/components/quick-actions'
 
 const sectionTitles: Record<string, string> = {
   '/dashboard/convert': 'XML to Graph Conversion',
@@ -27,8 +28,6 @@ const sectionTitles: Record<string, string> = {
   '/dashboard/html': 'HTML Conversion',
   '/dashboard/graph/model': 'Model Visualization',
   '/dashboard/graph/builder': 'Model Builder',
-
-
   '/dashboard/admin/users': 'User Management',
   '/dashboard/admin/queries': 'Saved Queries Management'
 }
@@ -67,6 +66,9 @@ export default function DashboardLayout({
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            <div className="ml-auto flex items-center gap-2">
+              <QuickActions />
+            </div>
           </div>
         </header>
         <div className={cn('flex flex-1 flex-col gap-3 relative gradient-section', pathname === '/dashboard/graph/builder' || pathname?.includes('/edit') ? 'p-0' : 'p-3 pt-0')}>
