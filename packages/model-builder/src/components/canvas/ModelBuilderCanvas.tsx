@@ -153,15 +153,16 @@ interface ModelBuilderCanvasProps {
   onRegisterFocusApi?: (fn: (id: string) => void) => void
   onRegisterFocusRelationshipApi?: (fn: (fromId: string, toId: string) => void) => void
   onSwitchTab?: (tab: 'nodes' | 'relationships' | 'tools' | 'actions') => void
+  showToolbar?: boolean
 }
 
-function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSidebar, onRegisterFocusApi, onRegisterFocusRelationshipApi, onSwitchTab }: ModelBuilderCanvasProps) {
+function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSidebar, onRegisterFocusApi, onRegisterFocusRelationshipApi, onSwitchTab, showToolbar = true }: ModelBuilderCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
   const isUpdatingSelectionRef = useRef(false)
   const [showGrid, setShowGrid] = useState(false)
   const [snapToGrid, setSnapToGrid] = useState(false)
-  
+
   const nodeManagement = useCanvasNodeManagement()
   const edgeManagement = useCanvasEdgeManagement()
   const { visibleNodeIds } = useCanvasVisibility()
@@ -319,121 +320,121 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
           return child ? { id: child.id, label: child.label, type: child.type } : null
         }).filter(Boolean) as Array<{ id: string; label: string; type: string }> | undefined : undefined
 
-      if (isGroup) {
-        // Create a version key based on label, children IDs, child labels, and config to force ReactFlow to update
-        // Include child labels so updates to child action labels trigger a re-render
-        const childrenIds = an.children?.join(',') || 'empty'
-        const childrenLabels = childActions?.map(c => c.label).join(',') || 'empty'
-        const groupVersion = `${an.label || 'Action Group'}-${childrenIds}-${childrenLabels}-${JSON.stringify(an.config)}`
-        return {
-          id: an.id,
-          type: 'actionGroup',
-          position: an.position,
-          selected: an.id === selectedActionNodeId,
-          draggable: true, // Allow dragging the group node
-          data: {
-            label: an.label || 'Action Group',
-            type: an.type,
-            actionCount: an.children?.length ?? 0,
-            isExpanded: an.isExpanded ?? false,
-            children: childActions,
-            _version: groupVersion, // Force ReactFlow to detect changes when label, children, or config changes
-            onSelect: () => {
-              selectActionNode(an.id)
-              selectNode(null)
-              selectRelationship(null)
-              selectWfNode(null)
-              selectToolNode(null)
-            },
-            onDelete: () => deleteActionNode(an.id),
-            onToggleExpand: () => {
-              updateActionNode(an.id, { isExpanded: !(an.isExpanded ?? false) })
-            },
-            onAddAction: (actionTypes?: import('../../stores/actionCanvasStore').ActionNodeType[]) => {
-              if (!actionTypes || actionTypes.length === 0) return
-              
-              console.log('[DEBUG] onAddAction called:', { groupId: an.id, groupLabel: an.label, actionTypes, currentChildren: an.children })
-              
-              const existingChildren = an.children || []
-              const newActionIds: string[] = []
-              
-              actionTypes.forEach((actionType: import('../../stores/actionCanvasStore').ActionNodeType) => {
-                // Check if an action of this type already exists in the group
-                const existingAction = actionNodes.find(a => 
-                  existingChildren.includes(a.id) && a.type === actionType
-                )
-                
-                if (existingAction) {
-                  return // Skip adding duplicate
-                }
-                
-                const label = labelFromType(actionType)
-                const newActionId = addActionNode({
-                  type: actionType,
-                  label,
-                  config: {},
-                  position: { x: 0, y: 0 }
+        if (isGroup) {
+          // Create a version key based on label, children IDs, child labels, and config to force ReactFlow to update
+          // Include child labels so updates to child action labels trigger a re-render
+          const childrenIds = an.children?.join(',') || 'empty'
+          const childrenLabels = childActions?.map(c => c.label).join(',') || 'empty'
+          const groupVersion = `${an.label || 'Action Group'}-${childrenIds}-${childrenLabels}-${JSON.stringify(an.config)}`
+          return {
+            id: an.id,
+            type: 'actionGroup',
+            position: an.position,
+            selected: an.id === selectedActionNodeId,
+            draggable: true, // Allow dragging the group node
+            data: {
+              label: an.label || 'Action Group',
+              type: an.type,
+              actionCount: an.children?.length ?? 0,
+              isExpanded: an.isExpanded ?? false,
+              children: childActions,
+              _version: groupVersion, // Force ReactFlow to detect changes when label, children, or config changes
+              onSelect: () => {
+                selectActionNode(an.id)
+                selectNode(null)
+                selectRelationship(null)
+                selectWfNode(null)
+                selectToolNode(null)
+              },
+              onDelete: () => deleteActionNode(an.id),
+              onToggleExpand: () => {
+                updateActionNode(an.id, { isExpanded: !(an.isExpanded ?? false) })
+              },
+              onAddAction: (actionTypes?: import('../../stores/actionCanvasStore').ActionNodeType[]) => {
+                if (!actionTypes || actionTypes.length === 0) return
+
+                console.log('[DEBUG] onAddAction called:', { groupId: an.id, groupLabel: an.label, actionTypes, currentChildren: an.children })
+
+                const existingChildren = an.children || []
+                const newActionIds: string[] = []
+
+                actionTypes.forEach((actionType: import('../../stores/actionCanvasStore').ActionNodeType) => {
+                  // Check if an action of this type already exists in the group
+                  const existingAction = actionNodes.find(a =>
+                    existingChildren.includes(a.id) && a.type === actionType
+                  )
+
+                  if (existingAction) {
+                    return // Skip adding duplicate
+                  }
+
+                  const label = labelFromType(actionType)
+                  const newActionId = addActionNode({
+                    type: actionType,
+                    label,
+                    config: {},
+                    position: { x: 0, y: 0 }
+                  })
+                  newActionIds.push(newActionId)
                 })
-                newActionIds.push(newActionId)
-              })
-              
-              if (newActionIds.length > 0) {
-                const updatedChildren = [...existingChildren, ...newActionIds]
+
+                if (newActionIds.length > 0) {
+                  const updatedChildren = [...existingChildren, ...newActionIds]
+                  updateActionNode(an.id, {
+                    children: updatedChildren
+                  })
+                }
+              },
+              onSelectChildAction: (childActionId: string) => {
+                selectActionNode(childActionId)
+                selectNode(null)
+                selectRelationship(null)
+                selectWfNode(null)
+                selectToolNode(null)
+                onSwitchTab?.('actions')
+              },
+              onRemoveChildAction: (childActionId: string) => {
+                const currentChildren = an.children || []
+                const newChildren = currentChildren.filter(id => id !== childActionId)
                 updateActionNode(an.id, {
-                  children: updatedChildren
+                  children: newChildren
+                })
+                // Optionally delete the action node itself if it's not used elsewhere
+                // For now, we'll just remove it from the group
+              },
+              onMoveActionUp: (actionId: string) => {
+                const currentChildren = an.children || []
+                const index = currentChildren.indexOf(actionId)
+                if (index <= 0) return // Already at top or not found
+
+                const newChildren = [...currentChildren]
+                const [removed] = newChildren.splice(index, 1)
+                newChildren.splice(index - 1, 0, removed)
+
+                updateActionNode(an.id, {
+                  children: newChildren
+                })
+              },
+              onMoveActionDown: (actionId: string) => {
+                const currentChildren = an.children || []
+                const index = currentChildren.indexOf(actionId)
+                if (index === -1 || index >= currentChildren.length - 1) return // Already at bottom or not found
+
+                const newChildren = [...currentChildren]
+                const [removed] = newChildren.splice(index, 1)
+                newChildren.splice(index + 1, 0, removed)
+
+                updateActionNode(an.id, {
+                  children: newChildren
                 })
               }
-            },
-            onSelectChildAction: (childActionId: string) => {
-              selectActionNode(childActionId)
-              selectNode(null)
-              selectRelationship(null)
-              selectWfNode(null)
-              selectToolNode(null)
-              onSwitchTab?.('actions')
-            },
-            onRemoveChildAction: (childActionId: string) => {
-              const currentChildren = an.children || []
-              const newChildren = currentChildren.filter(id => id !== childActionId)
-              updateActionNode(an.id, {
-                children: newChildren
-              })
-              // Optionally delete the action node itself if it's not used elsewhere
-              // For now, we'll just remove it from the group
-            },
-            onMoveActionUp: (actionId: string) => {
-              const currentChildren = an.children || []
-              const index = currentChildren.indexOf(actionId)
-              if (index <= 0) return // Already at top or not found
-              
-              const newChildren = [...currentChildren]
-              const [removed] = newChildren.splice(index, 1)
-              newChildren.splice(index - 1, 0, removed)
-              
-              updateActionNode(an.id, {
-                children: newChildren
-              })
-            },
-            onMoveActionDown: (actionId: string) => {
-              const currentChildren = an.children || []
-              const index = currentChildren.indexOf(actionId)
-              if (index === -1 || index >= currentChildren.length - 1) return // Already at bottom or not found
-              
-              const newChildren = [...currentChildren]
-              const [removed] = newChildren.splice(index, 1)
-              newChildren.splice(index + 1, 0, removed)
-              
-              updateActionNode(an.id, {
-                children: newChildren
-              })
             }
           }
         }
-      }
 
         // Create a version string based on label and config to force ReactFlow updates
         const actionVersion = `${an.label}-${JSON.stringify(an.config)}`
-        
+
         return {
           id: an.id,
           type: 'action',
@@ -445,21 +446,21 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
             subtitle: labelFromType(an.type),
             _version: actionVersion, // Force ReactFlow to detect changes when label or config changes
             onSelect: () => {
-            selectActionNode(an.id)
-            selectNode(null)
-            selectRelationship(null)
-            selectWfNode(null)
-            selectToolNode(null)
-          },
-          onDelete: () => deleteActionNode(an.id)
+              selectActionNode(an.id)
+              selectNode(null)
+              selectRelationship(null)
+              selectWfNode(null)
+              selectToolNode(null)
+            },
+            onDelete: () => deleteActionNode(an.id)
+          }
         }
-      }
-    })
+      })
 
     const allNodes = [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow]
-    
+
     return allNodes
-    }, [storeNodes, visibleNodeIds, stepsByNodeId, handleDeleteNode, wfNodes, selectNode, selectWfNode, selectRelationship, deleteWfNode, selectedNode, selectedWfNodeId, toolNodes, selectedToolNodeId, selectToolNode, deleteToolNode, actionNodes, selectedActionNodeId, selectActionNode, deleteActionNode, updateActionNode, addActionNode, onSwitchTab, rootNodeId])
+  }, [storeNodes, visibleNodeIds, stepsByNodeId, handleDeleteNode, wfNodes, selectNode, selectWfNode, selectRelationship, deleteWfNode, selectedNode, selectedWfNodeId, toolNodes, selectedToolNodeId, selectToolNode, deleteToolNode, actionNodes, selectedActionNodeId, selectActionNode, deleteActionNode, updateActionNode, addActionNode, onSwitchTab, rootNodeId])
 
   // Convert store relationships to ReactFlow edges (only show edges between visible nodes)
   const reactFlowEdges: Edge[] = useMemo(() => {
@@ -595,7 +596,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
   // Filter edges to prevent multiple connections from if/else tools to action groups
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     onEdgesChange(changes)
-    
+
     // After edges change, check for and remove invalid connections
     // (if/else tool to action group should only have one connection)
     setEdges((currentEdges) => {
@@ -609,10 +610,10 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
           .filter(a => a.type === 'action:group' || a.isGroup)
           .map(a => a.id)
       )
-      
+
       // Group edges by (source, target) for if/else -> action group connections
       const edgeGroups = new Map<string, Edge[]>()
-      
+
       currentEdges.forEach(edge => {
         if (ifElseToolIds.has(edge.source) && actionGroupIds.has(edge.target)) {
           const key = `${edge.source}->${edge.target}`
@@ -622,7 +623,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
           edgeGroups.get(key)!.push(edge)
         }
       })
-      
+
       // For each group, if there are multiple edges, keep only the most recent one
       // Check which edge was just added in the changes
       const addedEdgeIds = new Set(
@@ -630,20 +631,20 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
           .filter(change => change.type === 'add')
           .map(change => (change as { type: 'add'; item: Edge }).item.id)
       )
-      
+
       const edgesToRemove = new Set<string>()
       edgeGroups.forEach((groupEdges) => {
         if (groupEdges.length > 1) {
           // Find the edge that was just added (most recent)
           const newlyAddedEdge = groupEdges.find(e => addedEdgeIds.has(e.id))
           const edgeToKeep = newlyAddedEdge || groupEdges[groupEdges.length - 1] // Fallback to last one
-          
+
           groupEdges.forEach(edge => {
             if (edge.id !== edgeToKeep.id) {
               edgesToRemove.add(edge.id)
               // Also remove from store if it's an action edge
-              const storeEdge = actionEdges.find(e => 
-                e.source === edge.source && 
+              const storeEdge = actionEdges.find(e =>
+                e.source === edge.source &&
                 e.target === edge.target &&
                 e.sourceHandle === edge.sourceHandle
               )
@@ -654,7 +655,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
           })
         }
       })
-      
+
       if (edgesToRemove.size > 0) {
         return currentEdges.filter(e => !edgesToRemove.has(e.id))
       }
@@ -787,36 +788,36 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
       if (connection.targetHandle !== 'input') {
         return false
       }
-      
+
       const sourceTool = toolNodes.find(t => t.id === connection.source)
-      
+
       // For if/else tools, ensure only one connection to the same action group
       if (sourceTool?.type === 'tool:if') {
         const validIfElseHandles = ['true', 'false']
         if (connection.sourceHandle && !validIfElseHandles.includes(connection.sourceHandle)) {
           return false
         }
-        
+
         // Check if there's already ANY connection from this tool to this action group
         // Check both store edges and ReactFlow edges to catch any pending connections
-        const existingStoreEdge = actionEdges.find(e => 
-          e.source === connection.source && 
+        const existingStoreEdge = actionEdges.find(e =>
+          e.source === connection.source &&
           e.target === connection.target
         )
-        
+
         // Check ReactFlow edges for any connection from same source to same target
-        const existingReactFlowEdge = edges.find(e => 
-          e.source === connection.source && 
+        const existingReactFlowEdge = edges.find(e =>
+          e.source === connection.source &&
           e.target === connection.target
         )
-        
+
         // For if/else tools, REJECT if there's ANY existing connection (regardless of handle)
         // This prevents connecting to both true and false outputs simultaneously
         if (existingStoreEdge || existingReactFlowEdge) {
           return false
         }
       }
-      
+
       return true
     }
 
@@ -896,32 +897,32 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
     if (sourceIsTool && targetIsActionGroup) {
       const sourceTool = toolNodes.find(t => t.id === params.source)
       const isIfElseTool = sourceTool?.type === 'tool:if'
-      
+
       // For if/else tools, ensure only one connection to the action group
       // Remove ANY existing connection from the same tool to the same action group
       if (isIfElseTool) {
         // Remove from store first
-        const existingStoreEdges = actionEdges.filter(e => 
-          e.source === params.source && 
+        const existingStoreEdges = actionEdges.filter(e =>
+          e.source === params.source &&
           e.target === params.target
         )
         existingStoreEdges.forEach(edge => {
           deleteActionEdge(edge.id)
         })
-        
+
         // Also remove from ReactFlow edges state if present
-        const existingReactFlowEdges = edges.filter(e => 
-          e.source === params.source && 
+        const existingReactFlowEdges = edges.filter(e =>
+          e.source === params.source &&
           e.target === params.target
         )
         if (existingReactFlowEdges.length > 0) {
-          const updatedEdges = edges.filter(e => 
+          const updatedEdges = edges.filter(e =>
             !(e.source === params.source && e.target === params.target)
           )
           setEdges(updatedEdges)
         }
       }
-      
+
       addActionEdge({
         source: params.source,
         target: params.target,
@@ -1024,7 +1025,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
 
   // Track last processed selectedRelationship to avoid loops
   const lastProcessedSelectionRef = useRef<string | null>(null)
-  
+
   // Create signature for reactFlowEdges to detect any changes (similar to nodes)
   const reactFlowEdgesSig = useMemo(() => {
     return reactFlowEdges
@@ -1035,7 +1036,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
       })
       .join('|')
   }, [reactFlowEdges])
-  
+
   // Create signature for current edges from ReactFlow state
   const currentEdgesSig = useMemo(() => {
     return edges
@@ -1050,10 +1051,10 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
   // Sync ReactFlow edges with store - use signature comparison for reliable change detection
   useEffect(() => {
     if (isDraggingRef.current) return
-    
+
     // Check if selectedRelationship changed - this is the primary trigger
     const selectedRelationshipChanged = lastProcessedSelectionRef.current !== selectedRelationship
-    
+
     // If selection changed, always update (even if flag is set, as it might be from a previous operation)
     if (selectedRelationshipChanged) {
       isUpdatingSelectionRef.current = true
@@ -1064,7 +1065,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
       }, 150)
       return
     }
-    
+
     // Use signature comparison - if signatures differ, update edges
     // Always update when signature changes, regardless of isUpdatingSelectionRef flag
     // The flag only prevents loops from selection changes, not from data changes like type updates
@@ -1085,10 +1086,10 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
     if (isWf && node.id === selectedWfNodeId) return
     if (isTool && node.id === selectedToolNodeId) return
     if (isAction && node.id === selectedActionNodeId) return
-    
+
     // Mark that we're programmatically updating selection
     isUpdatingSelectionRef.current = true
-    
+
     if (isTool) {
       console.log('[canvas] onNodeClick tool node', { id: node.id })
       selectToolNode(node.id)
@@ -1122,7 +1123,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
       // Switch to nodes tab when clicking a node
       onSwitchTab?.('nodes')
     }
-    
+
     // Reset flag after a short delay to allow ReactFlow to process
     setTimeout(() => {
       isUpdatingSelectionRef.current = false
@@ -1134,14 +1135,14 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
     if (isUpdatingSelectionRef.current) {
       return
     }
-    
+
     // Handle edge selection
     const firstEdge = params.edges[0]
     if (firstEdge) {
       // Only handle relationship edges (not workflow edges)
-      const isRelationshipEdge = !firstEdge.id.includes('__attach') && 
-                                  !firstEdge.id.startsWith('wfn_') &&
-                                  storeRelationships.some((r: Relationship) => r.id === firstEdge.id)
+      const isRelationshipEdge = !firstEdge.id.includes('__attach') &&
+        !firstEdge.id.startsWith('wfn_') &&
+        storeRelationships.some((r: Relationship) => r.id === firstEdge.id)
       if (isRelationshipEdge && firstEdge.id !== selectedRelationship) {
         isUpdatingSelectionRef.current = true
         selectRelationship(firstEdge.id)
@@ -1153,13 +1154,13 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
         return
       }
     }
-    
+
     // Handle node selection (only if no edge was selected)
     const firstNode = params.nodes[0]
     if (firstNode && !firstEdge) {
       if (!firstNode.id.startsWith('wfn_') && firstNode.id === selectedNode) return
       if (firstNode.id.startsWith('wfn_') && firstNode.id === selectedWfNodeId) return
-      
+
       isUpdatingSelectionRef.current = true
       if (firstNode.id.startsWith('wfn_')) {
         selectWfNode(firstNode.id)
@@ -1175,7 +1176,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
       setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
       return
     }
-    
+
     // If nothing selected in ReactFlow but we have a selectedRelationship in store,
     // don't clear it - it might have been selected from the list
     if (params.nodes.length === 0 && params.edges.length === 0) {
@@ -1230,16 +1231,16 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
     const fromNode = reactFlowInstance.getNode(fromNodeId)
     const toNode = reactFlowInstance.getNode(toNodeId)
     if (!fromNode || !toNode) return
-    
+
     // Focus on the midpoint between the two nodes
     const fromX = fromNode.position.x + (fromNode.width || 0) / 2
     const fromY = fromNode.position.y + (fromNode.height || 0) / 2
     const toX = toNode.position.x + (toNode.width || 0) / 2
     const toY = toNode.position.y + (toNode.height || 0) / 2
-    
+
     const centerX = (fromX + toX) / 2
     const centerY = (fromY + toY) / 2
-    
+
     reactFlowInstance.setCenter(centerX, centerY, {
       zoom: 1.2,
       duration: 400
@@ -1269,22 +1270,22 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
           return
         }
 
-      // Delete selected node
-      if (selectedNode) {
-        event.preventDefault()
-        handleDeleteNode(selectedNode)
-      }
-      // Delete selected workflow node
-      else if (selectedWfNodeId) {
-        event.preventDefault()
-        deleteWfNode(selectedWfNodeId)
-        selectWfNode(null)
-      }
-      // Delete selected relationship
-      else if (selectedRelationship) {
-        event.preventDefault()
-        handleDeleteRelationship(selectedRelationship)
-      }
+        // Delete selected node
+        if (selectedNode) {
+          event.preventDefault()
+          handleDeleteNode(selectedNode)
+        }
+        // Delete selected workflow node
+        else if (selectedWfNodeId) {
+          event.preventDefault()
+          deleteWfNode(selectedWfNodeId)
+          selectWfNode(null)
+        }
+        // Delete selected relationship
+        else if (selectedRelationship) {
+          event.preventDefault()
+          handleDeleteRelationship(selectedRelationship)
+        }
       }
     }
 
@@ -1318,7 +1319,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
     // Handle tool nodes
     if (type.startsWith('tool:')) {
       let outputs: Array<{ id: string; label: string }> = [{ id: 'output', label: 'Output' }]
-      
+
       if (type === 'tool:if') {
         outputs = [{ id: 'true', label: 'True' }, { id: 'false', label: 'False' }]
       } else if (type === 'tool:switch') {
@@ -1331,7 +1332,7 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
       } else if (type === 'tool:http') {
         outputs = [{ id: 'output', label: 'Output' }]
       }
-      
+
       addToolNode({
         type: type as import('../../stores/toolCanvasStore').ToolNodeType,
         label: labelFromType(type),
@@ -1461,25 +1462,27 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
         snapToGrid={snapToGrid}
         snapGrid={[20, 20]}
       >
-        <Background 
+        <Background
           variant={showGrid ? BackgroundVariant.Dots : BackgroundVariant.Lines}
           gap={showGrid ? 20 : 12}
           size={showGrid ? 1 : 1}
         />
-        <EnhancedMiniMap 
+        <EnhancedMiniMap
           className="absolute bottom-4 right-4"
         />
-        <CanvasToolbarInner 
-          canvasRef={canvasRef} 
-          sidebarOpen={sidebarOpen} 
-          onToggleSidebar={onToggleSidebar}
-          showGrid={showGrid}
-          snapToGrid={snapToGrid}
-          onGridToggle={setShowGrid}
-          onSnapToggle={setSnapToGrid}
-        />
+        {showToolbar && (
+          <CanvasToolbarInner
+            canvasRef={canvasRef}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={onToggleSidebar}
+            showGrid={showGrid}
+            snapToGrid={snapToGrid}
+            onGridToggle={setShowGrid}
+            onSnapToggle={setSnapToGrid}
+          />
+        )}
       </ReactFlow>
-      
+
       {/* Delete Node Confirmation Dialog */}
       <ConfirmDialog
         open={nodeManagement.deleteNodeDialogOpen}
@@ -1503,11 +1506,11 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
         description={
           edgeManagement.pendingRelationshipId
             ? (() => {
-                const rel = storeRelationships.find((r: Relationship) => r.id === edgeManagement.pendingRelationshipId)
-                return rel
-                  ? `Are you sure you want to delete the relationship "${rel.type || 'RELATES_TO'}"? This action cannot be undone.`
-                  : 'Are you sure you want to delete this relationship?'
-              })()
+              const rel = storeRelationships.find((r: Relationship) => r.id === edgeManagement.pendingRelationshipId)
+              return rel
+                ? `Are you sure you want to delete the relationship "${rel.type || 'RELATES_TO'}"? This action cannot be undone.`
+                : 'Are you sure you want to delete this relationship?'
+            })()
             : 'Are you sure you want to delete this relationship?'
         }
         confirmText="Delete"
@@ -1534,15 +1537,15 @@ function ModelBuilderCanvasInner ({ className, sidebarOpen = true, onToggleSideb
   )
 }
 
-function CanvasToolbarInner ({ 
-  canvasRef, 
-  sidebarOpen, 
+function CanvasToolbarInner({
+  canvasRef,
+  sidebarOpen,
   onToggleSidebar,
   showGrid,
   snapToGrid,
   onGridToggle,
   onSnapToggle
-}: { 
+}: {
   canvasRef: React.RefObject<HTMLDivElement | null>
   sidebarOpen?: boolean
   onToggleSidebar?: () => void
@@ -1570,7 +1573,7 @@ function CanvasToolbarInner ({
 }
 
 // Wrapper component to provide ReactFlow context
-export function ModelBuilderCanvas ({ className, sidebarOpen, onToggleSidebar, onRegisterFocusApi, onRegisterFocusRelationshipApi, onSwitchTab }: ModelBuilderCanvasProps) {
+export function ModelBuilderCanvas({ className, sidebarOpen, onToggleSidebar, onRegisterFocusApi, onRegisterFocusRelationshipApi, onSwitchTab, showToolbar = true }: ModelBuilderCanvasProps) {
   return (
     <ReactFlowProvider>
       <ModelBuilderCanvasInner
@@ -1580,6 +1583,7 @@ export function ModelBuilderCanvas ({ className, sidebarOpen, onToggleSidebar, o
         onRegisterFocusApi={onRegisterFocusApi}
         onRegisterFocusRelationshipApi={onRegisterFocusRelationshipApi}
         onSwitchTab={onSwitchTab}
+        showToolbar={showToolbar}
       />
     </ReactFlowProvider>
   )

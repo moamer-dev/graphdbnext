@@ -41,7 +41,7 @@ interface CanvasToolbarProps {
   onSnapToggle?: (enabled: boolean) => void
 }
 
-export function CanvasToolbar ({
+export function CanvasToolbar({
   canvasRef,
   sidebarOpen,
   onToggleSidebar,
@@ -83,7 +83,7 @@ export function CanvasToolbar ({
 
   return (
     <TooltipProvider>
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border/40 rounded-lg p-1.5 shadow-lg">
+      <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10 flex flex-col items-center gap-2 bg-background/95 backdrop-blur-sm border border-border/40 rounded-lg p-1.5 shadow-lg">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -95,7 +95,7 @@ export function CanvasToolbar ({
               <Layout className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Organize Layout</p>
           </TooltipContent>
         </Tooltip>
@@ -111,7 +111,7 @@ export function CanvasToolbar ({
               <RotateCcw className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Fit View</p>
           </TooltipContent>
         </Tooltip>
@@ -127,12 +127,12 @@ export function CanvasToolbar ({
               <Trash2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Clear All</p>
           </TooltipContent>
         </Tooltip>
 
-        <div className="h-6 w-px bg-border/40" />
+        <div className="w-6 h-px bg-border/40" />
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -145,7 +145,7 @@ export function CanvasToolbar ({
               <ZoomIn className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Zoom In</p>
           </TooltipContent>
         </Tooltip>
@@ -161,7 +161,7 @@ export function CanvasToolbar ({
               <ZoomOut className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Zoom Out</p>
           </TooltipContent>
         </Tooltip>
@@ -181,13 +181,13 @@ export function CanvasToolbar ({
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</p>
           </TooltipContent>
         </Tooltip>
 
 
-        <div className="h-6 w-px bg-border/40" />
+        <div className="w-6 h-px bg-border/40" />
 
         {onGridToggle && (
           <Tooltip>
@@ -201,7 +201,7 @@ export function CanvasToolbar ({
                 <Grid3x3 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="left">
               <p>Toggle Grid</p>
             </TooltipContent>
           </Tooltip>
@@ -219,13 +219,13 @@ export function CanvasToolbar ({
                 <Square className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="left">
               <p>Snap to Grid</p>
             </TooltipContent>
           </Tooltip>
         )}
 
-        <div className="h-6 w-px bg-border/40" />
+        <div className="w-6 h-px bg-border/40" />
 
         {onToggleSidebar && (
           <Tooltip>
@@ -243,13 +243,13 @@ export function CanvasToolbar ({
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="left">
               <p>{sidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}</p>
             </TooltipContent>
           </Tooltip>
         )}
 
-        <div className="h-6 w-px bg-border/40" />
+        <div className="w-6 h-px bg-border/40" />
       </div>
       <ConfirmDialog
         open={showClearDialog}
