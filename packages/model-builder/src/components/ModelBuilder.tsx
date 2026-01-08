@@ -26,13 +26,7 @@ import {
 } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from './ui/select'
+import { cn } from '../utils/cn'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,8 +34,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem
 } from './ui/dropdown-menu'
-import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Lightbulb, AlertCircle, Settings, Workflow, CheckCircle2, FileText, X } from 'lucide-react'
+import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Lightbulb, AlertCircle, Settings, Workflow, CheckCircle2, FileText, X, Layout } from 'lucide-react'
 import { AIChatbot } from './ai/AIChatbot'
 import { SchemaDesignPanel } from './ai/SchemaDesignPanel'
 import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
@@ -199,6 +194,7 @@ function ModelBuilderContent({
   const [xmlContent, setXmlContent] = useState<string>('')
   const [xmlPanelWidth, setXmlPanelWidth] = useState(600)
   const [xmlWrapWord, setXmlWrapWord] = useState(false)
+  const [showToolbar, setShowToolbar] = useState(true)
 
   const selectedRelationship = useModelBuilderStore((state) => state.selectedRelationship)
   const selectedNode = useModelBuilderStore((state) => state.selectedNode)
@@ -1258,7 +1254,7 @@ function ModelBuilderContent({
           {xmlContent && (
             <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
               <Label htmlFor="show-xml-preview" className="text-[12px] text-muted-foreground cursor-pointer" title="Show XML Preview">
-                {/* <FileText className="h-3 w-3" /> XML Preview */}
+                {/* <FileText className="h-3 w-3" /> */} XML Preview
               </Label>
               <Switch
                 id="show-xml-preview"
@@ -1312,6 +1308,23 @@ function ModelBuilderContent({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-2 text-xs">
+                <Layout className="h-3.5 w-3.5" />
+                View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuCheckboxItem
+                checked={showToolbar}
+                onCheckedChange={setShowToolbar}
+              >
+                Show Canvas Toolbar
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Generate Graph Button */}
           {hasContent && (
             <Button
@@ -1331,57 +1344,74 @@ function ModelBuilderContent({
         {nodesSidebarOpen && (
           <div className="w-64 border-r bg-muted/10 flex flex-col transition-all duration-200">
             <div className="p-2 border-b bg-muted/20 flex items-center gap-2">
-              <Select value={leftTab} onValueChange={(value) => setLeftTab(value as typeof leftTab)}>
-                <SelectTrigger className="h-8 text-xs flex-1">
-                  <div className="flex items-center gap-2">
-                    {leftTab === 'nodes' && <Circle className="h-3.5 w-3.5 text-blue-600" />}
-                    {leftTab === 'relationships' && <Link2 className="h-3.5 w-3.5 text-indigo-600" />}
-                    {leftTab === 'tools' && <Wrench className="h-3.5 w-3.5 text-purple-600" />}
-                    {leftTab === 'actions' && <Zap className="h-3.5 w-3.5 text-amber-600" />}
-                    <SelectValue>
-                      {leftTab === 'nodes' && 'Nodes'}
-                      {leftTab === 'relationships' && 'Relations'}
-                      {leftTab === 'tools' && 'Tools'}
-                      {leftTab === 'actions' && 'Actions'}
-                    </SelectValue>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nodes">
-                    <div className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-blue-600" />
-                      <span>Nodes</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="relationships">
-                    <div className="flex items-center gap-2">
-                      <Link2 className="h-3.5 w-3.5 text-indigo-600" />
-                      <span>Relations</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="tools">
-                    <div className="flex items-center gap-2">
-                      <Wrench className="h-3.5 w-3.5 text-purple-600" />
-                      <span>Tools</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="actions">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-3.5 w-3.5 text-amber-600" />
-                      <span>Actions</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setNodesSidebarOpen(false)}
-                className="h-8 w-8 p-0 shrink-0"
-                title="Hide Sidebar"
-              >
-                <PanelLeftClose className="h-3.5 w-3.5" />
-              </Button>
+              <div className="flex flex-col border-b bg-muted/20">
+                <div className="flex items-center justify-between p-2 pb-0">
+                  <span className="text-xs font-semibold text-muted-foreground pl-1">Library</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNodesSidebarOpen(false)}
+                    className="h-6 w-6 p-0 shrink-0 hover:bg-background/80"
+                    title="Hide Sidebar"
+                  >
+                    <PanelLeftClose className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-4 gap-1 p-2 pt-1">
+                  <button
+                    onClick={() => setLeftTab('nodes')}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
+                      leftTab === 'nodes'
+                        ? "bg-background text-blue-600 border-border shadow-sm"
+                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
+                    )}
+                    title="Nodes"
+                  >
+                    <Circle className="h-4 w-4" />
+                    <span className="text-[10px] font-medium leading-none">Nodes</span>
+                  </button>
+                  <button
+                    onClick={() => setLeftTab('relationships')}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
+                      leftTab === 'relationships'
+                        ? "bg-background text-indigo-600 border-border shadow-sm"
+                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
+                    )}
+                    title="Relationships"
+                  >
+                    <Link2 className="h-4 w-4" />
+                    <span className="text-[10px] font-medium leading-none">Rels</span>
+                  </button>
+                  <button
+                    onClick={() => setLeftTab('tools')}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
+                      leftTab === 'tools'
+                        ? "bg-background text-purple-600 border-border shadow-sm"
+                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
+                    )}
+                    title="Tools"
+                  >
+                    <Wrench className="h-4 w-4" />
+                    <span className="text-[10px] font-medium leading-none">Tools</span>
+                  </button>
+                  <button
+                    onClick={() => setLeftTab('actions')}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
+                      leftTab === 'actions'
+                        ? "bg-background text-amber-600 border-border shadow-sm"
+                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
+                    )}
+                    title="Actions"
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span className="text-[10px] font-medium leading-none">Actions</span>
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="flex-1 overflow-hidden">
               {leftTab === 'nodes' && <NodePalette className="h-full" mode="nodes" onFocusNode={(id) => focusNodeFnRef.current?.(id)} />}
@@ -1413,6 +1443,7 @@ function ModelBuilderContent({
               onRegisterFocusApi={(fn) => { focusNodeFnRef.current = fn }}
               onRegisterFocusRelationshipApi={(fn) => { focusRelationshipFnRef.current = fn }}
               onSwitchTab={(tab) => setLeftTab(tab)}
+              showToolbar={showToolbar}
             />
           </div>
           {agentsPanelOpen && (isSchemaDesignEnabled || isWorkflowGenerationEnabled) && (
