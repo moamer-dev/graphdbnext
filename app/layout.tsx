@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EUPT Graph Database Manager",
+  title: "GraphDBNext",
   description: "Manage XML to Graph conversion and Memgraph database operations",
 };
 

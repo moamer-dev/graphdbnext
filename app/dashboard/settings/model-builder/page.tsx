@@ -170,7 +170,7 @@ export default function ModelBuilderSettingsPage() {
                         </Button>
                         <div>
                             <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                                <Sparkles className="h-4 w-4" />
+                                {/* <Sparkles className="h-4 w-4" /> */}
                                 <span className="relative">
                                     Model Builder Settings
                                     <span className="absolute -bottom-1 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/25 to-transparent"></span>

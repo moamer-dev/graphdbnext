@@ -147,7 +147,7 @@ export default function ModulesSettingsPage() {
                     <div className="mt-2 pt-2 border-t border-border/20">
                       <Link href="/dashboard/settings/model-builder">
                         <Button variant="ghost" size="sm" className="h-7 text-xs gap-2">
-                          <Sparkles className="h-3 w-3" />
+                          <Settings className="h-3 w-3" />
                           Configure AI Settings
                         </Button>
                       </Link>

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react'
+import { Settings, ArrowLeft, Loader2 } from 'lucide-react'
 import type { AIModelProvider, AIModelName, AISettings } from '@graphdb/model-builder'
 import { toast } from 'sonner'
 
@@ -38,7 +38,8 @@ const DEFAULT_AI_SETTINGS: ExtendedAISettings = {
     nodePropertySuggestion: false,
     schemaOptimization: false,
     aiAgentsAsTools: false,
-    queryAiAgent: false
+    queryAiAgent: false,
+    semanticEnrichment: false
   }
 }
 
@@ -177,7 +178,7 @@ export default function AISettingsPage() {
             </Button>
             <div>
               <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
+                <Settings className="h-4 w-4" />
                 <span className="relative">
                   AI Settings
                   <span className="absolute -bottom-1 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/25 to-transparent"></span>

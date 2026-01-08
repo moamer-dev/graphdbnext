@@ -49,8 +49,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Network className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">EUPT Graph Database</span>
-                <span className="truncate text-xs text-muted-foreground">Research Platform</span>
+                <span className="truncate font-semibold">GraphDBNext</span>
+                <span className="truncate text-xs text-muted-foreground">Graph Database Platform</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
