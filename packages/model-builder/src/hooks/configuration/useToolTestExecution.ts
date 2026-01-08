@@ -1,0 +1,283 @@
+import { useCallback } from 'react'
+import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
+import { useToolCanvasStore } from '../../stores/toolCanvasStore'
+import type { Condition, ConditionGroup } from '../../components/sidebars/ToolConfigurationSidebar'
+
+export interface TestElementData {
+  tagName: string
+  children: Array<{ tagName: string }>
+  attributes: Record<string, string>
+  textContent: string
+  parent?: { tagName: string } | null
+  ancestors?: string[]
+}
+
+function evaluateCondition(condition: Condition, element: TestElementData): boolean {
+  switch (condition.type) {
+    case 'HasChildren': {
+      if (!condition.values || condition.values.length === 0) return false
+      const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
+      const matches = condition.values.map(v => childNames.includes(v.toLowerCase().trim()))
+      const operator = condition.internalOperator || 'OR'
+      return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
+    }
+    case 'HasNoChildren': {
+      if (!condition.values || condition.values.length === 0) return false
+      const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
+      const notPresent = condition.values.map(v => !childNames.includes(v.toLowerCase().trim()))
+      const operator = condition.internalOperator || 'AND'
+      return operator === 'AND' ? notPresent.every(n => n) : notPresent.some(n => n)
+    }
+    case 'HasAncestor': {
+      if (!condition.values || condition.values.length === 0) {
+        if (condition.value) {
+          const ancestors = element.ancestors || []
+          return ancestors.some(a => a.toLowerCase().trim() === condition.value!.toLowerCase().trim())
+        }
+        return false
+      }
+      const ancestors = element.ancestors || []
+      const matches = condition.values.map(v =>
+        ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
+      )
+      const operator = condition.internalOperator || 'OR'
+      return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
+    }
+    case 'HasParent': {
+      if (!condition.value || !element.parent) return false
+      const parentTag = element.parent.tagName.toLowerCase().trim()
+      const conditionValue = condition.value.toLowerCase().trim()
+      return parentTag === conditionValue
+    }
+    case 'HasAttribute': {
+      if (!condition.attributeName) return false
+      return condition.attributeName in element.attributes
+    }
+    case 'HasTextContent': {
+      return element.textContent.trim().length > 0
+    }
+    case 'ElementNameEquals': {
+      if (!condition.value) return false
+      return element.tagName.toLowerCase().trim() === condition.value.toLowerCase().trim()
+    }
+    case 'AttributeValueEquals': {
+      if (!condition.attributeName || !condition.value) return false
+      const attrValue = element.attributes[condition.attributeName]
+      if (attrValue === undefined) return false
+      return attrValue === condition.value
+    }
+    case 'ChildCount': {
+      const count = element.children.length
+      if (condition.min !== undefined && count < condition.min) return false
+      if (condition.max !== undefined && count > condition.max) return false
+      return true
+    }
+    default:
+      return false
+  }
+}
+
+function evaluateConditionGroup(group: ConditionGroup, element: TestElementData): boolean {
+  if (group.conditions.length === 0) return true
+  
+  const results = group.conditions.map(c => evaluateCondition(c, element))
+  const operator = group.internalOperator || 'AND'
+  
+  return operator === 'AND' ? results.every(r => r) : results.some(r => r)
+}
+
+function evaluateAllGroups(groups: ConditionGroup[], element: TestElementData): boolean {
+  if (groups.length === 0) return true
+  
+  let finalResult = evaluateConditionGroup(groups[0], element)
+  
+  for (let i = 1; i < groups.length; i++) {
+    const groupResult = evaluateConditionGroup(groups[i], element)
+    const operator = groups[i].operator || 'AND'
+    
+    if (operator === 'AND') {
+      finalResult = finalResult && groupResult
+    } else {
+      finalResult = finalResult || groupResult
+    }
+  }
+  
+  return finalResult
+}
+
+export function useToolTestExecution(toolNodeId: string | null) {
+  const conditionGroups = useToolConfigurationStore((state) => state.conditionGroups)
+  const testResult = useToolConfigurationStore((state) => state.testResult)
+  const setTestResult = useToolConfigurationStore((state) => state.setTestResult)
+  const isExecuting = useToolConfigurationStore((state) => state.isExecuting)
+  const setIsExecuting = useToolConfigurationStore((state) => state.setIsExecuting)
+  const testIdInput = useToolConfigurationStore((state) => state.testIdInput)
+  const setTestIdInput = useToolConfigurationStore((state) => state.setTestIdInput)
+  const executedApiResponse = useToolConfigurationStore((state) => state.executedApiResponse)
+  const setExecutedApiResponse = useToolConfigurationStore((state) => state.setExecutedApiResponse)
+  const apiResponseModalOpen = useToolConfigurationStore((state) => state.apiResponseModalOpen)
+  const setApiResponseModalOpen = useToolConfigurationStore((state) => state.setApiResponseModalOpen)
+  const responseHistory = useToolConfigurationStore((state) => state.responseHistory)
+  const setResponseHistory = useToolConfigurationStore((state) => state.setResponseHistory)
+  const connectionStatus = useToolConfigurationStore((state) => state.connectionStatus)
+  const setConnectionStatus = useToolConfigurationStore((state) => state.setConnectionStatus)
+  const validationErrors = useToolConfigurationStore((state) => state.validationErrors)
+  const setValidationErrors = useToolConfigurationStore((state) => state.setValidationErrors)
+  const toolNode = useToolCanvasStore((state) => state.nodes.find(n => n.id === toolNodeId))
+  const updateToolNode = useToolCanvasStore((state) => state.updateNode)
+  const getState = useToolConfigurationStore.getState
+
+  const createTestElement = useCallback((
+    attachedNode?: { label?: string; type?: string; properties?: Array<{ key: string }> } | null,
+    xmlChildren?: Array<{ name: string }>,
+    xmlAncestors?: string[],
+    xmlParent?: string,
+    xmlTypeStats?: { attributesCount?: number }
+  ): TestElementData => {
+    const tagName = attachedNode?.label || attachedNode?.type || 'test-element'
+    const children = (xmlChildren || []).map(child => ({ tagName: child.name }))
+    
+    const attributes: Record<string, string> = {}
+    if (attachedNode?.properties && attachedNode.properties.length > 0) {
+      attachedNode.properties.forEach((prop) => {
+        attributes[prop.key] = `test-${prop.key}`
+      })
+    } else if (xmlTypeStats?.attributesCount && xmlTypeStats.attributesCount > 0) {
+      attributes['id'] = 'test-id'
+      attributes['xml:id'] = 'test-xml-id'
+    }
+    
+    return {
+      tagName,
+      children,
+      attributes,
+      textContent: 'Sample text content',
+      parent: xmlParent ? { tagName: xmlParent } : null,
+      ancestors: xmlAncestors || []
+    }
+  }, [])
+
+  const handleExecuteConditionTest = useCallback((
+    createTestElementFn: () => TestElementData
+  ) => {
+    if (conditionGroups.length === 0) {
+      setTestResult({
+        success: false,
+        output: 'No conditions configured',
+        details: 'Please add at least one condition group before testing.'
+      })
+      return
+    }
+
+    setIsExecuting(true)
+    
+    setTimeout(() => {
+      try {
+        const testElement = createTestElementFn()
+        const result = evaluateAllGroups(conditionGroups, testElement)
+        
+        const groupResults = conditionGroups.map((group, idx) => {
+          const groupResult = evaluateConditionGroup(group, testElement)
+          const conditionDetails = group.conditions.map(c => {
+            const condResult = evaluateCondition(c, testElement)
+            let details = `  - ${c.type}: ${condResult ? '✓' : '✗'}`
+            
+            if (c.type === 'HasParent') {
+              const actualParent = testElement.parent?.tagName || 'none'
+              const expectedParent = c.value || '(not set)'
+              details += ` (expected: "${expectedParent}", actual: "${actualParent}")`
+            } else if (c.type === 'HasAncestor') {
+              const actualAncestors = (testElement.ancestors || []).join(', ') || 'none'
+              const expectedAncestors = c.values?.join(', ') || c.value || '(not set)'
+              const operator = c.internalOperator || 'OR'
+              const ancestors = testElement.ancestors || []
+              const matches = c.values?.map(v =>
+                ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
+              ) || []
+              const hasAncestor = matches.length > 0 && (operator === 'AND' ? matches.every(m => m) : matches.some(m => m))
+              details += ` (expected: [${expectedAncestors}], ancestors: [${actualAncestors}], operator: ${operator}, found: ${hasAncestor})`
+            } else if (c.type === 'HasAttribute') {
+              const hasAttr = c.attributeName ? (c.attributeName in testElement.attributes) : false
+              const attrValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(no value)') : '(not set)'
+              details += ` (attribute: "${c.attributeName || '(not set)'}", found: ${hasAttr}, value: "${attrValue}")`
+            } else if (c.type === 'HasChildren' || c.type === 'HasNoChildren') {
+              const childNames = testElement.children.map(ch => ch.tagName).join(', ')
+              const expected = c.values?.join(', ') || '(not set)'
+              const operator = c.internalOperator || 'OR'
+              details += ` (expected: [${expected}], actual: [${childNames}], operator: ${operator})`
+            } else if (c.type === 'ChildCount') {
+              const actualCount = testElement.children.length
+              const minStr = c.min !== undefined ? c.min.toString() : 'none'
+              const maxStr = c.max !== undefined ? c.max.toString() : 'none'
+              const inRange = (c.min === undefined || actualCount >= c.min) &&
+                             (c.max === undefined || actualCount <= c.max)
+              details += ` (count: ${actualCount}, min: ${minStr}, max: ${maxStr}, in range: ${inRange})`
+            } else if (c.type === 'HasTextContent') {
+              const hasText = testElement.textContent.trim().length > 0
+              const textLength = testElement.textContent.trim().length
+              details += ` (has text: ${hasText}, length: ${textLength})`
+            } else if (c.type === 'ElementNameEquals') {
+              const actualName = testElement.tagName
+              const expectedName = c.value || '(not set)'
+              const matches = actualName.toLowerCase() === expectedName.toLowerCase()
+              details += ` (expected: "${expectedName}", actual: "${actualName}", matches: ${matches})`
+            } else if (c.type === 'AttributeValueEquals') {
+              const actualValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(not found)') : '(attribute not set)'
+              const expectedValue = c.value || '(not set)'
+              const matches = c.attributeName && c.value
+                ? (testElement.attributes[c.attributeName] === c.value)
+                : false
+              details += ` (attribute: "${c.attributeName || '(not set)'}", expected: "${expectedValue}", actual: "${actualValue}", matches: ${matches})`
+            }
+            return details
+          }).join('\n')
+          return `Group ${idx + 1} (${groupResult ? 'PASS' : 'FAIL'}):\n${conditionDetails}`
+        }).join('\n\n')
+        
+        setTestResult({
+          success: result,
+          output: result ? 'true' : 'false',
+          details: `Element: ${testElement.tagName}\n` +
+                   `Children: ${testElement.children.map(c => c.tagName).join(', ') || 'none'}\n` +
+                   `Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
+                   `Parent: ${testElement.parent?.tagName || 'none'}\n` +
+                   `Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n\n` +
+                   `Evaluation Breakdown:\n${groupResults}`
+        })
+      } catch (error) {
+        setTestResult({
+          success: false,
+          output: 'Error',
+          details: error instanceof Error ? error.message : 'Unknown error occurred'
+        })
+      } finally {
+        setIsExecuting(false)
+      }
+    }, 300)
+  }, [conditionGroups, setTestResult, setIsExecuting])
+
+  return {
+    testResult,
+    setTestResult,
+    isExecuting,
+    setIsExecuting,
+    testIdInput,
+    setTestIdInput,
+    executedApiResponse,
+    setExecutedApiResponse,
+    apiResponseModalOpen,
+    setApiResponseModalOpen,
+    responseHistory,
+    setResponseHistory,
+    connectionStatus,
+    setConnectionStatus,
+    validationErrors,
+    setValidationErrors,
+    handleExecuteConditionTest,
+    createTestElement,
+    evaluateCondition,
+    evaluateConditionGroup,
+    evaluateAllGroups
+  }
+}
+

@@ -1,0 +1,80 @@
+services:
+  # neo4j:
+  #   image: neo4j:5-community
+  #   container_name: graphdb-neo4j
+  #   ports:
+  #     - "7687:7687"
+  #     - "7474:7474"
+  #   environment:
+  #     - NEO4J_AUTH=neo4j/password
+  #     - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+  #     - NEO4J_dbms_security_procedures_allowlist=apoc.*
+  #     - NEO4J_dbms_memory_heap_initial__size=512m
+  #     - NEO4J_dbms_memory_heap_max__size=2G
+  #   volumes:
+  #     - neo4j-data:/data
+  #     - neo4j-logs:/logs
+  #     - neo4j-import:/var/lib/neo4j/import
+  #     - neo4j-plugins:/plugins
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "cypher-shell -u neo4j -p password 'RETURN 1' || exit 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  memgraph:
+    image: memgraph/memgraph-mage:latest
+    container_name: memgraph-mage
+    ports:
+      - "7688:7687"
+      - "7444:7444"
+    command: ["--log-level=TRACE"]
+    volumes:
+      - ./example:/var/lib/memgraph/import
+      - memgraph-data:/var/lib/memgraph
+ 
+  lab:
+    image: memgraph/lab:latest
+    container_name: memgraph-lab
+    ports:
+      - "3003:3000"
+    depends_on:
+      - memgraph
+    environment:
+      - QUICK_CONNECT_MG_HOST=memgraph
+      - QUICK_CONNECT_MG_PORT=7687
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: graphdb-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=graphdb
+      - POSTGRES_PASSWORD=graphdb_password
+      - POSTGRES_DB=graphdb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graphdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:latest
+    container_name: graphdb-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+
+volumes:
+  # neo4j-data:
+  # neo4j-logs:
+  # neo4j-import:
+  # neo4j-plugins:
+  memgraph-data:
+  postgres-data:

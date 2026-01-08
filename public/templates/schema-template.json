@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2024-01-01T00:00:00.000Z",
+  "source": "user-uploaded",
+  "nodes": {
+    "NodeName1": {
+      "name": "NodeName1",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "name": {
+          "name": "name",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "connectsTo": ["NodeName2"]
+      },
+      "relationsIn": {}
+    },
+    "NodeName2": {
+      "name": "NodeName2",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "connectsTo": ["NodeName1"]
+      }
+    }
+  },
+  "relations": {
+    "connectsTo": {
+      "name": "connectsTo",
+      "properties": {
+        "createdAt": {
+          "name": "createdAt",
+          "datatype": "date",
+          "values": [],
+          "required": false
+        }
+      },
+      "domains": {
+        "NodeName1": ["NodeName2"]
+      }
+    }
+  }
+}
+

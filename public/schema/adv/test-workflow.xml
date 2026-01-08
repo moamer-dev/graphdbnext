@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<edxml xmlns="http://sub.uni-goettingen.de/edxml#" xmlns:tei="http://www.tei-c.org/ns/1.0">
+  <header>
+    <title>Advanced Complexity Test</title>
+    <textClass>
+      <classCode>test</classCode>
+    </textClass>
+    <author>Test Author</author>
+  </header>
+  <text>
+    <surface xml:id="surface-1" n="1">
+      <column xml:id="col-1" n="1">
+        <line xml:id="line-1" n="1">
+          <seg xml:id="seg-1" type="text" corresp="#word-1">
+            <w xml:id="word-1" lemma="test" ana="noun" cert="high" text="test">
+              <damage degree="low">
+                <unclear>t</unclear>
+              </damage>
+            </w>
+            <w xml:id="word-2" lemma="workflow" ana="noun" cert="high" text="workflow">workflow</w>
+            <w xml:id="word-3" lemma="example" ana="noun" cert="medium" text="example">example</w>
+          </seg>
+          <seg xml:id="seg-2" type="text">
+            <w xml:id="word-4" lemma="nested" ana="adjective" text="nested">nested</w>
+          </seg>
+        </line>
+        <line xml:id="line-2" n="2">
+          <seg xml:id="seg-3" type="text">
+            <w xml:id="word-5" lemma="second" ana="adjective" cert="high" text="second">second</w>
+            <pc type="punctuation">.</pc>
+          </seg>
+        </line>
+      </column>
+    </surface>
+    <structure>
+      <stanza xml:id="stanza-1" n="1">
+        <verse xml:id="verse-1" n="1">
+          <w xml:id="word-6" lemma="verse" ana="noun" text="verse">verse</w>
+          <w xml:id="word-7" lemma="content" ana="noun" text="content">content</w>
+        </verse>
+      </stanza>
+    </structure>
+    <note xml:id="note-1" type="editorial" target="#word-1 #word-2">
+      <p>This is an editorial note</p>
+      <term key="glossary">test term</term>
+    </note>
+    <translation xml:lang="en" corresp="#verse-1">
+      <seg corresp="#word-6">translation</seg>
+      <seg corresp="#word-7">of verse</seg>
+    </translation>
+    <choice>
+      <corr xml:id="corr-1">
+        <w xml:id="word-8" lemma="correct" ana="adjective" text="correct">correct</w>
+      </corr>
+      <sic xml:id="sic-1">
+        <w xml:id="word-9" lemma="incorrect" ana="adjective" text="incorrect">incorrect</w>
+      </sic>
+    </choice>
+  </text>
+</edxml>
+

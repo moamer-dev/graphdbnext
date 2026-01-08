@@ -1,0 +1,703 @@
+{
+  "version": 1,
+  "type": "workflow-config",
+  "createdAt": "2025-12-19T11:47:11.889Z",
+  "relationships": [
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Header",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Text",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Title",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Author",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Surface",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Surface",
+      "toNodeLabel": "Column",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Column",
+      "toNodeLabel": "Line",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Line",
+      "toNodeLabel": "Seg",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Seg",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Structure",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Structure",
+      "toNodeLabel": "Stanza",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Stanza",
+      "toNodeLabel": "Verse",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Verse",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Note",
+      "type": "annotates",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "P",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "W",
+      "type": "references",
+      "cardinality": "many-to-many"
+    },
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Header",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Text",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Title",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Author",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Surface",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Surface",
+      "toNodeLabel": "Column",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Column",
+      "toNodeLabel": "Line",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Line",
+      "toNodeLabel": "Seg",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Seg",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Structure",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Structure",
+      "toNodeLabel": "Stanza",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Stanza",
+      "toNodeLabel": "Verse",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Verse",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Note",
+      "type": "annotates",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "P",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "W",
+      "type": "references",
+      "cardinality": "many-to-many"
+    },
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Header",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Text",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Title",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Author",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Surface",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Surface",
+      "toNodeLabel": "Column",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Column",
+      "toNodeLabel": "Line",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Line",
+      "toNodeLabel": "Seg",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Seg",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Structure",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Structure",
+      "toNodeLabel": "Stanza",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Stanza",
+      "toNodeLabel": "Verse",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Verse",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Note",
+      "type": "annotates",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "P",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "W",
+      "type": "references",
+      "cardinality": "many-to-many"
+    }
+  ],
+  "tools": [
+    {
+      "type": "tool:if",
+      "label": "Check W Lemma is Hello or World",
+      "targetNodeLabel": "W",
+      "config": {
+        "conditionGroups": [
+          {
+            "id": "lemma_hello_world",
+            "conditions": [
+              {
+                "type": "AttributeValueEquals",
+                "attributeName": "lemma",
+                "value": "hello",
+                "internalOperator": "OR"
+              },
+              {
+                "type": "AttributeValueEquals",
+                "attributeName": "lemma",
+                "value": "world",
+                "internalOperator": "OR"
+              }
+            ],
+            "internalOperator": "OR"
+          }
+        ]
+      },
+      "position": {
+        "x": 250,
+        "y": 0
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
+        }
+      ]
+    },
+    {
+      "type": "tool:if",
+      "label": "Check P Has Text Content",
+      "targetNodeLabel": "P",
+      "config": {
+        "conditionGroups": [
+          {
+            "id": "has_text",
+            "conditions": [
+              {
+                "type": "HasTextContent",
+                "internalOperator": "OR"
+              }
+            ],
+            "internalOperator": "AND"
+          }
+        ]
+      },
+      "position": {
+        "x": 250,
+        "y": 0
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
+        }
+      ]
+    },
+    {
+      "type": "tool:if",
+      "label": "If / Else",
+      "targetNodeLabel": "Seg",
+      "config": {
+        "conditionGroups": [
+          {
+            "id": "group_1766138152314_1uj9",
+            "conditions": [
+              {
+                "type": "HasChildren",
+                "internalOperator": "OR",
+                "values": [
+                  "w"
+                ]
+              }
+            ],
+            "internalOperator": "AND"
+          }
+        ]
+      },
+      "position": {
+        "x": 166,
+        "y": 1144
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
+        }
+      ]
+    },
+    {
+      "type": "tool:if",
+      "label": "If / Else",
+      "targetNodeLabel": "Verse",
+      "config": {
+        "conditionGroups": [
+          {
+            "id": "group_1766138475966_l5hd",
+            "conditions": [
+              {
+                "type": "HasChildren",
+                "internalOperator": "OR",
+                "values": [
+                  "w"
+                ]
+              }
+            ],
+            "internalOperator": "AND"
+          }
+        ]
+      },
+      "position": {
+        "x": 556,
+        "y": 1080
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
+        }
+      ]
+    }
+  ],
+  "toolEdges": [
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "W::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "P::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "Seg::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "Verse::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    }
+  ],
+  "actions": [
+    {
+      "type": "action:create-node",
+      "label": "Create W Node",
+      "config": {
+        "labels": [
+          "W"
+        ],
+        "parentRelationship": "contains",
+        "properties": [
+          {
+            "key": "xmlId",
+            "value": "xml:id",
+            "source": "attribute"
+          },
+          {
+            "key": "lemma",
+            "value": "lemma",
+            "source": "attribute"
+          }
+        ]
+      },
+      "position": {
+        "x": 667.5650474549557,
+        "y": 236.6998033064154
+      }
+    },
+    {
+      "type": "action:create-node-tokens",
+      "label": "Create Character Nodes",
+      "config": {
+        "targetLabel": "Character",
+        "relationshipType": "contains",
+        "splitBy": "",
+        "filterPattern": "[a-zA-Z0-9]",
+        "properties": [
+          {
+            "key": "id",
+            "source": "attribute",
+            "attributeName": "id"
+          },
+          {
+            "key": "text",
+            "source": "token"
+          }
+        ]
+      },
+      "position": {
+        "x": 657.871347351142,
+        "y": 306.2901576870377
+      }
+    },
+    {
+      "type": "action:create-node",
+      "label": "Create P Node",
+      "config": {
+        "labels": [
+          "P"
+        ],
+        "parentRelationship": "contains",
+        "properties": []
+      },
+      "position": {
+        "x": 1742.4747471821322,
+        "y": 672.0235474283344
+      }
+    },
+    {
+      "type": "action:extract-text",
+      "label": "Extract P Text",
+      "config": {
+        "extractionMode": "text"
+      },
+      "position": {
+        "x": 1742.4747471821318,
+        "y": 735.0884917901724
+      }
+    },
+    {
+      "type": "action:transform-text",
+      "label": "Sanitize P Text",
+      "config": {
+        "transformType": "replace",
+        "replaceFrom": "-",
+        "replaceTo": ""
+      },
+      "position": {
+        "x": 1744.7930153324835,
+        "y": 795.8351680016591
+      }
+    },
+    {
+      "type": "action:set-property",
+      "label": "Set P Text Property",
+      "config": {
+        "propertyKey": "text",
+        "propertyValue": ""
+      },
+      "position": {
+        "x": 1748.2704175580095,
+        "y": 860.0592464386725
+      }
+    },
+    {
+      "type": "action:create-node-text",
+      "label": "Create Node (Text)",
+      "config": {},
+      "position": {
+        "x": 796.4189522201689,
+        "y": 624.098223050543
+      }
+    },
+    {
+      "type": "action:extract-text",
+      "label": "action:extract-text",
+      "config": {},
+      "position": {
+        "x": 804.6610807416544,
+        "y": 684.4498164277624
+      }
+    },
+    {
+      "type": "action:set-property",
+      "label": "Set Property",
+      "config": {
+        "propertyKey": "wordText"
+      },
+      "position": {
+        "x": 812.2902783006738,
+        "y": 749.446191022241
+      }
+    },
+    {
+      "type": "action:skip",
+      "label": "Skip",
+      "config": {
+        "skipMainNode": false,
+        "skipChildrenMode": "all"
+      },
+      "position": {
+        "x": 802.796978892189,
+        "y": 1118.2792937823228
+      }
+    },
+    {
+      "type": "action:skip",
+      "label": "Skip",
+      "config": {
+        "skipMainNode": true
+      },
+      "position": {
+        "x": 461.2871341844236,
+        "y": 1283.2945548806128
+      }
+    }
+  ],
+  "actionEdges": [
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create W Node",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create Character Nodes",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "P::tool:if",
+      "targetActionLabel": "Create P Node",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "P::tool:if",
+      "targetActionLabel": "Extract P Text",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "P::tool:if",
+      "targetActionLabel": "Extract P Text",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "P::tool:if",
+      "targetActionLabel": "Sanitize P Text",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "P::tool:if",
+      "targetActionLabel": "Set P Text Property",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create Node (Text)",
+      "sourceHandle": "false",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "action:extract-text",
+      "sourceHandle": "false",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Set Property",
+      "sourceHandle": "false",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "Verse::tool:if",
+      "targetActionLabel": "Skip",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "Seg::tool:if",
+      "targetActionLabel": "Skip",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    }
+  ]
+}

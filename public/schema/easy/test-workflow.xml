@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<edxml xmlns="http://sub.uni-goettingen.de/edxml#" xmlns:tei="http://www.tei-c.org/ns/1.0">
+  <header>
+    <title>Test Document</title>
+    <author>Test Author</author>
+  </header>
+  <text>
+    <surface xml:id="surface-1" n="1">
+      <column xml:id="col-1" n="1">
+        <line xml:id="line-1" n="1">
+          <seg xml:id="seg-1" type="text">
+            <w xml:id="word-1" lemma="hello" text="hello">hello</w>
+            <w xml:id="word-2" lemma="world" text="world">world</w>
+          </seg>
+        </line>
+      </column>
+    </surface>
+    <structure>
+      <stanza xml:id="stanza-1" n="1">
+        <verse xml:id="verse-1" n="1">
+          <w xml:id="q42" lemma="test" text="test">test</w>
+        </verse>
+      </stanza>
+    </structure>
+    <note xml:id="note-1" type="editorial" target="#word-1">
+      <p>This is a note about word-1</p>
+    </note>
+  </text>
+</edxml>

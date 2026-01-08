@@ -1,0 +1,541 @@
+[
+  {
+    "id": 0,
+    "type": "node",
+    "labels": [
+      "Edxml"
+    ],
+    "properties": {
+      "xmlns": "http://sub.uni-goettingen.de/edxml#",
+      "xmlns:tei": "http://www.tei-c.org/ns/1.0"
+    }
+  },
+  {
+    "id": 1,
+    "type": "node",
+    "labels": [
+      "Header"
+    ],
+    "properties": {}
+  },
+  {
+    "id": 2,
+    "type": "node",
+    "labels": [
+      "Title"
+    ],
+    "properties": {}
+  },
+  {
+    "id": 3,
+    "type": "node",
+    "labels": [
+      "Author"
+    ],
+    "properties": {}
+  },
+  {
+    "id": 4,
+    "type": "node",
+    "labels": [
+      "Text"
+    ],
+    "properties": {}
+  },
+  {
+    "id": 5,
+    "type": "node",
+    "labels": [
+      "Surface"
+    ],
+    "properties": {
+      "xml:id": "surface-1",
+      "n": "1"
+    }
+  },
+  {
+    "id": 6,
+    "type": "node",
+    "labels": [
+      "Column"
+    ],
+    "properties": {
+      "xml:id": "col-1",
+      "n": "1"
+    }
+  },
+  {
+    "id": 7,
+    "type": "node",
+    "labels": [
+      "Line"
+    ],
+    "properties": {
+      "xml:id": "line-1",
+      "n": "1"
+    }
+  },
+  {
+    "id": 8,
+    "type": "node",
+    "labels": [
+      "Seg"
+    ],
+    "properties": {
+      "xml:id": "seg-1",
+      "type": "text"
+    }
+  },
+  {
+    "id": 9,
+    "type": "node",
+    "labels": [
+      "W"
+    ],
+    "properties": {
+      "xml:id": "word-1",
+      "lemma": "hello",
+      "text": "hello"
+    }
+  },
+  {
+    "id": 10,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "h"
+    }
+  },
+  {
+    "id": 11,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "e"
+    }
+  },
+  {
+    "id": 12,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "l"
+    }
+  },
+  {
+    "id": 13,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "l"
+    }
+  },
+  {
+    "id": 14,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "o"
+    }
+  },
+  {
+    "id": 15,
+    "type": "node",
+    "labels": [
+      "W"
+    ],
+    "properties": {
+      "xml:id": "word-2",
+      "lemma": "world",
+      "text": "world"
+    }
+  },
+  {
+    "id": 16,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "w"
+    }
+  },
+  {
+    "id": 17,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "o"
+    }
+  },
+  {
+    "id": 18,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "r"
+    }
+  },
+  {
+    "id": 19,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "l"
+    }
+  },
+  {
+    "id": 20,
+    "type": "node",
+    "labels": [
+      "Character"
+    ],
+    "properties": {
+      "text": "d"
+    }
+  },
+  {
+    "id": 21,
+    "type": "node",
+    "labels": [
+      "Structure"
+    ],
+    "properties": {}
+  },
+  {
+    "id": 22,
+    "type": "node",
+    "labels": [
+      "Stanza"
+    ],
+    "properties": {
+      "xml:id": "stanza-1",
+      "n": "1"
+    }
+  },
+  {
+    "id": 23,
+    "type": "node",
+    "labels": [
+      "Verse"
+    ],
+    "properties": {
+      "xml:id": "verse-1",
+      "n": "1"
+    }
+  },
+  {
+    "id": 24,
+    "type": "node",
+    "labels": [
+      "W"
+    ],
+    "properties": {
+      "xml:id": "word-3",
+      "lemma": "test",
+      "text": "test",
+      "textContent": "test",
+      "wordText": "test"
+    }
+  },
+  {
+    "id": 25,
+    "type": "node",
+    "labels": [
+      "Note"
+    ],
+    "properties": {
+      "xml:id": "note-1",
+      "type": "editorial",
+      "target": "#word-1"
+    }
+  },
+  {
+    "id": 26,
+    "type": "node",
+    "labels": [
+      "P"
+    ],
+    "properties": {
+      "textContent": "This is a note about word1",
+      "transformedText": "This is a note about word1",
+      "text": "This is a note about word1"
+    }
+  },
+  {
+    "id": 0,
+    "type": "relationship",
+    "label": "contains",
+    "start": 0,
+    "end": 1,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 1,
+    "type": "relationship",
+    "label": "contains",
+    "start": 1,
+    "end": 2,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 2,
+    "type": "relationship",
+    "label": "contains",
+    "start": 1,
+    "end": 3,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 3,
+    "type": "relationship",
+    "label": "contains",
+    "start": 0,
+    "end": 4,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 4,
+    "type": "relationship",
+    "label": "contains",
+    "start": 4,
+    "end": 5,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 5,
+    "type": "relationship",
+    "label": "contains",
+    "start": 5,
+    "end": 6,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 6,
+    "type": "relationship",
+    "label": "contains",
+    "start": 6,
+    "end": 7,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 7,
+    "type": "relationship",
+    "label": "contains",
+    "start": 7,
+    "end": 8,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 8,
+    "type": "relationship",
+    "label": "contains",
+    "start": 8,
+    "end": 9,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 9,
+    "type": "relationship",
+    "label": "contains",
+    "start": 9,
+    "end": 10,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 10,
+    "type": "relationship",
+    "label": "contains",
+    "start": 9,
+    "end": 11,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 11,
+    "type": "relationship",
+    "label": "contains",
+    "start": 9,
+    "end": 12,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 12,
+    "type": "relationship",
+    "label": "contains",
+    "start": 9,
+    "end": 13,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 13,
+    "type": "relationship",
+    "label": "contains",
+    "start": 9,
+    "end": 14,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 14,
+    "type": "relationship",
+    "label": "contains",
+    "start": 8,
+    "end": 15,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 15,
+    "type": "relationship",
+    "label": "contains",
+    "start": 15,
+    "end": 16,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 16,
+    "type": "relationship",
+    "label": "contains",
+    "start": 15,
+    "end": 17,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 17,
+    "type": "relationship",
+    "label": "contains",
+    "start": 15,
+    "end": 18,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 18,
+    "type": "relationship",
+    "label": "contains",
+    "start": 15,
+    "end": 19,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 19,
+    "type": "relationship",
+    "label": "contains",
+    "start": 15,
+    "end": 20,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 20,
+    "type": "relationship",
+    "label": "contains",
+    "start": 4,
+    "end": 21,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 21,
+    "type": "relationship",
+    "label": "contains",
+    "start": 21,
+    "end": 22,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 22,
+    "type": "relationship",
+    "label": "contains",
+    "start": 22,
+    "end": 23,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 23,
+    "type": "relationship",
+    "label": "contains",
+    "start": 23,
+    "end": 24,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 24,
+    "type": "relationship",
+    "label": "contains",
+    "start": 4,
+    "end": 25,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  },
+  {
+    "id": 25,
+    "type": "relationship",
+    "label": "contains",
+    "start": 25,
+    "end": 26,
+    "properties": {
+      "cardinality": "one-to-many"
+    }
+  }
+]

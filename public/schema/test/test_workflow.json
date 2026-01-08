@@ -1,0 +1,416 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-19T10:48:10.670Z",
+  "source": "test-workflow",
+  "nodes": {
+    "W": {
+      "name": "W",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "lemma": {
+          "name": "lemma",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "text": {
+          "name": "text",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "Seg",
+          "Verse"
+        ],
+        "references": [
+          "Note"
+        ]
+      }
+    },
+    "Edxml": {
+      "name": "Edxml",
+      "superclassNames": [],
+      "properties": {
+        "xmlns": {
+          "name": "xmlns",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "tei": {
+          "name": "tei",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Header",
+          "Text"
+        ]
+      },
+      "relationsIn": {}
+    },
+    "Header": {
+      "name": "Header",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "contains": [
+          "Title",
+          "Author"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Edxml"
+        ]
+      }
+    },
+    "Title": {
+      "name": "Title",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "Header"
+        ]
+      }
+    },
+    "Author": {
+      "name": "Author",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "Header"
+        ]
+      }
+    },
+    "Text": {
+      "name": "Text",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "contains": [
+          "Surface",
+          "Structure"
+        ],
+        "annotates": [
+          "Note"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Edxml"
+        ]
+      }
+    },
+    "Surface": {
+      "name": "Surface",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Column"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Text"
+        ]
+      }
+    },
+    "Column": {
+      "name": "Column",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Line"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Surface"
+        ]
+      }
+    },
+    "Line": {
+      "name": "Line",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Seg"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Column"
+        ]
+      }
+    },
+    "Seg": {
+      "name": "Seg",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Line"
+        ]
+      }
+    },
+    "Structure": {
+      "name": "Structure",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "contains": [
+          "Stanza"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Text"
+        ]
+      }
+    },
+    "Stanza": {
+      "name": "Stanza",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Verse"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Structure"
+        ]
+      }
+    },
+    "Verse": {
+      "name": "Verse",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Stanza"
+        ]
+      }
+    },
+    "Note": {
+      "name": "Note",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "target": {
+          "name": "target",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "P"
+        ],
+        "references": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "annotates": [
+          "Text"
+        ]
+      }
+    },
+    "P": {
+      "name": "P",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "Note"
+        ]
+      }
+    }
+  },
+  "relations": {
+    "contains": {
+      "name": "contains",
+      "properties": {},
+      "domains": {
+        "Edxml": [
+          "Header",
+          "Text"
+        ],
+        "Header": [
+          "Title",
+          "Author"
+        ],
+        "Text": [
+          "Surface",
+          "Structure"
+        ],
+        "Surface": [
+          "Column"
+        ],
+        "Column": [
+          "Line"
+        ],
+        "Line": [
+          "Seg"
+        ],
+        "Seg": [
+          "W"
+        ],
+        "Structure": [
+          "Stanza"
+        ],
+        "Stanza": [
+          "Verse"
+        ],
+        "Verse": [
+          "W"
+        ],
+        "Note": [
+          "P"
+        ]
+      }
+    },
+    "annotates": {
+      "name": "annotates",
+      "properties": {},
+      "domains": {
+        "Text": [
+          "Note"
+        ]
+      }
+    },
+    "references": {
+      "name": "references",
+      "properties": {},
+      "domains": {
+        "Note": [
+          "W"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "nodes": 21,
+  "relations": 10,
+  "totalProperties": 51,
+  "validation": {
+    "passed": false,
+    "errors": 29,
+    "warnings": 1
+  }
+}

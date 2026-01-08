@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "type": "workflow-config",
+  "createdAt": "2025-12-19T00:00:00.000Z",
+  "_note": "IMPORTANT: Before importing this config, you must first import test-workflow.xml and map all XML elements to node labels. Map: edxml→Edxml, header→Header, text→Text, surface→Surface, column→Column, line→Line, seg→Seg, w→W, structure→Structure, stanza→Stanza, verse→Verse, note→Note, title→Title, author→Author, p→P, translation→Translation, pc→Pc",
+  "relationships": [
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Header",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Edxml",
+      "toNodeLabel": "Text",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Title",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Header",
+      "toNodeLabel": "Author",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Surface",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Surface",
+      "toNodeLabel": "Column",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Column",
+      "toNodeLabel": "Line",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Line",
+      "toNodeLabel": "Seg",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Seg",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Seg",
+      "toNodeLabel": "Pc",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Structure",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Structure",
+      "toNodeLabel": "Stanza",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Stanza",
+      "toNodeLabel": "Verse",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Verse",
+      "toNodeLabel": "W",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Note",
+      "type": "annotates",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Translation",
+      "type": "translates",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "P",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "W",
+      "type": "references",
+      "cardinality": "many-to-many"
+    },
+    {
+      "fromNodeLabel": "Translation",
+      "toNodeLabel": "Seg",
+      "type": "contains",
+      "cardinality": "one-to-many"
+    }
+  ],
+  "tools": [
+    {
+      "type": "tool:if",
+      "label": "Check W Has Text Attribute",
+      "targetNodeLabel": "W",
+      "config": {
+        "conditionGroups": [
+          {
+            "id": "has_text_attr",
+            "conditions": [
+              {
+                "type": "HasAttribute",
+                "attributeName": "text",
+                "internalOperator": "OR"
+              }
+            ],
+            "internalOperator": "AND"
+          }
+        ]
+      },
+      "position": { "x": 800, "y": 200 },
+      "inputs": 1,
+      "outputs": [
+        { "id": "true", "label": "True" },
+        { "id": "false", "label": "False" }
+      ]
+    },
+    {
+      "type": "tool:switch",
+      "label": "Switch by Lemma",
+      "targetNodeLabel": "W",
+      "config": {
+        "switchSource": "attribute",
+        "switchAttributeName": "lemma",
+        "switchCases": [
+          { "id": "case1", "value": "hello", "label": "greeting" },
+          { "id": "case2", "value": "world", "label": "noun" },
+          { "id": "case3", "value": "default", "label": "default" }
+        ]
+      },
+      "position": { "x": 800, "y": 350 },
+      "inputs": 1,
+      "outputs": [
+        { "id": "greeting", "label": "greeting" },
+        { "id": "noun", "label": "noun" },
+        { "id": "default", "label": "default" }
+      ]
+    },
+    {
+      "type": "tool:transform",
+      "label": "Transform Attributes",
+      "targetNodeLabel": "W",
+      "config": {
+        "mappings": [
+          {
+            "id": "mapping1",
+            "source": "lemma",
+            "target": "lemmaProperty",
+            "defaultValue": "unknown"
+          },
+          {
+            "id": "mapping2",
+            "source": "ana",
+            "target": "posTag",
+            "defaultValue": ""
+          }
+        ]
+      },
+      "position": { "x": 800, "y": 500 },
+      "inputs": 1,
+      "outputs": [
+        { "id": "output", "label": "Output" }
+      ]
+    }
+  ],
+  "toolEdges": [
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "W::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "W::tool:switch",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "",
+      "targetToolLabel": "W::tool:transform",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    }
+  ],
+  "actions": [
+    {
+      "type": "action:create-node",
+      "label": "Create W Node",
+      "config": {
+        "labels": ["W"],
+        "parentRelationship": "contains",
+        "properties": [
+          {
+            "key": "xmlId",
+            "value": "xml:id",
+            "source": "attribute"
+          },
+          {
+            "key": "lemma",
+            "value": "lemma",
+            "source": "attribute"
+          }
+        ]
+      },
+      "position": { "x": 1200, "y": 200 }
+    },
+    {
+      "type": "action:create-node-tokens",
+      "label": "Create Character Nodes",
+      "config": {
+        "targetLabel": "Character",
+        "relationshipType": "contains",
+        "splitBy": "",
+        "filterPattern": "[a-zA-Z0-9]",
+        "properties": [
+          {
+            "key": "id",
+            "source": "attribute",
+            "attributeName": "id"
+          },
+          {
+            "key": "text",
+            "source": "token"
+          }
+        ]
+      },
+      "position": { "x": 1200, "y": 350 }
+    },
+    {
+      "type": "action:extract-property",
+      "label": "Extract Lemma Property",
+      "config": {
+        "sourceAttribute": "lemma",
+        "targetPropertyKey": "extractedLemma",
+        "defaultValue": "unknown"
+      },
+      "position": { "x": 1200, "y": 500 }
+    },
+    {
+      "type": "action:set-property",
+      "label": "Set Processed Property",
+      "config": {
+        "propertyKey": "processed",
+        "propertyValue": "true"
+      },
+      "position": { "x": 1200, "y": 650 }
+    },
+    {
+      "type": "action:create-reference",
+      "label": "Create Reference",
+      "config": {
+        "referenceAttribute": "corresp",
+        "relationshipType": "references"
+      },
+      "position": { "x": 1200, "y": 800 }
+    }
+  ],
+  "actionEdges": [
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create W Node",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create Character Nodes",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:switch",
+      "targetActionLabel": "Extract Lemma Property",
+      "sourceHandle": "greeting",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:transform",
+      "targetActionLabel": "Set Processed Property",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:transform",
+      "targetActionLabel": "Create Reference",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    }
+  ]
+}
+

@@ -1,0 +1,1650 @@
+{
+  "@context": {
+    "@vocab": "https://eupt.example.org/schema/",
+    "schema": "https://eupt.example.org/schema/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "schema:EditionObject",
+      "@type": "schema:Node",
+      "schema:name": "EditionObject",
+      "rdfs:label": "EditionObject",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:EditionObject"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:EditionObject/docStatus",
+          "schema:name": "docStatus",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:EditionObject/textClass",
+          "schema:name": "textClass",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:EditionObject/title",
+          "schema:name": "title",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:hasLayer",
+          "schema:targets": [
+            "schema:TransliterationLayer",
+            "schema:VocalisationLayer"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:TransliterationLayer",
+      "@type": "schema:Node",
+      "schema:name": "TransliterationLayer",
+      "rdfs:label": "TransliterationLayer",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextInformationLayer",
+        "schema:VisualLayer",
+        "schema:TransliterationLayer"
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Surface",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:hasLayer",
+          "schema:sources": [
+            "schema:EditionObject"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Surface",
+      "@type": "schema:Node",
+      "schema:name": "Surface",
+      "rdfs:label": "Surface",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:VisualUnit",
+        "schema:TextArea",
+        "schema:Surface"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Surface/surface",
+          "schema:name": "surface",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Column",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:TransliterationLayer"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Column",
+      "@type": "schema:Node",
+      "schema:name": "Column",
+      "rdfs:label": "Column",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:VisualUnit",
+        "schema:TextArea",
+        "schema:Zone",
+        "schema:Column"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Column/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Column/n",
+          "schema:name": "n",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Line",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Surface"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Line",
+      "@type": "schema:Node",
+      "schema:name": "Line",
+      "rdfs:label": "Line",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:VisualUnit",
+        "schema:TextArea",
+        "schema:Zone",
+        "schema:Line"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Line/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Line/n",
+          "schema:name": "n",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Part",
+            "schema:Seg",
+            "schema:Sign",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Column"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Part",
+      "@type": "schema:Node",
+      "schema:name": "Part",
+      "rdfs:label": "Part",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:VisualUnit",
+        "schema:GraphicalUnit",
+        "schema:Part"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Part/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Seg",
+            "schema:Sign",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Line"
+          ]
+        },
+        {
+          "schema:relation": "schema:refersTo",
+          "schema:sources": [
+            "schema:Colon"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Seg",
+      "@type": "schema:Node",
+      "schema:name": "Seg",
+      "rdfs:label": "Seg",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:VisualUnit",
+        "schema:GraphicalUnit",
+        "schema:Seg"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Seg/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Sign",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Line",
+            "schema:Part"
+          ]
+        },
+        {
+          "schema:relation": "schema:refersTo",
+          "schema:sources": [
+            "schema:Word"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Sign",
+      "@type": "schema:Node",
+      "schema:name": "Sign",
+      "rdfs:label": "Sign",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:VisualUnit",
+        "schema:GraphicalUnit",
+        "schema:Sign"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Sign/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Sign/text",
+          "schema:name": "text",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Sign/type",
+          "schema:name": "type",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Sign/whitespace",
+          "schema:name": "whitespace",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Sign/index",
+          "schema:name": "index",
+          "schema:datatype": "integer",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Sign/subtype",
+          "schema:name": "subtype",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Sign/damage",
+          "schema:name": "damage",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Line",
+            "schema:Part",
+            "schema:Seg"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:VocalisationLayer",
+      "@type": "schema:Node",
+      "schema:name": "VocalisationLayer",
+      "rdfs:label": "VocalisationLayer",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextInformationLayer",
+        "schema:VocalisationLayer"
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Stanza",
+            "schema:Verse",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:hasLayer",
+          "schema:sources": [
+            "schema:EditionObject"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Stanza",
+      "@type": "schema:Node",
+      "schema:name": "Stanza",
+      "rdfs:label": "Stanza",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:PoetologicalUnit",
+        "schema:Stanza"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Stanza/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Stanza/analysis",
+          "schema:name": "analysis",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Verse",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:VocalisationLayer"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Verse",
+      "@type": "schema:Node",
+      "schema:name": "Verse",
+      "rdfs:label": "Verse",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:PoetologicalUnit",
+        "schema:Verse"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Verse/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Verse/n",
+          "schema:name": "n",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Colon",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:VocalisationLayer",
+            "schema:Stanza"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Colon",
+      "@type": "schema:Node",
+      "schema:name": "Colon",
+      "rdfs:label": "Colon",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:PoetologicalUnit",
+        "schema:Colon"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Colon/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Colon/n",
+          "schema:name": "n",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Colon/analysis",
+          "schema:name": "analysis",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:UnidentifiableUnit",
+            "schema:Word",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:relation": "schema:refersTo",
+          "schema:targets": [
+            "schema:Part"
+          ]
+        },
+        {
+          "schema:relation": "schema:translatedAs",
+          "schema:targets": [
+            "schema:TranslationUnit",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Verse"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Phrase",
+      "@type": "schema:Node",
+      "schema:name": "Phrase",
+      "rdfs:label": "Phrase",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:GrammaticalUnit",
+        "schema:Phrase"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Phrase/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Phrase/analysis",
+          "schema:name": "analysis",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:UnidentifiableUnit",
+            "schema:Word",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Word",
+      "@type": "schema:Node",
+      "schema:name": "Word",
+      "rdfs:label": "Word",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:GrammaticalUnit",
+        "schema:MorphologicalUnit",
+        "schema:Word"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Word/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Word/cert",
+          "schema:name": "cert",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:Character"
+          ]
+        },
+        {
+          "schema:relation": "schema:refersTo",
+          "schema:targets": [
+            "schema:Seg"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Phrase"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Character",
+      "@type": "schema:Node",
+      "schema:name": "Character",
+      "rdfs:label": "Character",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:GrammaticalUnit",
+        "schema:Character"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Character/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Character/text",
+          "schema:name": "text",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Character/whitespace",
+          "schema:name": "whitespace",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Character/damage",
+          "schema:name": "damage",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Character/unclear",
+          "schema:name": "unclear",
+          "schema:datatype": "boolean",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Word"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:UnidentifiableUnit",
+      "@type": "schema:Node",
+      "schema:name": "UnidentifiableUnit",
+      "rdfs:label": "UnidentifiableUnit",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:GrammaticalUnit",
+        "schema:MorphologicalUnit",
+        "schema:Word",
+        "schema:UnidentifiableUnit"
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:targets": [
+            "schema:UnidentifiableSign",
+            "schema:Alternatives"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:Phrase",
+            "schema:Colon"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:UnidentifiableSign",
+      "@type": "schema:Node",
+      "schema:name": "UnidentifiableSign",
+      "rdfs:label": "UnidentifiableSign",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextUnit",
+        "schema:GrammaticalUnit",
+        "schema:Character"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:UnidentifiableSign/id",
+          "schema:name": "id",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:UnidentifiableSign/text",
+          "schema:name": "text",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:UnidentifiableSign/type",
+          "schema:name": "type",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:UnidentifiableSign/whitespace",
+          "schema:name": "whitespace",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:UnidentifiableSign/damage",
+          "schema:name": "damage",
+          "schema:datatype": "string",
+          "schema:required": false,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:UnidentifiableSign/unclear",
+          "schema:name": "unclear",
+          "schema:datatype": "boolean",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:UnidentifiableUnit"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Alternatives",
+      "@type": "schema:Node",
+      "schema:name": "Alternatives",
+      "rdfs:label": "Alternatives",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextInformationLayer",
+        "schema:Alternatives"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Alternatives/name",
+          "schema:name": "name",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:alternative",
+          "schema:targets": [
+            "schema:Alternative"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:contains",
+          "schema:sources": [
+            "schema:TextUnit",
+            "schema:TransliterationLayer",
+            "schema:VocalisationLayer"
+          ]
+        },
+        {
+          "schema:relation": "schema:translatedAs",
+          "schema:sources": [
+            "schema:Colon"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Alternative",
+      "@type": "schema:Node",
+      "schema:name": "Alternative",
+      "rdfs:label": "Alternative",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:TextInformationLayer",
+        "schema:Alternative"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Alternative/name",
+          "schema:name": "name",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:targets": [
+            "schema:TextUnit",
+            "schema:TranslationUnit"
+          ]
+        },
+        {
+          "schema:relation": "schema:relatedAlternative",
+          "schema:targets": [
+            "schema:Alternative (itself)"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:alternative",
+          "schema:sources": [
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:relation": "schema:relatedAlternative",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:Annotation",
+      "@type": "schema:Node",
+      "schema:name": "Annotation",
+      "rdfs:label": "Annotation",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:Annotation"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:Annotation/content",
+          "schema:name": "content",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Annotation/mimeType",
+          "schema:name": "mimeType",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Annotation/type",
+          "schema:name": "type",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:Annotation/ref",
+          "schema:name": "ref",
+          "schema:datatype": "URI",
+          "schema:required": false,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsOut": [
+        {
+          "schema:relation": "schema:annotates",
+          "schema:targets": [
+            "schema:Thing",
+            "schema:Alternative",
+            "schema:Alternatives",
+            "schema:Annotation",
+            "schema:TranslationUnit"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:targets": [
+            "schema:Thing",
+            "schema:Alternative",
+            "schema:Alternatives",
+            "schema:Annotation",
+            "schema:TranslationUnit"
+          ]
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:TranslationUnit",
+      "@type": "schema:Node",
+      "schema:name": "TranslationUnit",
+      "rdfs:label": "TranslationUnit",
+      "rdfs:subClassOf": [
+        "schema:Thing",
+        "schema:Annotation",
+        "schema:TranslationUnit"
+      ],
+      "schema:properties": [
+        {
+          "@id": "schema:TranslationUnit/content",
+          "schema:name": "content",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        },
+        {
+          "@id": "schema:TranslationUnit/mimeType",
+          "schema:name": "mimeType",
+          "schema:datatype": "string",
+          "schema:required": true,
+          "schema:allowedValues": []
+        }
+      ],
+      "schema:relationsIn": [
+        {
+          "schema:relation": "schema:translatedAs",
+          "schema:sources": [
+            "schema:Colon"
+          ]
+        },
+        {
+          "schema:relation": "schema:annotates",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:relation": "schema:expressedAs",
+          "schema:sources": [
+            "schema:Alternative"
+          ]
+        },
+        {
+          "schema:relation": "schema:mentions",
+          "schema:sources": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:contains",
+      "@type": "schema:Relation",
+      "schema:name": "contains",
+      "rdfs:label": "contains",
+      "schema:properties": [
+        {
+          "@id": "schema:contains/pos",
+          "schema:name": "pos",
+          "schema:datatype": "integer",
+          "schema:required": true
+        }
+      ],
+      "schema:domains": [
+        {
+          "schema:source": "schema:TransliterationLayer",
+          "schema:targets": [
+            "schema:Surface",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:VocalisationLayer",
+          "schema:targets": [
+            "schema:Stanza",
+            "schema:Verse",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Surface",
+          "schema:targets": [
+            "schema:Column",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Column",
+          "schema:targets": [
+            "schema:Line",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Line",
+          "schema:targets": [
+            "schema:Part",
+            "schema:Seg",
+            "schema:Sign",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Part",
+          "schema:targets": [
+            "schema:Seg",
+            "schema:Sign",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Seg",
+          "schema:targets": [
+            "schema:Sign",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Stanza",
+          "schema:targets": [
+            "schema:Verse",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Verse",
+          "schema:targets": [
+            "schema:Colon",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Colon",
+          "schema:targets": [
+            "schema:UnidentifiableUnit",
+            "schema:Word",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Phrase",
+          "schema:targets": [
+            "schema:Word",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:Word",
+          "schema:targets": [
+            "schema:Character",
+            "schema:Alternatives"
+          ]
+        },
+        {
+          "schema:source": "schema:UnidentifiableUnit",
+          "schema:targets": [
+            "schema:UnidentifiableSign",
+            "schema:Alternatives"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:hasLayer",
+      "@type": "schema:Relation",
+      "schema:name": "hasLayer",
+      "rdfs:label": "hasLayer",
+      "schema:domains": [
+        {
+          "schema:source": "schema:EditionObject",
+          "schema:targets": [
+            "schema:TransliterationLayer",
+            "schema:VocalisationLayer"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:annotates",
+      "@type": "schema:Relation",
+      "schema:name": "annotates",
+      "rdfs:label": "annotates",
+      "schema:domains": [
+        {
+          "schema:source": "schema:Annotation",
+          "schema:targets": [
+            "schema:Thing",
+            "schema:Alternative",
+            "schema:Alternatives",
+            "schema:Annotation",
+            "schema:TranslationUnit"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:annotatedBy",
+      "@type": "schema:Relation",
+      "schema:name": "annotatedBy",
+      "rdfs:label": "annotatedBy",
+      "schema:domains": [
+        {
+          "schema:source": "schema:Thing",
+          "schema:targets": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:source": "schema:Alternative",
+          "schema:targets": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:source": "schema:Alternatives",
+          "schema:targets": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:source": "schema:Annotation",
+          "schema:targets": [
+            "schema:Annotation"
+          ]
+        },
+        {
+          "schema:source": "schema:TranslationUnit",
+          "schema:targets": [
+            "schema:Annotation"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:mentions",
+      "@type": "schema:Relation",
+      "schema:name": "mentions",
+      "rdfs:label": "mentions",
+      "schema:domains": [
+        {
+          "schema:source": "schema:Annotation",
+          "schema:targets": [
+            "schema:Thing",
+            "schema:Alternative",
+            "schema:Alternatives",
+            "schema:Annotation",
+            "schema:TranslationUnit"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:refersTo",
+      "@type": "schema:Relation",
+      "schema:name": "refersTo",
+      "rdfs:label": "refersTo",
+      "schema:domains": [
+        {
+          "schema:source": "schema:Word",
+          "schema:targets": [
+            "schema:Seg"
+          ]
+        },
+        {
+          "schema:source": "schema:Colon",
+          "schema:targets": [
+            "schema:Part"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:translatedAs",
+      "@type": "schema:Relation",
+      "schema:name": "translatedAs",
+      "rdfs:label": "translatedAs",
+      "schema:properties": [
+        {
+          "@id": "schema:translatedAs/lang",
+          "schema:name": "lang",
+          "schema:datatype": "string",
+          "schema:required": true
+        }
+      ],
+      "schema:domains": [
+        {
+          "schema:source": "schema:Colon",
+          "schema:targets": [
+            "schema:TranslationUnit",
+            "schema:Alternatives"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:alternative",
+      "@type": "schema:Relation",
+      "schema:name": "alternative",
+      "rdfs:label": "alternative",
+      "schema:properties": [
+        {
+          "@id": "schema:alternative/order",
+          "schema:name": "order",
+          "schema:datatype": "integer",
+          "schema:required": true
+        },
+        {
+          "@id": "schema:alternative/pref",
+          "schema:name": "pref",
+          "schema:datatype": "boolean",
+          "schema:required": true
+        }
+      ],
+      "schema:domains": [
+        {
+          "schema:source": "schema:Alternatives",
+          "schema:targets": [
+            "schema:Alternative"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:expressedAs",
+      "@type": "schema:Relation",
+      "schema:name": "expressedAs",
+      "rdfs:label": "expressedAs",
+      "schema:domains": [
+        {
+          "schema:source": "schema:Alternative",
+          "schema:targets": [
+            "schema:TextUnit",
+            "schema:TranslationUnit"
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "schema:relatedAlternative",
+      "@type": "schema:Relation",
+      "schema:name": "relatedAlternative",
+      "rdfs:label": "relatedAlternative",
+      "schema:domains": [
+        {
+          "schema:source": "schema:Alternative",
+          "schema:targets": [
+            "schema:Alternative (both directions)"
+          ]
+        }
+      ]
+    }
+  ]
+}

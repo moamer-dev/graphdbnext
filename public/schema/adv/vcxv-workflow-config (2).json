@@ -1,0 +1,290 @@
+{
+  "version": 1,
+  "type": "workflow-config",
+  "createdAt": "2025-12-24T14:44:31.697Z",
+  "relationships": [
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    },
+    {
+      "fromNodeLabel": "xzczxc",
+      "toNodeLabel": "cxzcxz",
+      "type": "RELATES_TO"
+    }
+  ],
+  "tools": [
+    {
+      "type": "tool:if",
+      "label": "If / Else",
+      "targetNodeLabel": "xzczxc",
+      "config": {},
+      "position": {
+        "x": 172.55636907381563,
+        "y": 56.557861433039875
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
+        }
+      ]
+    }
+  ],
+  "toolEdges": [
+    {
+      "sourceNodeLabel": "xzczxc",
+      "targetToolLabel": "xzczxc::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceNodeLabel": "xzczxc",
+      "targetToolLabel": "xzczxc::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceNodeLabel": "xzczxc",
+      "targetToolLabel": "xzczxc::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceNodeLabel": "xzczxc",
+      "targetToolLabel": "xzczxc::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    }
+  ],
+  "actions": [
+    {
+      "type": "action:group",
+      "label": "Action Group",
+      "config": {},
+      "position": {
+        "x": 471.48116770544124,
+        "y": 157.23239791419616
+      },
+      "isGroup": true,
+      "children": [
+        "Create Node (Text)"
+      ],
+      "isExpanded": true,
+      "enabled": true
+    },
+    {
+      "type": "action:create-node-text",
+      "label": "Create Node (Text)",
+      "config": {},
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "actionEdges": [
+    {
+      "sourceToolLabel": "xzczxc::tool:if",
+      "targetActionLabel": "Action Group",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    }
+  ]
+}

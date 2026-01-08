@@ -1,0 +1,1138 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-12-12T09:41:08.923Z",
+  "source": "application.md",
+  "nodes": {
+    "EditionObject": {
+      "name": "EditionObject",
+      "superclassNames": [
+        "Thing",
+        "EditionObject"
+      ],
+      "properties": {
+        "docStatus": {
+          "name": "docStatus",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "textClass": {
+          "name": "textClass",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "title": {
+          "name": "title",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "hasLayer": [
+          "TransliterationLayer",
+          "VocalisationLayer"
+        ]
+      },
+      "relationsIn": {
+        "annotates": [
+          "Annotation"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "TransliterationLayer": {
+      "name": "TransliterationLayer",
+      "superclassNames": [
+        "Thing",
+        "TextInformationLayer",
+        "VisualLayer",
+        "TransliterationLayer"
+      ],
+      "properties": {},
+      "relationsOut": {
+        "contains": [
+          "Surface",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "hasLayer": [
+          "EditionObject"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Surface": {
+      "name": "Surface",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "VisualUnit",
+        "TextArea",
+        "Surface"
+      ],
+      "properties": {
+        "surface": {
+          "name": "surface",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Column",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "TransliterationLayer"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Column": {
+      "name": "Column",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "VisualUnit",
+        "TextArea",
+        "Zone",
+        "Column"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "n": {
+          "name": "n",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Line",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Surface"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Line": {
+      "name": "Line",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "VisualUnit",
+        "TextArea",
+        "Zone",
+        "Line"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "n": {
+          "name": "n",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Part",
+          "Seg",
+          "Sign",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Column"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Part": {
+      "name": "Part",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "VisualUnit",
+        "GraphicalUnit",
+        "Part"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Seg",
+          "Sign",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Line"
+        ],
+        "refersTo": [
+          "Colon"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Seg": {
+      "name": "Seg",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "VisualUnit",
+        "GraphicalUnit",
+        "Seg"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Sign",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Line",
+          "Part"
+        ],
+        "refersTo": [
+          "Word"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Sign": {
+      "name": "Sign",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "VisualUnit",
+        "GraphicalUnit",
+        "Sign"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "text": {
+          "name": "text",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "whitespace": {
+          "name": "whitespace",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "index": {
+          "name": "index",
+          "datatype": "integer",
+          "values": [],
+          "required": false
+        },
+        "subtype": {
+          "name": "subtype",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "damage": {
+          "name": "damage",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "Line",
+          "Part",
+          "Seg"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "VocalisationLayer": {
+      "name": "VocalisationLayer",
+      "superclassNames": [
+        "Thing",
+        "TextInformationLayer",
+        "VocalisationLayer"
+      ],
+      "properties": {},
+      "relationsOut": {
+        "contains": [
+          "Stanza",
+          "Verse",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "hasLayer": [
+          "EditionObject"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Stanza": {
+      "name": "Stanza",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "PoetologicalUnit",
+        "Stanza"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "analysis": {
+          "name": "analysis",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Verse",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "VocalisationLayer"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Verse": {
+      "name": "Verse",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "PoetologicalUnit",
+        "Verse"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "n": {
+          "name": "n",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Colon",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "VocalisationLayer",
+          "Stanza"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Colon": {
+      "name": "Colon",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "PoetologicalUnit",
+        "Colon"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "n": {
+          "name": "n",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "analysis": {
+          "name": "analysis",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "UnidentifiableUnit",
+          "Word",
+          "Alternatives"
+        ],
+        "refersTo": [
+          "Part"
+        ],
+        "translatedAs": [
+          "TranslationUnit",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Verse"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Phrase": {
+      "name": "Phrase",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "GrammaticalUnit",
+        "Phrase"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "analysis": {
+          "name": "analysis",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "UnidentifiableUnit",
+          "Word",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Word": {
+      "name": "Word",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "GrammaticalUnit",
+        "MorphologicalUnit",
+        "Word"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "cert": {
+          "name": "cert",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {
+        "contains": [
+          "Character"
+        ],
+        "refersTo": [
+          "Seg"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Phrase"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Character": {
+      "name": "Character",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "GrammaticalUnit",
+        "Character"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "text": {
+          "name": "text",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "whitespace": {
+          "name": "whitespace",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "damage": {
+          "name": "damage",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "unclear": {
+          "name": "unclear",
+          "datatype": "boolean",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "Word"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "UnidentifiableUnit": {
+      "name": "UnidentifiableUnit",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "GrammaticalUnit",
+        "MorphologicalUnit",
+        "Word",
+        "UnidentifiableUnit"
+      ],
+      "properties": {},
+      "relationsOut": {
+        "contains": [
+          "UnidentifiableSign",
+          "Alternatives"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "Phrase",
+          "Colon"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "UnidentifiableSign": {
+      "name": "UnidentifiableSign",
+      "superclassNames": [
+        "Thing",
+        "TextUnit",
+        "GrammaticalUnit",
+        "Character"
+      ],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "text": {
+          "name": "text",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "whitespace": {
+          "name": "whitespace",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "damage": {
+          "name": "damage",
+          "datatype": "string",
+          "values": [],
+          "required": false
+        },
+        "unclear": {
+          "name": "unclear",
+          "datatype": "boolean",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "contains": [
+          "UnidentifiableUnit"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Alternatives": {
+      "name": "Alternatives",
+      "superclassNames": [
+        "Thing",
+        "TextInformationLayer",
+        "Alternatives"
+      ],
+      "properties": {
+        "name": {
+          "name": "name",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "alternative": [
+          "Alternative"
+        ]
+      },
+      "relationsIn": {
+        "contains": [
+          "TextUnit",
+          "TransliterationLayer",
+          "VocalisationLayer"
+        ],
+        "translatedAs": [
+          "Colon"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Alternative": {
+      "name": "Alternative",
+      "superclassNames": [
+        "Thing",
+        "TextInformationLayer",
+        "Alternative"
+      ],
+      "properties": {
+        "name": {
+          "name": "name",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "expressedAs": [
+          "TextUnit",
+          "TranslationUnit"
+        ],
+        "relatedAlternative": [
+          "Alternative (itself)"
+        ]
+      },
+      "relationsIn": {
+        "alternative": [
+          "Alternatives"
+        ],
+        "relatedAlternative": [
+          "Alternative"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "Annotation": {
+      "name": "Annotation",
+      "superclassNames": [
+        "Thing",
+        "Annotation"
+      ],
+      "properties": {
+        "content": {
+          "name": "content",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "mimeType": {
+          "name": "mimeType",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "ref": {
+          "name": "ref",
+          "datatype": "URI",
+          "values": [],
+          "required": false
+        }
+      },
+      "relationsOut": {
+        "annotates": [
+          "Thing",
+          "Alternative",
+          "Alternatives",
+          "Annotation",
+          "TranslationUnit"
+        ],
+        "mentions": [
+          "Thing",
+          "Alternative",
+          "Alternatives",
+          "Annotation",
+          "TranslationUnit"
+        ]
+      },
+      "relationsIn": {
+        "annotates": [
+          "Annotation"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    },
+    "TranslationUnit": {
+      "name": "TranslationUnit",
+      "superclassNames": [
+        "Thing",
+        "Annotation",
+        "TranslationUnit"
+      ],
+      "properties": {
+        "content": {
+          "name": "content",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "mimeType": {
+          "name": "mimeType",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "translatedAs": [
+          "Colon"
+        ],
+        "annotates": [
+          "Annotation"
+        ],
+        "expressedAs": [
+          "Alternative"
+        ],
+        "mentions": [
+          "Annotation"
+        ]
+      }
+    }
+  },
+  "relations": {
+    "contains": {
+      "name": "contains",
+      "properties": {
+        "pos": {
+          "name": "pos",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "domains": {
+        "TransliterationLayer": [
+          "Surface",
+          "Alternatives"
+        ],
+        "VocalisationLayer": [
+          "Stanza",
+          "Verse",
+          "Alternatives"
+        ],
+        "Surface": [
+          "Column",
+          "Alternatives"
+        ],
+        "Column": [
+          "Line",
+          "Alternatives"
+        ],
+        "Line": [
+          "Part",
+          "Seg",
+          "Sign",
+          "Alternatives"
+        ],
+        "Part": [
+          "Seg",
+          "Sign",
+          "Alternatives"
+        ],
+        "Seg": [
+          "Sign",
+          "Alternatives"
+        ],
+        "Stanza": [
+          "Verse",
+          "Alternatives"
+        ],
+        "Verse": [
+          "Colon",
+          "Alternatives"
+        ],
+        "Colon": [
+          "UnidentifiableUnit",
+          "Word",
+          "Alternatives"
+        ],
+        "Phrase": [
+          "Word",
+          "Alternatives"
+        ],
+        "Word": [
+          "Character",
+          "Alternatives"
+        ],
+        "UnidentifiableUnit": [
+          "UnidentifiableSign",
+          "Alternatives"
+        ]
+      }
+    },
+    "hasLayer": {
+      "name": "hasLayer",
+      "properties": {},
+      "domains": {
+        "EditionObject": [
+          "TransliterationLayer",
+          "VocalisationLayer"
+        ]
+      }
+    },
+    "annotates": {
+      "name": "annotates",
+      "properties": {},
+      "domains": {
+        "Annotation": [
+          "Thing",
+          "Alternative",
+          "Alternatives",
+          "Annotation",
+          "TranslationUnit"
+        ]
+      }
+    },
+    "annotatedBy": {
+      "name": "annotatedBy",
+      "properties": {},
+      "domains": {
+        "Thing": [
+          "Annotation"
+        ],
+        "Alternative": [
+          "Annotation"
+        ],
+        "Alternatives": [
+          "Annotation"
+        ],
+        "Annotation": [
+          "Annotation"
+        ],
+        "TranslationUnit": [
+          "Annotation"
+        ]
+      }
+    },
+    "mentions": {
+      "name": "mentions",
+      "properties": {},
+      "domains": {
+        "Annotation": [
+          "Thing",
+          "Alternative",
+          "Alternatives",
+          "Annotation",
+          "TranslationUnit"
+        ]
+      }
+    },
+    "refersTo": {
+      "name": "refersTo",
+      "properties": {},
+      "domains": {
+        "Word": [
+          "Seg"
+        ],
+        "Colon": [
+          "Part"
+        ]
+      }
+    },
+    "translatedAs": {
+      "name": "translatedAs",
+      "properties": {
+        "lang": {
+          "name": "lang",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "domains": {
+        "Colon": [
+          "TranslationUnit",
+          "Alternatives"
+        ]
+      }
+    },
+    "alternative": {
+      "name": "alternative",
+      "properties": {
+        "order": {
+          "name": "order",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        },
+        "pref": {
+          "name": "pref",
+          "datatype": "boolean",
+          "values": [],
+          "required": true
+        }
+      },
+      "domains": {
+        "Alternatives": [
+          "Alternative"
+        ]
+      }
+    },
+    "expressedAs": {
+      "name": "expressedAs",
+      "properties": {},
+      "domains": {
+        "Alternative": [
+          "TextUnit",
+          "TranslationUnit"
+        ]
+      }
+    },
+    "relatedAlternative": {
+      "name": "relatedAlternative",
+      "properties": {},
+      "domains": {
+        "Alternative": [
+          "Alternative (both directions)"
+        ]
+      }
+    }
+  }
+}
