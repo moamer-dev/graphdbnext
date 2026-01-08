@@ -118,20 +118,20 @@ async function parseStructuredResponse<T>(
   try {
     const { jsonrepair } = await import('jsonrepair')
     const response = await model.invoke(messages)
-    
+
     let responseContent = ''
     if (response.content) {
-      responseContent = typeof response.content === 'string' 
-        ? response.content 
+      responseContent = typeof response.content === 'string'
+        ? response.content
         : Array.isArray(response.content)
-        ? response.content.map(c => typeof c === 'string' ? c : JSON.stringify(c)).join('')
-        : JSON.stringify(response.content)
+          ? response.content.map(c => typeof c === 'string' ? c : JSON.stringify(c)).join('')
+          : JSON.stringify(response.content)
     }
 
     // Remove markdown code blocks if present
     let cleanedContent = responseContent.trim()
     cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '')
-    
+
     // Try to extract JSON from response (match first complete JSON object)
     const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
@@ -234,7 +234,15 @@ Tools (for conditional logic and data processing):
 - tool:merge - Merge multiple data streams
 - tool:map - Map over arrays
 - tool:split - Split data into multiple streams
-- tool:aggregate, tool:sort, tool:limit, tool:collect, tool:lookup, tool:traverse, etc.
+- tool:aggregate, tool:sort, tool:limit, tool:collect, tool:traverse, etc.
+- tool:fetch-api - Fetch data from research APIs (Wikidata, GND, VIAF, ORCID, etc.)
+  Use when: User asks to fetch data from external sources like Wikidata
+  Config example: {
+    "apiProvider": "wikidata",
+    "idSource": "attribute",
+    "idAttribute": "wikiId"
+  }
+- tool:lookup - Internal lookup (DO NOT use for external APIs like Wikidata)
 
 Actions (for graph operations - USE SPECIALIZED ACTIONS WHEN AVAILABLE):
 PRIMARY ACTIONS (use these when they match the use case):
@@ -328,7 +336,6 @@ Generate a workflow as JSON following these patterns. Return ONLY valid JSON. No
       messages,
       WorkflowSuggestionSchema
     )
-    // Type assertion is safe because we normalize config fields in parseStructuredResponse
     return result as WorkflowSuggestion
   } catch {
     return {
@@ -388,11 +395,11 @@ Keep the explanation brief (2-3 paragraphs) and focus on the high-level purpose 
   const response = await model.invoke(messages)
 
   if (response.content) {
-    return typeof response.content === 'string' 
-      ? response.content 
+    return typeof response.content === 'string'
+      ? response.content
       : Array.isArray(response.content)
-      ? response.content.map(c => typeof c === 'string' ? c : JSON.stringify(c)).join('')
-      : JSON.stringify(response.content)
+        ? response.content.map(c => typeof c === 'string' ? c : JSON.stringify(c)).join('')
+        : JSON.stringify(response.content)
   }
 
   return 'Could not generate workflow explanation.'
