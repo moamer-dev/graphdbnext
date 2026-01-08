@@ -22,7 +22,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -36,7 +35,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem
 } from './ui/dropdown-menu'
-import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Lightbulb, AlertCircle, Settings, Workflow, CheckCircle2, FileText, X, Layout } from 'lucide-react'
+import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Settings, CheckCircle2, X, Layout } from 'lucide-react'
 import { AIChatbot } from './ai/AIChatbot'
 import { SchemaDesignPanel } from './ai/SchemaDesignPanel'
 import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
