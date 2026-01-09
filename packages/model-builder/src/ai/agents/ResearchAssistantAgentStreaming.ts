@@ -39,10 +39,10 @@ export async function* invokeResearchAssistantStreaming(
 ): AsyncGenerator<string, void, unknown> {
   // Build context-aware system prompt
   let contextInfo = `\n\nAI Features Enabled: ${JSON.stringify(settings.features)}`
-  
+
   if (appContext) {
     contextInfo += `\n\nCurrent View: ${appContext.currentView || 'unknown'}`
-    
+
     if (appContext.currentState) {
       const state = appContext.currentState
       contextInfo += `\n\nCurrent Schema State:`
@@ -63,24 +63,31 @@ export async function* invokeResearchAssistantStreaming(
         contextInfo += `\n- Selected Relationship: ${state.selectedRelationshipId}`
       }
     }
+
+    if (appContext.xmlContent) {
+      const truncatedXml = appContext.xmlContent.length > 5000
+        ? appContext.xmlContent.substring(0, 5000) + '... (truncated)'
+        : appContext.xmlContent
+      contextInfo += `\n\nContext from Uploaded XML:\n${truncatedXml}`
+    }
   }
-  
+
   if (toolContext) {
     const schema = toolContext.getNodes()
     if (schema.length > 0) {
       contextInfo += `\n\nAvailable Nodes: ${schema.map(n => `${n.label} (${n.type})`).join(', ')}`
     }
   }
-  
+
   const systemMessage = new SystemMessage(RESEARCH_ASSISTANT_SYSTEM_PROMPT + contextInfo)
 
   // Bind tools to the model (check if bindTools exists)
   if (!model.bindTools) {
     throw new Error('Model does not support tool binding. Please use a chat model that supports tools.')
   }
-  
+
   // Create tools with executor if context is provided, otherwise use empty tools
-  const tools = toolContext 
+  const tools = toolContext
     ? createModelBuilderTools(createToolExecutor(toolContext))
     : []
 
@@ -97,35 +104,35 @@ export async function* invokeResearchAssistantStreaming(
   let response: AIMessage | null = null
   let accumulatedContent = ''
   const chunks: AIMessageChunk[] = []
-  
+
   // Stream the initial response
   const stream = await modelWithTools.stream(conversationMessages)
-  
+
   for await (const chunk of stream) {
     // Accumulate chunks to reconstruct full message for tool_calls
     chunks.push(chunk as AIMessageChunk)
-    
+
     // Chunks are AIMessageChunk objects, which have content directly
     if (chunk.content) {
-      const content = typeof chunk.content === 'string' 
-        ? chunk.content 
+      const content = typeof chunk.content === 'string'
+        ? chunk.content
         : Array.isArray(chunk.content)
-        ? chunk.content.map((c: unknown) => typeof c === 'string' ? c : String(c)).join('')
-        : String(chunk.content)
+          ? chunk.content.map((c: unknown) => typeof c === 'string' ? c : String(c)).join('')
+          : String(chunk.content)
       accumulatedContent += content
       yield content
     }
   }
-  
+
   // Reconstruct the full AIMessage from chunks to get tool_calls
   // In LangChain streaming, tool_calls are accumulated in chunks, so the last chunk has all tool_calls
   if (chunks.length > 0) {
     const lastChunk = chunks[chunks.length - 1]
     // Use the last chunk's tool_calls (LangChain accumulates them in the last chunk)
-    const finalToolCalls = lastChunk.tool_calls && lastChunk.tool_calls.length > 0 
+    const finalToolCalls = lastChunk.tool_calls && lastChunk.tool_calls.length > 0
       ? lastChunk.tool_calls.filter((tc): tc is NonNullable<typeof tc> => tc !== undefined && tc !== null)
       : undefined
-    
+
     response = new AIMessage({
       content: accumulatedContent,
       tool_calls: finalToolCalls,
@@ -134,7 +141,7 @@ export async function* invokeResearchAssistantStreaming(
   } else {
     response = new AIMessage(accumulatedContent)
   }
-  
+
   // Handle tool calls in a loop (max 5 iterations to prevent infinite loops)
   let iterations = 0
   const maxIterations = 5
@@ -142,13 +149,13 @@ export async function* invokeResearchAssistantStreaming(
   while (response.tool_calls && response.tool_calls.length > 0 && iterations < maxIterations) {
     iterations++
     const toolMessages: ToolMessage[] = []
-    
+
     // Add the response (with tool calls) to conversation
     conversationMessages.push(response)
-    
+
     // Yield information about tool calls
     yield `\n\n[Executing ${response.tool_calls.length} tool(s)...]\n\n`
-    
+
     for (const toolCall of response.tool_calls) {
       // Find the tool
       const tool = tools.find(t => t.name === toolCall.name)
@@ -157,10 +164,10 @@ export async function* invokeResearchAssistantStreaming(
           // Tools are invoked with the args object directly
           const result = await (tool as any).invoke(toolCall.args || {})
           const resultContent = typeof result === 'string' ? result : JSON.stringify(result)
-          
+
           // Yield tool result to user so they can see what happened
           yield `✓ Tool ${toolCall.name} executed: ${resultContent}\n`
-          
+
           const toolMessage = new ToolMessage({
             content: resultContent,
             tool_call_id: toolCall.id,
@@ -169,10 +176,10 @@ export async function* invokeResearchAssistantStreaming(
           conversationMessages.push(toolMessage)
         } catch (error) {
           const errorContent = `Error executing tool ${toolCall.name}: ${error instanceof Error ? error.message : String(error)}`
-          
+
           // Yield error to user
           yield `✗ ${errorContent}\n`
-          
+
           const errorMessage = new ToolMessage({
             content: errorContent,
             tool_call_id: toolCall.id,
@@ -183,7 +190,7 @@ export async function* invokeResearchAssistantStreaming(
       } else {
         const notFoundMsg = `Tool ${toolCall.name} not found or missing ID`
         yield `✗ ${notFoundMsg}\n`
-        
+
         if (toolCall.id) {
           const errorMessage = new ToolMessage({
             content: notFoundMsg,
@@ -194,30 +201,30 @@ export async function* invokeResearchAssistantStreaming(
         }
       }
     }
-    
+
     yield `\n[Waiting for model response...]\n\n`
 
     // Stream the next response with tool results
     accumulatedContent = ''
     const nextChunks: AIMessageChunk[] = []
     const nextStream = await modelWithTools.stream(conversationMessages)
-    
+
     for await (const chunk of nextStream) {
       // Accumulate chunks to reconstruct full message for tool_calls
       nextChunks.push(chunk as AIMessageChunk)
-      
+
       // Chunks are AIMessageChunk objects, which have content directly
       if (chunk.content) {
         const content = typeof chunk.content === 'string'
           ? chunk.content
           : Array.isArray(chunk.content)
-          ? chunk.content.map((c: unknown) => typeof c === 'string' ? c : String(c)).join('')
-          : String(chunk.content)
+            ? chunk.content.map((c: unknown) => typeof c === 'string' ? c : String(c)).join('')
+            : String(chunk.content)
         accumulatedContent += content
         yield content
       }
     }
-    
+
     // Reconstruct the full AIMessage from chunks to get tool_calls
     if (nextChunks.length > 0) {
       const lastChunk = nextChunks[nextChunks.length - 1]
@@ -225,7 +232,7 @@ export async function* invokeResearchAssistantStreaming(
       const finalToolCalls = lastChunk.tool_calls && lastChunk.tool_calls.length > 0
         ? lastChunk.tool_calls.filter((tc): tc is NonNullable<typeof tc> => tc !== undefined && tc !== null)
         : undefined
-      
+
       response = new AIMessage({
         content: accumulatedContent,
         tool_calls: finalToolCalls,
@@ -234,7 +241,7 @@ export async function* invokeResearchAssistantStreaming(
     } else {
       response = new AIMessage(accumulatedContent)
     }
-    
+
     // Break if no more tool calls
     if (!response.tool_calls || response.tool_calls.length === 0) {
       break

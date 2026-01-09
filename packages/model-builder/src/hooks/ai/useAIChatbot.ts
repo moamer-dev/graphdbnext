@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAIFeature } from '../../ai/config'
 import { useAISettings } from '../../ai/config'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
+import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import type { ToolExecutionContext } from '../../ai/tools/toolExecutor'
 import type { ResearchAssistantContext } from '../../ai/agents/ResearchAssistantAgent'
 
@@ -29,6 +30,7 @@ export function useAIChatbot() {
   const { settings, isReady } = useAISettings()
   const isEnabled = useAIFeature('researchAssistantChatbot')
   const store = useModelBuilderStore()
+  const xmlFileFromWizard = useXmlImportWizardStore(state => state.selectedFile)
 
   const toolContext: ToolExecutionContext = {
     getStore: () => store,
@@ -96,19 +98,19 @@ export function useAIChatbot() {
       const { createChatModel } = await import('../../ai/models/factory')
       const { invokeResearchAssistantStreaming } = await import('../../ai/agents/ResearchAssistantAgentStreaming')
       const { AIMessage, HumanMessage } = await import('@langchain/core/messages')
-      
+
       const model = createChatModel(settings.model)
       const humanMsg = new HumanMessage(messageToSend)
-      
+
       let fullResponse = ''
-      
+
       for await (const token of invokeResearchAssistantStreaming(
         model,
         settings,
         messageToSend,
         conversationHistory,
         toolContext,
-        appContext
+        { ...appContext, xmlContent: xmlFileFromWizard ? await xmlFileFromWizard.text() : undefined }
       )) {
         fullResponse += token
         setMessages(prev => prev.map(msg => {
@@ -126,9 +128,9 @@ export function useAIChatbot() {
       })
     } catch (error) {
       console.error('Error getting AI response:', error)
-      
+
       let errorMessageText = 'Sorry, I encountered an error. Please check your AI settings and try again.'
-      
+
       if (error instanceof Error) {
         if (error.message.includes('API key') || error.message.includes('401') || error.message.includes('Unauthorized')) {
           errorMessageText = `Authentication error: Please check your API key in AI settings. ${error.message}`
@@ -138,7 +140,7 @@ export function useAIChatbot() {
           errorMessageText = `Error: ${error.message}. Please check your AI settings.`
         }
       }
-      
+
       setMessages(prev => prev.map(msg => {
         if (msg.role === 'assistant' && msg.timestamp === assistantMessage.timestamp) {
           return { ...msg, content: errorMessageText }

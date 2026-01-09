@@ -3,6 +3,7 @@ import { useAISettings, useAIFeature } from '../../ai/config'
 import { createChatModel } from '../../ai/models/factory'
 import { suggestSchema, optimizeSchema, validateSchema, type SchemaSuggestion, type SchemaOptimization, type SchemaValidation } from '../../ai/agents/SchemaDesignAgent'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
+import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import { createToolExecutor } from '../../ai/tools/toolExecutor'
 import { SchemaDesignService } from '../../services/schemaDesignService'
 
@@ -31,6 +32,7 @@ export function useSchemaDesign() {
   const { settings, isReady } = useAISettings()
   const isEnabled = useAIFeature('schemaDesignAgent')
   const store = useModelBuilderStore()
+  const xmlFile = useXmlImportWizardStore(state => state.selectedFile)
 
   const handleSuggestSchema = async () => {
     if (!description.trim() || !isReady || !settings.enabled) return
@@ -42,7 +44,8 @@ export function useSchemaDesign() {
     try {
       const model = createChatModel(settings.model)
       const existingNodes = store.nodes.length > 0 ? store.nodes : undefined
-      const result = await suggestSchema(model, settings, description, existingNodes)
+      const xmlContext = xmlFile ? await xmlFile.text() : undefined
+      const result = await suggestSchema(model, settings, description, existingNodes, xmlContext)
       setSuggestion(result)
     } catch (err) {
       console.error('Error suggesting schema:', err)
@@ -165,14 +168,14 @@ export function useSchemaDesign() {
             setError('Cannot apply: Node label is required for adding a node')
             return
           }
-          
+
           try {
             const result = await executor.createNode({
               name: improvement.suggestion.nodeLabel.replace(/\s+/g, ''),
               label: improvement.suggestion.nodeLabel,
               description: improvement.message,
             })
-            
+
             const extractedId = SchemaDesignService.extractNodeIdFromResult(result)
             if (extractedId) {
               undoData.nodeId = extractedId
@@ -212,7 +215,7 @@ export function useSchemaDesign() {
             setError('Cannot apply: Relationship type is required')
             return
           }
-          
+
           const nodes = store.nodes
           if (nodes.length < 2) {
             const { toast } = await import('../../utils/toast')
@@ -220,13 +223,13 @@ export function useSchemaDesign() {
             setError('Cannot add relationship: Need at least 2 nodes in the schema')
             return
           }
-          
+
           const { source: sourceNode, target: targetNode } = SchemaDesignService.findNodesByMessage(
             nodes,
             improvement.message,
             improvement.suggestion?.nodeLabel
           )
-          
+
           if (!sourceNode || !targetNode) {
             const { toast } = await import('../../utils/toast')
             if (!sourceNode && !targetNode) {
@@ -241,14 +244,14 @@ export function useSchemaDesign() {
             }
             return
           }
-          
+
           try {
             const result = await executor.createRelationship({
               from: sourceNode.label,
               to: targetNode.label,
               type: improvement.suggestion.relationshipType,
             })
-            
+
             const extractedId = SchemaDesignService.extractRelationshipIdFromResult(result)
             if (extractedId) {
               undoData.relationshipId = extractedId
@@ -272,7 +275,7 @@ export function useSchemaDesign() {
           } catch (err) {
             const errorMsg = err instanceof Error ? err.message : 'Failed to add relationship'
             const { toast } = await import('../../utils/toast')
-            
+
             if (errorMsg.includes('not found')) {
               if (errorMsg.includes('Source node')) {
                 toast.error('Cannot add relationship: Source node does not exist in the schema')
@@ -284,7 +287,7 @@ export function useSchemaDesign() {
               setError(errorMsg)
               return
             }
-            
+
             if (errorMsg.includes('already exists')) {
               setAppliedOptimizations(prev => {
                 const newMap = new Map(prev)
@@ -297,7 +300,7 @@ export function useSchemaDesign() {
               })
               return
             }
-            
+
             toast.error(errorMsg)
             throw err
           }
@@ -310,15 +313,15 @@ export function useSchemaDesign() {
             setError('Cannot apply: Node label is required')
             return
           }
-          
-          const properties = improvement.suggestion.propertyName 
+
+          const properties = improvement.suggestion.propertyName
             ? [{
-                name: improvement.suggestion.propertyName,
-                type: 'string' as const,
-                required: false,
-              }]
+              name: improvement.suggestion.propertyName,
+              type: 'string' as const,
+              required: false,
+            }]
             : undefined
-          
+
           try {
             await executor.updateNode({
               nodeIdOrLabel: improvement.suggestion.nodeLabel,
@@ -341,7 +344,7 @@ export function useSchemaDesign() {
           setError(`Unknown optimization type: ${(improvement as any).type}`)
           return
       }
-      
+
       setAppliedOptimizations(prev => {
         const newMap = new Map(prev)
         newMap.set(improvementIndex, {
@@ -351,7 +354,7 @@ export function useSchemaDesign() {
         })
         return newMap
       })
-      
+
       const { toast } = await import('../../utils/toast')
       toast.success(`Optimization applied: ${improvement.message}`)
     } catch (err) {
@@ -369,7 +372,7 @@ export function useSchemaDesign() {
 
     try {
       const { toast } = await import('../../utils/toast')
-      
+
       switch (applied.type) {
         case 'add_node': {
           if (applied.undoData.nodeId) {
@@ -384,7 +387,7 @@ export function useSchemaDesign() {
             try {
               const relationships = useModelBuilderStore.getState().relationships
               const relExists = SchemaDesignService.findRelationshipById(relationships, applied.undoData.relationshipId) !== undefined
-              
+
               if (relExists) {
                 store.deleteRelationship(applied.undoData.relationshipId)
                 toast.success('Relationship removed (optimization undone)')

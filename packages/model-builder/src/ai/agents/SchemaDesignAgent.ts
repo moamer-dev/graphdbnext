@@ -167,20 +167,20 @@ async function parseStructuredResponse<T>(
   try {
     const { jsonrepair } = await import('jsonrepair')
     const response = await model.invoke(messages)
-    
+
     let responseContent = ''
     if (response.content) {
-      responseContent = typeof response.content === 'string' 
-        ? response.content 
+      responseContent = typeof response.content === 'string'
+        ? response.content
         : Array.isArray(response.content)
-        ? response.content.map(c => typeof c === 'string' ? c : JSON.stringify(c)).join('')
-        : JSON.stringify(response.content)
+          ? response.content.map(c => typeof c === 'string' ? c : JSON.stringify(c)).join('')
+          : JSON.stringify(response.content)
     }
 
     // Remove markdown code blocks if present
     let cleanedContent = responseContent.trim()
     cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '')
-    
+
     // Try to extract JSON from response (match first complete JSON object)
     const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
@@ -223,11 +223,11 @@ async function parseStructuredResponse<T>(
         return rel
       })
     }
-    
+
     // 3. Normalize optimization schema format (schema_optimizations -> improvements)
     if (parsed.schema_optimizations && !parsed.improvements) {
       const optimizations: any[] = []
-      
+
       // Convert new_nodes to add_node improvements
       if (parsed.schema_optimizations.new_nodes && Array.isArray(parsed.schema_optimizations.new_nodes)) {
         parsed.schema_optimizations.new_nodes.forEach((node: any) => {
@@ -241,7 +241,7 @@ async function parseStructuredResponse<T>(
           })
         })
       }
-      
+
       // Convert new_relationships to add_relationship improvements
       if (parsed.schema_optimizations.new_relationships && Array.isArray(parsed.schema_optimizations.new_relationships)) {
         parsed.schema_optimizations.new_relationships.forEach((rel: any) => {
@@ -255,7 +255,7 @@ async function parseStructuredResponse<T>(
           })
         })
       }
-      
+
       // Convert property suggestions to add_property improvements
       if (parsed.schema_optimizations.property_suggestions && Array.isArray(parsed.schema_optimizations.property_suggestions)) {
         parsed.schema_optimizations.property_suggestions.forEach((prop: any) => {
@@ -270,24 +270,24 @@ async function parseStructuredResponse<T>(
           })
         })
       }
-      
+
       parsed.improvements = optimizations
       // Preserve reasoning if it exists in schema_optimizations or at root level, otherwise use default
       if (!parsed.reasoning) {
-        parsed.reasoning = parsed.schema_optimizations?.reasoning 
-          || parsed.schema_optimizations?.summary 
-          || parsed.reasoning 
+        parsed.reasoning = parsed.schema_optimizations?.reasoning
+          || parsed.schema_optimizations?.summary
+          || parsed.reasoning
           || 'AI-generated optimization suggestions based on schema analysis.'
       }
       // Remove schema_optimizations to avoid confusion
       delete parsed.schema_optimizations
     }
-    
+
     // 4. Ensure "improvements" field is present for optimization schema (if schema expects it)
     if (!parsed.improvements) {
       parsed.improvements = []
     }
-    
+
     // 5. Ensure "reasoning" field is present (required by schema)
     if (!parsed.reasoning || typeof parsed.reasoning !== 'string') {
       parsed.reasoning = 'AI-generated schema suggestion based on the provided description.'
@@ -312,7 +312,8 @@ export async function suggestSchema(
   model: BaseChatModel,
   settings: AISettings,
   description: string,
-  existingNodes?: Node[]
+  existingNodes?: Node[],
+  xmlContext?: string
 ): Promise<SchemaSuggestion> {
   const systemMessage = new SystemMessage(SCHEMA_DESIGN_SYSTEM_PROMPT)
 
@@ -320,12 +321,19 @@ export async function suggestSchema(
     ? `\n\nExisting Nodes: ${existingNodes.map(n => `${n.label} (${n.type})`).join(', ')}`
     : ''
 
-  const prompt = `Based on this description, suggest a complete graph database schema:
+  let prompt = `Based on this description, suggest a complete graph database schema:
 
 Description: "${description}"
-${existingSchemaInfo}
+${existingSchemaInfo}`
 
-IMPORTANT: You MUST respond with valid JSON only, matching this structure:
+  if (xmlContext) {
+    const truncatedXml = xmlContext.length > 5000
+      ? xmlContext.substring(0, 5000) + '... (truncated)'
+      : xmlContext
+    prompt += `\n\nContext from Uploaded XML (use this to infer entities and relationships):\n${truncatedXml}`
+  }
+
+  prompt += `\n\nIMPORTANT: You MUST respond with valid JSON only, matching this structure:
 {
   "nodes": [
     {

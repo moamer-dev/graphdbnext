@@ -16,6 +16,7 @@ export interface ResearchAssistantContext {
     relationships?: Array<{ type: string; from: string; to: string; id: string }>
   }
   userHistory?: unknown[]
+  xmlContent?: string
 }
 
 const RESEARCH_ASSISTANT_SYSTEM_PROMPT = `You are a helpful research assistant for a Graph Database Model Builder application. 
@@ -50,10 +51,10 @@ export async function invokeResearchAssistant(
 ): Promise<AIMessage> {
   // Build context-aware system prompt
   let contextInfo = `\n\nAI Features Enabled: ${JSON.stringify(settings.features)}`
-  
+
   if (appContext) {
     contextInfo += `\n\nCurrent View: ${appContext.currentView || 'unknown'}`
-    
+
     if (appContext.currentState) {
       const state = appContext.currentState
       contextInfo += `\n\nCurrent Schema State:`
@@ -74,24 +75,31 @@ export async function invokeResearchAssistant(
         contextInfo += `\n- Selected Relationship: ${state.selectedRelationshipId}`
       }
     }
+    // temporary context aware solution until we apply vector embeddings
+    if (appContext.xmlContent) {
+      const truncatedXml = appContext.xmlContent.length > 5000
+        ? appContext.xmlContent.substring(0, 5000) + '... (truncated)'
+        : appContext.xmlContent
+      contextInfo += `\n\nContext from Uploaded XML:\n${truncatedXml}`
+    }
   }
-  
+
   if (toolContext) {
     const schema = toolContext.getNodes()
     if (schema.length > 0) {
       contextInfo += `\n\nAvailable Nodes: ${schema.map(n => `${n.label} (${n.type})`).join(', ')}`
     }
   }
-  
+
   const systemMessage = new SystemMessage(RESEARCH_ASSISTANT_SYSTEM_PROMPT + contextInfo)
 
   // Bind tools to the model (check if bindTools exists)
   if (!model.bindTools) {
     throw new Error('Model does not support tool binding. Please use a chat model that supports tools.')
   }
-  
+
   // Create tools with executor if context is provided, otherwise use empty tools
-  const tools = toolContext 
+  const tools = toolContext
     ? createModelBuilderTools(createToolExecutor(toolContext))
     : []
 
@@ -106,7 +114,7 @@ export async function invokeResearchAssistant(
 
   // Call the model
   let response = await modelWithTools.invoke(conversationMessages)
-  
+
   // Handle tool calls in a loop (max 5 iterations to prevent infinite loops)
   let iterations = 0
   const maxIterations = 5
@@ -114,10 +122,10 @@ export async function invokeResearchAssistant(
   while (response.tool_calls && response.tool_calls.length > 0 && iterations < maxIterations) {
     iterations++
     const toolMessages: ToolMessage[] = []
-    
+
     // Add the response (with tool calls) to conversation
     conversationMessages.push(response)
-    
+
     for (const toolCall of response.tool_calls) {
       // Find the tool
       const tool = tools.find(t => t.name === toolCall.name)
@@ -145,7 +153,7 @@ export async function invokeResearchAssistant(
     // Call the model again with full conversation history including tool results
     response = await modelWithTools.invoke(conversationMessages)
   }
-  
+
   // Final response doesn't need to be added to conversationMessages as it's returned
 
   return response
