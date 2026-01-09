@@ -40,7 +40,7 @@ import { AIChatbot } from './ai/AIChatbot'
 import { SchemaDesignPanel } from './ai/SchemaDesignPanel'
 import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
 import { AIAgentsPanel } from './ai/AIAgentsPanel'
-import { ResizablePanel } from './ui/resizable-panel'
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from './ui/resizable-panel'
 import { useAIFeature } from '../ai/config'
 import { useWorkflowCanvasStore } from '../stores/workflowCanvasStore'
 import { useToolCanvasStore } from '../stores/toolCanvasStore'
@@ -1433,8 +1433,8 @@ function ModelBuilderContent({
             </Button>
           </div>
         )}
-        <div className="flex-1 relative flex">
-          <div className="flex-1 relative">
+        <ResizablePanelGroup orientation="horizontal" className="flex-1 relative">
+          <ResizablePanel defaultSize="60" minSize="30">
             <ModelBuilderCanvas
               className="h-full"
               sidebarOpen={sidebarOpen}
@@ -1444,18 +1444,61 @@ function ModelBuilderContent({
               onSwitchTab={(tab) => setLeftTab(tab)}
               showToolbar={showToolbar}
             />
-          </div>
+          </ResizablePanel>
+
           {agentsPanelOpen && (isSchemaDesignEnabled || isWorkflowGenerationEnabled) && (
-            <ResizablePanel
-              defaultWidth={agentsPanelWidth}
-              minWidth={300}
-              maxWidth={800}
-              onWidthChange={setAgentsPanelWidth}
-            >
-              <AIAgentsPanel className="h-full" />
-            </ResizablePanel>
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize="20" minSize="15" maxSize="40">
+                <AIAgentsPanel className="h-full" />
+              </ResizablePanel>
+            </>
           )}
-        </div>
+
+          {xmlPanelOpen && xmlContent && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize="20" minSize="15" maxSize="40">
+                <div className="h-full border-l bg-background flex flex-col">
+                  <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
+                    <h3 className="text-xs font-semibold">XML Preview</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Label htmlFor="xml-word-wrap" className="text-[10px] text-muted-foreground cursor-pointer" title="Word Wrap">
+                          Wrap
+                        </Label>
+                        <Switch
+                          id="xml-word-wrap"
+                          checked={xmlWrapWord}
+                          onCheckedChange={setXmlWrapWord}
+                          className="scale-75"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => setXmlPanelOpen(false)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex-1 relative overflow-hidden">
+                    <div className="absolute inset-0">
+                      <XmlCodePreview
+                        value={xmlContent}
+                        height="100%"
+                        wrapWord={xmlWrapWord}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
+
         {executionProgress && (
           <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 w-96 bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-lg">
             <ExecutionProgress
@@ -1465,51 +1508,6 @@ function ModelBuilderContent({
               status={executionProgress.current === executionProgress.total ? 'completed' : 'running'}
             />
           </div>
-        )}
-        {xmlPanelOpen && xmlContent && (
-          <ResizablePanel
-            defaultWidth={xmlPanelWidth}
-            minWidth={350}
-            maxWidth={1000}
-            onWidthChange={setXmlPanelWidth}
-            className="h-full"
-          >
-            <div className="h-full border-l bg-background flex flex-col">
-              <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
-                <h3 className="text-xs font-semibold">XML Preview</h3>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Label htmlFor="xml-word-wrap" className="text-[10px] text-muted-foreground cursor-pointer" title="Word Wrap">
-                      Wrap
-                    </Label>
-                    <Switch
-                      id="xml-word-wrap"
-                      checked={xmlWrapWord}
-                      onCheckedChange={setXmlWrapWord}
-                      className="scale-75"
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setXmlPanelOpen(false)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex-1 relative overflow-hidden">
-                <div className="absolute inset-0">
-                  <XmlCodePreview
-                    value={xmlContent}
-                    height="100%"
-                    wrapWord={xmlWrapWord}
-                  />
-                </div>
-              </div>
-            </div>
-          </ResizablePanel>
         )}
         {sidebarOpen && (
           <div className="w-80 border-l bg-muted/10">

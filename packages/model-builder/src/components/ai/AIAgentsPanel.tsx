@@ -158,7 +158,7 @@ export function AIAgentsPanel({ className }: { className?: string }) {
       <div className="p-6 pb-2 relative z-10">
         <h2 className="text-lg font-bold flex items-center gap-2 tracking-tight">
           <Bot className="h-5 w-5 text-primary" />
-          AI Hub
+          AI Agents
         </h2>
         <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed max-w-[280px]">
           Deploy specialized AI agents to accelerate your graph modeling and workflow automation tasks.

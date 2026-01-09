@@ -45,6 +45,7 @@
     "jsonrepair": "^3.13.1",
     "langchain": "^1.2.3",
     "lucide-react": "^0.561.0",
+    "react-resizable-panels": "^4.3.2",
     "react-syntax-highlighter": "^16.1.0",
     "reactflow": "^11.11.0",
     "tailwind-merge": "^3.4.0",

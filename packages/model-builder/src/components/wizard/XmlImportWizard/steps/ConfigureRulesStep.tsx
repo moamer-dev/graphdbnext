@@ -43,6 +43,7 @@ interface ConfigureRulesStepProps {
   onRulesChange: (rules: Partial<XmlAnalysisRules>) => void
   onImportRules: (file: File) => void
   onExportRules: () => void
+  xmlPreview: string | null
 }
 
 export function ConfigureRulesStep({
@@ -53,7 +54,8 @@ export function ConfigureRulesStep({
   importingRules,
   onRulesChange,
   onImportRules,
-  onExportRules
+  onExportRules,
+  xmlPreview
 }: ConfigureRulesStepProps) {
   const rulesInputRef = useRef<HTMLInputElement>(null)
   const isXmlMappingEnabled = useAIFeature('xmlMappingAssistant')
@@ -132,7 +134,7 @@ export function ConfigureRulesStep({
           </Button>
         </div>
       </div>
-      
+
       {extracting ? (
         <div className="flex items-center justify-center p-16 bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
           <div className="text-center space-y-3">
@@ -149,6 +151,7 @@ export function ConfigureRulesStep({
             initialRules={analysisRules}
             availableElements={availableElements || undefined}
             onRulesChange={onRulesChange}
+            xmlPreview={xmlPreview}
             onOpenAIAssistant={() => {
               // Trigger AI Assistant to open
               const event = new CustomEvent('openAIAssistant')
