@@ -39,7 +39,7 @@ interface ModelBuilderActions {
   // Bulk operations
   clear: () => void
   loadState: (state: Partial<ModelBuilderState>) => void
-  organizeLayout: () => void
+  organizeLayout: (type?: 'hierarchical' | 'grid' | 'circular') => void
 
   // Validation
   validate: () => { valid: boolean; errors: string[] }
@@ -542,11 +542,20 @@ export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
     })
   },
 
-  organizeLayout: (): void => {
+  organizeLayout: (type: 'hierarchical' | 'grid' | 'circular' = 'hierarchical'): void => {
     const state = get()
     // Import layout utility dynamically to avoid circular dependencies
-    import('../utils/layout').then(({ calculateHierarchicalLayout }) => {
-      const positions = calculateHierarchicalLayout(state.nodes, state.relationships)
+    import('../utils/layout').then(({ calculateHierarchicalLayout, calculateGridLayout, calculateCircularLayout }) => {
+      let positions = new Map<string, { x: number; y: number }>()
+
+      if (type === 'grid') {
+        positions = calculateGridLayout(state.nodes)
+      } else if (type === 'circular') {
+        positions = calculateCircularLayout(state.nodes)
+      } else {
+        positions = calculateHierarchicalLayout(state.nodes, state.relationships)
+      }
+
       const updatedNodes = state.nodes.map((node: Node) => {
         const newPosition = positions.get(node.id)
         return newPosition ? { ...node, position: newPosition } : node
