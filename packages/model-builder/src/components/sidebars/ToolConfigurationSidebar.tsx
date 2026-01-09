@@ -109,7 +109,7 @@ interface ToolConfigurationSidebarProps {
   className?: string
 }
 
-export function ToolConfigurationSidebar ({
+export function ToolConfigurationSidebar({
   toolNodeId,
   onClose,
   className
@@ -120,12 +120,12 @@ export function ToolConfigurationSidebar ({
   const nodes = useModelBuilderStore((state) => state.nodes)
   const getCredentialsByType = useCredentialsStore((state) => state.getCredentialsByType)
   const getCredential = useCredentialsStore((state) => state.getCredential)
-  
+
   // Tool configuration store
   const toolLabel = useToolConfigurationStore((state) => state.toolLabel)
   const setToolLabel = useToolConfigurationStore((state) => state.setToolLabel)
   const loadFromToolNode = useToolConfigurationStore((state) => state.loadFromToolNode)
-  
+
   // Load all config from toolNode into store
   useEffect(() => {
     loadFromToolNode(toolNode || null)
@@ -133,10 +133,10 @@ export function ToolConfigurationSidebar ({
 
   // Condition builder hook
   const conditionBuilder = useToolConditionBuilder(toolNodeId)
-  
+
   // Test execution hook
   const testExecution = useToolTestExecution(toolNodeId)
-  
+
   // Condition builder state (from hook)
   const conditionGroups = conditionBuilder.conditionGroups
   const selectedConditionType = conditionBuilder.selectedConditionType
@@ -145,7 +145,7 @@ export function ToolConfigurationSidebar ({
   const setChildInputValues = conditionBuilder.setChildInputValues
   const ancestorInputValues = conditionBuilder.ancestorInputValues
   const setAncestorInputValues = conditionBuilder.setAncestorInputValues
-  
+
   // Test/Execution state (from hook)
   const testResult = testExecution.testResult
   const setTestResult = testExecution.setTestResult
@@ -163,7 +163,7 @@ export function ToolConfigurationSidebar ({
   const setConnectionStatus = testExecution.setConnectionStatus
   const validationErrors = testExecution.validationErrors
   const setValidationErrors = testExecution.setValidationErrors
-  
+
   // Switch tool state from store
   const switchSource = useToolConfigurationStore((state) => state.switchSource)
   const setSwitchSource = useToolConfigurationStore((state) => state.setSwitchSource)
@@ -173,7 +173,7 @@ export function ToolConfigurationSidebar ({
   const setSwitchCases = useToolConfigurationStore((state) => state.setSwitchCases)
   const switchCaseInputs = useToolConfigurationStore((state) => state.switchCaseInputs)
   const setSwitchCaseInputs = useToolConfigurationStore((state) => state.setSwitchCaseInputs)
-  
+
   const getState = useToolConfigurationStore.getState
 
   // Get the main node this tool is attached to
@@ -197,7 +197,7 @@ export function ToolConfigurationSidebar ({
   const setHttpConfig = useToolConfigurationStore((state) => state.setHttpConfig)
   const fetchApiConfig = useToolConfigurationStore((state) => state.fetchApiConfig)
   const setFetchApiConfig = useToolConfigurationStore((state) => state.setFetchApiConfig)
-  
+
   // Tool-specific configs from store
   const loopConfig = useToolConfigurationStore((state) => state.loopConfig)
   const setLoopConfig = useToolConfigurationStore((state) => state.setLoopConfig)
@@ -327,7 +327,7 @@ export function ToolConfigurationSidebar ({
         id: testId
       })
       const cachedResponse = apiResponseCache.get(cacheKey)
-      
+
       let response
       if (cachedResponse) {
         response = { success: true, data: cachedResponse }
@@ -387,29 +387,29 @@ export function ToolConfigurationSidebar ({
           success: false,
           output: 'Failed',
           details: `API Provider: ${fetchApiConfig.apiProvider}\n` +
-                   `ID Used: ${testId}\n` +
-                   `Error: ${response.error || 'Unknown error'}\n\n` +
-                   `Please check:\n` +
-                   `- The ID is correct\n` +
-                   `- API key is set (if required)\n` +
-                   `- Network connection is available\n` +
-                   `- API endpoint is accessible`
+            `ID Used: ${testId}\n` +
+            `Error: ${response.error || 'Unknown error'}\n\n` +
+            `Please check:\n` +
+            `- The ID is correct\n` +
+            `- API key is set (if required)\n` +
+            `- Network connection is available\n` +
+            `- API endpoint is accessible`
         })
         toast.error('API call failed')
       }
-        } catch (error) {
-          setConnectionStatus('error')
-          setValidationErrors([{ field: 'api', message: error instanceof Error ? error.message : 'Unknown error' }])
-          setTestResult({
-            success: false,
-            output: 'Error',
-            details: `Exception occurred: ${error instanceof Error ? error.message : 'Unknown error'}`
-          })
-          toast.error('API test failed')
-        } finally {
-          setIsExecuting(false)
-        }
-      }
+    } catch (error) {
+      setConnectionStatus('error')
+      setValidationErrors([{ field: 'api', message: error instanceof Error ? error.message : 'Unknown error' }])
+      setTestResult({
+        success: false,
+        output: 'Error',
+        details: `Exception occurred: ${error instanceof Error ? error.message : 'Unknown error'}`
+      })
+      toast.error('API test failed')
+    } finally {
+      setIsExecuting(false)
+    }
+  }
 
   const handleExecuteAuthenticatedApiTest = async () => {
     if (!authenticatedApiConfig.credentialId) {
@@ -428,7 +428,7 @@ export function ToolConfigurationSidebar ({
       'tool:fetch-europeana': 'europeana',
       'tool:fetch-getty': 'getty'
     }
-    
+
     const provider = providerMap[toolNode?.type || ''] || 'orcid'
 
     setIsExecuting(true)
@@ -495,23 +495,23 @@ export function ToolConfigurationSidebar ({
           success: true,
           output: 'Success',
           details: `API Provider: ${provider}\n` +
-                   `Credential: ${credential.name}\n` +
-                   `ID Used: ${testId}\n` +
-                   `Status: Success\n\n` +
-                   `Response Data:\n${preview}`
+            `Credential: ${credential.name}\n` +
+            `ID Used: ${testId}\n` +
+            `Status: Success\n\n` +
+            `Response Data:\n${preview}`
         })
       } else {
         setTestResult({
           success: false,
           output: 'Failed',
           details: `API Provider: ${provider}\n` +
-                   `Credential: ${credential.name}\n` +
-                   `ID Used: ${testId}\n` +
-                   `Error: ${response.error || 'Unknown error'}\n\n` +
-                   `Please check:\n` +
-                   `- The ID is correct\n` +
-                   `- Credential is valid\n` +
-                   `- API service is accessible`
+            `Credential: ${credential.name}\n` +
+            `ID Used: ${testId}\n` +
+            `Error: ${response.error || 'Unknown error'}\n\n` +
+            `Please check:\n` +
+            `- The ID is correct\n` +
+            `- Credential is valid\n` +
+            `- API service is accessible`
         })
       }
     } catch (error) {
@@ -619,7 +619,7 @@ export function ToolConfigurationSidebar ({
           body = httpConfig.body
           contentType = 'application/x-www-form-urlencoded'
         }
-        
+
         if (contentType) {
           headers['Content-Type'] = contentType
         }
@@ -655,19 +655,19 @@ export function ToolConfigurationSidebar ({
           success: true,
           output: 'Success',
           details: `Method: ${httpConfig.method}\n` +
-                   `URL: ${url}\n` +
-                   `Status: ${response.status} ${response.statusText}\n` +
-                   `Content-Type: ${response.headers.get('content-type') || 'unknown'}\n\n` +
-                   `Response Data:\n${preview}`
+            `URL: ${url}\n` +
+            `Status: ${response.status} ${response.statusText}\n` +
+            `Content-Type: ${response.headers.get('content-type') || 'unknown'}\n\n` +
+            `Response Data:\n${preview}`
         })
       } else {
         setTestResult({
           success: false,
           output: 'Failed',
           details: `Method: ${httpConfig.method}\n` +
-                   `URL: ${url}\n` +
-                   `Status: ${response.status} ${response.statusText}\n` +
-                   `Error: ${responseText.substring(0, 500)}`
+            `URL: ${url}\n` +
+            `Status: ${response.status} ${response.statusText}\n` +
+            `Error: ${responseText.substring(0, 500)}`
         })
       }
     } catch (error) {
@@ -984,24 +984,24 @@ export function ToolConfigurationSidebar ({
           />
         )}
 
-        {(toolNode.type === 'tool:fetch-api' || 
+        {(toolNode.type === 'tool:fetch-api' ||
           ['tool:fetch-orcid', 'tool:fetch-geonames', 'tool:fetch-europeana', 'tool:fetch-getty'].includes(toolNode.type) ||
           toolNode.type === 'tool:http') && (
-          <ToolApiConfiguration
-            toolNodeType={toolNode.type}
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            fetchApiConfig={fetchApiConfig}
-            authenticatedApiConfig={authenticatedApiConfig}
-            httpConfig={httpConfig}
-            onFetchApiConfigChange={setFetchApiConfig}
-            onAuthenticatedApiConfigChange={setAuthenticatedApiConfig}
-            onHttpConfigChange={setHttpConfig}
-            onUpdateToolNode={updateToolNode}
-            getCredentialsByType={(type: string) => getCredentialsByType(type as any)}
-            getCredential={getCredential}
-          />
-        )}
+            <ToolApiConfiguration
+              toolNodeType={toolNode.type}
+              toolNodeId={toolNodeId!}
+              toolNode={toolNode}
+              fetchApiConfig={fetchApiConfig}
+              authenticatedApiConfig={authenticatedApiConfig}
+              httpConfig={httpConfig}
+              onFetchApiConfigChange={setFetchApiConfig}
+              onAuthenticatedApiConfigChange={setAuthenticatedApiConfig}
+              onHttpConfigChange={setHttpConfig}
+              onUpdateToolNode={updateToolNode}
+              getCredentialsByType={(type: string) => getCredentialsByType(type as any)}
+              getCredential={getCredential}
+            />
+          )}
 
 
         {/* Test Execution Section for Authenticated API Tools */}
@@ -1024,7 +1024,7 @@ export function ToolConfigurationSidebar ({
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Test ID (Optional)</Label>
                 <Input
-                  placeholder={authenticatedApiConfig.idSource === 'attribute' 
+                  placeholder={authenticatedApiConfig.idSource === 'attribute'
                     ? `e.g., ${toolNode.type === 'tool:fetch-orcid' ? '0000-0002-1825-0097' : toolNode.type === 'tool:fetch-geonames' ? '2925533' : toolNode.type === 'tool:fetch-europeana' ? 'record-id' : '500026662'} (for ${authenticatedApiConfig.idAttribute || 'id'})`
                     : 'Enter ID to test'}
                   className="h-8 text-xs"
@@ -1032,29 +1032,27 @@ export function ToolConfigurationSidebar ({
                   onChange={(e) => setTestIdInput(e.target.value)}
                 />
                 <div className="text-[10px] text-muted-foreground">
-                  {attachedNode 
+                  {attachedNode
                     ? `Leave empty to use ID from attached node "${attachedNode.label}" (if available)`
                     : 'Enter an ID to test the API call. If a node is attached, the ID will be extracted from it.'}
                 </div>
               </div>
 
               {testResult && (
-                <div className={`p-3 rounded border-2 ${
-                  testResult.success 
-                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
+                <div className={`p-3 rounded border-2 ${testResult.success
+                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
                     : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-                }`}>
+                  }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {testResult.success ? (
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                     )}
-                    <span className={`text-xs font-semibold ${
-                      testResult.success 
-                        ? 'text-green-700 dark:text-green-300' 
+                    <span className={`text-xs font-semibold ${testResult.success
+                        ? 'text-green-700 dark:text-green-300'
                         : 'text-red-700 dark:text-red-300'
-                    }`}>
+                      }`}>
                       {testResult.output}
                     </span>
                   </div>
@@ -1094,22 +1092,20 @@ export function ToolConfigurationSidebar ({
               </div>
 
               {testResult && (
-                <div className={`p-3 rounded border-2 ${
-                  testResult.success 
-                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
+                <div className={`p-3 rounded border-2 ${testResult.success
+                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
                     : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-                }`}>
+                  }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {testResult.success ? (
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                     )}
-                    <span className={`text-xs font-semibold ${
-                      testResult.success 
-                        ? 'text-green-700 dark:text-green-300' 
+                    <span className={`text-xs font-semibold ${testResult.success
+                        ? 'text-green-700 dark:text-green-300'
                         : 'text-red-700 dark:text-red-300'
-                    }`}>
+                      }`}>
                       {testResult.output}
                     </span>
                   </div>
@@ -1464,10 +1460,10 @@ export function ToolConfigurationSidebar ({
             onUpdateToolNode={updateToolNode}
             disabled={!fetchApiConfig.apiProvider}
             showTestIdInput={true}
-            testIdPlaceholder={fetchApiConfig.idSource === 'attribute' 
+            testIdPlaceholder={fetchApiConfig.idSource === 'attribute'
               ? `e.g., Q42 (for ${fetchApiConfig.idAttribute || 'wiki:id'})`
               : 'Enter ID to test'}
-            testIdHelpText={attachedNode 
+            testIdHelpText={attachedNode
               ? `Leave empty to use ID from attached node "${attachedNode.label}" (if available)`
               : 'Enter an ID to test the API call. If a node is attached, the ID will be extracted from it.'}
             showApiResponse={true}

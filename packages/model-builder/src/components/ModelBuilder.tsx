@@ -40,7 +40,7 @@ import { AIChatbot } from './ai/AIChatbot'
 import { SchemaDesignPanel } from './ai/SchemaDesignPanel'
 import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
 import { AIAgentsPanel } from './ai/AIAgentsPanel'
-import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from './ui/resizable-panel'
+import { ResizablePanel } from './ui/resizable-panel'
 import { useAIFeature } from '../ai/config'
 import { useWorkflowCanvasStore } from '../stores/workflowCanvasStore'
 import { useToolCanvasStore } from '../stores/toolCanvasStore'
@@ -145,6 +145,11 @@ function ModelBuilderContent({
   const isSchemaDesignEnabled = useAIFeature('schemaDesignAgent')
   const isWorkflowGenerationEnabled = useAIFeature('workflowGenerationAgent')
   const ui = useModelBuilderUI()
+  const [sidebarWidth, setSidebarWidth] = useState(260)
+  const sidebarResizingRef = useRef(false)
+
+
+
   const {
     importDialogOpen,
     setImportDialogOpen,
@@ -1340,9 +1345,33 @@ function ModelBuilderContent({
       </div>
 
       <div className="flex h-[calc(100%-56px)] relative">
+
+        {!nodesSidebarOpen && (
+          <div className="absolute left-0 top-2 z-10 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setNodesSidebarOpen(true)}
+              className="h-8 w-8 p-0 bg-background/95 backdrop-blur-sm border border-border/40 shadow-sm"
+              title="Show Sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Left Sidebar */}
         {nodesSidebarOpen && (
-          <div className="w-64 border-r bg-muted/10 flex flex-col transition-all duration-200">
-            <div className="p-2 border-b bg-muted/20 flex items-center gap-2">
+          <ResizablePanel
+            side="left"
+            defaultWidth={sidebarWidth}
+            minWidth={200}
+            maxWidth={600}
+            onWidthChange={setSidebarWidth}
+            className="h-full border-r bg-muted/10 shrink-0"
+          >
+            {/* Sidebar Content */}
+            <div className="h-full flex flex-col">
               <div className="flex flex-col border-b bg-muted/20">
                 <div className="flex items-center justify-between p-2 pb-0">
                   <span className="text-xs font-semibold text-muted-foreground pl-1">Library</span>
@@ -1357,84 +1386,37 @@ function ModelBuilderContent({
                   </Button>
                 </div>
                 <div className="grid grid-cols-4 gap-1 p-2 pt-1">
-                  <button
-                    onClick={() => setLeftTab('nodes')}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
-                      leftTab === 'nodes'
-                        ? "bg-background text-blue-600 border-border shadow-sm"
-                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
-                    )}
-                    title="Nodes"
-                  >
+                  <button onClick={() => setLeftTab('nodes')} className={cn("flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border", leftTab === 'nodes' ? "bg-background text-blue-600 border-border shadow-sm" : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground")} title="Nodes">
                     <Circle className="h-4 w-4" />
                     <span className="text-[10px] font-medium leading-none">Nodes</span>
                   </button>
-                  <button
-                    onClick={() => setLeftTab('relationships')}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
-                      leftTab === 'relationships'
-                        ? "bg-background text-indigo-600 border-border shadow-sm"
-                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
-                    )}
-                    title="Relationships"
-                  >
+                  <button onClick={() => setLeftTab('relationships')} className={cn("flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border", leftTab === 'relationships' ? "bg-background text-indigo-600 border-border shadow-sm" : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground")} title="Rels">
                     <Link2 className="h-4 w-4" />
                     <span className="text-[10px] font-medium leading-none">Rels</span>
                   </button>
-                  <button
-                    onClick={() => setLeftTab('tools')}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
-                      leftTab === 'tools'
-                        ? "bg-background text-purple-600 border-border shadow-sm"
-                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
-                    )}
-                    title="Tools"
-                  >
+                  <button onClick={() => setLeftTab('tools')} className={cn("flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border", leftTab === 'tools' ? "bg-background text-purple-600 border-border shadow-sm" : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground")} title="Tools">
                     <Wrench className="h-4 w-4" />
                     <span className="text-[10px] font-medium leading-none">Tools</span>
                   </button>
-                  <button
-                    onClick={() => setLeftTab('actions')}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border",
-                      leftTab === 'actions'
-                        ? "bg-background text-amber-600 border-border shadow-sm"
-                        : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground"
-                    )}
-                    title="Actions"
-                  >
+                  <button onClick={() => setLeftTab('actions')} className={cn("flex flex-col items-center justify-center gap-1 p-1.5 rounded-md transition-all duration-200 border", leftTab === 'actions' ? "bg-background text-amber-600 border-border shadow-sm" : "text-muted-foreground border-transparent hover:bg-background/50 hover:text-foreground")} title="Actions">
                     <Zap className="h-4 w-4" />
                     <span className="text-[10px] font-medium leading-none">Actions</span>
                   </button>
                 </div>
               </div>
+              <div className="flex-1 overflow-hidden">
+                {leftTab === 'nodes' && <NodePalette className="h-full" mode="nodes" onFocusNode={(id) => focusNodeFnRef.current?.(id)} />}
+                {leftTab === 'relationships' && <NodePalette className="h-full" mode="relationships" onFocusRelationship={(fromId, toId) => focusRelationshipFnRef.current?.(fromId, toId)} />}
+                {leftTab === 'tools' && <NodePalette className="h-full" mode="tools" />}
+                {leftTab === 'actions' && <NodePalette className="h-full" mode="actions" />}
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              {leftTab === 'nodes' && <NodePalette className="h-full" mode="nodes" onFocusNode={(id) => focusNodeFnRef.current?.(id)} />}
-              {leftTab === 'relationships' && <NodePalette className="h-full" mode="relationships" onFocusRelationship={(fromId, toId) => focusRelationshipFnRef.current?.(fromId, toId)} />}
-              {leftTab === 'tools' && <NodePalette className="h-full" mode="tools" />}
-              {leftTab === 'actions' && <NodePalette className="h-full" mode="actions" />}
-            </div>
-          </div>
+          </ResizablePanel>
         )}
-        {!nodesSidebarOpen && (
-          <div className="absolute left-0 top-2 z-10 flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setNodesSidebarOpen(true)}
-              className="h-8 w-8 p-0 bg-background/95 backdrop-blur-sm border border-border/40 shadow-sm"
-              title="Show Sidebar"
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-        <ResizablePanelGroup orientation="horizontal" className="flex-1 relative">
-          <ResizablePanel defaultSize="60" minSize="30">
+
+        <div className="flex-1 min-w-0 relative flex h-full overflow-hidden">
+          {/* Main Canvas Area */}
+          <div className="flex-1 relative h-full">
             <ModelBuilderCanvas
               className="h-full"
               sidebarOpen={sidebarOpen}
@@ -1444,60 +1426,71 @@ function ModelBuilderContent({
               onSwitchTab={(tab) => setLeftTab(tab)}
               showToolbar={showToolbar}
             />
-          </ResizablePanel>
+          </div>
 
+          {/* Right Panel: Agents */}
           {agentsPanelOpen && (isSchemaDesignEnabled || isWorkflowGenerationEnabled) && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize="20" minSize="15" maxSize="40">
-                <AIAgentsPanel className="h-full" />
-              </ResizablePanel>
-            </>
+            <ResizablePanel
+              side="right"
+              defaultWidth={agentsPanelWidth}
+              minWidth={300}
+              maxWidth={800}
+              onWidthChange={setAgentsPanelWidth}
+              className="h-full border-l bg-background"
+            >
+              <AIAgentsPanel className="h-full" />
+            </ResizablePanel>
           )}
 
+          {/* Right Panel: XML */}
           {xmlPanelOpen && xmlContent && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize="20" minSize="15" maxSize="40">
-                <div className="h-full border-l bg-background flex flex-col">
-                  <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
-                    <h3 className="text-xs font-semibold">XML Preview</h3>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <Label htmlFor="xml-word-wrap" className="text-[10px] text-muted-foreground cursor-pointer" title="Word Wrap">
-                          Wrap
-                        </Label>
-                        <Switch
-                          id="xml-word-wrap"
-                          checked={xmlWrapWord}
-                          onCheckedChange={setXmlWrapWord}
-                          className="scale-75"
-                        />
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => setXmlPanelOpen(false)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex-1 relative overflow-hidden">
-                    <div className="absolute inset-0">
-                      <XmlCodePreview
-                        value={xmlContent}
-                        height="100%"
-                        wrapWord={xmlWrapWord}
+            <ResizablePanel
+              side="right"
+              defaultWidth={xmlPanelWidth}
+              minWidth={350}
+              maxWidth={1000}
+              onWidthChange={setXmlPanelWidth}
+              className="h-full border-l bg-background"
+            >
+              <div className="h-full flex flex-col">
+                <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
+                  <h3 className="text-xs font-semibold">XML Preview</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Label htmlFor="xml-word-wrap" className="text-[10px] text-muted-foreground cursor-pointer" title="Word Wrap">
+                        Wrap
+                      </Label>
+                      <Switch
+                        id="xml-word-wrap"
+                        checked={xmlWrapWord}
+                        onCheckedChange={setXmlWrapWord}
+                        className="scale-75"
                       />
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => setXmlPanelOpen(false)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
-              </ResizablePanel>
-            </>
+                <div className="flex-1 relative overflow-hidden">
+                  <div className="absolute inset-0">
+                    <XmlCodePreview
+                      value={xmlContent}
+                      height="100%"
+                      wrapWord={xmlWrapWord}
+                    />
+                  </div>
+                </div>
+              </div>
+            </ResizablePanel>
           )}
-        </ResizablePanelGroup>
+        </div>
+
 
         {executionProgress && (
           <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 w-96 bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-lg">
@@ -1509,35 +1502,37 @@ function ModelBuilderContent({
             />
           </div>
         )}
-        {sidebarOpen && (
-          <div className="w-80 border-l bg-muted/10">
-            {selectedRelationship ? (
-              <RelationshipEditor
-                className="h-full"
-                onClose={() => setSidebarOpen(false)}
-              />
-            ) : selectedToolNodeId ? (
-              <ToolConfigurationSidebar
-                toolNodeId={selectedToolNodeId}
-                onClose={() => useToolCanvasStore.getState().selectNode(null)}
-                className="h-full"
-              />
-            ) : selectedActionNodeId ? (
-              <ActionConfigurationSidebar
-                actionNodeId={selectedActionNodeId}
-                onClose={() => useActionCanvasStore.getState().selectNode(null)}
-                className="h-full"
-              />
-            ) : (
-              <NodeEditor
-                className="h-full"
-                onFocusNode={(id) => focusNodeFnRef.current?.(id)}
-                onClose={() => setSidebarOpen(false)}
-              />
-            )}
-          </div>
-        )}
-      </div>
+        {
+          sidebarOpen && (
+            <div className="w-80 border-l bg-muted/10">
+              {selectedRelationship ? (
+                <RelationshipEditor
+                  className="h-full"
+                  onClose={() => setSidebarOpen(false)}
+                />
+              ) : selectedToolNodeId ? (
+                <ToolConfigurationSidebar
+                  toolNodeId={selectedToolNodeId}
+                  onClose={() => useToolCanvasStore.getState().selectNode(null)}
+                  className="h-full"
+                />
+              ) : selectedActionNodeId ? (
+                <ActionConfigurationSidebar
+                  actionNodeId={selectedActionNodeId}
+                  onClose={() => useActionCanvasStore.getState().selectNode(null)}
+                  className="h-full"
+                />
+              ) : (
+                <NodeEditor
+                  className="h-full"
+                  onFocusNode={(id) => focusNodeFnRef.current?.(id)}
+                  onClose={() => setSidebarOpen(false)}
+                />
+              )}
+            </div>
+          )
+        }
+      </div >
 
       <ImportSchemaDialog
         open={importDialogOpen}
@@ -1598,7 +1593,7 @@ function ModelBuilderContent({
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   )
 
   return content

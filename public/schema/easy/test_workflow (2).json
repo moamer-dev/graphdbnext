@@ -1,0 +1,377 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-09T11:36:53.274Z",
+  "source": "test-workflow",
+  "nodes": {
+    "W": {
+      "name": "W",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "lemma": {
+          "name": "lemma",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "text": {
+          "name": "text",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "CONTAINS_WORD": [
+          "Seg",
+          "Verse"
+        ],
+        "ANNOTATES_WORD": [
+          "Note"
+        ]
+      }
+    },
+    "Text": {
+      "name": "Text",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "CONTAINS_SURFACE": [
+          "Surface"
+        ],
+        "HAS_STRUCTURE": [
+          "Structure"
+        ]
+      },
+      "relationsIn": {}
+    },
+    "Surface": {
+      "name": "Surface",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_COLUMN": [
+          "Column"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_SURFACE": [
+          "Text"
+        ]
+      }
+    },
+    "Column": {
+      "name": "Column",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_LINE": [
+          "Line"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_COLUMN": [
+          "Surface"
+        ]
+      }
+    },
+    "Line": {
+      "name": "Line",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_SEG": [
+          "Seg"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_LINE": [
+          "Column"
+        ]
+      }
+    },
+    "Seg": {
+      "name": "Seg",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_WORD": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_SEG": [
+          "Line"
+        ]
+      }
+    },
+    "Structure": {
+      "name": "Structure",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "CONTAINS_STANZA": [
+          "Stanza"
+        ]
+      },
+      "relationsIn": {
+        "HAS_STRUCTURE": [
+          "Text"
+        ]
+      }
+    },
+    "Stanza": {
+      "name": "Stanza",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_VERSE": [
+          "Verse"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_STANZA": [
+          "Structure"
+        ]
+      }
+    },
+    "Verse": {
+      "name": "Verse",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_WORD": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_VERSE": [
+          "Stanza"
+        ]
+      }
+    },
+    "Note": {
+      "name": "Note",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "target": {
+          "name": "target",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "ANNOTATES_WORD": [
+          "W"
+        ],
+        "CONTAINS_CONTENT": [
+          "P"
+        ]
+      },
+      "relationsIn": {}
+    },
+    "P": {
+      "name": "P",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {},
+      "relationsIn": {
+        "CONTAINS_CONTENT": [
+          "Note"
+        ]
+      }
+    }
+  },
+  "relations": {
+    "CONTAINS_SURFACE": {
+      "name": "CONTAINS_SURFACE",
+      "properties": {},
+      "domains": {
+        "Text": [
+          "Surface"
+        ]
+      }
+    },
+    "CONTAINS_COLUMN": {
+      "name": "CONTAINS_COLUMN",
+      "properties": {},
+      "domains": {
+        "Surface": [
+          "Column"
+        ]
+      }
+    },
+    "CONTAINS_LINE": {
+      "name": "CONTAINS_LINE",
+      "properties": {},
+      "domains": {
+        "Column": [
+          "Line"
+        ]
+      }
+    },
+    "CONTAINS_SEG": {
+      "name": "CONTAINS_SEG",
+      "properties": {},
+      "domains": {
+        "Line": [
+          "Seg"
+        ]
+      }
+    },
+    "CONTAINS_WORD": {
+      "name": "CONTAINS_WORD",
+      "properties": {},
+      "domains": {
+        "Seg": [
+          "W"
+        ],
+        "Verse": [
+          "W"
+        ]
+      }
+    },
+    "HAS_STRUCTURE": {
+      "name": "HAS_STRUCTURE",
+      "properties": {},
+      "domains": {
+        "Text": [
+          "Structure"
+        ]
+      }
+    },
+    "CONTAINS_STANZA": {
+      "name": "CONTAINS_STANZA",
+      "properties": {},
+      "domains": {
+        "Structure": [
+          "Stanza"
+        ]
+      }
+    },
+    "CONTAINS_VERSE": {
+      "name": "CONTAINS_VERSE",
+      "properties": {},
+      "domains": {
+        "Stanza": [
+          "Verse"
+        ]
+      }
+    },
+    "ANNOTATES_WORD": {
+      "name": "ANNOTATES_WORD",
+      "properties": {},
+      "domains": {
+        "Note": [
+          "W"
+        ]
+      }
+    },
+    "CONTAINS_CONTENT": {
+      "name": "CONTAINS_CONTENT",
+      "properties": {},
+      "domains": {
+        "Note": [
+          "P"
+        ]
+      }
+    }
+  }
+}

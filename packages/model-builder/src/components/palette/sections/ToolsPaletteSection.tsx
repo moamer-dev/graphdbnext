@@ -22,7 +22,7 @@ function getColorClassesHelper(color?: string, bgColor?: string) {
       hoverBg: 'hover:bg-amber-100'
     }
   }
-  
+
   const colorMap: Record<string, { text: string; bg: string; iconBg: string; border: string; hoverBorder: string; hoverBg: string }> = {
     'text-blue-600': { text: 'text-blue-600', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200', hoverBorder: 'hover:border-blue-300', hoverBg: 'hover:bg-blue-100' },
     'text-purple-600': { text: 'text-purple-600', bg: 'bg-purple-50', iconBg: 'bg-purple-100', border: 'border-purple-200', hoverBorder: 'hover:border-purple-300', hoverBg: 'hover:bg-purple-100' },
@@ -44,7 +44,7 @@ function getColorClassesHelper(color?: string, bgColor?: string) {
     'text-fuchsia-600': { text: 'text-fuchsia-600', bg: 'bg-fuchsia-50', iconBg: 'bg-fuchsia-100', border: 'border-fuchsia-200', hoverBorder: 'hover:border-fuchsia-300', hoverBg: 'hover:bg-fuchsia-100' },
     'text-gray-600': { text: 'text-gray-600', bg: 'bg-gray-50', iconBg: 'bg-gray-100', border: 'border-gray-200', hoverBorder: 'hover:border-gray-300', hoverBg: 'hover:bg-gray-100' }
   }
-  
+
   return colorMap[color] || colorMap['text-amber-600']
 }
 
@@ -89,7 +89,7 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {filteredTools.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">
@@ -104,7 +104,7 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
             const categoryColor = categoryConfig?.color || 'text-muted-foreground'
             const categoryBgColor = categoryConfig?.bgColor || 'bg-muted'
             const isExpanded = expandedToolCategories.has(category)
-            
+
             return (
               <div key={category} className="space-y-1">
                 {/* Category Header */}
@@ -135,14 +135,14 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
                     {items.length}
                   </span>
                 </button>
-                
+
                 {/* Category Items */}
                 {isExpanded && (
                   <div className="space-y-0.5 pl-1">
                     {items.map((item: ToolItem) => {
                       const Icon = item.icon
                       const colors = getColorClassesHelper(item.color, item.bgColor)
-                      
+
                       return (
                         <div
                           key={item.type}

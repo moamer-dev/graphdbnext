@@ -77,7 +77,7 @@ function getColorClasses(color?: string, bgColor?: string) {
       hoverBg: 'hover:bg-amber-100'
     }
   }
-  
+
   const colorMap: Record<string, { text: string; bg: string; iconBg: string; border: string; hoverBorder: string; hoverBg: string }> = {
     'text-blue-600': { text: 'text-blue-600', bg: 'bg-blue-50', iconBg: 'bg-blue-100', border: 'border-blue-200', hoverBorder: 'hover:border-blue-300', hoverBg: 'hover:bg-blue-100' },
     'text-purple-600': { text: 'text-purple-600', bg: 'bg-purple-50', iconBg: 'bg-purple-100', border: 'border-purple-200', hoverBorder: 'hover:border-purple-300', hoverBg: 'hover:bg-purple-100' },
@@ -99,7 +99,7 @@ function getColorClasses(color?: string, bgColor?: string) {
     'text-fuchsia-600': { text: 'text-fuchsia-600', bg: 'bg-fuchsia-50', iconBg: 'bg-fuchsia-100', border: 'border-fuchsia-200', hoverBorder: 'hover:border-fuchsia-300', hoverBg: 'hover:bg-fuchsia-100' },
     'text-gray-600': { text: 'text-gray-600', bg: 'bg-gray-50', iconBg: 'bg-gray-100', border: 'border-gray-200', hoverBorder: 'hover:border-gray-300', hoverBg: 'hover:bg-gray-100' }
   }
-  
+
   return colorMap[color] || colorMap['text-amber-600']
 }
 
@@ -110,10 +110,10 @@ interface NodePaletteProps {
   onFocusRelationship?: (fromNodeId: string, toNodeId: string) => void
 }
 
-export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRelationship }: NodePaletteProps) {
+export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRelationship }: NodePaletteProps) {
   const viewMode = mode
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  
+
   const dialogs = useNodePaletteDialogs()
   const {
     nodeDialogOpen,
@@ -155,7 +155,7 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
     handleDeleteNode,
     handleConfirmDeleteNode
   } = dialogs
-  
+
   // Search hook - only for nodes section (Tools and Actions sections handle their own search)
   const { searchQuery, setSearchQuery } = useNodePaletteSearch()
 
@@ -225,33 +225,33 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    
+
     setActiveId(null)
-    
+
     if (!over || active.id === over.id) {
       return
     }
-    
+
     // Only nodes are draggable, not groups
     const activeIsGroup = groups.some((g) => g.id === active.id)
     if (activeIsGroup) {
       return // Don't allow dragging groups
     }
-    
+
     const activeNode = nodes.find((n) => n.id === active.id)
     const overNode = nodes.find((n) => n.id === over.id)
     const overIsGroup = groups.some((g) => g.id === over.id)
-    
+
     if (!activeNode) {
       return
     }
-    
+
     // If dragging over a group, move node to that group
     if (overIsGroup) {
       moveNodeToGroup(active.id as string, over.id as string)
       return
     }
-    
+
     // If dragging over an ungrouped node, move active node to ungrouped
     if (overNode && !overNode.groupId) {
       // If active node is in a group, move it out
@@ -267,7 +267,7 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
       }
       return
     }
-    
+
     // If dragging over a grouped node, move active node to that group
     if (overNode && overNode.groupId) {
       // If active node is already in the same group, just reorder
@@ -279,7 +279,7 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
       }
       return
     }
-    
+
     // Fallback: regular reordering
     if (activeNode && overNode) {
       if (!activeNode.groupId && !overNode.groupId) {
@@ -307,7 +307,7 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
         const nodeElement = scrollContainerRef.current?.querySelector(
           `[data-node-id="${selectedNode}"]`
         ) as HTMLElement
-        
+
         if (nodeElement) {
           nodeElement.scrollIntoView({
             behavior: 'smooth',
@@ -324,22 +324,22 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
   // Simple approach: both groups and nodes share the same order space
   const unifiedItems = useMemo(() => {
     const items: Array<{ type: 'group' | 'node'; id: string; order: number; data: Node | NodeGroup }> = []
-    
+
     // Add groups with their order
     groups.forEach((group) => {
       items.push({ type: 'group', id: group.id, order: group.order, data: group })
     })
-    
+
     // Add ungrouped nodes with their order
     // If a node doesn't have an order, assign one based on its index
     ungroupedNodes.forEach((node: Node, index: number) => {
       const order = node.order !== undefined ? node.order : (groups.length + index)
       items.push({ type: 'node', id: node.id, order, data: node })
     })
-    
+
     // Sort by order to get unified order
     items.sort((a, b) => a.order - b.order)
-    
+
     return items
   }, [groups, ungroupedNodes])
 
@@ -359,179 +359,179 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
               />
             </div>
 
-        {/* Add Group and Add Node Buttons - only show for nodes */}
-        {viewMode === 'nodes' && (
-          <div className="flex gap-2">
-            <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground">
-                  <FolderPlus className="h-3.5 w-3.5" />
-                  Add Group
-                </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add New Group</DialogTitle>
-                  <DialogDescription>
-                    Create a group to organize your nodes.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="groupName">Group Name</Label>
-                    <Input
-                      id="groupName"
-                      placeholder="e.g., Core Entities"
-                      value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleAddGroup()
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setGroupDialogOpen(false)
-                      setGroupName('')
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleAddGroup}
-                    disabled={!groupName.trim()}
-                  >
-                    Add Group
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={nodeDialogOpen} onOpenChange={setNodeDialogOpen}>
-              <DialogTrigger asChild>
-                <button className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground">
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Node
-                </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-            <TooltipProvider>
-              <DialogHeader>
-                <DialogTitle>Add New Node</DialogTitle>
-                <DialogDescription>
-                  Enter the label and type for the new node.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="label">Node Label</Label>
+            {/* Add Group and Add Node Buttons - only show for nodes */}
+            {viewMode === 'nodes' && (
+              <div className="flex gap-2">
+                <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground">
+                      <FolderPlus className="h-3.5 w-3.5" />
+                      Add Group
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Group</DialogTitle>
+                      <DialogDescription>
+                        Create a group to organize your nodes.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="groupName">Group Name</Label>
+                        <Input
+                          id="groupName"
+                          placeholder="e.g., Core Entities"
+                          value={groupName}
+                          onChange={(e) => setGroupName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleAddGroup()
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setGroupDialogOpen(false)
+                          setGroupName('')
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleAddGroup}
+                        disabled={!groupName.trim()}
+                      >
+                        Add Group
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={nodeDialogOpen} onOpenChange={setNodeDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground">
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Node
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
                     <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            The display name for the node (e.g., &quot;Person&quot;, &quot;Book&quot;, &quot;Author&quot;)
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <DialogHeader>
+                        <DialogTitle>Add New Node</DialogTitle>
+                        <DialogDescription>
+                          Enter the label and type for the new node.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="label">Node Label</Label>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs">
+                                    The display name for the node (e.g., &quot;Person&quot;, &quot;Book&quot;, &quot;Author&quot;)
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <Input
+                            id="label"
+                            placeholder="e.g., Person"
+                            value={label}
+                            onChange={(e) => setLabel(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                handleAddNode()
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="type">Node Type</Label>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="max-w-xs">
+                                    The type identifier for the node, typically matching the label (e.g., &quot;Person&quot;, &quot;Book&quot;)
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <Input
+                            id="type"
+                            placeholder="e.g., Person"
+                            value={type}
+                            onChange={(e) => setType(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                handleAddNode()
+                              }
+                            }}
+                          />
+                        </div>
+                        {groups.length > 0 && (
+                          <div className="grid gap-2">
+                            <Label htmlFor="group">Group (Optional)</Label>
+                            <Select value={groupId || 'none'} onValueChange={(value) => setGroupId(value === 'none' ? '' : value)}>
+                              <SelectTrigger id="group">
+                                <SelectValue placeholder="No group" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">No group</SelectItem>
+                                {groups.map((group) => (
+                                  <SelectItem key={group.id} value={group.id}>
+                                    {group.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setNodeDialogOpen(false)
+                            setLabel('')
+                            setType('')
+                            setGroupId('')
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => handleAddNode()}
+                          disabled={!label.trim() || !type.trim()}
+                        >
+                          Add Node
+                        </Button>
+                      </DialogFooter>
                     </TooltipProvider>
-                  </div>
-                  <Input
-                    id="label"
-                    placeholder="e.g., Person"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleAddNode()
-                      }
-                    }}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="type">Node Type</Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            The type identifier for the node, typically matching the label (e.g., &quot;Person&quot;, &quot;Book&quot;)
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input
-                    id="type"
-                    placeholder="e.g., Person"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleAddNode()
-                      }
-                    }}
-                  />
-                </div>
-                {groups.length > 0 && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="group">Group (Optional)</Label>
-                    <Select value={groupId || 'none'} onValueChange={(value) => setGroupId(value === 'none' ? '' : value)}>
-                      <SelectTrigger id="group">
-                        <SelectValue placeholder="No group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No group</SelectItem>
-                        {groups.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                  </DialogContent>
+                </Dialog>
               </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setNodeDialogOpen(false)
-                    setLabel('')
-                    setType('')
-                    setGroupId('')
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => handleAddNode()}
-                  disabled={!label.trim() || !type.trim()}
-                >
-                  Add Node
-                </Button>
-              </DialogFooter>
-            </TooltipProvider>
-          </DialogContent>
-            </Dialog>
-          </div>
             )}
             {/* Bulk Add Button - only show for nodes */}
             {viewMode === 'nodes' && (
@@ -554,116 +554,116 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
             )}
           </div>
         )}
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto">
-        {viewMode === 'nodes' && (groups.length > 0 || ungroupedNodes.length > 0) && (
-          <div className="p-2 pt-0 pr-1">
-            <div ref={scrollContainerRef} className="mt-2 space-y-2">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={[
-                    ...unifiedItems.map((item) => item.id),
-                    ...Object.values(groupedNodes).flat().map((node: Node) => node.id)
-                  ]}
-                  strategy={verticalListSortingStrategy}
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto">
+          {viewMode === 'nodes' && (groups.length > 0 || ungroupedNodes.length > 0) && (
+            <div className="p-2 pt-0 pr-1">
+              <div ref={scrollContainerRef} className="mt-2 space-y-2">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
-                  {/* Groups (not draggable) and Ungrouped Nodes (draggable) */}
-                  {unifiedItems.map((item) => {
-                    if (item.type === 'group') {
-                      const group = item.data as NodeGroup
-                      const groupNodes = groupedNodes[group.id] || []
-                      return (
-                        <NodeGroupComponent
-                          key={group.id}
-                          group={group}
-                          nodes={groupNodes}
-                          selectedNode={selectedNode}
-                          searchQuery={searchQuery}
-                          rootNodeId={rootNodeId}
-                          onSelectNode={(id) => {
-                            selectNode(id)
-                            onFocusNode?.(id)
-                          }}
-                          onDeleteNode={deleteNode}
-                          onToggleGroup={toggleGroup}
-                          onDeleteGroup={handleDeleteGroup}
-                          onReorderNodes={reorderNodes}
-                          onAddNodeToGroup={handleAddNodeToGroup}
-                        />
-                      )
-                    } else {
-                      const node = item.data as Node
-                      return (
-                        <SortableNodeItem
-                          key={node.id}
-                          node={node}
-                          selected={selectedNode === node.id}
-                          isRoot={rootNodeId === node.id}
-                          onSelect={() => {
-                            selectNode(node.id)
-                            onFocusNode?.(node.id)
-                          }}
-                          onDelete={() => handleDeleteNode(node.id)}
-                        />
-                      )
-                    }
-                  })}
-                </SortableContext>
-                <DragOverlay>
-                  {activeId ? (
-                    (() => {
-                      // Only nodes are draggable, not groups
-                      const activeNode = nodes.find((n) => n.id === activeId)
-                      if (activeNode) {
+                  <SortableContext
+                    items={[
+                      ...unifiedItems.map((item) => item.id),
+                      ...Object.values(groupedNodes).flat().map((node: Node) => node.id)
+                    ]}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {/* Groups (not draggable) and Ungrouped Nodes (draggable) */}
+                    {unifiedItems.map((item) => {
+                      if (item.type === 'group') {
+                        const group = item.data as NodeGroup
+                        const groupNodes = groupedNodes[group.id] || []
                         return (
-                          <div className="group flex items-center gap-2 px-3 py-2.5 text-xs rounded-lg bg-card border-2 border-primary shadow-lg opacity-95 min-w-[200px]">
-                            <div className="shrink-0 text-muted-foreground">
-                              <GripVertical className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold truncate text-foreground">{activeNode.label}</div>
-                              <div className="text-muted-foreground truncate text-[10px]">{activeNode.type}</div>
-                            </div>
-                          </div>
+                          <NodeGroupComponent
+                            key={group.id}
+                            group={group}
+                            nodes={groupNodes}
+                            selectedNode={selectedNode}
+                            searchQuery={searchQuery}
+                            rootNodeId={rootNodeId}
+                            onSelectNode={(id) => {
+                              selectNode(id)
+                              onFocusNode?.(id)
+                            }}
+                            onDeleteNode={deleteNode}
+                            onToggleGroup={toggleGroup}
+                            onDeleteGroup={handleDeleteGroup}
+                            onReorderNodes={reorderNodes}
+                            onAddNodeToGroup={handleAddNodeToGroup}
+                          />
+                        )
+                      } else {
+                        const node = item.data as Node
+                        return (
+                          <SortableNodeItem
+                            key={node.id}
+                            node={node}
+                            selected={selectedNode === node.id}
+                            isRoot={rootNodeId === node.id}
+                            onSelect={() => {
+                              selectNode(node.id)
+                              onFocusNode?.(node.id)
+                            }}
+                            onDelete={() => handleDeleteNode(node.id)}
+                          />
                         )
                       }
-                      return null
-                    })()
-                  ) : null}
-                </DragOverlay>
-              </DndContext>
+                    })}
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeId ? (
+                      (() => {
+                        // Only nodes are draggable, not groups
+                        const activeNode = nodes.find((n) => n.id === activeId)
+                        if (activeNode) {
+                          return (
+                            <div className="group flex items-center gap-2 px-3 py-2.5 text-xs rounded-lg bg-card border-2 border-primary shadow-lg opacity-95 min-w-[200px]">
+                              <div className="shrink-0 text-muted-foreground">
+                                <GripVertical className="h-4 w-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold truncate text-foreground">{activeNode.label}</div>
+                                <div className="text-muted-foreground truncate text-[10px]">{activeNode.type}</div>
+                              </div>
+                            </div>
+                          )
+                        }
+                        return null
+                      })()
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
 
-              {filteredNodes.length === 0 && searchQuery && (
-                <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-                  No nodes match &quot;{searchQuery}&quot;
-                </div>
-              )}
+                {filteredNodes.length === 0 && searchQuery && (
+                  <div className="px-3 py-4 text-xs text-muted-foreground text-center">
+                    No nodes match &quot;{searchQuery}&quot;
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Relationships Section - only show when relationships tab is active */}
-        {viewMode === 'relationships' && (
-          <RelationshipsPaletteSection
-            scrollContainerRef={scrollContainerRef}
-            onFocusRelationship={onFocusRelationship}
-          />
-        )}
+          {/* Relationships Section - only show when relationships tab is active */}
+          {viewMode === 'relationships' && (
+            <RelationshipsPaletteSection
+              scrollContainerRef={scrollContainerRef}
+              onFocusRelationship={onFocusRelationship}
+            />
+          )}
 
-        {/* Tools Section - only show when tools tab is active */}
-        {viewMode === 'tools' && (
-          <ToolsPaletteSection />
-        )}
+          {/* Tools Section - only show when tools tab is active */}
+          {viewMode === 'tools' && (
+            <ToolsPaletteSection />
+          )}
 
-        {/* Actions Section - only show when actions tab is active */}
-        {viewMode === 'actions' && (
-          <ActionsPaletteSection />
-        )}
-      </div>
+          {/* Actions Section - only show when actions tab is active */}
+          {viewMode === 'actions' && (
+            <ActionsPaletteSection />
+          )}
+        </div>
       </div>
       {/* Bulk Add Dialog */}
       <Dialog open={bulkAddDialogOpen} onOpenChange={setBulkAddDialogOpen}>
@@ -808,7 +808,7 @@ export function NodePalette ({ className, mode = 'nodes', onFocusNode, onFocusRe
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setPendingGroupId(null)
                 setPendingGroupNodeCount(0)

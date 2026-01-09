@@ -7,7 +7,7 @@ import { Input } from '../ui/input'
 import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../ui/resizable-panel'
+import { ResizablePanel } from '../ui/resizable-panel'
 import { cn } from '../../utils/cn'
 import { XmlCodePreview } from '../editor/XmlCodePreview'
 import type { XmlAnalysisRules } from '../../services/xmlAnalyzer'
@@ -201,6 +201,7 @@ export function XmlAnalysisRulesConfigurator({
   const [activeTab, setActiveTab] = useState('ignored-elements')
   const [wrapWord, setWrapWord] = useState(false)
   /* eslint-enable react-hooks/rules-of-hooks */
+  const [previewWidth, setPreviewWidth] = useState(600)
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
@@ -262,315 +263,314 @@ export function XmlAnalysisRulesConfigurator({
         </div>
 
         <div
-          className="w-full flex overflow-hidden min-h-0 pt-2 h-[calc(100vh-350px)] min-h-[400px]"
+          className="w-full flex overflow-hidden min-h-0 pt-2 h-[calc(100vh-350px)] min-h-[400px] border rounded-lg"
         >
-          <ResizablePanelGroup orientation="horizontal" className="h-full rounded-lg border">
-            {/* Rules Panel */}
-            <ResizablePanel defaultSize={showPreview ? "50" : "100"} minSize="30">
-              <div className="h-full bg-background flex flex-col border-none">
-                <TabsContent value="ignored-elements" className="flex-1 flex flex-col m-0 min-h-0 data-[state=inactive]:hidden h-full">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b shrink-0">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Select elements to completely ignore during analysis. They won't appear in the graph.
-                    </p>
-                  </div>
+          {/* Rules Panel (Fills remaining space) */}
+          <div className="flex-1 min-w-0 flex flex-col h-full bg-background">
+            <TabsContent value="ignored-elements" className="flex-1 flex flex-col m-0 min-h-0 data-[state=inactive]:hidden h-full">
+              <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b shrink-0">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Select elements to completely ignore during analysis. They won't appear in the graph.
+                </p>
+              </div>
 
-                  <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-                    <div className="flex gap-2">
-                      <div className="relative flex-1" ref={dropdownRef}>
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={availableElements ? "Search element to ignore..." : "Type element name..."}
-                            className="h-9 text-sm pl-9 pr-20 border-2 focus:border-primary/50 focus:ring-primary/20"
-                            value={searchTerm.elementSearch || ''}
-                            onChange={(e) => {
-                              setSearchTerm({ ...searchTerm, elementSearch: e.target.value })
-                              setShowDropdown({ ...showDropdown, ignoredElements: true })
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1" ref={dropdownRef}>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder={availableElements ? "Search element to ignore..." : "Type element name..."}
+                        className="h-9 text-sm pl-9 pr-20 border-2 focus:border-primary/50 focus:ring-primary/20"
+                        value={searchTerm.elementSearch || ''}
+                        onChange={(e) => {
+                          setSearchTerm({ ...searchTerm, elementSearch: e.target.value })
+                          setShowDropdown({ ...showDropdown, ignoredElements: true })
+                        }}
+                        onFocus={() => {
+                          if (availableElements && availableElements?.elementNames.length > 0) {
+                            setShowDropdown({ ...showDropdown, ignoredElements: true })
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            const value = e.currentTarget.value.trim()
+                            if (value) {
+                              addToList('ignoredElements', value)
+                              setSearchTerm({ ...searchTerm, elementSearch: '' })
+                            }
+                          }
+                        }}
+                      />
+                      {availableElements && availableElements?.elementNames.length > 0 && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="absolute right-10 top-0 h-9 w-9 p-0 hover:bg-muted"
+                            onClick={() => {
+                              setShowDropdown({ ...showDropdown, ignoredElements: !showDropdown.ignoredElements })
                             }}
-                            onFocus={() => {
-                              if (availableElements && availableElements?.elementNames.length > 0) {
-                                setShowDropdown({ ...showDropdown, ignoredElements: true })
+                            title="Show all elements"
+                          >
+                            <List className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="absolute right-0 top-0 h-9 w-9 p-0 hover:bg-muted hover:text-primary"
+                            onClick={() => {
+                              const value = searchTerm.elementSearch?.trim()
+                              if (value) {
+                                addToList('ignoredElements', value)
+                                setSearchTerm({ ...searchTerm, elementSearch: '' })
                               }
                             }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                const value = e.currentTarget.value.trim()
-                                if (value) {
-                                  addToList('ignoredElements', value)
-                                  setSearchTerm({ ...searchTerm, elementSearch: '' })
-                                }
-                              }
-                            }}
-                          />
-                          {availableElements && availableElements?.elementNames.length > 0 && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="absolute right-10 top-0 h-9 w-9 p-0 hover:bg-muted"
-                                onClick={() => {
-                                  setShowDropdown({ ...showDropdown, ignoredElements: !showDropdown.ignoredElements })
-                                }}
-                                title="Show all elements"
-                              >
-                                <List className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="absolute right-0 top-0 h-9 w-9 p-0 hover:bg-muted hover:text-primary"
-                                onClick={() => {
-                                  const value = searchTerm.elementSearch?.trim()
-                                  if (value) {
-                                    addToList('ignoredElements', value)
-                                    setSearchTerm({ ...searchTerm, elementSearch: '' })
-                                  }
-                                }}
-                                title="Add current value"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                            title="Add current value"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
+                  </div>
+                </div>
 
-                    {availableElements && availableElements?.elementNames.length > 0 && showDropdown.ignoredElements && (
-                      <div
-                        ref={ignoredElementsDropdownRef}
-                        className="border border-border rounded-lg max-h-48 overflow-y-auto bg-popover shadow-md z-10"
-                      >
-                        {filteredIgnoredElements.length > 0 ? (
-                          <>
-                            {filteredIgnoredElements.slice(0, 50).map((name: string) => (
-                              <button
-                                key={name}
-                                type="button"
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted hover:text-primary transition-colors border-b border-border/40 last:border-b-0"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  addToList('ignoredElements', name)
-                                  setSearchTerm({ ...searchTerm, elementSearch: '' })
-                                }}
-                              >
-                                {name}
-                              </button>
-                            ))}
-                            {filteredIgnoredElements.length > 50 && (
-                              <div className="p-2 text-xs text-muted-foreground text-center border-t bg-muted/20">
-                                + {filteredIgnoredElements.length - 50} more
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="p-4 text-xs text-muted-foreground text-center">
-                            No matching elements found
+                {availableElements && availableElements?.elementNames.length > 0 && showDropdown.ignoredElements && (
+                  <div
+                    ref={ignoredElementsDropdownRef}
+                    className="border border-border rounded-lg max-h-48 overflow-y-auto bg-popover shadow-md z-10"
+                  >
+                    {filteredIgnoredElements.length > 0 ? (
+                      <>
+                        {filteredIgnoredElements.slice(0, 50).map((name: string) => (
+                          <button
+                            key={name}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted hover:text-primary transition-colors border-b border-border/40 last:border-b-0"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              addToList('ignoredElements', name)
+                              setSearchTerm({ ...searchTerm, elementSearch: '' })
+                            }}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                        {filteredIgnoredElements.length > 50 && (
+                          <div className="p-2 text-xs text-muted-foreground text-center border-t bg-muted/20">
+                            + {filteredIgnoredElements.length - 50} more
                           </div>
                         )}
+                      </>
+                    ) : (
+                      <div className="p-4 text-xs text-muted-foreground text-center">
+                        No matching elements found
                       </div>
                     )}
+                  </div>
+                )}
 
-                    {getList('ignoredElements').map((item) => (
-                      <div key={item} className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border group">
-                        <span className="text-sm font-medium">{item}</span>
-                        <button
-                          onClick={() => removeFromList('ignoredElements', item)}
-                          className="text-muted-foreground hover:text-destructive p-1 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                {getList('ignoredElements').map((item) => (
+                  <div key={item} className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border group">
+                    <span className="text-sm font-medium">{item}</span>
+                    <button
+                      onClick={() => removeFromList('ignoredElements', item)}
+                      className="text-muted-foreground hover:text-destructive p-1 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
 
-                    {getList('ignoredElements').length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <Ban className="h-8 w-8 text-muted-foreground/20 mb-3" />
-                        <p className="text-sm text-muted-foreground">No elements ignored</p>
-                        {onOpenAIAssistant && isXmlMappingEnabled && (
-                          <Button variant="link" size="sm" onClick={onOpenAIAssistant} className="text-primary h-auto p-0 mt-1">
-                            Ask AI for suggestions
+                {getList('ignoredElements').length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Ban className="h-8 w-8 text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground">No elements ignored</p>
+                    {onOpenAIAssistant && isXmlMappingEnabled && (
+                      <Button variant="link" size="sm" onClick={onOpenAIAssistant} className="text-primary h-auto p-0 mt-1">
+                        Ask AI for suggestions
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ignored-subtrees" className="flex-1 flex flex-col m-0 min-h-0 data-[state=inactive]:hidden h-full">
+              <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b shrink-0">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Select elements to ignore their children/subtree, but keep the element itself (e.g., if it contains raw text).
+                </p>
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder={availableElements ? "Search subtree to ignore..." : "Type element name..."}
+                        className="h-9 text-sm pl-9 pr-20 border-2 focus:border-primary/50 focus:ring-primary/20"
+                        value={searchTerm.subtreeSearch || ''}
+                        onChange={(e) => {
+                          setSearchTerm({ ...searchTerm, subtreeSearch: e.target.value })
+                          setShowDropdown({ ...showDropdown, ignoredSubtrees: true })
+                        }}
+                        onFocus={() => {
+                          if (availableElements && availableElements?.elementNames.length > 0) {
+                            setShowDropdown({ ...showDropdown, ignoredSubtrees: true })
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            const value = e.currentTarget.value.trim()
+                            if (value) {
+                              addToList('ignoredSubtrees', value)
+                              setSearchTerm({ ...searchTerm, subtreeSearch: '' })
+                            }
+                          }
+                        }}
+                      />
+                      {availableElements && availableElements?.elementNames.length > 0 && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="absolute right-10 top-0 h-9 w-9 p-0 hover:bg-muted"
+                            onClick={() => {
+                              setShowDropdown({ ...showDropdown, ignoredSubtrees: !showDropdown.ignoredSubtrees })
+                            }}
+                            title="Show all elements"
+                          >
+                            <List className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="ignored-subtrees" className="flex-1 flex flex-col m-0 min-h-0 data-[state=inactive]:hidden h-full">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b shrink-0">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Select elements to ignore their children/subtree, but keep the element itself (e.g., if it contains raw text).
-                    </p>
-                  </div>
-
-                  <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={availableElements ? "Search subtree to ignore..." : "Type element name..."}
-                            className="h-9 text-sm pl-9 pr-20 border-2 focus:border-primary/50 focus:ring-primary/20"
-                            value={searchTerm.subtreeSearch || ''}
-                            onChange={(e) => {
-                              setSearchTerm({ ...searchTerm, subtreeSearch: e.target.value })
-                              setShowDropdown({ ...showDropdown, ignoredSubtrees: true })
-                            }}
-                            onFocus={() => {
-                              if (availableElements && availableElements?.elementNames.length > 0) {
-                                setShowDropdown({ ...showDropdown, ignoredSubtrees: true })
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="absolute right-0 top-0 h-9 w-9 p-0 hover:bg-muted hover:text-primary"
+                            onClick={() => {
+                              const value = searchTerm.subtreeSearch?.trim()
+                              if (value) {
+                                addToList('ignoredSubtrees', value)
+                                setSearchTerm({ ...searchTerm, subtreeSearch: '' })
                               }
                             }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                const value = e.currentTarget.value.trim()
-                                if (value) {
-                                  addToList('ignoredSubtrees', value)
-                                  setSearchTerm({ ...searchTerm, subtreeSearch: '' })
-                                }
-                              }
-                            }}
-                          />
-                          {availableElements && availableElements?.elementNames.length > 0 && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="absolute right-10 top-0 h-9 w-9 p-0 hover:bg-muted"
-                                onClick={() => {
-                                  setShowDropdown({ ...showDropdown, ignoredSubtrees: !showDropdown.ignoredSubtrees })
-                                }}
-                                title="Show all elements"
-                              >
-                                <List className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="absolute right-0 top-0 h-9 w-9 p-0 hover:bg-muted hover:text-primary"
-                                onClick={() => {
-                                  const value = searchTerm.subtreeSearch?.trim()
-                                  if (value) {
-                                    addToList('ignoredSubtrees', value)
-                                    setSearchTerm({ ...searchTerm, subtreeSearch: '' })
-                                  }
-                                }}
-                                title="Add current value"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                            title="Add current value"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
+                  </div>
+                </div>
 
-                    {availableElements && availableElements?.elementNames.length > 0 && showDropdown.ignoredSubtrees && (
-                      <div
-                        ref={ignoredSubtreesDropdownRef}
-                        className="border border-border rounded-lg max-h-48 overflow-y-auto bg-popover shadow-md z-10"
-                      >
-                        {filteredIgnoredSubtrees.length > 0 ? (
-                          <>
-                            {filteredIgnoredSubtrees.slice(0, 50).map((name: string) => (
-                              <button
-                                key={name}
-                                type="button"
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted hover:text-primary transition-colors border-b border-border/40 last:border-b-0"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  addToList('ignoredSubtrees', name)
-                                  setSearchTerm({ ...searchTerm, subtreeSearch: '' })
-                                }}
-                              >
-                                {name}
-                              </button>
-                            ))}
-                            {filteredIgnoredSubtrees.length > 50 && (
-                              <div className="p-2 text-xs text-muted-foreground text-center border-t bg-muted/20">
-                                + {filteredIgnoredSubtrees.length - 50} more
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="p-4 text-xs text-muted-foreground text-center">
-                            No matching elements found
+                {availableElements && availableElements?.elementNames.length > 0 && showDropdown.ignoredSubtrees && (
+                  <div
+                    ref={ignoredSubtreesDropdownRef}
+                    className="border border-border rounded-lg max-h-48 overflow-y-auto bg-popover shadow-md z-10"
+                  >
+                    {filteredIgnoredSubtrees.length > 0 ? (
+                      <>
+                        {filteredIgnoredSubtrees.slice(0, 50).map((name: string) => (
+                          <button
+                            key={name}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted hover:text-primary transition-colors border-b border-border/40 last:border-b-0"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              addToList('ignoredSubtrees', name)
+                              setSearchTerm({ ...searchTerm, subtreeSearch: '' })
+                            }}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                        {filteredIgnoredSubtrees.length > 50 && (
+                          <div className="p-2 text-xs text-muted-foreground text-center border-t bg-muted/20">
+                            + {filteredIgnoredSubtrees.length - 50} more
                           </div>
                         )}
-                      </div>
-                    )}
-
-                    {getList('ignoredSubtrees').map((item) => (
-                      <div key={item} className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border group">
-                        <span className="text-sm font-medium">{item}</span>
-                        <button
-                          onClick={() => removeFromList('ignoredSubtrees', item)}
-                          className="text-muted-foreground hover:text-destructive p-1 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {getList('ignoredSubtrees').length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <FolderTree className="h-8 w-8 text-muted-foreground/20 mb-3" />
-                        <p className="text-sm text-muted-foreground">No subtrees ignored</p>
-                        {onOpenAIAssistant && isXmlMappingEnabled && (
-                          <Button variant="link" size="sm" onClick={onOpenAIAssistant} className="text-primary h-auto p-0 mt-1">
-                            Ask AI for suggestions
-                          </Button>
-                        )}
+                      </>
+                    ) : (
+                      <div className="p-4 text-xs text-muted-foreground text-center">
+                        No matching elements found
                       </div>
                     )}
                   </div>
-                </TabsContent>
+                )}
+
+                {getList('ignoredSubtrees').map((item) => (
+                  <div key={item} className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border group">
+                    <span className="text-sm font-medium">{item}</span>
+                    <button
+                      onClick={() => removeFromList('ignoredSubtrees', item)}
+                      className="text-muted-foreground hover:text-destructive p-1 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+
+                {getList('ignoredSubtrees').length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <FolderTree className="h-8 w-8 text-muted-foreground/20 mb-3" />
+                    <p className="text-sm text-muted-foreground">No subtrees ignored</p>
+                    {onOpenAIAssistant && isXmlMappingEnabled && (
+                      <Button variant="link" size="sm" onClick={onOpenAIAssistant} className="text-primary h-auto p-0 mt-1">
+                        Ask AI for suggestions
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </div>
+
+          {/* XML Preview Panel */}
+          {showPreview && (
+            <ResizablePanel
+              side="right"
+              defaultWidth={previewWidth}
+              minWidth={300}
+              onWidthChange={setPreviewWidth}
+              className="h-full border-l"
+            >
+              <div className="h-full flex flex-col min-w-0 bg-background">
+                <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b shrink-0 h-[46px]">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-blue-100 rounded p-1">
+                      <Eye className="h-3.5 w-3.5 text-blue-600" />
+                    </div>
+                    <span className="text-xs font-semibold">XML Preview</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="xml-wrap-switch" className="text-[10px] text-muted-foreground font-medium cursor-pointer">Wrap</Label>
+                    <Switch
+                      id="xml-wrap-switch"
+                      checked={wrapWord}
+                      onCheckedChange={setWrapWord}
+                      className="scale-75"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0 overflow-hidden relative">
+                  <div className="absolute inset-0">
+                    <XmlCodePreview
+                      value={xmlPreview || 'No XML content available'}
+                      height="100%"
+                      wrapWord={wrapWord}
+                    />
+                  </div>
+                </div>
               </div>
             </ResizablePanel>
-
-            {/* XML Preview Panel */}
-            {showPreview && (
-              <>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize="50" minSize="30">
-                  <div className="h-full flex flex-col min-w-0 bg-background">
-                    <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b shrink-0 h-[46px]">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-blue-100 rounded p-1">
-                          <Eye className="h-3.5 w-3.5 text-blue-600" />
-                        </div>
-                        <span className="text-xs font-semibold">XML Preview</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="xml-wrap-switch" className="text-[10px] text-muted-foreground font-medium cursor-pointer">Wrap</Label>
-                        <Switch
-                          id="xml-wrap-switch"
-                          checked={wrapWord}
-                          onCheckedChange={setWrapWord}
-                          className="scale-75"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-h-0 overflow-hidden relative">
-                      <div className="absolute inset-0">
-                        <XmlCodePreview
-                          value={xmlPreview || 'No XML content available'}
-                          height="100%"
-                          wrapWord={wrapWord}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
+          )}
         </div>
       </Tabs >
     </div >

@@ -185,7 +185,7 @@ export function RelationshipsPaletteSection({
             relationshipTypes.map((relType) => {
               const typeRelationships = relationships.filter((rel: Relationship) => rel.type === relType.type)
               if (typeRelationships.length === 0) return null
-              
+
               return (
                 <div key={relType.type} className="space-y-1">
                   <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
@@ -215,11 +215,10 @@ export function RelationshipsPaletteSection({
                         data-relationship-id={rel.id}
                         onMouseDown={handleMouseDown}
                         onClick={handleClick}
-                        className={`group flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all cursor-pointer ml-2 ${
-                          isSelected
+                        className={`group flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all cursor-pointer ml-2 ${isSelected
                             ? 'bg-primary/10 border border-primary shadow-md'
                             : 'bg-muted/40 border border-border/60 shadow-sm hover:bg-muted/60 hover:shadow'
-                        }`}
+                          }`}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
@@ -280,11 +279,10 @@ export function RelationshipsPaletteSection({
                   data-relationship-id={rel.id}
                   onMouseDown={handleMouseDown}
                   onClick={handleClick}
-                  className={`group flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all cursor-pointer ${
-                    isSelected
+                  className={`group flex items-center gap-2 px-2 py-1.5 text-xs rounded-md transition-all cursor-pointer ${isSelected
                       ? 'bg-primary/10 border border-primary shadow-md'
                       : 'bg-muted/40 border border-border/60 shadow-sm hover:bg-muted/60 hover:shadow'
-                  }`}
+                    }`}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -436,11 +434,11 @@ export function RelationshipsPaletteSection({
         description={
           pendingRelationshipId
             ? (() => {
-                const rel = relationships.find((r) => r.id === pendingRelationshipId)
-                return rel
-                  ? `Are you sure you want to delete the relationship "${rel.type || 'RELATES_TO'}"? This action cannot be undone.`
-                  : 'Are you sure you want to delete this relationship?'
-              })()
+              const rel = relationships.find((r) => r.id === pendingRelationshipId)
+              return rel
+                ? `Are you sure you want to delete the relationship "${rel.type || 'RELATES_TO'}"? This action cannot be undone.`
+                : 'Are you sure you want to delete this relationship?'
+            })()
             : 'Are you sure you want to delete this relationship?'
         }
         confirmText="Delete"

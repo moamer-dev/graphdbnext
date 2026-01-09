@@ -28,7 +28,7 @@ export function useToolConditionBuilder(toolNodeId: string | null) {
     } else if (selectedConditionType === 'HasAncestor' && xmlAncestors && xmlAncestors.length > 0) {
       newCondition.values = [xmlAncestors[0]]
     }
-    
+
     const newGroup: ConditionGroup = {
       id: generateGroupId(),
       conditions: [newCondition],
@@ -103,19 +103,19 @@ export function useToolConditionBuilder(toolNodeId: string | null) {
       }
       return group
     }).filter(Boolean) as ConditionGroup[]
-    
+
     setConditionGroups(updated)
-    
+
     const currentState = getState()
     const newChildInputValues = { ...currentState.childInputValues }
     const newAncestorInputValues = { ...currentState.ancestorInputValues }
-    
+
     delete newChildInputValues[`${groupId}-${conditionIndex}`]
     delete newAncestorInputValues[`${groupId}-${conditionIndex}`]
-    
+
     setChildInputValues(newChildInputValues)
     setAncestorInputValues(newAncestorInputValues)
-    
+
     if (toolNodeId) {
       updateToolNode(toolNodeId, {
         config: { ...toolNode?.config, conditionGroups: updated }

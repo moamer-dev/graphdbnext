@@ -9,19 +9,19 @@ interface ToolConfigurationState {
   // Tool metadata
   toolNodeId: string | null
   toolLabel: string
-  
+
   // Condition builder state
   conditionGroups: ConditionGroup[]
   selectedConditionType: ConditionType
   childInputValues: Record<string, string>
   ancestorInputValues: Record<string, string>
-  
+
   // Switch tool state
   switchSource: SwitchSource
   switchAttributeName: string
   switchCases: SwitchCase[]
   switchCaseInputs: Record<string, string>
-  
+
   // Test/Execution state
   testResult: { success: boolean; output: string; details?: string } | null
   isExecuting: boolean
@@ -38,7 +38,7 @@ interface ToolConfigurationState {
   }>
   connectionStatus: ConnectionStatus
   validationErrors: Array<{ field: string; message: string }>
-  
+
   // API Configuration
   authenticatedApiConfig: {
     credentialId: string
@@ -78,7 +78,7 @@ interface ToolConfigurationState {
     timeout?: number
     storeInContext?: string
   }
-  
+
   // Tool-specific configs (lazy-loaded based on tool type)
   loopConfig: {
     filterChildren: string[]
@@ -238,27 +238,27 @@ interface ToolConfigurationState {
   }
   loopInputValues: Record<string, string>
   filterInputValues: Record<string, string>
-  
+
   // Actions
   setToolNodeId: (id: string | null) => void
   loadFromToolNode: (toolNode: ToolCanvasNode | null) => void
   reset: () => void
-  
+
   // Tool label
   setToolLabel: (label: string) => void
-  
+
   // Condition builder actions
   setConditionGroups: (groups: ConditionGroup[]) => void
   setSelectedConditionType: (type: ConditionType) => void
   setChildInputValues: (values: Record<string, string>) => void
   setAncestorInputValues: (values: Record<string, string>) => void
-  
+
   // Switch tool actions
   setSwitchSource: (source: SwitchSource) => void
   setSwitchAttributeName: (name: string) => void
   setSwitchCases: (cases: SwitchCase[]) => void
   setSwitchCaseInputs: (inputs: Record<string, string>) => void
-  
+
   // Test/Execution actions
   setTestResult: (result: { success: boolean; output: string; details?: string } | null) => void
   setIsExecuting: (executing: boolean) => void
@@ -283,12 +283,12 @@ interface ToolConfigurationState {
   }) => void
   setConnectionStatus: (status: ConnectionStatus) => void
   setValidationErrors: (errors: Array<{ field: string; message: string }>) => void
-  
+
   // API Configuration actions
   setAuthenticatedApiConfig: (config: ToolConfigurationState['authenticatedApiConfig']) => void
   setHttpConfig: (config: ToolConfigurationState['httpConfig']) => void
   setFetchApiConfig: (config: ToolConfigurationState['fetchApiConfig']) => void
-  
+
   // Tool-specific config actions (using Partial for updates)
   setLoopConfig: (config: Partial<ToolConfigurationState['loopConfig']>) => void
   setMergeConfig: (config: Partial<ToolConfigurationState['mergeConfig']>) => void
@@ -317,14 +317,14 @@ interface ToolConfigurationState {
   setBatchConfig: (config: Partial<ToolConfigurationState['batchConfig']>) => void
   setLoopInputValues: (values: Record<string, string>) => void
   setFilterInputValues: (values: Record<string, string>) => void
-  
+
   // Helper to convert store state to toolNode config
   getToolNodeConfig: (toolType: string) => Record<string, unknown>
 }
 
-const initialState: Omit<ToolConfigurationState, 
-  | 'setToolNodeId' 
-  | 'loadFromToolNode' 
+const initialState: Omit<ToolConfigurationState,
+  | 'setToolNodeId'
+  | 'loadFromToolNode'
   | 'reset'
   | 'setToolLabel'
   | 'setConditionGroups'
@@ -515,17 +515,17 @@ const initialState: Omit<ToolConfigurationState,
 
 export const useToolConfigurationStore = create<ToolConfigurationState>((set, get) => ({
   ...initialState,
-  
+
   setToolNodeId: (id) => set({ toolNodeId: id }),
-  
+
   loadFromToolNode: (toolNode) => {
     if (!toolNode) {
       set({ ...initialState, toolNodeId: null })
       return
     }
-    
+
     const config = toolNode.config || {}
-    
+
     // Load condition groups (support migration from old format)
     let conditionGroups: ConditionGroup[] = []
     if (config.conditionGroups) {
@@ -540,15 +540,15 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
         }]
       }
     }
-    
+
     // Load switch config
     const switchSource = config.switchSource as SwitchSource || 'attribute'
     const switchAttributeName = config.switchAttributeName as string || ''
     const switchCases = config.switchCases as SwitchCase[] || []
-    
+
     // Load tool-specific configs based on tool type
     const toolType = toolNode.type
-    
+
     set({
       toolNodeId: toolNode.id,
       toolLabel: toolNode.label || '',
@@ -556,7 +556,7 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
       switchSource,
       switchAttributeName,
       switchCases,
-      
+
       // Load tool-specific configs conditionally
       ...(toolType === 'tool:loop' && {
         loopConfig: {
@@ -811,24 +811,24 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
       })
     })
   },
-  
+
   reset: () => set({ ...initialState }),
-  
+
   // Tool label
   setToolLabel: (label) => set({ toolLabel: label }),
-  
+
   // Condition builder
   setConditionGroups: (groups) => set({ conditionGroups: groups }),
   setSelectedConditionType: (type) => set({ selectedConditionType: type }),
   setChildInputValues: (values) => set({ childInputValues: values }),
   setAncestorInputValues: (values) => set({ ancestorInputValues: values }),
-  
+
   // Switch tool
   setSwitchSource: (source) => set({ switchSource: source }),
   setSwitchAttributeName: (name) => set({ switchAttributeName: name }),
   setSwitchCases: (cases) => set({ switchCases: cases }),
   setSwitchCaseInputs: (inputs) => set({ switchCaseInputs: inputs }),
-  
+
   // Test/Execution
   setTestResult: (result) => set({ testResult: result }),
   setIsExecuting: (executing) => set({ isExecuting: executing }),
@@ -841,12 +841,12 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
   })),
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   setValidationErrors: (errors) => set({ validationErrors: errors }),
-  
+
   // API Configuration
   setAuthenticatedApiConfig: (config) => set({ authenticatedApiConfig: config }),
   setHttpConfig: (config) => set({ httpConfig: config }),
   setFetchApiConfig: (config) => set({ fetchApiConfig: config }),
-  
+
   // Tool-specific configs (using Partial for updates)
   setLoopConfig: (config) => set((state) => ({
     loopConfig: { ...state.loopConfig, ...config }
@@ -925,12 +925,12 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
   })),
   setLoopInputValues: (values) => set({ loopInputValues: values }),
   setFilterInputValues: (values) => set({ filterInputValues: values }),
-  
+
   // Helper function to convert store state to toolNode config format
   getToolNodeConfig: (toolType: string): Record<string, unknown> => {
     const state = get()
     const config: Record<string, unknown> = {}
-    
+
     // Common configs
     if (state.conditionGroups.length > 0) {
       config.conditionGroups = state.conditionGroups
@@ -940,7 +940,7 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
       config.switchAttributeName = state.switchAttributeName
       config.switchCases = state.switchCases
     }
-    
+
     // Tool-specific configs
     switch (toolType) {
       case 'tool:loop':
@@ -1089,7 +1089,7 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
         if (state.executedApiResponse) config.executedResponse = state.executedApiResponse
         break
     }
-    
+
     // Authenticated API tools
     if (['tool:fetch-orcid', 'tool:fetch-geonames', 'tool:fetch-europeana', 'tool:fetch-getty'].includes(toolType)) {
       if (state.authenticatedApiConfig.credentialId) config.credentialId = state.authenticatedApiConfig.credentialId
@@ -1099,7 +1099,7 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
       if (state.authenticatedApiConfig.timeout !== undefined) config.timeout = state.authenticatedApiConfig.timeout
       if (state.authenticatedApiConfig.storeInContext) config.storeInContext = state.authenticatedApiConfig.storeInContext
     }
-    
+
     // HTTP tool
     if (toolType === 'tool:http') {
       config.method = state.httpConfig.method
@@ -1121,7 +1121,7 @@ export const useToolConfigurationStore = create<ToolConfigurationState>((set, ge
       if (state.httpConfig.timeout !== undefined) config.timeout = state.httpConfig.timeout
       if (state.httpConfig.storeInContext) config.storeInContext = state.httpConfig.storeInContext
     }
-    
+
     return config
   }
 }))
@@ -1134,7 +1134,7 @@ export const syncToolConfigurationToNode = (
 ) => {
   const store = useToolConfigurationStore.getState()
   const config = store.getToolNodeConfig(toolType)
-  
+
   updateToolNode(toolNodeId, {
     label: store.toolLabel,
     config

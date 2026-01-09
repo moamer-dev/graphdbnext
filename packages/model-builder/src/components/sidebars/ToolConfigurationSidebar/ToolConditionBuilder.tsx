@@ -56,7 +56,7 @@ export function ToolConditionBuilder({
   const handleRemoveCondition = conditionBuilder.handleRemoveCondition
   const handleRemoveGroup = conditionBuilder.handleRemoveGroup
   const handleUpdateGroup = conditionBuilder.handleUpdateGroup
-  
+
   const getState = useToolConfigurationStore.getState
 
   const getConditionInputs = (condition: Condition, groupId: string, conditionIndex: number) => {
@@ -544,7 +544,7 @@ export function ToolConditionBuilder({
                     {getConditionInputs(condition, group.id, conditionIndex)}
                   </div>
                 ))}
-                
+
                 <div className="pt-2">
                   <Button
                     variant="outline"
