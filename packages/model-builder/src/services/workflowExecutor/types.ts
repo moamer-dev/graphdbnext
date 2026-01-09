@@ -44,11 +44,14 @@ export interface ExecutionContext {
     to: GraphJsonNode | null
     type: string
     properties: Record<string, unknown>
+    targetId?: string
+    targetElement?: Element
   }>
   skipped?: boolean
   skipMainNode?: boolean
   skipChildren?: boolean
   skipChildrenTags?: string[]
   apiData?: Record<string, unknown>
+  findRelationship(fromLabel: string, toLabel: string): Relationship | undefined
 }
 

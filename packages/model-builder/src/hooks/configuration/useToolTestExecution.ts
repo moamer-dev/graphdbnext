@@ -22,7 +22,10 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
       return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
     }
     case 'HasNoChildren': {
-      if (!condition.values || condition.values.length === 0) return false
+      // If no specific children specified, check if it has NO children at all (is leaf)
+      if (!condition.values || condition.values.length === 0) {
+        return element.children.length === 0
+      }
       const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
       const notPresent = condition.values.map(v => !childNames.includes(v.toLowerCase().trim()))
       const operator = condition.internalOperator || 'AND'
@@ -79,29 +82,29 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
 
 function evaluateConditionGroup(group: ConditionGroup, element: TestElementData): boolean {
   if (group.conditions.length === 0) return true
-  
+
   const results = group.conditions.map(c => evaluateCondition(c, element))
   const operator = group.internalOperator || 'AND'
-  
+
   return operator === 'AND' ? results.every(r => r) : results.some(r => r)
 }
 
 function evaluateAllGroups(groups: ConditionGroup[], element: TestElementData): boolean {
   if (groups.length === 0) return true
-  
+
   let finalResult = evaluateConditionGroup(groups[0], element)
-  
+
   for (let i = 1; i < groups.length; i++) {
     const groupResult = evaluateConditionGroup(groups[i], element)
     const operator = groups[i].operator || 'AND'
-    
+
     if (operator === 'AND') {
       finalResult = finalResult && groupResult
     } else {
       finalResult = finalResult || groupResult
     }
   }
-  
+
   return finalResult
 }
 
@@ -132,21 +135,28 @@ export function useToolTestExecution(toolNodeId: string | null) {
     xmlChildren?: Array<{ name: string }>,
     xmlAncestors?: string[],
     xmlParent?: string,
-    xmlTypeStats?: { attributesCount?: number }
+    xmlTypeStats?: { attributesCount?: number },
+    xmlAttributes?: Record<string, string>
   ): TestElementData => {
     const tagName = attachedNode?.label || attachedNode?.type || 'test-element'
     const children = (xmlChildren || []).map(child => ({ tagName: child.name }))
-    
-    const attributes: Record<string, string> = {}
+
+    // Start with provided XML attributes (real data)
+    const attributes: Record<string, string> = xmlAttributes ? { ...xmlAttributes } : {}
+
+    // Fill in missing properties from schema with mock values if not present
     if (attachedNode?.properties && attachedNode.properties.length > 0) {
       attachedNode.properties.forEach((prop) => {
-        attributes[prop.key] = `test-${prop.key}`
+        if (!(prop.key in attributes)) {
+          attributes[prop.key] = `test-${prop.key}`
+        }
       })
-    } else if (xmlTypeStats?.attributesCount && xmlTypeStats.attributesCount > 0) {
+    } else if (Object.keys(attributes).length === 0 && xmlTypeStats?.attributesCount && xmlTypeStats.attributesCount > 0) {
+      // Fallback only if no attributes exist at all
       attributes['id'] = 'test-id'
       attributes['xml:id'] = 'test-xml-id'
     }
-    
+
     return {
       tagName,
       children,
@@ -170,18 +180,18 @@ export function useToolTestExecution(toolNodeId: string | null) {
     }
 
     setIsExecuting(true)
-    
+
     setTimeout(() => {
       try {
         const testElement = createTestElementFn()
         const result = evaluateAllGroups(conditionGroups, testElement)
-        
+
         const groupResults = conditionGroups.map((group, idx) => {
           const groupResult = evaluateConditionGroup(group, testElement)
           const conditionDetails = group.conditions.map(c => {
             const condResult = evaluateCondition(c, testElement)
             let details = `  - ${c.type}: ${condResult ? '✓' : '✗'}`
-            
+
             if (c.type === 'HasParent') {
               const actualParent = testElement.parent?.tagName || 'none'
               const expectedParent = c.value || '(not set)'
@@ -210,7 +220,7 @@ export function useToolTestExecution(toolNodeId: string | null) {
               const minStr = c.min !== undefined ? c.min.toString() : 'none'
               const maxStr = c.max !== undefined ? c.max.toString() : 'none'
               const inRange = (c.min === undefined || actualCount >= c.min) &&
-                             (c.max === undefined || actualCount <= c.max)
+                (c.max === undefined || actualCount <= c.max)
               details += ` (count: ${actualCount}, min: ${minStr}, max: ${maxStr}, in range: ${inRange})`
             } else if (c.type === 'HasTextContent') {
               const hasText = testElement.textContent.trim().length > 0
@@ -233,16 +243,16 @@ export function useToolTestExecution(toolNodeId: string | null) {
           }).join('\n')
           return `Group ${idx + 1} (${groupResult ? 'PASS' : 'FAIL'}):\n${conditionDetails}`
         }).join('\n\n')
-        
+
         setTestResult({
           success: result,
           output: result ? 'true' : 'false',
           details: `Element: ${testElement.tagName}\n` +
-                   `Children: ${testElement.children.map(c => c.tagName).join(', ') || 'none'}\n` +
-                   `Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
-                   `Parent: ${testElement.parent?.tagName || 'none'}\n` +
-                   `Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n\n` +
-                   `Evaluation Breakdown:\n${groupResults}`
+            `Children: ${testElement.children.map(c => c.tagName).join(', ') || 'none'}\n` +
+            `Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
+            `Parent: ${testElement.parent?.tagName || 'none'}\n` +
+            `Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n\n` +
+            `Evaluation Breakdown:\n${groupResults}`
         })
       } catch (error) {
         setTestResult({

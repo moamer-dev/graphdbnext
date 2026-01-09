@@ -38,6 +38,17 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
   const elementToGraph = new Map<Element, GraphJsonNode>()
   const nodeIdCounter = { value: 0 }
   const relIdCounter = { value: 0 }
+  const deferredRelationships: Array<{
+    from: GraphJsonNode
+    to: GraphJsonNode | null // If null, implies looking up by ID in properties? No, wait.
+    // We need enough info to resolve target.
+    // Usually deferred means "Target Element is known, but GraphNode not yet created" OR "Target ID string known".
+    // ReferenceActions needs to store lookup info.
+    type: string
+    properties: Record<string, unknown>
+    targetId?: string // Added for ID lookup
+    targetElement?: Element // Added for Element lookup
+  }> = []
 
   const labelToNodes = buildLabelMap(nodes)
   const nodeIdToNode = new Map(nodes.map(n => [n.id, n]))
@@ -106,8 +117,8 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
 
   const getApiResponseDataWrapper = createGetApiResponseData(toolNodes, actionNodes, actionEdges)
 
-  const applyTransformsWrapper = (text: string, transforms: Array<{ type: string; [key: string]: unknown }>): string => {
-    return applyTransforms(text, transforms as Array<{ type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'; [key: string]: unknown }>)
+  const applyTransformsWrapper = (text: string, transforms: Array<{ type: string;[key: string]: unknown }>): string => {
+    return applyTransforms(text, transforms as Array<{ type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex';[key: string]: unknown }>)
   }
 
   const walk = (element: Element, parentGraphNode: GraphJsonNode | null, depth: number = 0) => {
@@ -135,6 +146,22 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
       let elementSkipped = false
       let skipChildrenConfig: { skip: boolean; tags?: string[] } | null = null as { skip: boolean; tags?: string[] } | null
 
+      // Helper to find relationship type between parent and child based on labels
+      const findRelType = (fromLabel: string, toLabel: string): Relationship | undefined => {
+        // 1. Try to find explicit relationship between types
+        const match = relationships.find(r => {
+          const fromNode = nodeIdToNode.get(r.from)
+          const toNode = nodeIdToNode.get(r.to)
+          return fromNode && toNode &&
+            fromNode.label === fromLabel &&
+            toNode.label === toLabel
+        })
+        if (match) return match
+
+        // 2. Fallback to generic 'contains' only
+        return relationships.find(r => r.type === 'contains')
+      }
+
       matchedNodes.forEach((builderNode) => {
         if (elementSkipped) {
           return
@@ -146,8 +173,9 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
           currentGraphNode: null,
           builderNode,
           elementToGraph,
-          deferredRelationships: [],
-          skipped: false
+          deferredRelationships,
+          skipped: false,
+          findRelationship: findRelType
         }
 
         const attachedTools = toolNodesByTarget.get(builderNode.id) || []
@@ -156,7 +184,7 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
           const toolResult = executeTool(tool, ctx)
 
           const toolOutputEdges = toolEdgesBySource.get(tool.id) || []
-          
+
           toolOutputEdges.forEach(edge => {
             const outputPath = toolResult.outputPath || 'output'
             const matches = edge.sourceHandle === outputPath || (!edge.sourceHandle && outputPath === 'output')
@@ -266,12 +294,12 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                     getApiResponseData: (action) => getApiResponseDataWrapper(action, ctx),
                     evaluateTemplate,
                     applyTransforms: applyTransformsWrapper,
-                  findElementById,
-                  walk,
-                  labelToNodes,
-                  actionNodes
-                }
-                executeActionWithWalk(actionNode, actionCtx)
+                    findElementById,
+                    walk,
+                    labelToNodes,
+                    actionNodes
+                  }
+                  executeActionWithWalk(actionNode, actionCtx)
                   if (ctx.skipChildren !== undefined) {
                     if (skipChildrenConfig === null) {
                       skipChildrenConfig = {
@@ -305,12 +333,12 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                     getApiResponseData: (action) => getApiResponseDataWrapper(action, ctx),
                     evaluateTemplate,
                     applyTransforms: applyTransformsWrapper,
-                  findElementById,
-                  walk,
-                  labelToNodes,
-                  actionNodes
-                }
-                executeActionWithWalk(actionNode, actionCtx)
+                    findElementById,
+                    walk,
+                    labelToNodes,
+                    actionNodes
+                  }
+                  executeActionWithWalk(actionNode, actionCtx)
                   if (ctx.skipChildren !== undefined) {
                     if (skipChildrenConfig === null) {
                       skipChildrenConfig = {
@@ -401,27 +429,37 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
           createdForElement = graphNode
 
           if (parentGraphNode) {
-            const defaultRel = relationships.find(r => r.type === 'contains') || relationships[0]
-            if (defaultRel) {
-              const rel = createRelationshipWrapper(parentGraphNode, graphNode, defaultRel)
+            const relDef = findRelType(parentGraphNode.labels[0], graphNode.labels[0])
+            if (relDef) {
+              const rel = createRelationshipWrapper(parentGraphNode, graphNode, relDef)
               graphRels.push(rel)
             }
           }
         } else if (ctx.currentGraphNode) {
           createdForElement = ctx.currentGraphNode
         } else if (attachedTools.length > 0 && ctx.currentGraphNode === null && !ctx.skipped) {
-          const nodeId = nodeIdCounter.value++
-          const graphNode = createGraphNodeWrapper(builderNode, element, nodeId)
-          graphNodes.push(graphNode)
-          elementToGraph.set(element, graphNode)
-          ctx.currentGraphNode = graphNode
-          createdForElement = graphNode
+          // Check if a node was already created for this element (e.g., by an action in a sub-context)
+          const existingNode = elementToGraph.get(element)
 
-          if (parentGraphNode) {
-            const defaultRel = relationships.find(r => r.type === 'contains') || relationships[0]
-            if (defaultRel) {
-              const rel = createRelationshipWrapper(parentGraphNode, graphNode, defaultRel)
-              graphRels.push(rel)
+          if (existingNode && existingNode.labels.includes(builderNode.label)) {
+            // Reuse the existing node created by the action
+            createdForElement = existingNode
+            ctx.currentGraphNode = existingNode
+          } else {
+            // No node created by action, create one now
+            const nodeId = nodeIdCounter.value++
+            const graphNode = createGraphNodeWrapper(builderNode, element, nodeId)
+            graphNodes.push(graphNode)
+            elementToGraph.set(element, graphNode)
+            ctx.currentGraphNode = graphNode
+            createdForElement = graphNode
+
+            if (parentGraphNode) {
+              const relDef = findRelType(parentGraphNode.labels[0], graphNode.labels[0])
+              if (relDef) {
+                const rel = createRelationshipWrapper(parentGraphNode, graphNode, relDef)
+                graphRels.push(rel)
+              }
             }
           }
         }
@@ -449,7 +487,7 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
       }
 
       const children = element.childNodes ? Array.from(element.childNodes).filter((n: Node) => n.nodeType === 1) as Element[] : []
-      
+
       if (skipChildrenConfig !== null && skipChildrenConfig.skip) {
         const config = skipChildrenConfig
         if (config.tags && config.tags.length > 0) {
@@ -485,6 +523,30 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
   }
 
   walk(startElement, null, 0)
+
+  // Process deferred relationships
+  deferredRelationships.forEach(deferred => {
+    let targetNode: GraphJsonNode | undefined
+
+    if (deferred.targetElement) {
+      targetNode = elementToGraph.get(deferred.targetElement)
+    } else if (deferred.targetId) {
+      // Linear scan? Or build a map of IDs?
+      // elementToGraph has Element keys. We need ID -> Node.
+      // We can iterate graphNodes and check properties.
+      // Or rely on ID map if graphNodes have IDs?
+      // Assuming 'props.id' or 'props.xml:id' holds the ID.
+      targetNode = graphNodes.find(n =>
+        n.properties['xml:id'] === deferred.targetId ||
+        n.properties['id'] === deferred.targetId
+      )
+    }
+
+    if (targetNode) {
+      const rel = createRelationshipWrapper(deferred.from, targetNode, { type: deferred.type } as Relationship, deferred.properties)
+      graphRels.push(rel)
+    }
+  })
 
   return [...graphNodes, ...graphRels]
 }

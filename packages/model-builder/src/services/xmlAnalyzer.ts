@@ -937,6 +937,21 @@ export class XmlAnalyzer {
       })
       xmlMetadata.propertySemantics = propertySemantics
 
+      // Populate sample attributes for testing
+      const xmlAttributes: Record<string, string> = {}
+      if (elementType) {
+        elementType.attributes.forEach((attrName) => {
+          const sample = elementType.attributeAnalysis[attrName]?.sampleValues[0]
+          if (sample !== undefined && sample !== null) {
+            // Use the same property key mapping as the node properties
+            const mapped = attrMapping[attrName]
+            const propertyKey = mapped?.propertyKey || this.toCamelCase(attrName)
+            xmlAttributes[propertyKey] = String(sample)
+          }
+        })
+      }
+      xmlMetadata.xmlAttributes = xmlAttributes
+
       if (elementType) {
         xmlMetadata.xmlTypeStatistics = {
           count: elementType.count,

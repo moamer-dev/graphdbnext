@@ -187,6 +187,7 @@ export function ToolConfigurationSidebar({
   const xmlAncestors = xmlMetadata?.xmlAncestors as string[] | undefined
   const xmlParent = xmlMetadata?.xmlParent as string | undefined
   const xmlTypeStats = xmlMetadata?.xmlTypeStatistics as { attributesCount: number } | undefined
+  const xmlAttributes = xmlMetadata?.xmlAttributes as Record<string, string> | undefined
 
   // All configs are loaded via loadFromToolNode in the store above
 
@@ -268,7 +269,8 @@ export function ToolConfigurationSidebar({
     xmlChildren,
     xmlAncestors,
     xmlParent,
-    xmlTypeStats
+    xmlTypeStats,
+    xmlAttributes
   )
 
   const handleExecuteTest = () => {
@@ -1040,8 +1042,8 @@ export function ToolConfigurationSidebar({
 
               {testResult && (
                 <div className={`p-3 rounded border-2 ${testResult.success
-                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                    : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
+                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
+                  : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
                   }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {testResult.success ? (
@@ -1050,8 +1052,8 @@ export function ToolConfigurationSidebar({
                       <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                     )}
                     <span className={`text-xs font-semibold ${testResult.success
-                        ? 'text-green-700 dark:text-green-300'
-                        : 'text-red-700 dark:text-red-300'
+                      ? 'text-green-700 dark:text-green-300'
+                      : 'text-red-700 dark:text-red-300'
                       }`}>
                       {testResult.output}
                     </span>
@@ -1093,8 +1095,8 @@ export function ToolConfigurationSidebar({
 
               {testResult && (
                 <div className={`p-3 rounded border-2 ${testResult.success
-                    ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                    : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
+                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
+                  : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
                   }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {testResult.success ? (
@@ -1103,8 +1105,8 @@ export function ToolConfigurationSidebar({
                       <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                     )}
                     <span className={`text-xs font-semibold ${testResult.success
-                        ? 'text-green-700 dark:text-green-300'
-                        : 'text-red-700 dark:text-red-300'
+                      ? 'text-green-700 dark:text-green-300'
+                      : 'text-red-700 dark:text-red-300'
                       }`}>
                       {testResult.output}
                     </span>

@@ -4,7 +4,7 @@ import type { GraphJsonNode, GraphJsonRelationship } from '../types'
 
 export function executeCreateAnnotationAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   const annotationTypes = (action.config.annotationTypes as string[]) || []
-  
+
   annotationTypes.forEach(attrName => {
     const value = ctx.xmlElement.getAttribute(attrName)
     if (value && ctx.currentGraphNode) {
@@ -55,7 +55,29 @@ export function executeCreateReferenceAction(action: ActionCanvasNode, ctx: Acti
 }
 
 export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.builderNode || !ctx.currentGraphNode) return
+  if (!ctx.builderNode) return
+
+  // Ensure current node exists
+  if (!ctx.currentGraphNode) {
+    if (ctx.elementToGraph.has(ctx.xmlElement)) {
+      ctx.currentGraphNode = ctx.elementToGraph.get(ctx.xmlElement)!
+    } else {
+      const nodeId = ctx.nodeIdCounter.value++
+      const node = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
+      ctx.graphNodes.push(node)
+      ctx.elementToGraph.set(ctx.xmlElement, node)
+      ctx.currentGraphNode = node
+
+      // Create parent relationship if applicable
+      if (ctx.parentGraphNode) {
+        const relType = ctx.findRelationship(ctx.parentGraphNode.labels[0], node.labels[0])
+        if (relType) {
+          const rel = ctx.createRelationship(ctx.parentGraphNode, node, relType)
+          ctx.graphRels.push(rel)
+        }
+      }
+    }
+  }
 
   const annotationNodeLabel = (action.config.annotationNodeLabel as string) || 'Annotation'
   const targetAttributes = (action.config.targetAttributes as string[]) || []
@@ -66,31 +88,80 @@ export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx
   targetAttributes.forEach(attrName => {
     const attrValue = ctx.xmlElement.getAttribute(attrName)
     if (attrValue) {
-      const annotationNode: GraphJsonNode = {
-        id: ctx.nodeIdCounter.value++,
-        type: 'node',
-        labels: [annotationNodeLabel],
-        properties: {
-          type: attrName,
-          value: attrValue
-        }
-      }
-      ctx.graphNodes.push(annotationNode)
+      // Check if this is an ID reference (target)
+      if (attrValue.startsWith('#')) {
+        const cleanId = attrValue.replace(/^#/, '').split(' ')[0]
+        const targetElement = ctx.findElementById(ctx.doc, cleanId)
 
-      const relType = ctx.relationships.find(r => r.type === relationshipType)
-      if (relType) {
-        const rel = ctx.createRelationship(currentNode, annotationNode, relType)
-        ctx.graphRels.push(rel)
-      } else {
-        const rel: GraphJsonRelationship = {
-          id: ctx.relIdCounter.value++,
-          type: 'relationship',
-          label: relationshipType,
-          start: currentNode.id,
-          end: annotationNode.id,
-          properties: {}
+        // Try to find target node
+        let targetNode = targetElement ? ctx.elementToGraph.get(targetElement) : undefined
+
+        // If not found in map, maybe search by ID property? (For nodes created without Element, or forward refs)
+        if (!targetNode && cleanId) {
+          // We can't search graphNodes efficiently here, so we default to deferral if element not mapped yet.
         }
-        ctx.graphRels.push(rel)
+
+        const relationType = (action.config.relationshipType as string) || 'annotates'
+
+        // Prepare relationship type label
+        const relTypeLabel = ctx.relationships.find(r => r.type === relationType)?.type || relationType
+
+        if (targetNode) {
+          // Create relationship immediately
+          const relType = ctx.relationships.find(r => r.type === relationType)
+          if (relType) {
+            const rel = ctx.createRelationship(currentNode, targetNode, relType)
+            ctx.graphRels.push(rel)
+          } else {
+            const rel: GraphJsonRelationship = {
+              id: ctx.relIdCounter.value++,
+              type: 'relationship',
+              label: relationType,
+              start: currentNode.id,
+              end: targetNode.id,
+              properties: {}
+            }
+            ctx.graphRels.push(rel)
+          }
+        } else {
+          // Defer relationship
+          ctx.deferredRelationships.push({
+            from: currentNode,
+            to: null,
+            type: relTypeLabel,
+            properties: {},
+            targetId: cleanId,
+            targetElement: targetElement || undefined
+          })
+        }
+      } else {
+        // Literal Annotation (create new child node)
+        const annotationNode: GraphJsonNode = {
+          id: ctx.nodeIdCounter.value++,
+          type: 'node',
+          labels: [annotationNodeLabel],
+          properties: {
+            type: attrName,
+            value: attrValue
+          }
+        }
+        ctx.graphNodes.push(annotationNode)
+
+        const relType = ctx.relationships.find(r => r.type === relationshipType)
+        if (relType) {
+          const rel = ctx.createRelationship(currentNode, annotationNode, relType)
+          ctx.graphRels.push(rel)
+        } else {
+          const rel: GraphJsonRelationship = {
+            id: ctx.relIdCounter.value++,
+            type: 'relationship',
+            label: relationshipType,
+            start: currentNode.id,
+            end: annotationNode.id,
+            properties: {}
+          }
+          ctx.graphRels.push(rel)
+        }
       }
     }
   })
