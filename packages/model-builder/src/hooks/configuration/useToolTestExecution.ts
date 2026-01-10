@@ -10,6 +10,7 @@ export interface TestElementData {
   textContent: string
   parent?: { tagName: string } | null
   ancestors?: string[]
+  descendants?: string[]
 }
 
 function evaluateCondition(condition: Condition, element: TestElementData): boolean {
@@ -40,6 +41,26 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
       const notPresent = validValues.map(v => !childNames.includes(v.toLowerCase().trim()))
       const operator = condition.internalOperator || 'AND'
       return operator === 'AND' ? notPresent.every(n => n) : notPresent.some(n => n)
+    }
+    case 'HasDescendant': {
+      // Collect valid values
+      const validValues = [
+        ...(condition.values || []),
+        ...(condition.value ? [condition.value] : [])
+      ].filter(v => v && v.trim() !== '')
+
+      const descendants = element.descendants || []
+
+      // If no valid values, check if ANY descendant exists
+      if (validValues.length === 0) {
+        return descendants.length > 0
+      }
+
+      const matches = validValues.map(v =>
+        descendants.some(d => d.toLowerCase().trim() === v.toLowerCase().trim())
+      )
+      const operator = condition.internalOperator || 'OR'
+      return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
     }
     case 'HasAncestor': {
       // Collect valid values from both singular value and array values
@@ -157,7 +178,8 @@ export function useToolTestExecution(toolNodeId: string | null) {
     xmlAncestors?: string[],
     xmlParent?: string,
     xmlTypeStats?: { attributesCount?: number; hasTextContent?: boolean },
-    xmlAttributes?: Record<string, string>
+    xmlAttributes?: Record<string, string>,
+    xmlDescendants?: string[]
   ): TestElementData => {
     const tagName = attachedNode?.label || attachedNode?.type || 'test-element'
     const children = (xmlChildren || []).map(child => ({ tagName: child.name }))
@@ -188,7 +210,8 @@ export function useToolTestExecution(toolNodeId: string | null) {
       attributes,
       textContent: hasText ? 'Sample text content' : '',
       parent: xmlParent ? { tagName: xmlParent } : null,
-      ancestors: xmlAncestors || []
+      ancestors: xmlAncestors || [],
+      descendants: xmlDescendants || []
     }
 
   }, [])

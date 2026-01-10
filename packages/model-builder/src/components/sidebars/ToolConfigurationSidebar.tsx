@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
@@ -73,6 +73,7 @@ export type ConditionType =
   | 'HasNoChildren'
   | 'HasAncestor'
   | 'HasParent'
+  | 'HasDescendant'
   | 'HasAttribute'
   | 'HasTextContent'
   | 'ElementNameEquals'
@@ -258,16 +259,104 @@ export function ToolConfigurationSidebar({
         // Include inferred parent in ancestors list
         xmlAncestors: ancestors
       }
+
+      // Infer descendants recursively
+      const findChildren = (parentName: string) => {
+        return analysis.relationshipPatterns.filter(p =>
+          p.from === parentName &&
+          p.relationshipTypes.includes('contains') &&
+          p.to !== parentName
+        )
+      }
+
+      const descendants: string[] = []
+      const queue: string[] = [elementType.name]
+      const seenDescendants = new Set<string>()
+
+      while (queue.length > 0) {
+        const currentName = queue.shift()!
+        const childrenPatterns = findChildren(currentName)
+
+        childrenPatterns.forEach(pattern => {
+          if (!seenDescendants.has(pattern.to)) {
+            descendants.push(pattern.to)
+            seenDescendants.add(pattern.to)
+            queue.push(pattern.to)
+          }
+        })
+      }
+
+      // Add descendants to xmlMetadata locally (TS might complain if not typed, but it's any-ish usage downstream)
+      // Since xmlMetadata is defined locally in this effect, we can just extend it.
+      // However, we need to make sure the type definition supports it or we cast it.
+      ; (xmlMetadata as any).xmlDescendants = descendants
     }
   }
+
+  // Infer type and descendants for ANY node (manual or standard) if analysis is available
+  const elementName = (xmlMetadata?.sourceElement as string) || attachedNode?.label || attachedNode?.type
+
+  // Memoize descendant inference to avoid recalc
+  const inferredDescendants = useMemo(() => {
+
+    if (!analysis || !elementName) return []
+
+    // Normalize element name to lower case for matching
+    const normalizedElementName = elementName.toLowerCase()
+
+    // Find children relationships recursively (case insensitive)
+    const findChildren = (parentName: string) => {
+      const parentLower = parentName.toLowerCase()
+      return analysis.relationshipPatterns.filter(p =>
+        p.from.toLowerCase() === parentLower &&
+        p.relationshipTypes.includes('contains') &&
+        p.to.toLowerCase() !== parentLower
+      )
+    }
+
+    const results: string[] = []
+    const queue: string[] = [elementName] // Start with original casing, findChildren will normalize
+    // Use set with actual schema names to preserve casing for results
+    // But track seen by key to avoid duplicates
+    const seen = new Set<string>()
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      // Note: patterns will contain the actual schema casing in p.to
+      const patterns = findChildren(current)
+
+      patterns.forEach(p => {
+        const toLower = p.to.toLowerCase()
+        if (!seen.has(toLower)) {
+          seen.add(toLower)
+          results.push(p.to) // Push actual schema name
+          queue.push(p.to) // Queue actual schema name for next step (though findChildren handles lower)
+        }
+      })
+    }
+
+
+    return results.sort()
+  }, [analysis, elementName])
 
   const xmlChildren = xmlMetadata?.xmlChildren as Array<{ name: string; count: number }> | undefined
   const xmlAncestors = xmlMetadata?.xmlAncestors as string[] | undefined
   const xmlParent = xmlMetadata?.xmlParent as string | undefined
   const xmlTypeStats = xmlMetadata?.xmlTypeStatistics as { attributesCount: number } | undefined
   const xmlAttributes = xmlMetadata?.xmlAttributes as Record<string, string> | undefined
+  // Use existing xmlDescendants or fallback to inferred ones
+  const xmlDescendants = ((xmlMetadata as any)?.xmlDescendants as string[] | undefined) || inferredDescendants
 
-  // All configs are loaded via loadFromToolNode in the store above
+  // console.log('Final xmlDescendants passed to builder:', xmlDescendants)
+
+  // ... (rest of the file until createTestElement)
+
+  // Test execution - use hook's createTestElement and handleExecuteConditionTest
+
+
+  // ... (rest of logic)
+
+
 
   // API configs from store
   const authenticatedApiConfig = useToolConfigurationStore((state) => state.authenticatedApiConfig)
@@ -785,6 +874,7 @@ export function ToolConfigurationSidebar({
             xmlParent={xmlParent}
             xmlAncestors={xmlAncestors}
             xmlChildren={xmlChildren}
+            xmlDescendants={xmlDescendants}
           />
         )}
 

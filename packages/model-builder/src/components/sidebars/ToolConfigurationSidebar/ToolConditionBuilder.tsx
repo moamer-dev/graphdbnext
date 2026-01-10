@@ -35,13 +35,15 @@ interface ToolConditionBuilderProps {
   xmlParent?: string
   xmlAncestors?: string[]
   xmlChildren?: Array<{ name: string; count: number }>
+  xmlDescendants?: string[]
 }
 
 export function ToolConditionBuilder({
   conditionBuilder,
   xmlParent,
   xmlAncestors,
-  xmlChildren
+  xmlChildren,
+  xmlDescendants
 }: ToolConditionBuilderProps) {
   const conditionGroups = conditionBuilder.conditionGroups
   const selectedConditionType = conditionBuilder.selectedConditionType
@@ -63,10 +65,12 @@ export function ToolConditionBuilder({
     switch (condition.type) {
       case 'HasChildren':
       case 'HasNoChildren':
+      case 'HasDescendant':
+        const isDescendant = condition.type === 'HasDescendant'
         return (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs">Child Element Names</Label>
+              <Label className="text-xs">{isDescendant ? 'Descendant Names' : 'Child Element Names'}</Label>
               {condition.values && condition.values.length > 1 && (
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-muted-foreground">Internal logic:</span>
@@ -98,7 +102,7 @@ export function ToolConditionBuilder({
                     [`${groupId}-${conditionIndex}`]: e.target.value
                   })
                 }}
-                placeholder="Enter child element name"
+                placeholder={isDescendant ? "Enter descendant name" : "Enter child element name"}
                 className="h-8 text-xs flex-1"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -115,7 +119,7 @@ export function ToolConditionBuilder({
                   }
                 }}
               />
-              {xmlChildren && xmlChildren.length > 0 && (
+              {((isDescendant && xmlDescendants && xmlDescendants.length > 0) || (!isDescendant && xmlChildren && xmlChildren.length > 0)) && (
                 <Select
                   value=""
                   onValueChange={(value) => {
@@ -131,11 +135,13 @@ export function ToolConditionBuilder({
                     <SelectValue placeholder="Or select" />
                   </SelectTrigger>
                   <SelectContent>
-                    {xmlChildren.filter((child) => !condition.values?.includes(child.name)).map((child) => (
-                      <SelectItem key={child.name} value={child.name}>
-                        {child.name}
-                      </SelectItem>
-                    ))}
+                    {(isDescendant ? xmlDescendants! : xmlChildren!.map(c => c.name))
+                      .filter((name) => !condition.values?.includes(name))
+                      .map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               )}
@@ -164,7 +170,7 @@ export function ToolConditionBuilder({
                 </div>
                 {condition.values.length > 1 && (
                   <div className="text-[10px] text-muted-foreground px-1">
-                    Element must have: {condition.values.join(` ${condition.internalOperator || 'OR'} `)}
+                    Element must have {isDescendant ? 'descendant' : 'child'}: {condition.values.join(` ${condition.internalOperator || 'OR'} `)}
                   </div>
                 )}
               </div>
@@ -290,6 +296,21 @@ export function ToolConditionBuilder({
         )
 
       case 'HasParent':
+        // Determine potential parents to show in dropdown
+        // Current logic: inferred parent (via xmlParent) + potentially ancestors?
+        // But HasParent is strict (immediate parent).
+        // For manual nodes, we only have xmlParent.
+        // For real nodes, we might have multiple candidates if ambiguous? No, usually one.
+        // BUT user might want to choose from a list of *valid schema parents*?
+        // For now, let's use xmlParent + xmlAncestors as candidates (since any ancestor *could* be a parent in a different context, or user confusion).
+        // Actually, strictly speaking, only xmlParent is the *current* parent.
+        // But the condition is "does it have parent X?".
+        // If xmlParent is "Stanza", then selecting "Stanza" checks "Is parent Stanza?".
+        // Selecting "Structure" checks "Is parent Structure?".
+        // So we should list potential parents.
+        // For manual nodes, we only know "Stanza" is the likely parent.
+        const parentOptions = xmlAncestors ? [...new Set([xmlParent, ...xmlAncestors].filter(Boolean) as string[])] : (xmlParent ? [xmlParent] : [])
+
         return (
           <div className="space-y-2">
             <Label className="text-xs">Parent Element Name</Label>
@@ -298,14 +319,35 @@ export function ToolConditionBuilder({
                 Detected parent: {xmlParent}
               </div>
             )}
-            <Input
-              value={condition.value || ''}
-              onChange={(e) => {
-                handleUpdateCondition(groupId, conditionIndex, { value: e.target.value })
-              }}
-              placeholder={xmlParent ? `Default: ${xmlParent}` : 'Enter parent element name'}
-              className="h-8 text-xs"
-            />
+            <div className="flex gap-2">
+              <Input
+                value={condition.value || ''}
+                onChange={(e) => {
+                  handleUpdateCondition(groupId, conditionIndex, { value: e.target.value })
+                }}
+                placeholder={xmlParent ? `Default: ${xmlParent}` : 'Enter parent element name'}
+                className="h-8 text-xs flex-1"
+              />
+              {parentOptions.length > 0 && (
+                <Select
+                  value=""
+                  onValueChange={(value) => {
+                    handleUpdateCondition(groupId, conditionIndex, { value })
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs w-32">
+                    <SelectValue placeholder="Or select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parentOptions.map((opt) => (
+                      <SelectItem key={opt} value={opt}>
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         )
 
@@ -525,6 +567,7 @@ export function ToolConditionBuilder({
                           <SelectItem value="HasNoChildren">Has No Children</SelectItem>
                           <SelectItem value="HasAncestor">Has Ancestor</SelectItem>
                           <SelectItem value="HasParent">Has Parent</SelectItem>
+                          <SelectItem value="HasDescendant">Has Descendant</SelectItem>
                           <SelectItem value="HasAttribute">Has Attribute</SelectItem>
                           <SelectItem value="HasTextContent">Has Text Content</SelectItem>
                           <SelectItem value="ElementNameEquals">Element Name Equals</SelectItem>
