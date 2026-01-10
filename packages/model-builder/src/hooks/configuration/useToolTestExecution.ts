@@ -168,6 +168,11 @@ export function useToolTestExecution(toolNodeId: string | null) {
   const setConnectionStatus = useToolConfigurationStore((state) => state.setConnectionStatus)
   const validationErrors = useToolConfigurationStore((state) => state.validationErrors)
   const setValidationErrors = useToolConfigurationStore((state) => state.setValidationErrors)
+  // Switch configuration selectors
+  const switchSource = useToolConfigurationStore((state) => state.switchSource)
+  const switchAttributeName = useToolConfigurationStore((state) => state.switchAttributeName)
+  const switchCases = useToolConfigurationStore((state) => state.switchCases)
+  const switchCaseInputs = useToolConfigurationStore((state) => state.switchCaseInputs)
   const toolNode = useToolCanvasStore((state) => state.nodes.find(n => n.id === toolNodeId))
   const updateToolNode = useToolCanvasStore((state) => state.updateNode)
   const getState = useToolConfigurationStore.getState
@@ -224,11 +229,22 @@ export function useToolTestExecution(toolNodeId: string | null) {
   const handleExecuteConditionTest = useCallback((
     createTestElementFn: () => TestElementData
   ) => {
-    if (conditionGroups.length === 0) {
+    const isSwitchTool = toolNode?.type === 'tool:switch'
+
+    if (!isSwitchTool && conditionGroups.length === 0) {
       setTestResult({
         success: false,
         output: 'No conditions configured',
         details: 'Please add at least one condition group before testing.'
+      })
+      return
+    }
+
+    if (isSwitchTool && switchCases.length === 0) {
+      setTestResult({
+        success: false,
+        output: 'No cases configured',
+        details: 'Please add at least one case to the switch configuration.'
       })
       return
     }
@@ -238,91 +254,156 @@ export function useToolTestExecution(toolNodeId: string | null) {
     setTimeout(() => {
       try {
         const testElement = createTestElementFn()
-        const result = evaluateAllGroups(conditionGroups, testElement)
 
-        const groupResults = conditionGroups.map((group, idx) => {
-          const groupResult = evaluateConditionGroup(group, testElement)
-          const conditionDetails = group.conditions.map(c => {
-            const condResult = evaluateCondition(c, testElement)
-            let details = `  - ${c.type}: ${condResult ? '✓' : '✗'}`
+        if (isSwitchTool) {
+          // Switch Evaluation Logic
+          let matchValue: string = ''
+          let matchedCaseId: string | null = null
+          let matchedCaseLabel: string | null = null
 
-            if (c.type === 'HasParent') {
-              const actualParent = testElement.parent?.tagName || 'none'
-              const expectedParent = c.value || '(not set)'
-              details += ` (expected: "${expectedParent}", actual: "${actualParent}")`
-            } else if (c.type === 'HasAncestor') {
-              const actualAncestors = (testElement.ancestors || []).join(', ') || 'none'
-              const expectedAncestors = c.values?.join(', ') || c.value || '(not set)'
-              const operator = c.internalOperator || 'OR'
-              const ancestors = testElement.ancestors || []
-              const matches = c.values?.map(v =>
-                ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
-              ) || []
-              const hasAncestor = matches.length > 0 && (operator === 'AND' ? matches.every(m => m) : matches.some(m => m))
-              details += ` (expected: [${expectedAncestors}], ancestors: [${actualAncestors}], operator: ${operator}, found: ${hasAncestor})`
-            } else if (c.type === 'HasAttribute') {
-              const hasAttr = c.attributeName ? (c.attributeName in testElement.attributes) : false
-              const attrValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(no value)') : '(not set)'
-              details += ` (attribute: "${c.attributeName || '(not set)'}", found: ${hasAttr}, value: "${attrValue}")`
-            } else if (c.type === 'HasChildren' || c.type === 'HasNoChildren') {
-              const childNames = testElement.children.map(ch => ch.tagName).join(', ')
-              const expected = c.values?.join(', ') || '(not set)'
-              const operator = c.internalOperator || 'OR'
-              details += ` (expected: [${expected}], actual: [${childNames}], operator: ${operator})`
-            } else if (c.type === 'ChildCount') {
-              const actualCount = testElement.children.length
-              const minStr = c.min !== undefined ? c.min.toString() : 'none'
-              const maxStr = c.max !== undefined ? c.max.toString() : 'none'
-              const inRange = (c.min === undefined || actualCount >= c.min) &&
-                (c.max === undefined || actualCount <= c.max)
-              details += ` (count: ${actualCount}, min: ${minStr}, max: ${maxStr}, in range: ${inRange})`
-            } else if (c.type === 'HasTextContent') {
-              const hasText = testElement.textContent.trim().length > 0
-              const textLength = testElement.textContent.trim().length
-              details += ` (has text: ${hasText}, length: ${textLength})`
-            } else if (c.type === 'ElementNameEquals') {
-              const actualName = testElement.tagName
-              const expectedName = c.value || '(not set)'
-              const matches = actualName.toLowerCase() === expectedName.toLowerCase()
-              details += ` (expected: "${expectedName}", actual: "${actualName}", matches: ${matches})`
-            } else if (c.type === 'AttributeValueEquals') {
-              const actualValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(not found)') : '(attribute not set)'
-              const expectedValue = c.value || '(not set)'
-              const matches = c.attributeName && c.value
-                ? (testElement.attributes[c.attributeName] === c.value)
-                : false
-              details += ` (attribute: "${c.attributeName || '(not set)'}", expected: "${expectedValue}", actual: "${actualValue}", matches: ${matches})`
+          // Determine value to match on
+          if (switchSource === 'elementName') {
+            matchValue = testElement.tagName
+          } else if (switchSource === 'textContent') {
+            matchValue = testElement.textContent
+          } else if (switchSource === 'attribute') {
+            matchValue = testElement.attributes[switchAttributeName] || ''
+          }
+
+          // Find matching case
+          const matchedCase = switchCases.find(c => {
+            const expectedValue = switchCaseInputs[c.id] ?? c.value
+            return (expectedValue || '').toLowerCase().trim() === (matchValue || '').toLowerCase().trim()
+          })
+
+          if (matchedCase) {
+            matchedCaseId = matchedCase.id
+            matchedCaseLabel = matchedCase.label
+          } else {
+            // Check for default case? (Usually labeled 'default')
+            const defaultCase = switchCases.find(c => c.label.toLowerCase() === 'default')
+            if (defaultCase) {
+              matchedCaseId = defaultCase.id
+              matchedCaseLabel = defaultCase.label + ' (Fallback)'
             }
-            return details
-          }).join('\n')
-          return `Group ${idx + 1} (${groupResult ? 'PASS' : 'FAIL'}):\n${conditionDetails}`
-        }).join('\n\n')
+          }
 
-        const childrenSummary = testElement.children.length > 0
-          ? testElement.children.map(c => c.tagName).reduce((acc, curr) => {
-            acc[curr] = (acc[curr] || 0) + 1
-            return acc
-          }, {} as Record<string, number>)
-          : 'none'
+          const childrenSummary = testElement.children.length > 0
+            ? testElement.children.map(c => c.tagName).reduce((acc, curr) => {
+              acc[curr] = (acc[curr] || 0) + 1
+              return acc
+            }, {} as Record<string, number>)
+            : 'none'
 
-        const childrenStr = typeof childrenSummary === 'string'
-          ? childrenSummary
-          : Object.entries(childrenSummary).map(([tag, count]) => `${tag} (${count})`).join(', ')
+          const childrenStr = typeof childrenSummary === 'string'
+            ? childrenSummary
+            : Object.entries(childrenSummary).map(([tag, count]) => `${tag} (${count})`).join(', ')
 
-        setTestResult({
-          success: result,
-          output: result ? 'true' : 'false',
-          details: `Test Element Structure (Mock):\n` +
-            `  Tag: ${testElement.tagName}\n` +
-            `  Children: ${childrenStr}\n` +
-            `  Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
-            `  Parent: ${testElement.parent?.tagName || 'none'}\n` +
-            `  Ancestors: ${(testElement.ancestors || []).join(', ') || 'none'}\n` +
-            `  Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n` +
-            `----------------------------------------\n` +
-            `Condition Results:\n${groupResults}`
+          setTestResult({
+            success: !!matchedCaseId,
+            output: matchedCaseLabel ? `Matched: ${matchedCaseLabel}` : 'No Match',
+            details: `Test Element Structure (Mock):\n` +
+              `  Tag: ${testElement.tagName}\n` +
+              `  Children: ${childrenStr}\n` +
+              `  Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
+              `  Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n` +
+              `----------------------------------------\n` +
+              `Switch Evaluation:\n` +
+              `  Source: ${switchSource}\n` +
+              `  Attribute: ${switchSource === 'attribute' ? switchAttributeName : 'N/A'}\n` +
+              `  Value found: "${matchValue}"\n` +
+              `  Matched Case: ${matchedCaseLabel || 'None'}`
+          })
 
-        })
+        } else {
+          // IF/ELSE Evaluation Logic (Original)
+          const result = evaluateAllGroups(conditionGroups, testElement)
+
+          const groupResults = conditionGroups.map((group, idx) => {
+            const groupResult = evaluateConditionGroup(group, testElement)
+            const conditionDetails = group.conditions.map(c => {
+              const condResult = evaluateCondition(c, testElement)
+              let details = `  - ${c.type}: ${condResult ? '✓' : '✗'}`
+
+              if (c.type === 'HasParent') {
+                const actualParent = testElement.parent?.tagName || 'none'
+                const expectedParent = c.value || '(not set)'
+                details += ` (expected: "${expectedParent}", actual: "${actualParent}")`
+              } else if (c.type === 'HasAncestor') {
+                const actualAncestors = (testElement.ancestors || []).join(', ') || 'none'
+                const expectedAncestors = c.values?.join(', ') || c.value || '(not set)'
+                const operator = c.internalOperator || 'OR'
+                const ancestors = testElement.ancestors || []
+                const matches = c.values?.map(v =>
+                  ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
+                ) || []
+                const hasAncestor = matches.length > 0 && (operator === 'AND' ? matches.every(m => m) : matches.some(m => m))
+                details += ` (expected: [${expectedAncestors}], ancestors: [${actualAncestors}], operator: ${operator}, found: ${hasAncestor})`
+              } else if (c.type === 'HasAttribute') {
+                const hasAttr = c.attributeName ? (c.attributeName in testElement.attributes) : false
+                const attrValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(no value)') : '(not set)'
+                details += ` (attribute: "${c.attributeName || '(not set)'}", found: ${hasAttr}, value: "${attrValue}")`
+              } else if (c.type === 'HasChildren' || c.type === 'HasNoChildren') {
+                const childNames = testElement.children.map(ch => ch.tagName).join(', ')
+                const expected = c.values?.join(', ') || '(not set)'
+                const operator = c.internalOperator || 'OR'
+                details += ` (expected: [${expected}], actual: [${childNames}], operator: ${operator})`
+              } else if (c.type === 'ChildCount') {
+                const actualCount = testElement.children.length
+                const minStr = c.min !== undefined ? c.min.toString() : 'none'
+                const maxStr = c.max !== undefined ? c.max.toString() : 'none'
+                const inRange = (c.min === undefined || actualCount >= c.min) &&
+                  (c.max === undefined || actualCount <= c.max)
+                details += ` (count: ${actualCount}, min: ${minStr}, max: ${maxStr}, in range: ${inRange})`
+              } else if (c.type === 'HasTextContent') {
+                const hasText = testElement.textContent.trim().length > 0
+                const textLength = testElement.textContent.trim().length
+                details += ` (has text: ${hasText}, length: ${textLength})`
+              } else if (c.type === 'ElementNameEquals') {
+                const actualName = testElement.tagName
+                const expectedName = c.value || '(not set)'
+                const matches = actualName.toLowerCase() === expectedName.toLowerCase()
+                details += ` (expected: "${expectedName}", actual: "${actualName}", matches: ${matches})`
+              } else if (c.type === 'AttributeValueEquals') {
+                const actualValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(not found)') : '(attribute not set)'
+                const expectedValue = c.value || '(not set)'
+                const matches = c.attributeName && c.value
+                  ? (testElement.attributes[c.attributeName] === c.value)
+                  : false
+                details += ` (attribute: "${c.attributeName || '(not set)'}", expected: "${expectedValue}", actual: "${actualValue}", matches: ${matches})`
+              }
+              return details
+            }).join('\n')
+            return `Group ${idx + 1} (${groupResult ? 'PASS' : 'FAIL'}):\n${conditionDetails}`
+          }).join('\n\n')
+
+          const childrenSummary = testElement.children.length > 0
+            ? testElement.children.map(c => c.tagName).reduce((acc, curr) => {
+              acc[curr] = (acc[curr] || 0) + 1
+              return acc
+            }, {} as Record<string, number>)
+            : 'none'
+
+          const childrenStr = typeof childrenSummary === 'string'
+            ? childrenSummary
+            : Object.entries(childrenSummary).map(([tag, count]) => `${tag} (${count})`).join(', ')
+
+          setTestResult({
+            success: result,
+            output: result ? 'true' : 'false',
+            details: `Test Element Structure (Mock):\n` +
+              `  Tag: ${testElement.tagName}\n` +
+              `  Children: ${childrenStr}\n` +
+              `  Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
+              `  Parent: ${testElement.parent?.tagName || 'none'}\n` +
+              `  Ancestors: ${(testElement.ancestors || []).join(', ') || 'none'}\n` +
+              `  Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n` +
+              `----------------------------------------\n` +
+              `Condition Results:\n${groupResults}`
+
+          })
+        }
+
       } catch (error) {
         setTestResult({
           success: false,

@@ -54,17 +54,27 @@ export function ToolSwitchConfiguration({
       label: `Case ${switchCases.length + 1}`
     }
     const updated = [...switchCases, newCase]
+
+    // Sync to node outputs
+    const outputs = updated.map(c => ({ id: c.id, label: c.label }))
+
     onSwitchCasesChange(updated)
     onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated }
+      config: { ...toolNode?.config, switchCases: updated },
+      outputs
     })
   }
 
   const handleRemoveCase = (caseId: string) => {
     const updated = switchCases.filter(c => c.id !== caseId)
+
+    // Sync to node outputs
+    const outputs = updated.map(c => ({ id: c.id, label: c.label }))
+
     onSwitchCasesChange(updated)
     onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated }
+      config: { ...toolNode?.config, switchCases: updated },
+      outputs
     })
     const newState = { ...getState().switchCaseInputs }
     delete newState[caseId]
@@ -88,9 +98,14 @@ export function ToolSwitchConfiguration({
     const updated = switchCases.map(c =>
       c.id === caseId ? { ...c, label } : c
     )
+
+    // Sync to node outputs
+    const outputs = updated.map(c => ({ id: c.id, label: c.label }))
+
     onSwitchCasesChange(updated)
     onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated }
+      config: { ...toolNode?.config, switchCases: updated },
+      outputs
     })
   }
 

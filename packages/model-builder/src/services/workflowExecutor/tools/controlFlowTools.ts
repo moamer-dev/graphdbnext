@@ -116,19 +116,30 @@ export const executeIfTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execution
 export const executeSwitchTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const switchSource = (tool.config.switchSource as 'attribute' | 'elementName' | 'textContent') || 'attribute'
   const switchAttributeName = (tool.config.switchAttributeName as string) || ''
-  const switchCases = (tool.config.switchCases as Array<{ value: string; label: string }>) || []
+  const switchCases = (tool.config.switchCases as Array<{ id: string; value: string; label: string }>) || []
 
   let value = ''
   if (switchSource === 'attribute') {
     value = ctx.xmlElement.getAttribute(switchAttributeName) || ''
   } else if (switchSource === 'elementName') {
-    value = ctx.xmlElement.tagName.toLowerCase()
+    value = ctx.xmlElement.tagName
   } else if (switchSource === 'textContent') {
     value = (ctx.xmlElement.textContent || '').trim()
   }
 
-  const matchedCase = switchCases.find(c => c.value === value)
-  const outputPath = matchedCase?.label || 'default'
+  // Case-insensitive matching
+  const matchedCase = switchCases.find(c => (c.value || '').toLowerCase().trim() === (value || '').toLowerCase().trim())
+
+  let outputPath = 'default'
+  if (matchedCase) {
+    outputPath = matchedCase.id
+  } else {
+    // Fallback to default case if it exists
+    const defaultCase = switchCases.find(c => c.label.toLowerCase() === 'default')
+    if (defaultCase) {
+      outputPath = defaultCase.id
+    }
+  }
 
   return { result: value, outputPath }
 }

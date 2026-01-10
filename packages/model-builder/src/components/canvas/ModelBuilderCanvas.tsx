@@ -663,6 +663,12 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
     })
   }, [onEdgesChange, setEdges, toolNodes, actionNodes, actionEdges, deleteActionEdge])
 
+  // Sync ReactFlow nodes with store
+  // Crucial: Update local nodes state when store-derived nodes change (e.g. outputs added)
+  useEffect(() => {
+    setNodes(reactFlowNodes)
+  }, [reactFlowNodes, setNodes])
+
   // Handle ReactFlow node changes, but filter out removals (we handle those through store)
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     // ignore select changes to avoid loops; handle selection via explicit click handlers
