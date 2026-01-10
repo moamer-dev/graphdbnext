@@ -16,18 +16,18 @@ export interface ActionConfigurationState {
   actionNodeId: string | null
   actionLabel: string
   selectedGroupId: string
-  
+
   // Group config (for action:group type)
   groupLabel: string
   groupEnabled: boolean
-  
+
   // Test/Execution state
   testResult: { success: boolean; output: string; details?: string } | null
   isExecuting: boolean
   showApiResponseModal: boolean
   graphResult: Array<Record<string, unknown>> | null
   showGraphModal: boolean
-  
+
   // Action-specific configs
   createNodeConfig: {
     labels: string[]
@@ -144,11 +144,8 @@ export interface ActionConfigurationState {
     }>
   }
   createAnnotationNodesConfig: {
-    annotationNodeLabel: string
-    annotationTypes: string[]
-    targetAttributes: string[]
+    referenceAttribute: string
     relationshipType: string
-    parentRelationship: string
   }
   createReferenceChainConfig: {
     referenceAttribute: string
@@ -207,7 +204,7 @@ export interface ActionConfigurationState {
     filterByTag: string[]
     recursive: boolean
   }
-  
+
   // Actions (setters)
   setActionNodeId: (id: string | null) => void
   setActionLabel: (label: string) => void
@@ -219,7 +216,7 @@ export interface ActionConfigurationState {
   setShowApiResponseModal: (show: boolean) => void
   setGraphResult: (result: Array<Record<string, unknown>> | null) => void
   setShowGraphModal: (show: boolean) => void
-  
+
   // Config setters
   setCreateNodeConfig: (config: Partial<ActionConfigurationState['createNodeConfig']>) => void
   setCreateRelationshipConfig: (config: Partial<ActionConfigurationState['createRelationshipConfig']>) => void
@@ -248,7 +245,7 @@ export interface ActionConfigurationState {
   setCreateNodeWithFilteredChildrenConfig: (config: Partial<ActionConfigurationState['createNodeWithFilteredChildrenConfig']>) => void
   setNormalizeAndDeduplicateConfig: (config: Partial<ActionConfigurationState['normalizeAndDeduplicateConfig']>) => void
   setCreateHierarchicalNodesConfig: (config: Partial<ActionConfigurationState['createHierarchicalNodesConfig']>) => void
-  
+
   // Helper functions
   loadFromActionNode: (actionNode: ActionCanvasNode | null) => void
   getActionNodeConfig: (actionType: string) => Record<string, unknown>
@@ -410,11 +407,8 @@ const initialState: Omit<ActionConfigurationState, keyof {
     attributeMappings: []
   },
   createAnnotationNodesConfig: {
-    annotationNodeLabel: 'Annotation',
-    annotationTypes: [],
-    targetAttributes: [],
-    relationshipType: 'annotatedBy',
-    parentRelationship: 'contains'
+    referenceAttribute: '',
+    relationshipType: 'annotatedBy'
   },
   createReferenceChainConfig: {
     referenceAttribute: 'corresp',
@@ -467,7 +461,7 @@ const initialState: Omit<ActionConfigurationState, keyof {
 
 export const useActionConfigurationStore = create<ActionConfigurationState>((set, get) => ({
   ...initialState,
-  
+
   setActionNodeId: (id) => set({ actionNodeId: id }),
   setActionLabel: (label) => set({ actionLabel: label }),
   setSelectedGroupId: (groupId) => set({ selectedGroupId: groupId }),
@@ -478,7 +472,7 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
   setShowApiResponseModal: (show) => set({ showApiResponseModal: show }),
   setGraphResult: (result) => set({ graphResult: result }),
   setShowGraphModal: (show) => set({ showGraphModal: show }),
-  
+
   setCreateNodeConfig: (config) => set((state) => ({ createNodeConfig: { ...state.createNodeConfig, ...config } })),
   setCreateRelationshipConfig: (config) => set((state) => ({ createRelationshipConfig: { ...state.createRelationshipConfig, ...config } })),
   setSetPropertyConfig: (config) => set((state) => ({ setPropertyConfig: { ...state.setPropertyConfig, ...config } })),
@@ -506,21 +500,21 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
   setCreateNodeWithFilteredChildrenConfig: (config) => set((state) => ({ createNodeWithFilteredChildrenConfig: { ...state.createNodeWithFilteredChildrenConfig, ...config } })),
   setNormalizeAndDeduplicateConfig: (config) => set((state) => ({ normalizeAndDeduplicateConfig: { ...state.normalizeAndDeduplicateConfig, ...config } })),
   setCreateHierarchicalNodesConfig: (config) => set((state) => ({ createHierarchicalNodesConfig: { ...state.createHierarchicalNodesConfig, ...config } })),
-  
+
   loadFromActionNode: (actionNode) => {
     if (!actionNode) {
       set({ ...initialState })
       return
     }
-    
+
     const state = get()
-    
+
     // Set basic info
     set({
       actionNodeId: actionNode.id,
       actionLabel: actionNode.label || ''
     })
-    
+
     // Load group config if it's a group
     if (actionNode.type === 'action:group' || actionNode.isGroup) {
       set({
@@ -528,10 +522,10 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         groupEnabled: actionNode.enabled !== false
       })
     }
-    
+
     // Load action-specific configs based on type
     const config = actionNode.config || {}
-    
+
     switch (actionNode.type) {
       case 'action:create-node':
         set({
@@ -744,11 +738,8 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
       case 'action:create-annotation-nodes':
         set({
           createAnnotationNodesConfig: {
-            annotationNodeLabel: (config.annotationNodeLabel as string) || state.createAnnotationNodesConfig.annotationNodeLabel,
-            annotationTypes: (config.annotationTypes as string[]) || state.createAnnotationNodesConfig.annotationTypes,
-            targetAttributes: (config.targetAttributes as string[]) || state.createAnnotationNodesConfig.targetAttributes,
-            relationshipType: (config.relationshipType as string) || state.createAnnotationNodesConfig.relationshipType,
-            parentRelationship: (config.parentRelationship as string) || state.createAnnotationNodesConfig.parentRelationship
+            referenceAttribute: (config.referenceAttribute as string) || state.createAnnotationNodesConfig.referenceAttribute,
+            relationshipType: (config.relationshipType as string) || state.createAnnotationNodesConfig.relationshipType
           }
         })
         break
@@ -839,11 +830,11 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         break
     }
   },
-  
+
   getActionNodeConfig: (actionType) => {
     const state = get()
     const config: Record<string, unknown> = {}
-    
+
     switch (actionType) {
       case 'action:create-node':
         config.labels = state.createNodeConfig.labels
@@ -950,11 +941,8 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         config.attributeMappings = state.extractAndNormalizeAttributesConfig.attributeMappings
         break
       case 'action:create-annotation-nodes':
-        config.annotationNodeLabel = state.createAnnotationNodesConfig.annotationNodeLabel
-        config.annotationTypes = state.createAnnotationNodesConfig.annotationTypes
-        config.targetAttributes = state.createAnnotationNodesConfig.targetAttributes
+        config.referenceAttribute = state.createAnnotationNodesConfig.referenceAttribute
         config.relationshipType = state.createAnnotationNodesConfig.relationshipType
-        config.parentRelationship = state.createAnnotationNodesConfig.parentRelationship
         break
       case 'action:create-reference-chain':
         config.referenceAttribute = state.createReferenceChainConfig.referenceAttribute
@@ -1004,7 +992,7 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         config.recursive = state.createHierarchicalNodesConfig.recursive
         break
     }
-    
+
     return config
   }
 }))
@@ -1016,7 +1004,7 @@ export const syncActionConfigurationToNode = (
   updateActionNode: (id: string, updates: Partial<ActionCanvasNode>) => void
 ) => {
   if (!actionNodeId) return
-  
+
   const config = useActionConfigurationStore.getState().getActionNodeConfig(actionType)
   updateActionNode(actionNodeId, { config })
 }
