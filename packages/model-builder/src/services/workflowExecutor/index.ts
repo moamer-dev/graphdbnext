@@ -12,7 +12,7 @@ import { evaluateTemplate } from './helpers/templateHelpers'
 import { applyTransforms } from './helpers/transformHelpers'
 import { findElementById, buildLabelMap, findElementByTag } from './helpers/elementHelpers'
 
-export function executeWorkflow(options: ExecuteOptions): GraphJson {
+export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJson> {
   const {
     xmlContent,
     schemaJson,
@@ -121,7 +121,7 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
     return applyTransforms(text, transforms as Array<{ type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex';[key: string]: unknown }>)
   }
 
-  const walk = (element: Element, parentGraphNode: GraphJsonNode | null, depth: number = 0) => {
+  const walk = async (element: Element, parentGraphNode: GraphJsonNode | null, depth: number = 0) => {
     try {
       if (depth > 10000) {
         return
@@ -136,9 +136,9 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
 
       if (matchedNodes.length === 0 && tag !== 'root') {
         const children = element.childNodes ? Array.from(element.childNodes).filter((n: Node) => n.nodeType === 1) as Element[] : []
-        children.forEach((child) => {
-          walk(child as Element, parentGraphNode, depth + 1)
-        })
+        for (const child of children) {
+          await walk(child as Element, parentGraphNode, depth + 1)
+        }
         return
       }
 
@@ -162,7 +162,7 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
         return relationships.find(r => r.type === 'contains')
       }
 
-      matchedNodes.forEach((builderNode) => {
+      for (const builderNode of matchedNodes) {
         if (elementSkipped) {
           return
         }
@@ -178,14 +178,14 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
           findRelationship: findRelType
         }
 
-        const processToolRecursive = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
-          const toolResult = executeTool(tool, ctx)
+        const processToolRecursive = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+          const toolResult = await executeTool(tool, ctx)
 
           const toolOutputEdges = toolEdgesBySource.get(tool.id) || []
           const actionOutputEdges = actionEdgesBySource.get(tool.id) || []
           const allOutputEdges = [...toolOutputEdges, ...actionOutputEdges]
 
-          allOutputEdges.forEach(edge => {
+          for (const edge of allOutputEdges) {
             const outputPath = toolResult.outputPath || 'output'
             const matches = edge.sourceHandle === outputPath || (!edge.sourceHandle && outputPath === 'output')
 
@@ -235,16 +235,16 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
               // Handle Tool Targets (Recursive)
               const nextTool = toolNodes.find(t => t.id === edge.target)
               if (nextTool) {
-                processToolRecursive(nextTool, ctx)
+                await processToolRecursive(nextTool, ctx)
               }
             }
-          })
+          }
         }
 
         const attachedTools = toolNodesByTarget.get(builderNode.id) || []
-        attachedTools.forEach(tool => {
-          processToolRecursive(tool, ctx)
-        })
+        for (const tool of attachedTools) {
+          await processToolRecursive(tool, ctx)
+        }
 
         if (ctx.skipMainNode !== undefined || ctx.skipChildren !== undefined) {
           if (ctx.skipMainNode) {
@@ -351,7 +351,7 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
             }
           }
         }
-      })
+      }
 
       if (elementSkipped) {
         if (elementToGraph.has(element)) {
@@ -379,19 +379,19 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
       if (skipChildrenConfig !== null && skipChildrenConfig.skip) {
         const config = skipChildrenConfig
         if (config.tags && config.tags.length > 0) {
-          children.forEach((child) => {
+          for (const child of children) {
             const childTag = child.tagName ? child.tagName.toLowerCase() : ''
             if (!config.tags!.includes(childTag)) {
-              walk(child as Element, createdForElement || parentGraphNode, depth + 1)
+              await walk(child as Element, createdForElement || parentGraphNode, depth + 1)
             }
-          })
+          }
         } else {
           return
         }
       } else {
-        children.forEach((child) => {
-          walk(child as Element, createdForElement || parentGraphNode, depth + 1)
-        })
+        for (const child of children) {
+          await walk(child as Element, createdForElement || parentGraphNode, depth + 1)
+        }
       }
     } catch (error) {
       throw error
@@ -410,7 +410,7 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
     }
   }
 
-  walk(startElement, null, 0)
+  await walk(startElement, null, 0)
 
   // Process deferred relationships
   deferredRelationships.forEach(deferred => {

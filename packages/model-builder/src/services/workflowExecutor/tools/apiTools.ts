@@ -3,7 +3,7 @@ import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 import { fetchFromApi, extractIdFromElement, type ApiProvider } from '../../apiClient'
 
-export const executeFetchApiTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const provider = (tool.config.apiProvider as ApiProvider) || 'wikidata'
   const idSource = (tool.config.idSource as 'attribute' | 'textContent' | 'xpath') || 'attribute'
   const idAttribute = tool.config.idAttribute as string | undefined
@@ -15,7 +15,7 @@ export const executeFetchApiTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Exe
   const storeInContext = (tool.config.storeInContext as string) || provider
 
   const id = extractIdFromElement(ctx.xmlElement, idSource, idAttribute, idXpath)
-  
+
   if (!id) {
     console.warn(`[Fetch API Tool] No ID found for provider ${provider}`)
     return { result: false }
@@ -25,14 +25,16 @@ export const executeFetchApiTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Exe
     ctx.apiData = {}
   }
 
-  fetchFromApi({
-    provider: provider === 'custom' ? 'custom' : provider,
-    id,
-    apiKey,
-    customEndpoint,
-    customHeaders,
-    timeout
-  }).then(response => {
+  try {
+    const response = await fetchFromApi({
+      provider: provider === 'custom' ? 'custom' : provider,
+      id,
+      apiKey,
+      customEndpoint,
+      customHeaders,
+      timeout
+    })
+
     if (response.success && response.data) {
       if (ctx.apiData) {
         ctx.apiData[storeInContext] = response.data
@@ -40,21 +42,21 @@ export const executeFetchApiTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Exe
     } else {
       console.warn(`[Fetch API Tool] API request failed: ${response.error}`)
     }
-  }).catch(error => {
+  } catch (error) {
     console.error(`[Fetch API Tool] Error:`, error)
-  })
+  }
 
   return { result: true }
 }
 
-export const executeAuthenticatedApiTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeAuthenticatedApiTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const providerMap: Record<string, ApiProvider> = {
     'tool:fetch-orcid': 'orcid',
     'tool:fetch-geonames': 'geonames',
     'tool:fetch-europeana': 'europeana',
     'tool:fetch-getty': 'getty'
   }
-  
+
   const provider = providerMap[tool.type] || 'orcid'
   const idSource = (tool.config.idSource as 'attribute' | 'textContent' | 'xpath') || 'attribute'
   const idAttribute = tool.config.idAttribute as string | undefined
@@ -69,7 +71,7 @@ export const executeAuthenticatedApiTool: ToolExecutor = (tool: ToolCanvasNode, 
   }
 
   const id = extractIdFromElement(ctx.xmlElement, idSource, idAttribute, idXpath)
-  
+
   if (!id) {
     console.warn(`[Authenticated API Tool] No ID found for provider ${provider}`)
     return { result: false }
@@ -79,14 +81,16 @@ export const executeAuthenticatedApiTool: ToolExecutor = (tool: ToolCanvasNode, 
     ctx.apiData = {}
   }
 
-  fetchFromApi({
-    provider,
-    id,
-    credentialId,
-    timeout
-  }, () => {
-    return undefined
-  }).then(response => {
+  try {
+    const response = await fetchFromApi({
+      provider,
+      id,
+      credentialId,
+      timeout
+    }, () => {
+      return undefined
+    })
+
     if (response.success && response.data) {
       if (ctx.apiData) {
         ctx.apiData[storeInContext] = response.data
@@ -94,14 +98,14 @@ export const executeAuthenticatedApiTool: ToolExecutor = (tool: ToolCanvasNode, 
     } else {
       console.warn(`[Authenticated API Tool] API request failed: ${response.error}`)
     }
-  }).catch(error => {
+  } catch (error) {
     console.error(`[Authenticated API Tool] Error:`, error)
-  })
+  }
 
   return { result: true }
 }
 
-export const executeHttpTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const method = (tool.config.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH') || 'GET'
   const url = (tool.config.url as string) || ''
   const useCredential = (tool.config.useCredential as boolean) || false
@@ -181,12 +185,14 @@ export const executeHttpTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executi
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-  fetch(fullUrl, {
-    method,
-    headers: requestHeaders,
-    body: requestBody,
-    signal: controller.signal
-  }).then(async response => {
+  try {
+    const response = await fetch(fullUrl, {
+      method,
+      headers: requestHeaders,
+      body: requestBody,
+      signal: controller.signal
+    })
+
     clearTimeout(timeoutId)
     const responseText = await response.text()
     let responseData: unknown
@@ -205,7 +211,7 @@ export const executeHttpTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executi
         data: responseData
       }
     }
-  }).catch(error => {
+  } catch (error) {
     clearTimeout(timeoutId)
     console.error('[HTTP Tool] Error:', error)
     if (ctx.apiData) {
@@ -213,7 +219,7 @@ export const executeHttpTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executi
         error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
-  })
+  }
 
   return { result: true }
 }

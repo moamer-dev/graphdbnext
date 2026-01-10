@@ -1106,7 +1106,7 @@ function ModelBuilderContent({
       setExecutionProgress({ current: 20, total: 100, currentStep: 'Executing workflow...' })
 
       // Use new workflow executor V2 that handles tools and actions
-      const graph = executeWorkflow({
+      const graph = await executeWorkflow({
         xmlContent: text,
         schemaJson,
         nodes,

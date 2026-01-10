@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "type": "workflow-config",
+  "createdAt": "2026-01-10T15:22:39.984Z",
+  "relationships": [
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Surface",
+      "type": "CONTAINS_SURFACE"
+    },
+    {
+      "fromNodeLabel": "Text",
+      "toNodeLabel": "Structure",
+      "type": "HAS_STRUCTURE"
+    },
+    {
+      "fromNodeLabel": "Surface",
+      "toNodeLabel": "Column",
+      "type": "CONTAINS_COLUMN"
+    },
+    {
+      "fromNodeLabel": "Column",
+      "toNodeLabel": "Line",
+      "type": "CONTAINS_LINE"
+    },
+    {
+      "fromNodeLabel": "Line",
+      "toNodeLabel": "Seg",
+      "type": "CONTAINS_SEG"
+    },
+    {
+      "fromNodeLabel": "Seg",
+      "toNodeLabel": "W",
+      "type": "CONTAINS_WORD"
+    },
+    {
+      "fromNodeLabel": "Structure",
+      "toNodeLabel": "Stanza",
+      "type": "CONTAINS_STANZA"
+    },
+    {
+      "fromNodeLabel": "Stanza",
+      "toNodeLabel": "Verse",
+      "type": "CONTAINS_VERSE"
+    },
+    {
+      "fromNodeLabel": "Verse",
+      "toNodeLabel": "W",
+      "type": "CONTAINS_WORD"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "W",
+      "type": "ANNOTATES_WORD"
+    },
+    {
+      "fromNodeLabel": "Note",
+      "toNodeLabel": "P",
+      "type": "CONTAINS_CONTENT"
+    }
+  ],
+  "tools": [
+    {
+      "type": "tool:switch",
+      "label": "Switch",
+      "targetNodeLabel": "W",
+      "config": {
+        "switchAttributeName": "lemma",
+        "switchCases": [
+          {
+            "id": "case_1768057215743_erx1",
+            "value": "test",
+            "label": "test"
+          },
+          {
+            "id": "case_1768057224818_rhy6",
+            "value": "hello",
+            "label": "hello"
+          }
+        ]
+      },
+      "position": {
+        "x": -225.57631584383427,
+        "y": -69.14894022699735
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "case_1768057215743_erx1",
+          "label": "test"
+        },
+        {
+          "id": "case_1768057224818_rhy6",
+          "label": "hello"
+        }
+      ]
+    }
+  ],
+  "toolEdges": [
+    {
+      "sourceNodeLabel": "W",
+      "targetToolLabel": "W::tool:switch",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "W::tool:switch",
+      "targetToolLabel": "If / Else",
+      "sourceHandle": "case_1768057224818_rhy6",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "W::tool:switch",
+      "targetToolLabel": "If / Else",
+      "sourceHandle": "case_1768057215743_erx1",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "If / Else",
+      "targetToolLabel": "Fetch API",
+      "sourceHandle": "true",
+      "targetHandle": "input-0"
+    }
+  ],
+  "actions": [
+    {
+      "type": "action:create-node-complete",
+      "label": "Create Node Complete",
+      "config": {
+        "nodeLabel": "Person",
+        "attributeMappings": [
+          {
+            "attributeName": "xml:id",
+            "propertyKey": "person_id",
+            "transforms": []
+          }
+        ],
+        "parentRelationship": "hasPerson"
+      },
+      "position": {
+        "x": 161.15016037561753,
+        "y": -4.395461743977535
+      }
+    },
+    {
+      "type": "action:create-node-complete",
+      "label": "Create Node Complete",
+      "config": {
+        "attributeMappings": [
+          {
+            "attributeName": "{{ $json.labels.ar.value }}",
+            "propertyKey": "name",
+            "transforms": []
+          }
+        ]
+      },
+      "position": {
+        "x": 260.8310815695866,
+        "y": -149.44398168648377
+      }
+    }
+  ],
+  "actionEdges": [
+    {
+      "sourceToolLabel": "If / Else",
+      "targetActionLabel": "Create Node Complete",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "Fetch API",
+      "targetActionLabel": "Create Node Complete",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    }
+  ]
+}

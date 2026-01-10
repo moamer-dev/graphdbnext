@@ -78,7 +78,7 @@ interface ActionConfigurationSidebarProps {
   className?: string
 }
 
-export function ActionConfigurationSidebar ({
+export function ActionConfigurationSidebar({
   actionNodeId,
   onClose,
   className
@@ -94,21 +94,21 @@ export function ActionConfigurationSidebar ({
   const relationships = useModelBuilderStore((state) => state.relationships)
   const rootNodeId = useModelBuilderStore((state) => state.rootNodeId)
   const xmlFileFromWizard = useXmlImportWizardStore((state) => state.selectedFile)
-  
+
   // Find connected API tool
   const connectedApiTool = useMemo(() => {
     if (!actionNodeId) return null
-    
+
     // Find edges where this action is the target
     const incomingEdges = actionEdges.filter(edge => edge.target === actionNodeId)
-    
+
     // Debug logging (can be removed later)
     if (incomingEdges.length > 0) {
       console.log('[ActionConfig] Found incoming edges:', incomingEdges)
       console.log('[ActionConfig] Action node ID:', actionNodeId)
       console.log('[ActionConfig] Available tool nodes:', toolNodes.map(t => ({ id: t.id, type: t.type })))
     }
-    
+
     for (const edge of incomingEdges) {
       // Check if source is an API tool
       const toolNode = toolNodes.find(t => t.id === edge.source)
@@ -129,51 +129,51 @@ export function ActionConfigurationSidebar ({
         console.log('[ActionConfig] Tool node not found for edge source:', edge.source)
       }
     }
-    
+
     return null
   }, [actionNodeId, actionEdges, toolNodes])
-  
+
   // Get API response from connected tool
   const apiResponse = useMemo(() => {
     if (!connectedApiTool) return null
     return (connectedApiTool.config?.executedResponse as unknown) || null
   }, [connectedApiTool])
-  
+
   const showApiResponseModal = useActionConfigurationStore((state) => state.showApiResponseModal)
   const setShowApiResponseModal = useActionConfigurationStore((state) => state.setShowApiResponseModal)
-  
+
   const actionLabel = useActionConfigurationStore((state) => state.actionLabel)
   const setActionLabel = useActionConfigurationStore((state) => state.setActionLabel)
   const loadFromActionNode = useActionConfigurationStore((state) => state.loadFromActionNode)
-  
+
   // Get all action groups and find which group this action belongs to
   const actionGroups = useMemo(() => {
-    return actionNodes.filter(an => 
-      (an.type === 'action:group' || an.isGroup === true) && 
+    return actionNodes.filter(an =>
+      (an.type === 'action:group' || an.isGroup === true) &&
       an.id !== actionNodeId // Exclude current action if it's a group
     )
   }, [actionNodes, actionNodeId])
-  
+
   const currentGroupId = useMemo(() => {
     if (!actionNodeId) return null
-    const group = actionNodes.find(an => 
+    const group = actionNodes.find(an =>
       (an.type === 'action:group' || an.isGroup === true) &&
       an.children?.includes(actionNodeId)
     )
     return group?.id || null
   }, [actionNodes, actionNodeId])
-  
+
   const selectedGroupId = useActionConfigurationStore((state) => state.selectedGroupId)
   const setSelectedGroupId = useActionConfigurationStore((state) => state.setSelectedGroupId)
-  
+
   useEffect(() => {
     setSelectedGroupId(currentGroupId || 'none')
   }, [currentGroupId, setSelectedGroupId])
-  
+
   // Handle moving action to group
   const handleMoveToGroup = (groupId: string) => {
     if (!actionNodeId || !actionNode) return
-    
+
     // If selecting "none", remove from current group
     if (groupId === 'none') {
       if (currentGroupId) {
@@ -188,19 +188,19 @@ export function ActionConfigurationSidebar ({
       setSelectedGroupId('none')
       return
     }
-    
+
     // Check if action is connected to any tools
-    const toolConnections = actionEdges.filter(edge => 
+    const toolConnections = actionEdges.filter(edge =>
       edge.target === actionNodeId && toolNodes.some(tool => tool.id === edge.source)
     )
-    
+
     // Delete tool connections before moving to group
     if (toolConnections.length > 0) {
       toolConnections.forEach(edge => {
         deleteActionEdge(edge.id)
       })
     }
-    
+
     // Remove from current group if in one
     if (currentGroupId && currentGroupId !== groupId) {
       const currentGroup = actionNodes.find(an => an.id === currentGroupId)
@@ -211,7 +211,7 @@ export function ActionConfigurationSidebar ({
         })
       }
     }
-    
+
     // Add to new group
     const targetGroup = actionNodes.find(an => an.id === groupId)
     if (targetGroup) {
@@ -223,10 +223,10 @@ export function ActionConfigurationSidebar ({
         })
       }
     }
-    
+
     setSelectedGroupId(groupId)
   }
-  
+
   const groupLabel = useActionConfigurationStore((state) => state.groupLabel)
   const setGroupLabel = useActionConfigurationStore((state) => state.setGroupLabel)
   const groupEnabled = useActionConfigurationStore((state) => state.groupEnabled)
@@ -307,7 +307,7 @@ export function ActionConfigurationSidebar ({
   const handleExecuteTest = async () => {
     // Get XML file from wizard store
     const xmlFileToUse = xmlFileFromWizard
-    
+
     if (!xmlFileToUse) {
       testExecution.setTestResult({
         success: false,
@@ -322,12 +322,12 @@ export function ActionConfigurationSidebar ({
     const executeWorkflow = async (): Promise<Array<Record<string, unknown>>> => {
       // Read XML content
       const xmlContent = await xmlFileToUse.text()
-      
+
       // Convert builder nodes/relationships to schema JSON
       const schemaJson = convertBuilderToSchemaJson(nodes, relationships)
-      
+
       // Execute workflow
-      const graph = executeWorkflowExecutor({
+      const graph = await executeWorkflowExecutor({
         xmlContent,
         schemaJson,
         nodes,
@@ -338,7 +338,7 @@ export function ActionConfigurationSidebar ({
         actionEdges,
         startNodeId: rootNodeId || undefined
       })
-      
+
       // Convert to record array for display
       return graph.map(item => ({ ...item } as Record<string, unknown>))
     }
@@ -387,7 +387,7 @@ export function ActionConfigurationSidebar ({
               )}
             </div>
             <div className="text-[10px] text-blue-600 dark:text-blue-400">
-              {apiResponse 
+              {apiResponse
                 ? 'You can use JSON fields from the API response in the action configuration below.'
                 : 'Execute the API tool to see the response data and use its fields in this action.'}
             </div>
@@ -556,20 +556,20 @@ export function ActionConfigurationSidebar ({
           />
         )}
 
-        {actionNode.type === 'action:create-node-with-attributes' && (          <ActionCreateNodeWithAttributesConfiguration
+        {actionNode.type === 'action:create-node-with-attributes' && (<ActionCreateNodeWithAttributesConfiguration
           actionNodeId={actionNodeId!}
-                                actionNode={actionNode}            
-                                createNodeWithAttributesConfig={createNodeWithAttributesConfig}            onCreateNodeWithAttributesConfigChange={setCreateNodeWithAttributesConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:create-node-complete' && (          <ActionCreateNodeCompleteConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            createNodeCompleteConfig={createNodeCompleteConfig}            onCreateNodeCompleteConfigChange={setCreateNodeCompleteConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:extract-and-normalize-attributes' && (          <ActionExtractAndNormalizeAttributesConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            extractAndNormalizeAttributesConfig={extractAndNormalizeAttributesConfig}            onExtractAndNormalizeAttributesConfigChange={setExtractAndNormalizeAttributesConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:create-annotation-nodes' && (          <ActionCreateAnnotationNodesConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            createAnnotationNodesConfig={createAnnotationNodesConfig}            onCreateAnnotationNodesConfigChange={setCreateAnnotationNodesConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:create-reference-chain' && (          <ActionCreateReferenceChainConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            createReferenceChainConfig={createReferenceChainConfig}            onCreateReferenceChainConfigChange={setCreateReferenceChainConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:merge-children-text' && (          <ActionMergeChildrenTextConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            mergeChildrenTextConfig={mergeChildrenTextConfig}            onMergeChildrenTextConfigChange={setMergeChildrenTextConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:create-conditional-node' && (          <ActionCreateConditionalNodeConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            createConditionalNodeConfig={createConditionalNodeConfig}            onCreateConditionalNodeConfigChange={setCreateConditionalNodeConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:extract-and-compute-property' && (          <ActionExtractAndComputePropertyConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            extractAndComputePropertyConfig={extractAndComputePropertyConfig}            onExtractAndComputePropertyConfigChange={setExtractAndComputePropertyConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:create-node-with-filtered-children' && (          <ActionCreateNodeWithFilteredChildrenConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            createNodeWithFilteredChildrenConfig={createNodeWithFilteredChildrenConfig}            onCreateNodeWithFilteredChildrenConfigChange={setCreateNodeWithFilteredChildrenConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:normalize-and-deduplicate' && (          <ActionNormalizeAndDeduplicateConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            normalizeAndDeduplicateConfig={normalizeAndDeduplicateConfig}            onNormalizeAndDeduplicateConfigChange={setNormalizeAndDeduplicateConfig}            onUpdateActionNode={updateActionNode}          />        )}
-        {actionNode.type === 'action:create-hierarchical-nodes' && (          <ActionCreateHierarchicalNodesConfiguration            actionNodeId={actionNodeId!}            actionNode={actionNode}            createHierarchicalNodesConfig={createHierarchicalNodesConfig}            onCreateHierarchicalNodesConfigChange={setCreateHierarchicalNodesConfig}            onUpdateActionNode={updateActionNode}          />        )}
+          actionNode={actionNode}
+          createNodeWithAttributesConfig={createNodeWithAttributesConfig} onCreateNodeWithAttributesConfigChange={setCreateNodeWithAttributesConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-node-complete' && (<ActionCreateNodeCompleteConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createNodeCompleteConfig={createNodeCompleteConfig} onCreateNodeCompleteConfigChange={setCreateNodeCompleteConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:extract-and-normalize-attributes' && (<ActionExtractAndNormalizeAttributesConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} extractAndNormalizeAttributesConfig={extractAndNormalizeAttributesConfig} onExtractAndNormalizeAttributesConfigChange={setExtractAndNormalizeAttributesConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-annotation-nodes' && (<ActionCreateAnnotationNodesConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createAnnotationNodesConfig={createAnnotationNodesConfig} onCreateAnnotationNodesConfigChange={setCreateAnnotationNodesConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-reference-chain' && (<ActionCreateReferenceChainConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createReferenceChainConfig={createReferenceChainConfig} onCreateReferenceChainConfigChange={setCreateReferenceChainConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:merge-children-text' && (<ActionMergeChildrenTextConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} mergeChildrenTextConfig={mergeChildrenTextConfig} onMergeChildrenTextConfigChange={setMergeChildrenTextConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-conditional-node' && (<ActionCreateConditionalNodeConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createConditionalNodeConfig={createConditionalNodeConfig} onCreateConditionalNodeConfigChange={setCreateConditionalNodeConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:extract-and-compute-property' && (<ActionExtractAndComputePropertyConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} extractAndComputePropertyConfig={extractAndComputePropertyConfig} onExtractAndComputePropertyConfigChange={setExtractAndComputePropertyConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-node-with-filtered-children' && (<ActionCreateNodeWithFilteredChildrenConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createNodeWithFilteredChildrenConfig={createNodeWithFilteredChildrenConfig} onCreateNodeWithFilteredChildrenConfigChange={setCreateNodeWithFilteredChildrenConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:normalize-and-deduplicate' && (<ActionNormalizeAndDeduplicateConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} normalizeAndDeduplicateConfig={normalizeAndDeduplicateConfig} onNormalizeAndDeduplicateConfigChange={setNormalizeAndDeduplicateConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-hierarchical-nodes' && (<ActionCreateHierarchicalNodesConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createHierarchicalNodesConfig={createHierarchicalNodesConfig} onCreateHierarchicalNodesConfigChange={setCreateHierarchicalNodesConfig} onUpdateActionNode={updateActionNode} />)}
         {/* Action Group Configuration */}
         {(actionNode?.type === 'action:group' || actionNode?.isGroup) && (
           <ActionGroupConfiguration
@@ -756,22 +756,20 @@ export function ActionConfigurationSidebar ({
             </div>
 
             {testResult && (
-              <div className={`p-3 rounded border-2 ${
-                testResult.success 
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
+              <div className={`p-3 rounded border-2 ${testResult.success
+                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
                   : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-              }`}>
+                }`}>
                 <div className="flex items-center gap-2 mb-2">
                   {testResult.success ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                   ) : (
                     <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   )}
-                  <span className={`text-xs font-semibold ${
-                    testResult.success 
-                      ? 'text-green-700 dark:text-green-300' 
+                  <span className={`text-xs font-semibold ${testResult.success
+                      ? 'text-green-700 dark:text-green-300'
                       : 'text-red-700 dark:text-red-300'
-                  }`}>
+                    }`}>
                     Result: {testResult.output.toUpperCase()}
                   </span>
                 </div>
@@ -785,7 +783,7 @@ export function ActionConfigurationSidebar ({
           </div>
         </div>
       </div>
-      
+
       {/* API Response Modal */}
       {apiResponse && (
         <ApiResponseModal
@@ -799,7 +797,7 @@ export function ActionConfigurationSidebar ({
           }}
         />
       )}
-      
+
       {/* Graph Result Modal */}
       {graphResult && (
         <GraphResultModal

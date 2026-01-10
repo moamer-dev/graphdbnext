@@ -2,7 +2,7 @@ import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
 import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 
-export const executeFilterTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeFilterTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const elementNames = (tool.config.elementNames as string[]) || []
   const currentTag = ctx.xmlElement.tagName.toLowerCase()
 
@@ -13,9 +13,9 @@ export const executeFilterTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execu
   return { result: true }
 }
 
-export const executeTransformTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeTransformTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const mappings = (tool.config.mappings as Array<{ source: string; target: string; defaultValue?: string }>) || []
-  
+
   if (ctx.currentGraphNode) {
     mappings.forEach(mapping => {
       const sourceValue = ctx.xmlElement.getAttribute(mapping.source) || mapping.defaultValue || ''
@@ -28,7 +28,7 @@ export const executeTransformTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Ex
   return { result: true }
 }
 
-export const executeMapTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeMapTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const mappings = (tool.config.mappings as Array<{
@@ -66,7 +66,7 @@ export const executeMapTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executio
   return { result: true }
 }
 
-export const executeReduceTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeReduceTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const operation = (tool.config.operation as 'concat' | 'sum' | 'join') || 'concat'
@@ -110,11 +110,11 @@ export const executeReduceTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execu
   return { result: true }
 }
 
-export const executeMergeTool: ToolExecutor = (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
+export const executeMergeTool: ToolExecutor = async (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
   return { result: true }
 }
 
-export const executeSplitTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeSplitTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const splitBy = (tool.config.splitBy as 'delimiter' | 'condition' | 'size') || 'delimiter'
   const delimiter = (tool.config.delimiter as string) || ' '
 

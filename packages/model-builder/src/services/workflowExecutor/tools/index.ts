@@ -63,10 +63,10 @@ const toolRegistry: Record<string, ToolExecutor> = {
   'tool:log': executeLogTool
 }
 
-export function executeTool(
+export async function executeTool(
   tool: ToolCanvasNode,
   ctx: ExecutionContext
-): { result: boolean | string; outputPath?: string } {
+): Promise<{ result: boolean | string; outputPath?: string }> {
   const executor = toolRegistry[tool.type]
   if (executor) {
     return executor(tool, ctx)

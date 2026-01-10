@@ -2,7 +2,7 @@ import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
 import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 
-export const executePartitionTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executePartitionTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const partitionBy = (tool.config.partitionBy as 'size' | 'condition') || 'size'
   const size = (tool.config.size as number) || 10
   const condition = (tool.config.condition as 'hasAttribute' | 'hasText') || 'hasAttribute'
@@ -41,7 +41,7 @@ export const executePartitionTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Ex
   return { result: true }
 }
 
-export const executeDistinctTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeDistinctTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const distinctBy = (tool.config.distinctBy as 'attribute' | 'textContent' | 'elementName') || 'attribute'
   const attributeName = (tool.config.attributeName as string) || ''
   const target = (tool.config.target as 'children' | 'self') || 'children'
@@ -71,7 +71,7 @@ export const executeDistinctTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Exe
   return { result: true }
 }
 
-export const executeWindowTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeWindowTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const windowSize = (tool.config.windowSize as number) || 3
@@ -96,7 +96,7 @@ export const executeWindowTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execu
   return { result: true }
 }
 
-export const executeJoinTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeJoinTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const joinWith = (tool.config.joinWith as 'siblings' | 'children' | 'parent') || 'siblings'
@@ -129,7 +129,7 @@ export const executeJoinTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executi
   return { result: true }
 }
 
-export const executeUnionTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeUnionTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const sources = (tool.config.sources as Array<{
@@ -157,7 +157,7 @@ export const executeUnionTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execut
   return { result: true }
 }
 
-export const executeIntersectTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeIntersectTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const sources = (tool.config.sources as Array<{
@@ -198,7 +198,7 @@ export const executeIntersectTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Ex
   return { result: true }
 }
 
-export const executeDiffTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeDiffTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const sourceA = (tool.config.sourceA as { type: 'children' | 'attribute', value: string }) || { type: 'children' as const, value: '' }
@@ -245,7 +245,7 @@ export const executeDiffTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executi
   return { result: true }
 }
 
-export const executeExistsTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeExistsTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const checkType = (tool.config.checkType as 'element' | 'attribute' | 'text') || 'element'
@@ -269,7 +269,7 @@ export const executeExistsTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execu
   return { result: true }
 }
 
-export const executeRangeTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeRangeTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const start = (tool.config.start as number) || 0
   const end = (tool.config.end as number) || 10
   const step = (tool.config.step as number) || 1
@@ -287,7 +287,7 @@ export const executeRangeTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execut
   return { result: true }
 }
 
-export const executeBatchTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeBatchTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const batchSize = (tool.config.batchSize as number) || 10
   const target = (tool.config.target as 'children' | 'self') || 'children'
 

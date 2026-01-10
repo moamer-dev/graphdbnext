@@ -2,7 +2,7 @@ import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
 import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 
-export const executeAggregateTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeAggregateTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const operation = (tool.config.operation as 'count' | 'sum' | 'avg' | 'min' | 'max') || 'count'
@@ -71,7 +71,7 @@ export const executeAggregateTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Ex
   return { result: true }
 }
 
-export const executeSortTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeSortTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const sortBy = (tool.config.sortBy as 'attribute' | 'textContent' | 'elementName') || 'attribute'
   const attributeName = (tool.config.attributeName as string) || ''
   const order = (tool.config.order as 'asc' | 'desc') || 'asc'
@@ -106,7 +106,7 @@ export const executeSortTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Executi
   return { result: true }
 }
 
-export const executeLimitTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeLimitTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const limit = (tool.config.limit as number) || 10
   const offset = (tool.config.offset as number) || 0
   const target = (tool.config.target as 'children' | 'self') || 'children'
@@ -119,7 +119,7 @@ export const executeLimitTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execut
   return { result: true }
 }
 
-export const executeCollectTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeCollectTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   if (!ctx.currentGraphNode) return { result: false }
 
   const targetProperty = (tool.config.targetProperty as string) || 'collected'
@@ -150,7 +150,7 @@ export const executeCollectTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Exec
   return { result: true }
 }
 
-export const executeGroupTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeGroupTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const groupBy = (tool.config.groupBy as 'attribute' | 'elementName' | 'textContent' | 'computed') || 'attribute'
   const groupKey = (tool.config.groupKey as string) || ''
   const computedExpression = (tool.config.computedExpression as string) || ''
@@ -171,15 +171,15 @@ export const executeGroupTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execut
   return { result: true, outputPath: groupValue || 'default' }
 }
 
-export const executeLookupTool: ToolExecutor = (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
+export const executeLookupTool: ToolExecutor = async (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
   return { result: true }
 }
 
-export const executeTraverseTool: ToolExecutor = (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
+export const executeTraverseTool: ToolExecutor = async (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
   return { result: true }
 }
 
-export const executeDelayTool: ToolExecutor = (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
+export const executeDelayTool: ToolExecutor = async (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
   return { result: true }
 }
 

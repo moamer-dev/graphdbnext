@@ -3,7 +3,7 @@ import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 import { getAncestors } from '../helpers/elementHelpers'
 
-export const executeIfTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeIfTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const conditionGroups = (tool.config.conditionGroups as Array<{
     conditions: Array<{
       type: string
@@ -113,7 +113,7 @@ export const executeIfTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execution
   return { result: finalResult, outputPath: finalResult ? 'true' : 'false' }
 }
 
-export const executeSwitchTool: ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+export const executeSwitchTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const switchSource = (tool.config.switchSource as 'attribute' | 'elementName' | 'textContent') || 'attribute'
   const switchAttributeName = (tool.config.switchAttributeName as string) || ''
   const switchCases = (tool.config.switchCases as Array<{ id: string; value: string; label: string }>) || []
@@ -144,7 +144,7 @@ export const executeSwitchTool: ToolExecutor = (tool: ToolCanvasNode, ctx: Execu
   return { result: value, outputPath }
 }
 
-export const executeLoopTool: ToolExecutor = (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
+export const executeLoopTool: ToolExecutor = async (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
   return { result: true }
 }
 
