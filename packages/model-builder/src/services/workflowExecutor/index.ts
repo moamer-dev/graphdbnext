@@ -211,6 +211,10 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                   actionNodes
                 }
                 executeActionWithWalk(actionNode, actionCtx)
+                if (actionCtx.skipped) ctx.skipped = true
+                if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
+                if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
+                if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
                 if (ctx.skipChildren !== undefined) {
                   if (skipChildrenConfig === null) {
                     skipChildrenConfig = {
@@ -255,6 +259,10 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                   actionNodes
                 }
                 executeActionWithWalk(actionNode, actionCtx)
+                if (actionCtx.skipped) ctx.skipped = true
+                if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
+                if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
+                if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
                 if (ctx.skipChildren !== undefined) {
                   if (skipChildrenConfig === null) {
                     skipChildrenConfig = {
@@ -300,6 +308,10 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                     actionNodes
                   }
                   executeActionWithWalk(actionNode, actionCtx)
+                  if (actionCtx.skipped) ctx.skipped = true
+                  if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
+                  if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
+                  if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
                   if (ctx.skipChildren !== undefined) {
                     if (skipChildrenConfig === null) {
                       skipChildrenConfig = {
@@ -339,6 +351,10 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                     actionNodes
                   }
                   executeActionWithWalk(actionNode, actionCtx)
+                  if (actionCtx.skipped) ctx.skipped = true
+                  if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
+                  if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
+                  if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
                   if (ctx.skipChildren !== undefined) {
                     if (skipChildrenConfig === null) {
                       skipChildrenConfig = {

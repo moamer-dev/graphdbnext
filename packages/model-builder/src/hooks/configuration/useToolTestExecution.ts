@@ -15,7 +15,9 @@ export interface TestElementData {
 function evaluateCondition(condition: Condition, element: TestElementData): boolean {
   switch (condition.type) {
     case 'HasChildren': {
-      if (!condition.values || condition.values.length === 0) return false
+      if (!condition.values || condition.values.length === 0) {
+        return element.children.length > 0
+      }
       const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
       const matches = condition.values.map(v => childNames.includes(v.toLowerCase().trim()))
       const operator = condition.internalOperator || 'OR'

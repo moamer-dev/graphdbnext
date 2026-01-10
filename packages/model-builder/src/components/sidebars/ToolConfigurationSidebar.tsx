@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
+import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import { useToolConditionBuilder } from '../../hooks'
 import { useToolTestExecution } from '../../hooks'
 import { Button } from '../ui/button'
@@ -182,7 +183,40 @@ export function ToolConfigurationSidebar({
     : null
 
   // Get XML metadata from the attached node
-  const xmlMetadata = attachedNode?.data as Record<string, unknown> | undefined
+  // Get XML metadata from the attached node or fallback to store analysis
+  const analysis = useXmlImportWizardStore((state) => state.analysis)
+
+  // Helper to find element type from analysis
+  const findElementType = (label: string | undefined) => {
+    if (!analysis || !label) return undefined
+    return analysis.elementTypes.find(et => et.name.toLowerCase() === label.toLowerCase())
+  }
+
+  // Use attached node data if available, otherwise try to reconstruct from analysis
+  let xmlMetadata = attachedNode?.data as Record<string, unknown> | undefined
+
+  if (!xmlMetadata && attachedNode && analysis) {
+    const elementType = findElementType(attachedNode.label) || findElementType(attachedNode.type)
+
+    if (elementType) {
+      xmlMetadata = {
+        sourceElement: elementType.name,
+        xmlNamespace: elementType.namespace,
+        xmlTypeStatistics: {
+          count: elementType.count,
+          attributesCount: elementType.attributes.length,
+          childrenCount: elementType.children.length,
+          hasTextContent: elementType.hasTextContent
+        },
+        xmlChildren: elementType.children.map(childName => ({
+          name: childName,
+          count: 0
+        })),
+        // We can't know parents/ancestors without the actual XML context, but we can verify children
+      }
+    }
+  }
+
   const xmlChildren = xmlMetadata?.xmlChildren as Array<{ name: string; count: number }> | undefined
   const xmlAncestors = xmlMetadata?.xmlAncestors as string[] | undefined
   const xmlParent = xmlMetadata?.xmlParent as string | undefined
