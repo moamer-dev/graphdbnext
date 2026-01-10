@@ -180,10 +180,54 @@ export function ToolConfigurationSidebar({
 
   const getState = useToolConfigurationStore.getState
 
-  // Get the main node this tool is attached to
-  const attachedNode = toolNode?.targetNodeId
-    ? nodes.find((n) => n.id === toolNode.targetNodeId)
-    : null
+  const toolCanvasEdges = useToolCanvasStore((state) => state.edges)
+
+  // Get the main node this tool is attached to by traversing upstream
+  const attachedNode = useMemo(() => {
+    if (!toolNodeId) return null
+
+    let currentId = toolNodeId
+    const visited = new Set<string>()
+
+    // Safety depth limit
+    let depth = 0
+    const MAX_DEPTH = 20
+
+    while (currentId && !visited.has(currentId) && depth < MAX_DEPTH) {
+      visited.add(currentId)
+      depth++
+
+      // 1. Check if current tool has direct reference
+      const currentTool = toolNodes.find(n => n.id === currentId)
+      if (currentTool?.targetNodeId) {
+        const directNode = nodes.find(n => n.id === currentTool.targetNodeId)
+        if (directNode) return directNode
+      }
+
+      // 2. Find incoming edge to this tool
+      const edge = toolCanvasEdges.find(e => e.target === currentId)
+      if (!edge) break
+
+      // 3. Check source of the edge
+      // Is it a tool? Use it for next iteration
+      const sourceTool = toolNodes.find(n => n.id === edge.source)
+      if (sourceTool) {
+        currentId = edge.source
+        continue
+      }
+
+      // Is it a schema node?
+      const sourceNode = nodes.find(n => n.id === edge.source)
+      if (sourceNode) {
+        return sourceNode
+      }
+
+      // If neither, stop
+      break
+    }
+
+    return null
+  }, [toolNodeId, toolNodes, toolCanvasEdges, nodes])
 
   // Get XML metadata from the attached node
   // Get XML metadata from the attached node or fallback to store analysis
@@ -507,15 +551,28 @@ export function ToolConfigurationSidebar({
       if (testIdInput.trim()) {
         // Use manually entered ID
         testId = testIdInput.trim()
-      } else if (attachedNode && xmlMetadata) {
-        // Try to extract ID from attached node's XML metadata
+      } else {
+        // Use createTestElement to get data from real sample or mock
+        const testElement = createTestElement()
+
         if (fetchApiConfig.idSource === 'attribute' && fetchApiConfig.idAttribute) {
-          const attrs = xmlMetadata.xmlAttributes as Record<string, string> | undefined
-          testId = attrs?.[fetchApiConfig.idAttribute] || null
+          testId = testElement.attributes[fetchApiConfig.idAttribute] || null
         } else if (fetchApiConfig.idSource === 'textContent') {
-          testId = (xmlMetadata.xmlTextContent as string | undefined)?.trim() || null
+          testId = testElement.textContent?.trim() || null
+        } else if (fetchApiConfig.idSource === 'xpath') {
+          // XPath not fully supported in simple test mode on mock objects, 
+          // but if we have real data we could try? 
+          // For now, prompt user or rely on element properties if matched.
+          // If the user selected an instance, we really should rely on the attribute extraction or specific property.
+          setTestResult({
+            success: false,
+            output: 'XPath Not Supported',
+            details: 'XPath ID source is not supported in test mode yet. Please enter an ID manually or use Attribute source.'
+          })
+          setConnectionStatus('error')
+          setIsExecuting(false)
+          return
         }
-        // XPath extraction not supported in test mode
       }
 
       if (!testId) {
