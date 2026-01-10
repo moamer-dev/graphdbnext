@@ -1,7 +1,7 @@
 {
   "version": 1,
   "type": "workflow-config",
-  "createdAt": "2026-01-10T15:22:39.984Z",
+  "createdAt": "2026-01-10T15:57:06.715Z",
   "relationships": [
     {
       "fromNodeLabel": "Text",
@@ -80,8 +80,8 @@
         ]
       },
       "position": {
-        "x": -225.57631584383427,
-        "y": -69.14894022699735
+        "x": -267.733291506838,
+        "y": -10.972313812052207
       },
       "inputs": 1,
       "outputs": [
@@ -138,8 +138,8 @@
         "parentRelationship": "hasPerson"
       },
       "position": {
-        "x": 161.15016037561753,
-        "y": -4.395461743977535
+        "x": 35.8159162788603,
+        "y": -120.02125528144659
       }
     },
     {
@@ -152,11 +152,13 @@
             "propertyKey": "name",
             "transforms": []
           }
-        ]
+        ],
+        "nodeLabel": "Person",
+        "parentRelationship": "hasPerson"
       },
       "position": {
-        "x": 260.8310815695866,
-        "y": -149.44398168648377
+        "x": 99.55593704200896,
+        "y": -229.635150729123
       }
     }
   ],

@@ -25,5 +25,8 @@
     <note xml:id="note-1" type="editorial" target="#word-1">
       <p>This is a note about word-1</p>
     </note>
+    <note xml:id="note-2" type="editorial" target="#word-2">
+      <p>This is a note about word-2</p>
+    </note>
   </text>
 </edxml>

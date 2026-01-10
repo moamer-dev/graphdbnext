@@ -55,7 +55,8 @@ export interface WorkflowConfigExport {
     enabled?: boolean
   }>
   actionEdges: Array<{
-    sourceToolLabel: string
+    sourceToolLabel?: string
+    sourceActionLabel?: string
     targetActionLabel: string
     sourceHandle?: string
     targetHandle?: string
@@ -119,7 +120,7 @@ export function exportWorkflowConfig(
       const sourceNode = nodes.find(n => n.id === edge.source)
       const targetTool = toolIdToNode.get(edge.target)
       const targetAction = actionIdToNode.get(edge.target)
-      
+
       // Check if source is a node (when connecting node to tool)
       if (sourceNode && edge.sourceHandle === 'tools') {
         // Source is a node, not a tool
@@ -146,10 +147,10 @@ export function exportWorkflowConfig(
         }
       } else if (sourceTool) {
         // Source is a tool
-        const sourceTargetNode = sourceTool.targetNodeId 
+        const sourceTargetNode = sourceTool.targetNodeId
           ? nodes.find(n => n.id === sourceTool.targetNodeId)
           : null
-        const toolLabel = sourceTargetNode 
+        const toolLabel = sourceTargetNode
           ? `${sourceTargetNode.label}::${sourceTool.type}`
           : sourceTool.label || ''
 
@@ -180,7 +181,7 @@ export function exportWorkflowConfig(
     actions: actionNodes
       .filter(action => {
         // Don't export child actions as separate actions - they should only exist in their parent group's children array
-        const isChild = actionNodes.some(group => 
+        const isChild = actionNodes.some(group =>
           group.isGroup && group.children && group.children.includes(action.id)
         )
         return !isChild
@@ -189,17 +190,17 @@ export function exportWorkflowConfig(
         // For action groups, export children as full action objects (not just labels) so they can be recreated
         const childrenActions = action.isGroup && action.children
           ? action.children.map(childId => {
-              const childAction = actionNodes.find(a => a.id === childId)
-              if (!childAction) return null
-              return {
-                type: childAction.type,
-                label: childAction.label,
-                config: childAction.config,
-                position: childAction.position || { x: 0, y: 0 }
-              }
-            }).filter((child): child is NonNullable<typeof child> => child !== null)
+            const childAction = actionNodes.find(a => a.id === childId)
+            if (!childAction) return null
+            return {
+              type: childAction.type,
+              label: childAction.label,
+              config: childAction.config,
+              position: childAction.position || { x: 0, y: 0 }
+            }
+          }).filter((child): child is NonNullable<typeof child> => child !== null)
           : undefined
-      
+
         return {
           type: action.type,
           label: action.label,
@@ -213,21 +214,31 @@ export function exportWorkflowConfig(
       }),
     actionEdges: actionEdges.map(edge => {
       const sourceTool = toolIdToNode.get(edge.source)
+      const sourceAction = actionIdToNode.get(edge.source)
       const targetAction = actionIdToNode.get(edge.target)
-      const sourceTargetNode = sourceTool?.targetNodeId
-        ? nodes.find(n => n.id === sourceTool.targetNodeId)
-        : null
-      const toolLabel = sourceTargetNode
-        ? `${sourceTargetNode.label}::${sourceTool?.type}`
-        : sourceTool?.label || ''
+
+      let sourceToolLabel = ''
+      let sourceActionLabel = ''
+
+      if (sourceTool) {
+        const sourceTargetNode = sourceTool.targetNodeId
+          ? nodes.find(n => n.id === sourceTool.targetNodeId)
+          : null
+        sourceToolLabel = sourceTargetNode
+          ? `${sourceTargetNode.label}::${sourceTool.type}`
+          : sourceTool.label || ''
+      } else if (sourceAction) {
+        sourceActionLabel = sourceAction.label
+      }
 
       return {
-        sourceToolLabel: toolLabel,
+        sourceToolLabel: sourceToolLabel || undefined,
+        sourceActionLabel: sourceActionLabel || undefined,
         targetActionLabel: targetAction?.label || '',
         sourceHandle: edge.sourceHandle,
         targetHandle: edge.targetHandle
       }
-    }).filter(edge => edge.sourceToolLabel && edge.targetActionLabel)
+    }).filter(edge => (edge.sourceToolLabel || edge.sourceActionLabel) && edge.targetActionLabel)
   }
 
   return JSON.stringify(config, null, 2)
@@ -246,7 +257,8 @@ export interface ImportedWorkflowConfig {
   }>
   actions: Array<Omit<ActionCanvasNode, 'id'> & { _childActions?: Array<Omit<ActionCanvasNode, 'id'>> }>
   actionEdges: Array<{
-    sourceToolLabel: string
+    sourceToolLabel?: string
+    sourceActionLabel?: string
     targetActionLabel: string
     sourceHandle?: string
     targetHandle?: string
@@ -350,7 +362,7 @@ export function importWorkflowConfig(
         children: action.children // Children are now full action objects, will be processed in second pass
       }
     })
-  
+
   // Second pass: create child actions and remap children IDs
   const actionsWithRemappedChildren = actions.map(action => {
     if (action.isGroup && action.children && Array.isArray(action.children) && action.children.length > 0) {
@@ -362,7 +374,7 @@ export function importWorkflowConfig(
         actionLabelToId.set(childAction.label, childId)
         return childId
       })
-      
+
       // Create child action objects to be added separately
       const childActions = action.children.map((childAction: any) => ({
         type: childAction.type as ActionCanvasNode['type'],
@@ -373,10 +385,10 @@ export function importWorkflowConfig(
         isExpanded: false,
         enabled: true
       }))
-      
-      // Store child actions for later addition (we'll add them after groups are created)
-      ;(action as any)._childActions = childActions
-      
+
+        // Store child actions for later addition (we'll add them after groups are created)
+        ; (action as any)._childActions = childActions
+
       return {
         ...action,
         children: remappedChildren
@@ -397,6 +409,7 @@ export function importWorkflowConfig(
   // Import action edges - return with labels for matching during import
   const actionEdges = config.actionEdges.map(edge => ({
     sourceToolLabel: edge.sourceToolLabel,
+    sourceActionLabel: edge.sourceActionLabel,
     targetActionLabel: edge.targetActionLabel,
     sourceHandle: edge.sourceHandle,
     targetHandle: edge.targetHandle

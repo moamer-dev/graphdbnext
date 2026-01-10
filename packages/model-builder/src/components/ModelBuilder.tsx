@@ -961,21 +961,39 @@ function ModelBuilderContent({
       const labelToUsedIndices = new Map<string, Set<number>>()
 
       imported.actionEdges.forEach((edge) => {
-        const sourceId = toolKeyToId.get(edge.sourceToolLabel)
+        let sourceId: string | undefined
+
+        if (edge.sourceToolLabel) {
+          sourceId = toolKeyToId.get(edge.sourceToolLabel)
+        } else if (edge.sourceActionLabel) {
+          // Find source action by label
+          const sourceActionIds = actionLabelToIds.get(edge.sourceActionLabel)
+          // Naive check: if we have sourceActionLabel, assume we can find it.
+          // Since we are iterating edges, actions should already be created.
+          // If there are multiple actions with the same label, it's tricky.
+          // But for now, let's take the first one or logic similar to target logic?
+          // Actually, actionLabelToIds maps label -> [id1, id2...]
+          // We don't have enough context to disambiguate identical action labels efficiently here without more complex logic.
+          // But usually actions have unique labels or sufficient context.
+          if (sourceActionIds && sourceActionIds.length > 0) {
+            sourceId = sourceActionIds[0] // Fallback to first
+          }
+        }
+
         if (!sourceId) {
-          console.warn('Action edge skipped - source tool not found:', edge.sourceToolLabel)
+          console.warn('Action edge skipped - source not found:', edge.sourceToolLabel || edge.sourceActionLabel)
           return
         }
 
-        // Find action by label - if multiple exist, use the one that matches this specific tool
+        // Find action by label - if multiple exist, use the one that matches this specific tool/action source
         const candidateIds = actionLabelToIds.get(edge.targetActionLabel) || []
         let targetId: string | undefined
 
         if (candidateIds.length === 1) {
           targetId = candidateIds[0]
         } else if (candidateIds.length > 1) {
-          // Multiple actions with same label - match by unique tool+label combination
-          const key = `${edge.sourceToolLabel}::${edge.targetActionLabel}`
+          // Multiple actions with same label - match by unique source+label combination
+          const key = `${edge.sourceToolLabel || edge.sourceActionLabel}::${edge.targetActionLabel}`
           let actionCandidateIndex = toolLabelToActionIndex.get(key)
 
           if (actionCandidateIndex === undefined) {

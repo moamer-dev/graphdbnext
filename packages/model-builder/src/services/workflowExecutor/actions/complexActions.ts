@@ -127,13 +127,23 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     let propertyKeyName: string
     let propertyValue: unknown = null
 
-    const isTemplateExpression = mapping.propertyKey && mapping.propertyKey.includes('{{ $json.')
+    // Check if Attribute Name is a template (Source Value)
+    const isAttributeTemplate = mapping.attributeName && mapping.attributeName.includes('{{')
+    // Check if Property Key is a template (Source Value - Legacy/Alternative)
+    const isPropertyTemplate = mapping.propertyKey && mapping.propertyKey.includes('{{ $json.')
 
-    if (isTemplateExpression && apiResponseData) {
+    if (isAttributeTemplate) {
+      // Case A: Attribute Name contains template -> Evaluate it as Value, use Property Key as Name
+      propertyValue = ctx.evaluateTemplate(mapping.attributeName, apiResponseData)
+      propertyKeyName = mapping.propertyKey || 'value'
+    } else if (isPropertyTemplate && apiResponseData) {
+      // Case B: Property Key contains template -> Evaluate it as Value, use Attribute Name as Name
+      // (This preserves existing behavior where users might have put the expression in the key field)
       propertyKeyName = mapping.attributeName || 'value'
       const evaluated = evaluateExpression(mapping.propertyKey, { json: apiResponseData })
       propertyValue = evaluated
     } else if (mapping.attributeName) {
+      // Case C: Standard XML Attribute Lookup
       propertyKeyName = mapping.propertyKey || mapping.attributeName
       let attrValue = ctx.xmlElement.getAttribute(mapping.attributeName)
       if (attrValue === null) {
@@ -141,6 +151,7 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
       }
       propertyValue = attrValue
     } else if (mapping.propertyKey) {
+      // Case D: Only Property Key provided -> Treat as XML Attribute (Edge case)
       propertyKeyName = mapping.propertyKey
       let attrValue = ctx.xmlElement.getAttribute(mapping.propertyKey)
       if (attrValue === null) {
