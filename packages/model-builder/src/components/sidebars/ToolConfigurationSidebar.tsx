@@ -199,6 +199,44 @@ export function ToolConfigurationSidebar({
     const elementType = findElementType(attachedNode.label) || findElementType(attachedNode.type)
 
     if (elementType) {
+      // Construct fallback attributes from schema analysis
+      const fallbackAttributes: Record<string, string> = {}
+      if (elementType.attributes && elementType.attributeAnalysis) {
+        elementType.attributes.forEach(attrName => {
+          const analysis = elementType.attributeAnalysis[attrName]
+          // Use sample value if available, otherwise just use the attribute name as value
+          if (analysis && analysis.sampleValues && analysis.sampleValues.length > 0) {
+            fallbackAttributes[attrName] = String(analysis.sampleValues[0])
+          } else {
+            fallbackAttributes[attrName] = `test-${attrName}`
+          }
+        })
+      }
+
+      // Infer parent from relationship patterns
+      // Look for a pattern where this element is the target of a 'contains' relationship
+      const findParent = (childName: string) => {
+        return analysis.relationshipPatterns.find(p =>
+          p.to === childName &&
+          p.relationshipTypes.includes('contains') &&
+          p.from !== childName
+        )
+      }
+
+      const parentPattern = findParent(elementType.name)
+
+      // Recursively find all ancestors
+      const ancestors: string[] = []
+      let currentParent = parentPattern?.from
+      const seen = new Set<string>()
+
+      while (currentParent && !seen.has(currentParent)) {
+        ancestors.push(currentParent)
+        seen.add(currentParent)
+        const nextPattern = findParent(currentParent)
+        currentParent = nextPattern?.from
+      }
+
       xmlMetadata = {
         sourceElement: elementType.name,
         xmlNamespace: elementType.namespace,
@@ -212,7 +250,13 @@ export function ToolConfigurationSidebar({
           name: childName,
           count: 0
         })),
-        // We can't know parents/ancestors without the actual XML context, but we can verify children
+        xmlAttributes: fallbackAttributes,
+        // We set a flag to indicate text content should be mocked if schema says so
+        hasTextContent: elementType.hasTextContent,
+        // Mock parent if found
+        xmlParent: parentPattern ? parentPattern.from : undefined,
+        // Include inferred parent in ancestors list
+        xmlAncestors: ancestors
       }
     }
   }

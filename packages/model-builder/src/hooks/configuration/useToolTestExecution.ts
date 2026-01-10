@@ -15,41 +15,60 @@ export interface TestElementData {
 function evaluateCondition(condition: Condition, element: TestElementData): boolean {
   switch (condition.type) {
     case 'HasChildren': {
-      if (!condition.values || condition.values.length === 0) {
+      const validValues = (condition.values || []).filter(v => v && v.trim() !== '')
+      if (validValues.length === 0) {
         return element.children.length > 0
       }
       const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
-      const matches = condition.values.map(v => childNames.includes(v.toLowerCase().trim()))
+      const matches = validValues.map(v => childNames.includes(v.toLowerCase().trim()))
       const operator = condition.internalOperator || 'OR'
       return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
     }
     case 'HasNoChildren': {
       // If no specific children specified, check if it has NO children at all (is leaf)
-      if (!condition.values || condition.values.length === 0) {
+      const validValues = (condition.values || []).filter(v => v && v.trim() !== '')
+      if (validValues.length === 0) {
         return element.children.length === 0
       }
       const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
-      const notPresent = condition.values.map(v => !childNames.includes(v.toLowerCase().trim()))
+      // Check if NONE of the specified children are present
+      const matches = validValues.map(v => childNames.includes(v.toLowerCase().trim()))
+      // If operator is AND, we want NONE of them to be present (so all must NOT be present)
+      // If operator is OR, we want AT LEAST ONE to NOT be present? No, usually HasNoChildren([A, B]) means "Does not have A AND Does not have B".
+      // But let's stick to the inverse logic.
+
+      const notPresent = validValues.map(v => !childNames.includes(v.toLowerCase().trim()))
       const operator = condition.internalOperator || 'AND'
       return operator === 'AND' ? notPresent.every(n => n) : notPresent.some(n => n)
     }
     case 'HasAncestor': {
-      if (!condition.values || condition.values.length === 0) {
-        if (condition.value) {
-          const ancestors = element.ancestors || []
-          return ancestors.some(a => a.toLowerCase().trim() === condition.value!.toLowerCase().trim())
-        }
-        return false
+      // Collect valid values from both singular value and array values
+      const validValues = [
+        ...(condition.values || []),
+        ...(condition.value ? [condition.value] : [])
+      ].filter(v => v && v.trim() !== '')
+
+      // If no valid values, check if ANY ancestor exists
+      if (validValues.length === 0) {
+        return (element.ancestors && element.ancestors.length > 0) || !!element.parent
       }
+
       const ancestors = element.ancestors || []
-      const matches = condition.values.map(v =>
+      // If we have a parent but it's not in ancestors list, add it for the check
+      if (element.parent && !ancestors.includes(element.parent.tagName)) {
+        ancestors.push(element.parent.tagName)
+      }
+
+      const matches = validValues.map(v =>
         ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
       )
       const operator = condition.internalOperator || 'OR'
       return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
     }
     case 'HasParent': {
-      if (!condition.value || !element.parent) return false
+      if (!element.parent) return false
+      // If no valid value specified, just check if parent exists (which we verified above)
+      if (!condition.value || condition.value.trim() === '') return true
       const parentTag = element.parent.tagName.toLowerCase().trim()
       const conditionValue = condition.value.toLowerCase().trim()
       return parentTag === conditionValue
@@ -137,13 +156,13 @@ export function useToolTestExecution(toolNodeId: string | null) {
     xmlChildren?: Array<{ name: string }>,
     xmlAncestors?: string[],
     xmlParent?: string,
-    xmlTypeStats?: { attributesCount?: number },
+    xmlTypeStats?: { attributesCount?: number; hasTextContent?: boolean },
     xmlAttributes?: Record<string, string>
   ): TestElementData => {
     const tagName = attachedNode?.label || attachedNode?.type || 'test-element'
     const children = (xmlChildren || []).map(child => ({ tagName: child.name }))
 
-    // Start with provided XML attributes (real data)
+    // Start with provided XML attributes (real or fallback from sidebar)
     const attributes: Record<string, string> = xmlAttributes ? { ...xmlAttributes } : {}
 
     // Fill in missing properties from schema with mock values if not present
@@ -154,19 +173,24 @@ export function useToolTestExecution(toolNodeId: string | null) {
         }
       })
     } else if (Object.keys(attributes).length === 0 && xmlTypeStats?.attributesCount && xmlTypeStats.attributesCount > 0) {
-      // Fallback only if no attributes exist at all
+      // Fallback only if no attributes exist at all and we didn't receive any fallback attributes
+      // (This block might be redundant if sidebar always provides fallback attributes, but kept for safety)
       attributes['id'] = 'test-id'
       attributes['xml:id'] = 'test-xml-id'
     }
+
+    // Determine text content based on stats
+    const hasText = xmlTypeStats?.hasTextContent !== false // Default to true if unknown, unless explicitly false
 
     return {
       tagName,
       children,
       attributes,
-      textContent: 'Sample text content',
+      textContent: hasText ? 'Sample text content' : '',
       parent: xmlParent ? { tagName: xmlParent } : null,
       ancestors: xmlAncestors || []
     }
+
   }, [])
 
   const handleExecuteConditionTest = useCallback((
@@ -253,6 +277,7 @@ export function useToolTestExecution(toolNodeId: string | null) {
             `Children: ${testElement.children.map(c => c.tagName).join(', ') || 'none'}\n` +
             `Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
             `Parent: ${testElement.parent?.tagName || 'none'}\n` +
+            `Ancestors: ${(testElement.ancestors || []).join(', ') || 'none'}\n` +
             `Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n\n` +
             `Evaluation Breakdown:\n${groupResults}`
         })
