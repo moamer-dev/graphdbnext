@@ -7,6 +7,7 @@ import type { Model } from '@/lib/resources/ModelResource'
 import { DEFAULT_AI_SETTINGS } from '@/lib/ai/ApiAISettingsStorage'
 import { SaveWorkflowDialog, WorkflowChangeConfirmDialog } from '@graphdb/model-builder'
 import { toast } from 'sonner'
+import { useDatabaseStore } from '@/app/dashboard/stores/databaseStore'
 
 export interface ModelBuilderAdapterProps {
   model: Model | null
@@ -937,6 +938,34 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
       setPendingWorkflowId(null)
     }
   }
+  // Handle pushing graph to database
+  const handlePushToDB = async (graph: Array<Record<string, unknown>>) => {
+    try {
+      const response = await fetch('/api/database/load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ graph })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(`Loaded ${data.nodesCreated} nodes and ${data.relationshipsCreated} relationships into the graph database`)
+
+        // Invalidate caches
+        const dbStore = useDatabaseStore.getState()
+        dbStore.checkStatus()
+        dbStore.invalidateNodeLabels()
+        dbStore.invalidateRelationshipTypes()
+        dbStore.invalidateNodeProperties()
+      } else {
+        toast.error(data.error || 'Failed to load graph')
+      }
+    } catch (error) {
+      console.error('Error pushing to DB:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to push to database')
+    }
+  }
 
   // Wait for AI settings to load before rendering
   if (aiSettings === null) {
@@ -956,6 +985,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
         currentWorkflowName={currentWorkflow?.name}
         availableWorkflows={existingWorkflows}
         onWorkflowChange={handleWorkflowChange}
+        onPushToDB={handlePushToDB}
       />
       <SaveWorkflowDialog
         open={saveWorkflowDialogOpen}

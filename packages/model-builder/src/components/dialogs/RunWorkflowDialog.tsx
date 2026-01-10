@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { PlayCircle, Loader2, ClipboardList, Download } from 'lucide-react'
+import { PlayCircle, Loader2, ClipboardList, Download, Database } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,7 @@ interface RunWorkflowDialogProps {
     fullGraph: Array<Record<string, unknown>>
   } | null
   onRun: () => void
+  onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
 
 export function RunWorkflowDialog({
@@ -49,8 +50,11 @@ export function RunWorkflowDialog({
   xmlFileFromWizard,
   running,
   graphPreview,
-  onRun
+  onRun,
+  onPushToDB
 }: RunWorkflowDialogProps) {
+  const [isPushing, setIsPushing] = useState(false)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -81,8 +85,8 @@ export function RunWorkflowDialog({
           </div>
           <div className="space-y-2">
             <Label>Root Node (Starter)</Label>
-            <Select 
-              value={rootNodeId || '__root__'} 
+            <Select
+              value={rootNodeId || '__root__'}
               onValueChange={(value) => {
                 if (value === '__root__') {
                   onRootNodeIdChange(null)
@@ -127,26 +131,48 @@ export function RunWorkflowDialog({
                     Showing first {graphPreview.items.length} of {graphPreview.fullGraph.length} entries
                   </span>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const json = JSON.stringify(graphPreview.fullGraph, null, 2)
-                    const blob = new Blob([json], { type: 'application/json' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = 'graph.json'
-                    document.body.appendChild(a)
-                    a.click()
-                    document.body.removeChild(a)
-                    URL.revokeObjectURL(url)
-                  }}
-                  className="h-7 text-xs"
-                >
-                  <Download className="h-3 w-3 mr-1" />
-                  Export JSON
-                </Button>
+                <div className="flex items-center gap-2">
+                  {onPushToDB && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (!onPushToDB) return
+                        setIsPushing(true)
+                        try {
+                          await onPushToDB(graphPreview.fullGraph)
+                        } finally {
+                          setIsPushing(false)
+                        }
+                      }}
+                      disabled={isPushing}
+                      className="h-7 text-xs"
+                    >
+                      {isPushing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Database className="h-3 w-3 mr-1" />}
+                      Push to Graph DB
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const json = JSON.stringify(graphPreview.fullGraph, null, 2)
+                      const blob = new Blob([json], { type: 'application/json' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = 'graph.json'
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Export JSON
+                  </Button>
+                </div>
               </div>
               <div className="max-h-64 overflow-auto rounded border bg-muted/30 text-xs p-2">
                 <pre className="whitespace-pre-wrap break-all">

@@ -113,6 +113,7 @@ export interface ModelBuilderProps {
     updatedAt: string
   }>
   onWorkflowChange?: (workflowId: string) => void
+  onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
 
 function ModelBuilderContent({
@@ -121,7 +122,8 @@ function ModelBuilderContent({
   initialWorkflow,
   currentWorkflowName,
   availableWorkflows = [],
-  onWorkflowChange
+  onWorkflowChange,
+  onPushToDB
 }: {
   className?: string
   workflowPersistence?: WorkflowPersistence
@@ -141,6 +143,7 @@ function ModelBuilderContent({
     updatedAt: string
   }>
   onWorkflowChange?: (workflowId: string) => void
+  onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }) {
   const isSchemaDesignEnabled = useAIFeature('schemaDesignAgent')
   const isWorkflowGenerationEnabled = useAIFeature('workflowGenerationAgent')
@@ -1569,6 +1572,7 @@ function ModelBuilderContent({
         running={running}
         graphPreview={graphPreview}
         onRun={handleRunWorkflow}
+        onPushToDB={onPushToDB}
       />
       <AIChatbot />
       <SchemaDesignPanel
@@ -1599,7 +1603,7 @@ function ModelBuilderContent({
   return content
 }
 
-export function ModelBuilder({ className, workflowPersistence, initialWorkflow, currentWorkflowName, availableWorkflows, onWorkflowChange }: ModelBuilderProps) {
-  return <ModelBuilderContent className={className} workflowPersistence={workflowPersistence} initialWorkflow={initialWorkflow} currentWorkflowName={currentWorkflowName} availableWorkflows={availableWorkflows} onWorkflowChange={onWorkflowChange} />
+export function ModelBuilder({ className, workflowPersistence, initialWorkflow, currentWorkflowName, availableWorkflows, onWorkflowChange, onPushToDB }: ModelBuilderProps) {
+  return <ModelBuilderContent className={className} workflowPersistence={workflowPersistence} initialWorkflow={initialWorkflow} currentWorkflowName={currentWorkflowName} availableWorkflows={availableWorkflows} onWorkflowChange={onWorkflowChange} onPushToDB={onPushToDB} />
 }
 
