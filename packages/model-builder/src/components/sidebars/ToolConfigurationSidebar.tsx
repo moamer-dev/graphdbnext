@@ -67,6 +67,8 @@ import { ToolVerifyConfiguration } from './ToolConfigurationSidebar/ToolVerifyCo
 import { ToolWebhookConfiguration } from './ToolConfigurationSidebar/ToolWebhookConfiguration'
 import { ToolEmailConfiguration } from './ToolConfigurationSidebar/ToolEmailConfiguration'
 import { ToolLogConfiguration } from './ToolConfigurationSidebar/ToolLogConfiguration'
+import { useRealXmlSample } from '../../hooks/useRealXmlSample'
+
 
 export type ConditionType =
   | 'HasChildren'
@@ -185,7 +187,24 @@ export function ToolConfigurationSidebar({
 
   // Get XML metadata from the attached node
   // Get XML metadata from the attached node or fallback to store analysis
+  // Get XML metadata from the attached node or fallback to store analysis
   const analysis = useXmlImportWizardStore((state) => state.analysis)
+  const selectedFile = useXmlImportWizardStore((state) => state.selectedFile)
+
+  // Real XML sampling
+  const attachedElementName = attachedNode?.label || attachedNode?.type || ''
+  const elementToSample = (attachedElementName.startsWith('xml:') ? attachedElementName.slice(4) : attachedElementName) || ''
+
+  const {
+    instances: realInstances,
+    selectedInstanceIndex,
+    selectedInstanceData,
+    setInstanceIndex,
+    loading: loadingRealData
+  } = useRealXmlSample(selectedFile, elementToSample)
+
+  console.log('DEBUG Real Mock:', { selectedFile: selectedFile?.name, elementToSample, realInstancesLen: realInstances.length, attachedElementName })
+
 
   // Helper to find element type from analysis
   const findElementType = (label: string | undefined) => {
@@ -247,10 +266,24 @@ export function ToolConfigurationSidebar({
           childrenCount: elementType.children.length,
           hasTextContent: elementType.hasTextContent
         },
-        xmlChildren: elementType.children.map(childName => ({
-          name: childName,
-          count: 0
-        })),
+        xmlChildren: elementType.children.map(childName => {
+          // Find the relationship to determine frequency
+          const rel = analysis.relationshipPatterns.find(p =>
+            p.from === elementType.name &&
+            p.to === childName &&
+            p.relationshipTypes.includes('contains')
+          )
+
+          // Mock count based on frequency to simulate realistic data
+          let mockCount = 1
+          if (rel?.frequency === 'high') mockCount = 3
+          else if (rel?.frequency === 'medium') mockCount = 2
+
+          return {
+            name: childName,
+            count: mockCount
+          }
+        }),
         xmlAttributes: fallbackAttributes,
         // We set a flag to indicate text content should be mocked if schema says so
         hasTextContent: elementType.hasTextContent,
@@ -430,15 +463,22 @@ export function ToolConfigurationSidebar({
   const handleRemoveGroup = conditionBuilder.handleRemoveGroup
   const handleUpdateGroup = conditionBuilder.handleUpdateGroup
 
-  // Test execution - use hook's createTestElement and handleExecuteConditionTest
-  const createTestElement = () => testExecution.createTestElement(
-    attachedNode,
-    xmlChildren,
-    xmlAncestors,
-    xmlParent,
-    xmlTypeStats,
-    xmlAttributes
-  )
+  // If we have real data selected, override the create test element function to return it directly
+  const createTestElement = () => {
+    if (selectedInstanceData) {
+      return selectedInstanceData
+    }
+    return testExecution.createTestElement(
+      attachedNode,
+      xmlChildren,
+      xmlAncestors,
+      xmlParent,
+      xmlTypeStats,
+      xmlAttributes,
+      ((xmlMetadata as any)?.xmlDescendants as string[] | undefined) || inferredDescendants
+    )
+  }
+
 
   const handleExecuteTest = () => {
     testExecution.handleExecuteConditionTest(createTestElement)
@@ -1639,6 +1679,30 @@ export function ToolConfigurationSidebar({
             showApiResponse={true}
           />
         )}
+
+        {/* Real Data Selector */}
+        {realInstances.length > 0 && (
+          <div className="mt-4 px-1">
+            <div className="text-xs font-medium mb-2 flex items-center justify-between">
+              <span>Test Data Source: {selectedFile?.name}</span>
+              <span className="text-[10px] text-muted-foreground">{realInstances.length} instances found</span>
+            </div>
+            <Select value={String(selectedInstanceIndex)} onValueChange={(v) => setInstanceIndex(Number(v))}>
+              <SelectTrigger className="h-7 text-xs w-full">
+                <SelectValue placeholder="Select instance" />
+              </SelectTrigger>
+              <SelectContent>
+                {realInstances.map((inst) => (
+                  <SelectItem key={inst.index} value={String(inst.index)} className="text-xs">
+                    Instance {inst.index + 1} {inst.id ? `(ID: ${inst.id})` : ''} - {inst.preview.slice(0, 30)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+
 
         {((toolNode.type === 'tool:if' && conditionGroups.length > 0) || (toolNode.type === 'tool:switch' && switchCases.length > 0)) && (
           <ToolTestExecution

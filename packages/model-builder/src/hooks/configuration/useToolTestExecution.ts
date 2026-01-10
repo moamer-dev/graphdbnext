@@ -174,7 +174,7 @@ export function useToolTestExecution(toolNodeId: string | null) {
 
   const createTestElement = useCallback((
     attachedNode?: { label?: string; type?: string; properties?: Array<{ key: string }> } | null,
-    xmlChildren?: Array<{ name: string }>,
+    xmlChildren?: Array<{ name: string; count?: number }>,
     xmlAncestors?: string[],
     xmlParent?: string,
     xmlTypeStats?: { attributesCount?: number; hasTextContent?: boolean },
@@ -182,7 +182,12 @@ export function useToolTestExecution(toolNodeId: string | null) {
     xmlDescendants?: string[]
   ): TestElementData => {
     const tagName = attachedNode?.label || attachedNode?.type || 'test-element'
-    const children = (xmlChildren || []).map(child => ({ tagName: child.name }))
+
+    // Generate children arrays based on count (e.g. if count is 3, create 3 items)
+    const children = (xmlChildren || []).flatMap(child => {
+      const count = child.count && child.count > 0 ? child.count : 1
+      return Array(count).fill({ tagName: child.name })
+    })
 
     // Start with provided XML attributes (real or fallback from sidebar)
     const attributes: Record<string, string> = xmlAttributes ? { ...xmlAttributes } : {}
@@ -293,16 +298,30 @@ export function useToolTestExecution(toolNodeId: string | null) {
           return `Group ${idx + 1} (${groupResult ? 'PASS' : 'FAIL'}):\n${conditionDetails}`
         }).join('\n\n')
 
+        const childrenSummary = testElement.children.length > 0
+          ? testElement.children.map(c => c.tagName).reduce((acc, curr) => {
+            acc[curr] = (acc[curr] || 0) + 1
+            return acc
+          }, {} as Record<string, number>)
+          : 'none'
+
+        const childrenStr = typeof childrenSummary === 'string'
+          ? childrenSummary
+          : Object.entries(childrenSummary).map(([tag, count]) => `${tag} (${count})`).join(', ')
+
         setTestResult({
           success: result,
           output: result ? 'true' : 'false',
-          details: `Element: ${testElement.tagName}\n` +
-            `Children: ${testElement.children.map(c => c.tagName).join(', ') || 'none'}\n` +
-            `Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
-            `Parent: ${testElement.parent?.tagName || 'none'}\n` +
-            `Ancestors: ${(testElement.ancestors || []).join(', ') || 'none'}\n` +
-            `Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n\n` +
-            `Evaluation Breakdown:\n${groupResults}`
+          details: `Test Element Structure (Mock):\n` +
+            `  Tag: ${testElement.tagName}\n` +
+            `  Children: ${childrenStr}\n` +
+            `  Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
+            `  Parent: ${testElement.parent?.tagName || 'none'}\n` +
+            `  Ancestors: ${(testElement.ancestors || []).join(', ') || 'none'}\n` +
+            `  Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n` +
+            `----------------------------------------\n` +
+            `Condition Results:\n${groupResults}`
+
         })
       } catch (error) {
         setTestResult({
