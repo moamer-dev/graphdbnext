@@ -178,65 +178,19 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
           findRelationship: findRelType
         }
 
-        const attachedTools = toolNodesByTarget.get(builderNode.id) || []
-
-        attachedTools.forEach(tool => {
+        const processToolRecursive = (tool: ToolCanvasNode, ctx: ExecutionContext) => {
           const toolResult = executeTool(tool, ctx)
 
           const toolOutputEdges = toolEdgesBySource.get(tool.id) || []
-
-          toolOutputEdges.forEach(edge => {
-            const outputPath = toolResult.outputPath || 'output'
-            const matches = edge.sourceHandle === outputPath || (!edge.sourceHandle && outputPath === 'output')
-            if (matches) {
-              const actionNode = actionNodes.find(a => a.id === edge.target)
-              if (actionNode) {
-                const actionCtx: SpecialActionExecutionContext = {
-                  ...ctx,
-                  graphNodes,
-                  graphRels,
-                  nodeIdCounter,
-                  relIdCounter,
-                  relationships,
-                  schemaJson,
-                  doc,
-                  createGraphNode: createGraphNodeWrapper,
-                  createRelationship: createRelationshipWrapper,
-                  getApiResponseData: (action) => getApiResponseDataWrapper(action, ctx),
-                  evaluateTemplate,
-                  applyTransforms: applyTransformsWrapper,
-                  findElementById,
-                  walk,
-                  labelToNodes,
-                  actionNodes
-                }
-                executeActionWithWalk(actionNode, actionCtx)
-                if (actionCtx.skipped) ctx.skipped = true
-                if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
-                if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
-                if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
-                if (ctx.skipChildren !== undefined) {
-                  if (skipChildrenConfig === null) {
-                    skipChildrenConfig = {
-                      skip: ctx.skipChildren,
-                      tags: ctx.skipChildrenTags || []
-                    }
-                  } else {
-                    skipChildrenConfig = {
-                      skip: skipChildrenConfig.skip || ctx.skipChildren,
-                      tags: [...new Set([...(skipChildrenConfig.tags || []), ...(ctx.skipChildrenTags || [])])]
-                    }
-                  }
-                }
-              }
-            }
-          })
-
           const actionOutputEdges = actionEdgesBySource.get(tool.id) || []
-          actionOutputEdges.forEach(edge => {
+          const allOutputEdges = [...toolOutputEdges, ...actionOutputEdges]
+
+          allOutputEdges.forEach(edge => {
             const outputPath = toolResult.outputPath || 'output'
             const matches = edge.sourceHandle === outputPath || (!edge.sourceHandle && outputPath === 'output')
+
             if (matches) {
+              // Handle Action Targets
               const actionNode = actionNodes.find(a => a.id === edge.target)
               if (actionNode) {
                 const actionCtx: SpecialActionExecutionContext = {
@@ -277,101 +231,19 @@ export function executeWorkflow(options: ExecuteOptions): GraphJson {
                   }
                 }
               }
-            }
-          })
 
-          toolOutputEdges.forEach(edge => {
-            const nextTool = toolNodes.find(t => t.id === edge.target)
-            if (nextTool) {
-              executeTool(nextTool, ctx)
-              const nextToolEdges = toolEdgesBySource.get(nextTool.id) || []
-              nextToolEdges.forEach(nextEdge => {
-                const actionNode = actionNodes.find(a => a.id === nextEdge.target)
-                if (actionNode) {
-                  const actionCtx: SpecialActionExecutionContext = {
-                    ...ctx,
-                    graphNodes,
-                    graphRels,
-                    nodeIdCounter,
-                    relIdCounter,
-                    relationships,
-                    schemaJson,
-                    doc,
-                    createGraphNode: createGraphNodeWrapper,
-                    createRelationship: createRelationshipWrapper,
-                    getApiResponseData: (action) => getApiResponseDataWrapper(action, ctx),
-                    evaluateTemplate,
-                    applyTransforms: applyTransformsWrapper,
-                    findElementById,
-                    walk,
-                    labelToNodes,
-                    actionNodes
-                  }
-                  executeActionWithWalk(actionNode, actionCtx)
-                  if (actionCtx.skipped) ctx.skipped = true
-                  if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
-                  if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
-                  if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
-                  if (ctx.skipChildren !== undefined) {
-                    if (skipChildrenConfig === null) {
-                      skipChildrenConfig = {
-                        skip: ctx.skipChildren,
-                        tags: ctx.skipChildrenTags || []
-                      }
-                    } else {
-                      skipChildrenConfig = {
-                        skip: skipChildrenConfig.skip || ctx.skipChildren,
-                        tags: [...new Set([...(skipChildrenConfig.tags || []), ...(ctx.skipChildrenTags || [])])]
-                      }
-                    }
-                  }
-                }
-              })
-              const nextActionEdges = actionEdgesBySource.get(nextTool.id) || []
-              nextActionEdges.forEach(nextEdge => {
-                const actionNode = actionNodes.find(a => a.id === nextEdge.target)
-                if (actionNode) {
-                  const actionCtx: SpecialActionExecutionContext = {
-                    ...ctx,
-                    graphNodes,
-                    graphRels,
-                    nodeIdCounter,
-                    relIdCounter,
-                    relationships,
-                    schemaJson,
-                    doc,
-                    createGraphNode: createGraphNodeWrapper,
-                    createRelationship: createRelationshipWrapper,
-                    getApiResponseData: (action) => getApiResponseDataWrapper(action, ctx),
-                    evaluateTemplate,
-                    applyTransforms: applyTransformsWrapper,
-                    findElementById,
-                    walk,
-                    labelToNodes,
-                    actionNodes
-                  }
-                  executeActionWithWalk(actionNode, actionCtx)
-                  if (actionCtx.skipped) ctx.skipped = true
-                  if (actionCtx.skipMainNode !== undefined) ctx.skipMainNode = actionCtx.skipMainNode
-                  if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
-                  if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
-                  if (ctx.skipChildren !== undefined) {
-                    if (skipChildrenConfig === null) {
-                      skipChildrenConfig = {
-                        skip: ctx.skipChildren,
-                        tags: ctx.skipChildrenTags || []
-                      }
-                    } else {
-                      skipChildrenConfig = {
-                        skip: skipChildrenConfig.skip || ctx.skipChildren,
-                        tags: [...new Set([...(skipChildrenConfig.tags || []), ...(ctx.skipChildrenTags || [])])]
-                      }
-                    }
-                  }
-                }
-              })
+              // Handle Tool Targets (Recursive)
+              const nextTool = toolNodes.find(t => t.id === edge.target)
+              if (nextTool) {
+                processToolRecursive(nextTool, ctx)
+              }
             }
           })
+        }
+
+        const attachedTools = toolNodesByTarget.get(builderNode.id) || []
+        attachedTools.forEach(tool => {
+          processToolRecursive(tool, ctx)
         })
 
         if (ctx.skipMainNode !== undefined || ctx.skipChildren !== undefined) {

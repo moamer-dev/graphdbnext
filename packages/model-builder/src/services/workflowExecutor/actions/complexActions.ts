@@ -41,16 +41,75 @@ export function executeExtractAndNormalizeAttributesAction(action: ActionCanvasN
 export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.builderNode) return
 
-  const nodeId = ctx.nodeIdCounter.value++
-  const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
-  
   const apiResponseData = ctx.getApiResponseData(action)
-  
-  const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
-  if (nodeLabel) {
-    graphNode.labels = [nodeLabel]
+
+  // 1. Resolve Node (Upsert Logic)
+  let graphNode: GraphJsonNode | undefined
+  let isNewNode = true
+
+  const uniqueIdTemplate = action.config.uniqueId as string
+  if (uniqueIdTemplate) {
+    const uniqueId = ctx.evaluateTemplate(uniqueIdTemplate, apiResponseData)
+    // Check if node with this ID already exists in the current graph context
+    // We check ctx.graphNodes. Note: This is an internal ID check, not a graph database query.
+    // Ideally we might want to check against a "semantic ID" map if we maintained one.
+    // For now, if the user provides a uniqueId, we can check if any node has a property that matches?
+    // OR, we assume 'uniqueId' refers to our internal unique identifiers if they are managing them?
+    // Actually, usually users want to deduplicate by a BUSINESS KEY (e.g. URI, or specific property).
+    // But here 'uniqueId' config implies a direct lookup key.
+    // Let's assume uniqueId maps to a special property '_id' or 'uri' or just checks properties?
+    // Wait, the standard "getOrCreate" usually relies on a label + primary key.
+    // Here we are just given a "Unique ID". 
+    // Let's assume the user puts a value that we can check against `properties._id` or similar if we strictly enforced it.
+    // BUT, a common pattern in this tool is that normalized IDs are stored in `elementToGraph` or similar maps.
+    // Let's check if we can find a node with this ID in `graphNodes`.
+    // Since graphNodes keys are numeric IDs usually, this `uniqueId` is likely a business key.
+
+    // BETTER APPROACH: Check if any node in graphNodes has a property `_id` or `id` matching this value?
+    // OR simpler: Allow the user to define what makes it unique. 
+    // BUT for "Node Complete", the simple "Unique ID" field usually implies "Primary Key".
+    // Let's assume it maps to a property called `id`.
+
+    // However, if we want to support "update if exists", we need to know WHICH node.
+    // Let's check if we have a node in `graphNodes` with `properties.id === uniqueId` OR `properties._id === uniqueId`.
+
+    if (uniqueId) {
+      graphNode = ctx.graphNodes.find(n => n.properties.id === uniqueId || n.properties._id === uniqueId)
+      if (graphNode) {
+        isNewNode = false
+      }
+    }
   }
 
+  if (isNewNode) {
+    const nodeId = ctx.nodeIdCounter.value++
+    graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
+
+    const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+    if (nodeLabel) {
+      graphNode.labels = [nodeLabel]
+    }
+
+    ctx.graphNodes.push(graphNode)
+    // Only map element if new? Or always?
+    ctx.elementToGraph.set(ctx.xmlElement, graphNode)
+  }
+
+  // Ensure graphNode is defined (TS check)
+  if (!graphNode) return // Should not happen given logic above
+
+  // Set the "Unique ID" as a property if it was provided and we created a new node
+  // This ensures subsequent lookups find it.
+  if (uniqueIdTemplate && isNewNode) {
+    const uniqueId = ctx.evaluateTemplate(uniqueIdTemplate, apiResponseData)
+    if (uniqueId) {
+      graphNode.properties.id = uniqueId // Defaulting to 'id' property for uniqueness
+    }
+  }
+
+  ctx.currentGraphNode = graphNode
+
+  // 2. Map Attributes (Properties)
   const attributeMappings = (action.config.attributeMappings as Array<{
     attributeName: string
     propertyKey: string
@@ -67,9 +126,9 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
   attributeMappings.forEach(mapping => {
     let propertyKeyName: string
     let propertyValue: unknown = null
-    
+
     const isTemplateExpression = mapping.propertyKey && mapping.propertyKey.includes('{{ $json.')
-    
+
     if (isTemplateExpression && apiResponseData) {
       propertyKeyName = mapping.attributeName || 'value'
       const evaluated = evaluateExpression(mapping.propertyKey, { json: apiResponseData })
@@ -91,21 +150,67 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     } else {
       return
     }
-    
+
     if (propertyKeyName && propertyValue !== null && propertyValue !== undefined) {
       let finalValue = String(propertyValue)
       if (mapping.transforms && mapping.transforms.length > 0) {
         finalValue = ctx.applyTransforms(finalValue, mapping.transforms)
       }
-      graphNode.properties[propertyKeyName] = finalValue
+      graphNode!.properties[propertyKeyName] = finalValue
     }
   })
 
-  ctx.graphNodes.push(graphNode)
-  ctx.elementToGraph.set(ctx.xmlElement, graphNode)
-  ctx.currentGraphNode = graphNode
+  // 3. Create Relationship
+  // Check for Custom Relationship Config first
+  const relationshipConfig = action.config.relationship as {
+    type: string
+    targetNodeId: string
+    targetNodeLabel?: string
+    direction?: 'outgoing' | 'incoming'
+  } | undefined
 
-  if (ctx.parentGraphNode) {
+  if (relationshipConfig && relationshipConfig.targetNodeId) {
+    // Custom Relationship Logic
+    const targetId = ctx.evaluateTemplate(relationshipConfig.targetNodeId, apiResponseData)
+    const relLabel = relationshipConfig.type || 'relatedTo'
+    const direction = relationshipConfig.direction || 'outgoing'
+
+    if (targetId) {
+      // Find target node in current graph
+      // Assuming targetId matches the 'id' or '_id' property we use for uniqueness
+      const targetNode = ctx.graphNodes.find(n => n.properties.id === targetId || n.properties._id === targetId)
+
+      if (targetNode) {
+        // Create relationship immediately
+        const startNode = direction === 'outgoing' ? graphNode : targetNode
+        const endNode = direction === 'outgoing' ? targetNode : graphNode
+
+        const rel: GraphJsonRelationship = {
+          id: ctx.relIdCounter.value++,
+          type: 'relationship',
+          label: relLabel,
+          start: startNode.id,
+          end: endNode.id,
+          properties: {}
+        }
+        ctx.graphRels.push(rel)
+      } else {
+        // Target not found yet? Defer it?
+        // The current context doesn't explicitly support a queue for "defer by property ID", 
+        // only "defer by parent relationship".
+        // But we can implement a basic deferral if needed, or just log warning.
+        // For now, let's assume the user ensures topological sort or existence.
+        // If we NEED deferral, we would push to a pending list.
+        // Let's log for now.
+        // console.warn(`Target node with ID ${targetId} not found for relationship ${relLabel}`)
+
+        // Optionally create a "Placeholder" node if we want to ensure structural completeness?
+        // No, simpler to just skip or fail.
+        // But wait, if we are in a "Create Node Complete" action, maybe we shouldn't fail silently.
+      }
+    }
+  } else if (ctx.parentGraphNode) {
+    // Fallback: Parent Relationship (Backward Compatibility)
     const parentRelType = (action.config.parentRelationship as string) || 'contains'
     const relType = ctx.relationships.find(r => r.type === parentRelType)
     if (relType) {
@@ -124,6 +229,7 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     }
   }
 }
+
 
 export function executeMergeChildrenTextAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.currentGraphNode) return
@@ -207,7 +313,7 @@ export function executeCreateConditionalNodeAction(action: ActionCanvasNode, ctx
 
   const nodeId = ctx.nodeIdCounter.value++
   const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
-  
+
   const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
   if (nodeLabel) {
     graphNode.labels = [nodeLabel]

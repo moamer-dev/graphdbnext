@@ -134,6 +134,13 @@ export interface ActionConfigurationState {
       defaultValue?: string
     }>
     parentRelationship: string
+    uniqueId?: string
+    relationship?: {
+      type: string
+      targetNodeId: string
+      targetNodeLabel?: string
+      direction: 'outgoing' | 'incoming'
+    }
   }
   extractAndNormalizeAttributesConfig: {
     attributeMappings: Array<{
@@ -401,7 +408,8 @@ const initialState: Omit<ActionConfigurationState, keyof {
   createNodeCompleteConfig: {
     nodeLabel: '',
     attributeMappings: [],
-    parentRelationship: 'contains'
+    parentRelationship: 'contains',
+    uniqueId: ''
   },
   extractAndNormalizeAttributesConfig: {
     attributeMappings: []
@@ -719,7 +727,14 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
               transforms?: TextTransform[]
               defaultValue?: string
             }>) || state.createNodeCompleteConfig.attributeMappings,
-            parentRelationship: (config.parentRelationship as string) || state.createNodeCompleteConfig.parentRelationship
+            parentRelationship: (config.parentRelationship as string) || state.createNodeCompleteConfig.parentRelationship,
+            uniqueId: (config.uniqueId as string) || state.createNodeCompleteConfig.uniqueId,
+            relationship: (config.relationship as {
+              type: string
+              targetNodeId: string
+              targetNodeLabel?: string
+              direction: 'outgoing' | 'incoming'
+            }) || state.createNodeCompleteConfig.relationship
           }
         })
         break

@@ -3,7 +3,15 @@
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import { X } from 'lucide-react'
+import { Switch } from '../../ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../../ui/select'
+import { X, ArrowRight, ArrowLeft } from 'lucide-react'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 import type { ActionConfigurationState } from '../../../stores/actionConfigurationStore'
@@ -48,6 +56,26 @@ export function ActionCreateNodeCompleteConfiguration({
               })
             }}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Unique ID Template (Optional)</Label>
+          <Input
+            placeholder="e.g., {{ $json.id }} or node-{{ 1 }}"
+            className="h-8 text-xs"
+            value={createNodeCompleteConfig.uniqueId || ''}
+            onChange={(e) => {
+              const value = e.target.value
+              const updated = { ...createNodeCompleteConfig, uniqueId: value }
+              onCreateNodeCompleteConfigChange(updated)
+              onUpdateActionNode(actionNodeId, {
+                config: { ...actionNode.config, uniqueId: value }
+              })
+            }}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            If provided, finding a node with this ID will update it instead of creating a new one (Upsert).
+          </p>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -144,6 +172,9 @@ export function ActionCreateNodeCompleteConfiguration({
               })
             }}
           />
+          <p className="text-[10px] text-muted-foreground">
+            Connects the new node to its parent context node.
+          </p>
         </div>
       </div>
     </CollapsibleSection>
