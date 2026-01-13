@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRelationshipPaletteDialogs } from '../../../hooks/palette/useRelationshipPaletteDialogs'
 import {
   Dialog,
@@ -68,6 +69,26 @@ export function RelationshipsPaletteSection({
     handleDeleteRelationship,
     handleConfirmDeleteRelationship
   } = dialogs
+
+  // Scroll to selected relationship when it changes
+  useEffect(() => {
+    if (selectedRelationship && scrollContainerRef?.current) {
+      // Small delay to ensure DOM has updated
+      setTimeout(() => {
+        const relationshipElement = scrollContainerRef.current?.querySelector(
+          `[data-relationship-id="${selectedRelationship}"]`
+        ) as HTMLElement
+
+        if (relationshipElement) {
+          relationshipElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          })
+        }
+      }, 100)
+    }
+  }, [selectedRelationship, scrollContainerRef])
 
   const handleDownloadRelationshipTemplate = () => {
     const csvContent = generateRelationshipTemplate()

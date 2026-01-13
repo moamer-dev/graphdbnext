@@ -1026,8 +1026,14 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
   useEffect(() => {
     if (isDraggingRef.current) return
     if (reactFlowNodesSig === currentNodesSig) return
+
+    // Avoid triggering onSelectionChange when syncing state from store to ReactFlow
+    // This prevents phantom selection events (e.g. when deselecting a node via store)
+    // from being interpreted as user interactions that switch tabs
+    isUpdatingSelectionRef.current = true
     setNodes(reactFlowNodes)
-  }, [reactFlowNodes, reactFlowNodesSig, currentNodesSig, setNodes])
+    setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
+  }, [reactFlowNodes, reactFlowNodesSig, currentNodesSig, setNodes, selectedNode])
 
   // Track last processed selectedRelationship to avoid loops
   const lastProcessedSelectionRef = useRef<string | null>(null)
@@ -1149,7 +1155,14 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
       const isRelationshipEdge = !firstEdge.id.includes('__attach') &&
         !firstEdge.id.startsWith('wfn_') &&
         storeRelationships.some((r: Relationship) => r.id === firstEdge.id)
-      if (isRelationshipEdge && firstEdge.id !== selectedRelationship) {
+      
+      // CRITICAL: Only process edge selection if this edge is actually selected in the store
+      // or if we don't have a selectedNode in the store (which would indicate we're selecting the edge now)
+      // This prevents phantom edge selections when switching from relationship to node selection
+      const shouldProcessEdge = isRelationshipEdge && 
+        (firstEdge.id === selectedRelationship || !selectedNode)
+      
+      if (shouldProcessEdge && firstEdge.id !== selectedRelationship) {
         isUpdatingSelectionRef.current = true
         selectRelationship(firstEdge.id)
         // selectRelationship already clears selectedNode
@@ -1159,14 +1172,30 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
         setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
         return
       }
+      
+      // If we have a selectedNode in store and this edge is not what we want, ignore the edge
+      if (selectedNode && isRelationshipEdge && firstEdge.id !== selectedRelationship) {
+        // Fall through to handle node selection below
+      } else if (shouldProcessEdge && firstEdge.id === selectedRelationship) {
+        // Edge is already selected, nothing to do
+        return
+      }
     }
 
     // Handle node selection (only if no edge was selected)
     const firstNode = params.nodes[0]
     if (firstNode && !firstEdge) {
+      
+      // CRITICAL FIX: If we have a selectedRelationship in the store but ReactFlow is reporting
+      // a node selection (no edge in params), this is a phantom selection caused by ReactFlow's
+      // internal state when we selected a relationship from the palette. Ignore it.
+      if (selectedRelationship && !params.edges.length) {
+        console.log('[DEBUG] Ignoring phantom node selection - relationship is selected in store:', selectedRelationship)
+        return
+      }
+      
       if (!firstNode.id.startsWith('wfn_') && firstNode.id === selectedNode) return
       if (firstNode.id.startsWith('wfn_') && firstNode.id === selectedWfNodeId) return
-
       isUpdatingSelectionRef.current = true
       if (firstNode.id.startsWith('wfn_')) {
         selectWfNode(firstNode.id)
@@ -1222,7 +1251,23 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
 
   const focusNode = useCallback((id: string) => {
     const node = reactFlowInstance.getNode(id)
-    if (!node) return
+    if (!node) {
+      return
+    }
+    
+    // CRITICAL: Set the flag BEFORE updating selection to prevent onSelectionChange from interfering
+    isUpdatingSelectionRef.current = true
+    
+    // Update the node to be selected (this ensures visual highlighting)
+    setNodes((nds) => {
+      const updated = nds.map((n) => ({
+        ...n,
+        selected: n.id === id
+      }))
+      return updated
+    })
+    
+    // Then center the view on it
     const width = node.width || 0
     const height = node.height || 0
     const x = node.position.x + width / 2
@@ -1231,12 +1276,31 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
       zoom: 1.2,
       duration: 400
     })
-  }, [reactFlowInstance])
+    
+    // Clear the flag after a delay
+    setTimeout(() => { isUpdatingSelectionRef.current = false }, 150)
+  }, [reactFlowInstance, setNodes])
 
   const focusRelationship = useCallback((fromNodeId: string, toNodeId: string) => {
     const fromNode = reactFlowInstance.getNode(fromNodeId)
     const toNode = reactFlowInstance.getNode(toNodeId)
     if (!fromNode || !toNode) return
+
+    // CRITICAL: Set the flag BEFORE updating selection to prevent onSelectionChange from interfering
+    isUpdatingSelectionRef.current = true
+
+    // Update edges to highlight the selected relationship
+    const relationship = storeRelationships.find(
+      (r: Relationship) => r.from === fromNodeId && r.to === toNodeId
+    )
+    if (relationship) {
+      setEdges((eds) =>
+        eds.map((e) => ({
+          ...e,
+          selected: e.id === relationship.id
+        }))
+      )
+    }
 
     // Focus on the midpoint between the two nodes
     const fromX = fromNode.position.x + (fromNode.width || 0) / 2
@@ -1251,7 +1315,10 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
       zoom: 1.2,
       duration: 400
     })
-  }, [reactFlowInstance])
+    
+    // Clear the flag after a delay
+    setTimeout(() => { isUpdatingSelectionRef.current = false }, 150)
+  }, [reactFlowInstance, storeRelationships, setEdges])
 
   useEffect(() => {
     if (onRegisterFocusApi) {

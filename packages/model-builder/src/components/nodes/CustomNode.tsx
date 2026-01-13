@@ -22,7 +22,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         data.isRoot 
           ? 'border-amber-400 border-2 bg-linear-to-br from-yellow-50 to-amber-50 shadow-md' 
           : selected 
-            ? 'border-gray-400 border-2 shadow-md' 
+            ? 'border-blue-500 border-2 shadow-lg' 
             : 'border-gray-300 hover:border-gray-400'
       }`}
       onClick={() => {
