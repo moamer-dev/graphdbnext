@@ -10,7 +10,7 @@ export interface WorkflowConfigExport {
     name?: string
     description?: string
   }
-  relationships: Array<{
+  relationships?: Array<{
     fromNodeLabel: string
     toNodeLabel: string
     type: string
@@ -92,17 +92,9 @@ export function exportWorkflowConfig(
     version: 1,
     type: 'workflow-config',
     createdAt: new Date().toISOString(),
-    relationships: relationships.map(rel => {
-      const fromNode = nodes.find(n => n.id === rel.from)
-      const toNode = nodes.find(n => n.id === rel.to)
-      return {
-        fromNodeLabel: fromNode?.label || '',
-        toNodeLabel: toNode?.label || '',
-        type: rel.type,
-        properties: rel.properties,
-        cardinality: rel.cardinality
-      }
-    }).filter(rel => rel.fromNodeLabel && rel.toNodeLabel),
+    // Exclude relationships from workflow export as per requirement to separate schema and workflow
+    relationships: [], 
+
     tools: toolNodes.map(tool => {
       const targetNode = nodes.find(n => n.id === tool.targetNodeId)
       return {
@@ -114,7 +106,7 @@ export function exportWorkflowConfig(
         inputs: tool.inputs,
         outputs: tool.outputs
       }
-    }).filter(tool => tool.targetNodeLabel),
+    }),
     toolEdges: toolEdges.map(edge => {
       const sourceTool = toolIdToNode.get(edge.source)
       const sourceNode = nodes.find(n => n.id === edge.source)
@@ -161,6 +153,7 @@ export function exportWorkflowConfig(
           const targetToolLabel = targetTargetNode
             ? `${targetTargetNode.label}::${targetTool.type}`
             : targetTool.label || ''
+
           return {
             sourceToolLabel: toolLabel,
             targetToolLabel,
@@ -286,7 +279,7 @@ export function importWorkflowConfig(
   const nodeLabelToId = new Map(nodes.map(n => [n.label, n.id]))
 
   // Import relationships - preserve node labels for error reporting
-  const relationships: Array<Omit<Relationship, 'id'> & { fromNodeLabel?: string; toNodeLabel?: string }> = config.relationships
+  const relationships: Array<Omit<Relationship, 'id'> & { fromNodeLabel?: string; toNodeLabel?: string }> = (config.relationships || [])
     .map(rel => {
       const fromId = nodeLabelToId.get(rel.fromNodeLabel)
       const toId = nodeLabelToId.get(rel.toNodeLabel)
@@ -328,10 +321,16 @@ export function importWorkflowConfig(
   const toolLabelToId = new Map<string, string>()
   const tools: Array<Omit<ToolCanvasNode, 'id'>> = config.tools
     .map(tool => {
-      const targetNodeId = nodeLabelToId.get(tool.targetNodeLabel)
-      if (!targetNodeId) return null
+      const targetNodeId = tool.targetNodeLabel 
+        ? nodeLabelToId.get(tool.targetNodeLabel)
+        : undefined
+      
       const toolId = `temp_${Math.random().toString(36).slice(2, 9)}`
-      const toolLabel = `${tool.targetNodeLabel}::${tool.type}`
+      // For tools without target node, use just label or type as key part
+      const toolLabel = targetNodeId && tool.targetNodeLabel
+        ? `${tool.targetNodeLabel}::${tool.type}`
+        : tool.label || tool.type
+      
       toolLabelToId.set(toolLabel, toolId)
       return {
         type: tool.type as ToolCanvasNode['type'],
@@ -422,7 +421,7 @@ export function importWorkflowConfig(
     actions: actionsWithRemappedChildren,
     actionEdges,
     _originalCounts: {
-      relationships: config.relationships.length,
+      relationships: config.relationships?.length || 0,
       tools: config.tools.length,
       actions: config.actions.length,
       toolEdges: config.toolEdges.length,

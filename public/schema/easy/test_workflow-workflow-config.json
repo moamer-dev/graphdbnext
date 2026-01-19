@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "type": "workflow-config",
+  "createdAt": "2026-01-19T09:17:18.631Z",
+  "relationships": [],
+  "tools": [
+    {
+      "type": "tool:if",
+      "label": "If / Else",
+      "targetNodeLabel": "W",
+      "config": {},
+      "position": {
+        "x": -209.12357066804344,
+        "y": 470.5381608524232
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
+        }
+      ]
+    },
+    {
+      "type": "tool:switch",
+      "label": "Switch",
+      "targetNodeLabel": "Note",
+      "config": {
+        "switchCases": [
+          {
+            "id": "case_1768814179629_oxxf",
+            "value": "cas1",
+            "label": "Case 1"
+          },
+          {
+            "id": "case_1768814183778_joqj",
+            "value": "cas2",
+            "label": "Case 2"
+          }
+        ]
+      },
+      "position": {
+        "x": -163.3428422855569,
+        "y": -20.11181942074478
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "case_1768814179629_oxxf",
+          "label": "Case 1"
+        },
+        {
+          "id": "case_1768814183778_joqj",
+          "label": "Case 2"
+        }
+      ]
+    },
+    {
+      "type": "tool:fetch-api",
+      "label": "Fetch API",
+      "targetNodeLabel": "",
+      "config": {},
+      "position": {
+        "x": 60.58463349834324,
+        "y": -111.67327618571737
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "output",
+          "label": "Output"
+        }
+      ]
+    }
+  ],
+  "toolEdges": [
+    {
+      "sourceNodeLabel": "W",
+      "targetToolLabel": "W::tool:if",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceNodeLabel": "Note",
+      "targetToolLabel": "Note::tool:switch",
+      "sourceHandle": "tools",
+      "targetHandle": "input-0"
+    },
+    {
+      "sourceToolLabel": "Note::tool:switch",
+      "targetToolLabel": "Fetch API",
+      "sourceHandle": "case_1768814179629_oxxf",
+      "targetHandle": "input-0"
+    }
+  ],
+  "actions": [
+    {
+      "type": "action:create-node-complete",
+      "label": "Create Node Complete",
+      "config": {},
+      "position": {
+        "x": -196.1855387338624,
+        "y": 233.67265313434208
+      }
+    },
+    {
+      "type": "action:create-node-complete",
+      "label": "Create Node Complete",
+      "config": {},
+      "position": {
+        "x": -121.54304680589566,
+        "y": 296.37234635383413
+      }
+    },
+    {
+      "type": "action:create-node-complete",
+      "label": "Create Node Complete",
+      "config": {},
+      "position": {
+        "x": 292.4739750878932,
+        "y": -133.56840715125426
+      }
+    },
+    {
+      "type": "action:create-node-complete",
+      "label": "Create Node Complete",
+      "config": {},
+      "position": {
+        "x": 242.71231380258203,
+        "y": -29.068918452100828
+      }
+    }
+  ],
+  "actionEdges": [
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create Node Complete",
+      "sourceHandle": "true",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:if",
+      "targetActionLabel": "Create Node Complete",
+      "sourceHandle": "false",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "Fetch API",
+      "targetActionLabel": "Create Node Complete",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "Note::tool:switch",
+      "targetActionLabel": "Create Node Complete",
+      "sourceHandle": "case_1768814183778_joqj",
+      "targetHandle": "input"
+    }
+  ]
+}

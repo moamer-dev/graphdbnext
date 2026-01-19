@@ -23,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { cn } from '../utils/cn'
@@ -35,7 +45,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem
 } from './ui/dropdown-menu'
-import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Settings, CheckCircle2, X, Layout } from 'lucide-react'
+import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Settings, CheckCircle2, X, Layout, Trash2 } from 'lucide-react'
 import { AIChatbot } from './ai/AIChatbot'
 import { SchemaDesignPanel } from './ai/SchemaDesignPanel'
 import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
@@ -202,6 +212,7 @@ function ModelBuilderContent({
   const [xmlPanelWidth, setXmlPanelWidth] = useState(600)
   const [xmlWrapWord, setXmlWrapWord] = useState(false)
   const [showToolbar, setShowToolbar] = useState(true)
+  const [clearWorkflowDialogOpen, setClearWorkflowDialogOpen] = useState(false)
 
   const selectedRelationship = useModelBuilderStore((state) => state.selectedRelationship)
   const selectedNode = useModelBuilderStore((state) => state.selectedNode)
@@ -314,6 +325,17 @@ function ModelBuilderContent({
   const updateActionNode = useActionCanvasStore((state) => state.updateNode)
   const addRelationship = useModelBuilderStore((state) => state.addRelationship)
 
+  const handleClearWorkflow = () => {
+    setClearWorkflowDialogOpen(true)
+  }
+
+  const confirmClearWorkflow = () => {
+    useToolCanvasStore.getState().clear()
+    useActionCanvasStore.getState().clear()
+    setClearWorkflowDialogOpen(false)
+    toast.success('Workflow cleared successfully')
+  }
+
   const handleImport = async () => {
     if (!importFile) return
     const result = await importSchema(importFile)
@@ -409,41 +431,74 @@ function ModelBuilderContent({
       const existingToolNodes = useToolCanvasStore.getState().nodes
       const toolKeyToId = new Map<string, string>()
       let toolsAdded = 0
+      
+
+      
       imported.tools.forEach(tool => {
         try {
-          // Imported tools have targetNodeId, not targetNodeLabel
-          const targetNode = nodes.find(n => n.id === tool.targetNodeId)
+
+          
+          // Find target node if specified
+          const targetNode = tool.targetNodeId ? nodes.find(n => n.id === tool.targetNodeId) : undefined
+          
+          // Verify target node exists if ID is provided
+          if (tool.targetNodeId && !targetNode) {
+            console.warn('[TOOL_IMPORT] Tool skipped - target node not found:', tool.targetNodeId, tool.label)
+            return
+          }
+          
+          // Generate tool key (unique identifier for deduplication)
+          const toolKey = targetNode 
+            ? `${targetNode.label}::${tool.type}` 
+            : (tool.label || tool.type)
+          
+
+          
+          // Check if we already processed this tool in this import run
+          if (toolKeyToId.has(toolKey)) {
+
+            return
+          }
+          
+          // Check if tool already exists in the store (prevents duplicates across multiple imports)
+          const existingTool = existingToolNodes.find(t => {
+            if (targetNode) {
+              // For tools attached to nodes, match by targetNodeId and type
+              return t.targetNodeId === targetNode.id && t.type === tool.type
+            } else {
+              // For standalone tools, match by label and type
+              return t.label === tool.label && t.type === tool.type
+            }
+          })
+          
+          if (existingTool) {
+
+            toolKeyToId.set(toolKey, existingTool.id)
+            return
+          }
+          
+          // Calculate tool position
+          const toolPosition = tool.position || (targetNode ? {
+            x: targetNode.position.x + 250,
+            y: targetNode.position.y
+          } : { x: 100, y: 100 })
+          
+          // Add the tool
+          const realId = addToolNode({
+            ...tool,
+            targetNodeId: targetNode?.id, // Can be undefined for standalone tools
+            position: toolPosition
+          })
+          
+
+          
+          // Create edge from node to tool (only if tool is attached to a node)
           if (targetNode) {
-            // Check if tool already exists (same target node + same type)
-            const toolKey = `${targetNode.label}::${tool.type}`
-            const existingTool = existingToolNodes.find(t =>
-              t.targetNodeId === targetNode.id && t.type === tool.type
-            )
-
-            if (existingTool) {
-              // Tool already exists, use existing ID
-              toolKeyToId.set(toolKey, existingTool.id)
-              return
-            }
-
-            // Use the position from the imported tool if available, otherwise position near target node
-            const toolPosition = tool.position || {
-              x: targetNode.position.x + 250,
-              y: targetNode.position.y
-            }
-
-            const realId = addToolNode({
-              ...tool,
-              targetNodeId: targetNode.id,
-              position: toolPosition
-            })
-
-            // Create edge from main node to tool (if not already in toolEdges)
             const hasNodeToToolEdge = imported.toolEdges.some(edge =>
               edge.sourceNodeLabel === targetNode.label &&
-              edge.targetToolLabel === `${targetNode.label}::${tool.type}`
+              edge.targetToolLabel === toolKey
             )
-
+            
             if (!hasNodeToToolEdge) {
               addToolEdge({
                 source: targetNode.id,
@@ -452,15 +507,12 @@ function ModelBuilderContent({
                 targetHandle: 'input-0'
               })
             }
-
-            toolKeyToId.set(toolKey, realId)
-            toolsAdded++
-          } else {
-            const targetNodeLabel = tool.targetNodeId ? nodes.find(n => n.id === tool.targetNodeId)?.label : 'unknown'
-            console.warn('Tool skipped - target node not found:', targetNodeLabel, tool.label)
           }
+          
+          toolKeyToId.set(toolKey, realId)
+          toolsAdded++
         } catch (err) {
-          console.warn('Failed to add tool:', tool, err)
+          console.warn('[TOOL_IMPORT] Failed to add tool:', tool, err)
         }
       })
 
@@ -747,39 +799,89 @@ function ModelBuilderContent({
       })
 
       // Add tools and track IDs by target node label + type
+      const existingToolNodes = useToolCanvasStore.getState().nodes
       const toolKeyToId = new Map<string, string>()
       let toolsAdded = 0
+      
       imported.tools.forEach(tool => {
         try {
-          const targetNode = nodes.find(n => n.id === tool.targetNodeId)
-          if (targetNode) {
-            // Position tool near its target node (to the right)
-            const toolPosition = {
-              x: targetNode.position.x + 250,
-              y: targetNode.position.y
-            }
 
-            const realId = addToolNode({
-              ...tool,
-              position: toolPosition
-            })
-
-            // Create edge from main node to tool
-            addToolEdge({
-              source: targetNode.id,
-              target: realId,
-              sourceHandle: 'tools',
-              targetHandle: 'input-0'
-            })
-
-            const key = `${targetNode.label}::${tool.type}`
-            toolKeyToId.set(key, realId)
-            toolsAdded++
-          } else {
-            console.warn('Tool skipped - target node not found:', tool.targetNodeId, tool.label)
+          
+          // Find target node if specified
+          const targetNode = tool.targetNodeId ? nodes.find(n => n.id === tool.targetNodeId) : undefined
+          
+          // Verify target node exists if ID is provided
+          if (tool.targetNodeId && !targetNode) {
+            console.warn('[TOOL_IMPORT] Tool skipped - target node not found:', tool.targetNodeId, tool.label)
+            return
           }
+          
+          // Generate tool key (unique identifier for deduplication)
+          const toolKey = targetNode 
+            ? `${targetNode.label}::${tool.type}` 
+            : (tool.label || tool.type)
+          
+
+          
+          // Check if we already processed this tool in this import run
+          if (toolKeyToId.has(toolKey)) {
+
+            return
+          }
+          
+          // Check if tool already exists in the store (prevents duplicates across multiple imports)
+          const existingTool = existingToolNodes.find(t => {
+            if (targetNode) {
+              // For tools attached to nodes, match by targetNodeId and type
+              return t.targetNodeId === targetNode.id && t.type === tool.type
+            } else {
+              // For standalone tools, match by label and type
+              return t.label === tool.label && t.type === tool.type
+            }
+          })
+          
+          if (existingTool) {
+
+            toolKeyToId.set(toolKey, existingTool.id)
+            return
+          }
+          
+          // Calculate tool position
+          const toolPosition = tool.position || (targetNode ? {
+            x: targetNode.position.x + 250,
+            y: targetNode.position.y
+          } : { x: 100, y: 100 })
+          
+          // Add the tool
+          const realId = addToolNode({
+            ...tool,
+            targetNodeId: targetNode?.id, // Can be undefined for standalone tools
+            position: toolPosition
+          })
+          
+
+          
+          // Create edge from node to tool (only if tool is attached to a node)
+          if (targetNode) {
+            const hasNodeToToolEdge = imported.toolEdges.some(edge =>
+              edge.sourceNodeLabel === targetNode.label &&
+              edge.targetToolLabel === toolKey
+            )
+            
+            if (!hasNodeToToolEdge) {
+              addToolEdge({
+                source: targetNode.id,
+                target: realId,
+                sourceHandle: 'tools',
+                targetHandle: 'input-0'
+              })
+            }
+          }
+          
+          toolKeyToId.set(toolKey, realId)
+          toolsAdded++
         } catch (err) {
-          console.warn('Failed to add tool:', tool, err)
+          console.warn('[TOOL_IMPORT] Failed to add tool:', tool, err)
         }
       })
 
@@ -951,75 +1053,78 @@ function ModelBuilderContent({
         }
       })
 
-      // Add action edges
+      // Add action edges with proximity-based matching
       let actionEdgesAdded = 0
       const connectedActionIds = new Set<string>()
-      // Map to track which action candidate index to use for each unique tool+label combination
-      // This ensures that Verse::tool:if -> Skip uses a different Skip action than Seg::tool:if -> Skip
       const toolLabelToActionIndex = new Map<string, number>()
-      // Track which action IDs have been used for each label
       const labelToUsedIndices = new Map<string, Set<number>>()
+
 
       imported.actionEdges.forEach((edge) => {
         let sourceId: string | undefined
+        let sourcePosition = { x: 0, y: 0 }
 
         if (edge.sourceToolLabel) {
           sourceId = toolKeyToId.get(edge.sourceToolLabel)
+          // Find position for proximity matching
+          const sourceTool = imported.tools.find(t => 
+            t.label === edge.sourceToolLabel || 
+            (t.targetNodeId && nodes.find(n => n.id === t.targetNodeId)?.label + '::' + t.type === edge.sourceToolLabel)
+          )
+          if (sourceTool) sourcePosition = sourceTool.position
         } else if (edge.sourceActionLabel) {
           // Find source action by label
           const sourceActionIds = actionLabelToIds.get(edge.sourceActionLabel)
-          // Naive check: if we have sourceActionLabel, assume we can find it.
-          // Since we are iterating edges, actions should already be created.
-          // If there are multiple actions with the same label, it's tricky.
-          // But for now, let's take the first one or logic similar to target logic?
-          // Actually, actionLabelToIds maps label -> [id1, id2...]
-          // We don't have enough context to disambiguate identical action labels efficiently here without more complex logic.
-          // But usually actions have unique labels or sufficient context.
           if (sourceActionIds && sourceActionIds.length > 0) {
-            sourceId = sourceActionIds[0] // Fallback to first
+            sourceId = sourceActionIds[0] // Fallback to first if ambiguity
+            const sourceAction = imported.actions.find(a => a.label === edge.sourceActionLabel)
+            if (sourceAction) sourcePosition = sourceAction.position
           }
         }
 
         if (!sourceId) {
-          console.warn('Action edge skipped - source not found:', edge.sourceToolLabel || edge.sourceActionLabel)
+          console.warn('[ACTION_EDGE] Edge skipped - source not found:', edge.sourceToolLabel || edge.sourceActionLabel)
           return
         }
 
-        // Find action by label - if multiple exist, use the one that matches this specific tool/action source
+        // Find action by label - match by Proximity to Source
         const candidateIds = actionLabelToIds.get(edge.targetActionLabel) || []
         let targetId: string | undefined
 
         if (candidateIds.length === 1) {
           targetId = candidateIds[0]
         } else if (candidateIds.length > 1) {
-          // Multiple actions with same label - match by unique source+label combination
-          const key = `${edge.sourceToolLabel || edge.sourceActionLabel}::${edge.targetActionLabel}`
-          let actionCandidateIndex = toolLabelToActionIndex.get(key)
-
-          if (actionCandidateIndex === undefined) {
-            // First time seeing this tool+label combo - find an unused action
-            const usedIndices = labelToUsedIndices.get(edge.targetActionLabel) || new Set<number>()
-
-            // Find the first unused action index
-            for (let i = 0; i < candidateIds.length; i++) {
-              if (!usedIndices.has(i)) {
-                actionCandidateIndex = i
-                usedIndices.add(i)
-                labelToUsedIndices.set(edge.targetActionLabel, usedIndices)
-                break
+           const usedIndices = labelToUsedIndices.get(edge.targetActionLabel) || new Set<number>()
+           
+           let bestIndex = -1
+           let minDistance = Number.MAX_VALUE
+           
+           // Find closest unused candidate
+           candidateIds.forEach((id, index) => {
+              if (usedIndices.has(index)) return
+              
+              const originalIndex = actionIdToIndex.get(id)
+              if (originalIndex !== undefined) {
+                  const candidateAction = imported.actions[originalIndex]
+                  // Weight Y distance more heavily to prefer horizontal alignment (row matching)
+                  // and prevent "crossing" wires when X distances differ
+                  const dist = Math.pow(candidateAction.position.x - sourcePosition.x, 2) + 
+                               Math.pow((candidateAction.position.y - sourcePosition.y) * 5, 2)
+                  if (dist < minDistance) {
+                      minDistance = dist
+                      bestIndex = index
+                  }
               }
-            }
-
-            // If all actions are used, use the first one (shouldn't happen in normal cases)
-            if (actionCandidateIndex === undefined) {
-              actionCandidateIndex = 0
-            }
-
-            toolLabelToActionIndex.set(key, actionCandidateIndex)
-          }
-
-          // Get the action ID at the calculated index
-          targetId = candidateIds[actionCandidateIndex]
+           })
+           
+           if (bestIndex !== -1) {
+               targetId = candidateIds[bestIndex]
+               usedIndices.add(bestIndex)
+               labelToUsedIndices.set(edge.targetActionLabel, usedIndices)
+           } else {
+               // Fallback: all used? Shouldn't happen if counts match. Use first.
+               targetId = candidateIds[0]
+           }
         }
 
         if (targetId) {
@@ -1350,6 +1455,20 @@ function ModelBuilderContent({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Clear Workflow Button */}
+          {(toolNodes.length > 0 || actionNodes.length > 0) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearWorkflow}
+              className="h-8 text-xs"
+              title="Clear all workflow items (tools and actions)"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Clear Workflow
+            </Button>
+          )}
+
           {/* Generate Graph Button */}
           {hasContent && (
             <Button
@@ -1615,6 +1734,23 @@ function ModelBuilderContent({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={clearWorkflowDialogOpen} onOpenChange={setClearWorkflowDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Workflow?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all workflow items (tools and actions) while keeping your schema nodes and relationships. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClearWorkflow} className="bg-destructive text-primary-foreground hover:bg-destructive/80">
+              Clear Workflow
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div >
   )
 
