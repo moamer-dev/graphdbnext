@@ -22,19 +22,19 @@ interface ActionSelectorDialogProps {
 }
 
 const quickActions: Array<{ label: string; type: ActionNodeType }> = [
-  { label: 'Create Text Node ⚡', type: 'action:create-text-node' },
-  { label: 'Create Token Nodes ⚡', type: 'action:create-token-nodes' },
-  { label: 'Create Node (Attributes) ⚡', type: 'action:create-node-with-attributes' },
-  { label: 'Create Node Complete ⚡', type: 'action:create-node-complete' },
-  { label: 'Extract & Normalize Attributes ⚡', type: 'action:extract-and-normalize-attributes' },
-  { label: 'Create Annotation Nodes ⚡', type: 'action:create-annotation-nodes' },
-  { label: 'Create Reference Chain ⚡', type: 'action:create-reference-chain' },
-  { label: 'Merge Children Text ⚡', type: 'action:merge-children-text' },
-  { label: 'Create Conditional Node ⚡', type: 'action:create-conditional-node' },
-  { label: 'Extract & Compute Property ⚡', type: 'action:extract-and-compute-property' },
-  { label: 'Create Node (Filtered Children) ⚡', type: 'action:create-node-with-filtered-children' },
-  { label: 'Normalize & Deduplicate ⚡', type: 'action:normalize-and-deduplicate' },
-  { label: 'Create Hierarchical Nodes ⚡', type: 'action:create-hierarchical-nodes' }
+  { label: 'Create Text Node', type: 'action:create-text-node' },
+  { label: 'Create Token Nodes', type: 'action:create-token-nodes' },
+  { label: 'Create Node (Attributes)', type: 'action:create-node-with-attributes' },
+  { label: 'Create Node Complete', type: 'action:create-node-complete' },
+  { label: 'Extract & Normalize Attributes', type: 'action:extract-and-normalize-attributes' },
+  { label: 'Create Annotation Nodes', type: 'action:create-annotation-nodes' },
+  { label: 'Create Reference Chain', type: 'action:create-reference-chain' },
+  { label: 'Merge Children Text', type: 'action:merge-children-text' },
+  { label: 'Create Conditional Node', type: 'action:create-conditional-node' },
+  { label: 'Extract & Compute Property', type: 'action:extract-and-compute-property' },
+  { label: 'Create Node (Filtered Children)', type: 'action:create-node-with-filtered-children' },
+  { label: 'Normalize & Deduplicate', type: 'action:normalize-and-deduplicate' },
+  { label: 'Create Hierarchical Nodes', type: 'action:create-hierarchical-nodes' }
 ]
 
 const basicActions: Array<{ label: string; type: ActionNodeType }> = [

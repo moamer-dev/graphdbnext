@@ -170,9 +170,6 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium leading-tight text-foreground flex items-center gap-1">
                               {item.label}
-                              {isQuick && (
-                                <span className="text-[9px] text-primary font-bold">⚡</span>
-                              )}
                             </div>
                           </div>
                         </div>
