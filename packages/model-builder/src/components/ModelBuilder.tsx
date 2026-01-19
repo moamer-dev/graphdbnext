@@ -12,6 +12,7 @@ import { useWorkflowStore } from '../stores/workflowStore'
 import { useSchemaImport, useSchemaExport } from '../hooks'
 import { generateNodeTemplate, generateRelationshipTemplate } from '../services/parseService'
 import { downloadFile } from '../utils/exportUtils'
+import { extractXmlElements } from '../utils/xmlElementExtractor'
 import { exportWorkflowConfig, importWorkflowConfig } from '../utils/workflowConfigExport'
 import { WorkflowSelector } from './workflow/WorkflowSelector'
 import { convertBuilderToSchemaJson } from '../utils/schemaJsonConverter'
@@ -45,7 +46,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem
 } from './ui/dropdown-menu'
-import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Settings, CheckCircle2, X, Layout, Trash2 } from 'lucide-react'
+import { Upload, PanelLeftClose, PanelLeftOpen, Download, PlayCircle, Circle, Link2, Wrench, Zap, Key, Sparkles, Settings, CheckCircle2, X, Layout, Trash2, FileUp } from 'lucide-react'
 import { AIChatbot } from './ai/AIChatbot'
 import { SchemaDesignPanel } from './ai/SchemaDesignPanel'
 import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
@@ -334,6 +335,30 @@ function ModelBuilderContent({
     useActionCanvasStore.getState().clear()
     setClearWorkflowDialogOpen(false)
     toast.success('Workflow cleared successfully')
+  }
+
+  const xmlUploadInputRef = useRef<HTMLInputElement>(null)
+
+  const handleUploadXml = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Update wizard store with the file
+    useXmlImportWizardStore.getState().setSelectedFile(file)
+    
+    // Also perform extraction to ensure state consistency looks like wizard usage
+    try {
+        setXmlFile(file) // Set local state immediately too
+        const elementInfo = await extractXmlElements(file)
+        useXmlImportWizardStore.getState().setAvailableElements(elementInfo)
+        toast.success(`XML file uploaded: ${file.name}`)
+    } catch (err) {
+        console.error('Failed to extract elements', err)
+        toast.error('Failed to parse XML file')
+        // Still set the file even if extraction fails, so basic usage might work
+        setXmlFile(file)
+        useXmlImportWizardStore.getState().setSelectedFile(file)
+    }
   }
 
   const handleImport = async () => {
@@ -1468,6 +1493,25 @@ function ModelBuilderContent({
               Clear Workflow
             </Button>
           )}
+
+          {/* Upload XML Button */}
+          <input
+            ref={xmlUploadInputRef}
+            type="file"
+            accept=".xml"
+            className="hidden"
+            onChange={handleUploadXml}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => xmlUploadInputRef.current?.click()}
+            className="h-8 text-xs"
+            title={xmlFile ? `Current XML: ${xmlFile.name}` : "Upload XML file for graph generation"}
+          >
+            <FileUp className="h-3 w-3 mr-1" />
+            {xmlFile ? 'Change XML' : 'Upload XML'}
+          </Button>
 
           {/* Generate Graph Button */}
           {hasContent && (
