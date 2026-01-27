@@ -85,48 +85,57 @@ export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx
   const currentNode = ctx.currentGraphNode
 
   // Strictly Handle Reference Linking
+  let attrValue: string | null = null
+
   if (referenceAttribute) {
-    const attrValue = ctx.xmlElement.getAttribute(referenceAttribute)
+    attrValue = ctx.xmlElement.getAttribute(referenceAttribute)
+  } else {
+    // Auto-detect common reference attributes
+    const commonAttributes = ['target', 'corresp', 'ref', 'ana']
+    for (const attr of commonAttributes) {
+      attrValue = ctx.xmlElement.getAttribute(attr)
+      if (attrValue) break
+    }
+  }
 
-    if (attrValue) {
-      // ID Reference Mode (Always)
-      const cleanId = attrValue.replace(/^#/, '').split(' ')[0]
-      const targetElement = ctx.findElementById(ctx.doc, cleanId)
+  if (attrValue) {
+    // ID Reference Mode (Always)
+    const cleanId = attrValue.replace(/^#/, '').split(' ')[0]
+    const targetElement = ctx.findElementById(ctx.doc, cleanId)
 
-      // Try to find target node
-      const targetNode = targetElement ? ctx.elementToGraph.get(targetElement) : undefined
+    // Try to find target node
+    const targetNode = targetElement ? ctx.elementToGraph.get(targetElement) : undefined
 
-      // Determine relationship type
-      const relLabel = relationshipType || 'annotates'
-      const relType = ctx.relationships.find(r => r.type === relLabel)
+    // Determine relationship type
+    const relLabel = relationshipType || 'annotates'
+    const relType = ctx.relationships.find(r => r.type === relLabel)
 
-      if (targetNode) {
-        // Both nodes exist, create relationship
-        if (relType) {
-          const rel = ctx.createRelationship(currentNode, targetNode, relType)
-          ctx.graphRels.push(rel)
-        } else {
-          const rel: GraphJsonRelationship = {
-            id: ctx.relIdCounter.value++,
-            type: 'relationship',
-            label: relLabel,
-            start: currentNode.id,
-            end: targetNode.id,
-            properties: {}
-          }
-          ctx.graphRels.push(rel)
-        }
+    if (targetNode) {
+      // Both nodes exist, create relationship
+      if (relType) {
+        const rel = ctx.createRelationship(currentNode, targetNode, relType)
+        ctx.graphRels.push(rel)
       } else {
-        // Defer relationship if target likely exists but isn't processed yet
-        ctx.deferredRelationships.push({
-          from: currentNode,
-          to: null,
-          type: relLabel,
-          properties: {},
-          targetId: cleanId,
-          targetElement: targetElement || undefined
-        })
+        const rel: GraphJsonRelationship = {
+          id: ctx.relIdCounter.value++,
+          type: 'relationship',
+          label: relLabel,
+          start: currentNode.id,
+          end: targetNode.id,
+          properties: {}
+        }
+        ctx.graphRels.push(rel)
       }
+    } else {
+      // Defer relationship if target likely exists but isn't processed yet
+      ctx.deferredRelationships.push({
+        from: currentNode,
+        to: null,
+        type: relLabel,
+        properties: {},
+        targetId: cleanId,
+        targetElement: targetElement || undefined
+      })
     }
   }
 }

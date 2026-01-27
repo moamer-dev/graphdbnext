@@ -119,6 +119,8 @@ export interface ActionConfigurationState {
     filterPattern: string
     transforms: TextTransform[]
     properties: Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>
+    structure?: 'flat' | 'chained'
+    nextRelationshipType?: string
   }
   createNodeWithAttributesConfig: {
     nodeLabel: string
@@ -704,7 +706,9 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
             splitBy: (config.splitBy as string) ?? state.createTokenNodesConfig.splitBy,
             filterPattern: (config.filterPattern as string) || state.createTokenNodesConfig.filterPattern,
             transforms: (config.transforms as TextTransform[]) || state.createTokenNodesConfig.transforms,
-            properties: (config.properties as Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>) || state.createTokenNodesConfig.properties
+            properties: (config.properties as Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>) || state.createTokenNodesConfig.properties,
+            structure: (config.structure as 'flat' | 'chained') || state.createTokenNodesConfig.structure,
+            nextRelationshipType: (config.nextRelationshipType as string) || state.createTokenNodesConfig.nextRelationshipType
           }
         })
         break

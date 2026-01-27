@@ -1,0 +1,688 @@
+[
+  {
+    "id": 0,
+    "labels": [
+      "Thing",
+      "EditionObject"
+    ],
+    "properties": {
+      "docStatus": "",
+      "textClass": "",
+      "title": "Test Document"
+    },
+    "type": "node"
+  },
+  {
+    "id": 1,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "VisualUnit",
+      "TextArea",
+      "Surface"
+    ],
+    "properties": {},
+    "type": "node"
+  },
+  {
+    "id": 2,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "VisualUnit",
+      "TextArea",
+      "Zone",
+      "Column"
+    ],
+    "properties": {
+      "id": "col-1",
+      "n": "1"
+    },
+    "type": "node"
+  },
+  {
+    "end": 2,
+    "id": 3,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 1,
+    "type": "relationship"
+  },
+  {
+    "id": 4,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "VisualUnit",
+      "TextArea",
+      "Zone",
+      "Line"
+    ],
+    "properties": {
+      "id": "line-1",
+      "n": "1"
+    },
+    "type": "node"
+  },
+  {
+    "end": 4,
+    "id": 5,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 2,
+    "type": "relationship"
+  },
+  {
+    "id": 6,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "VisualUnit",
+      "GraphicalUnit",
+      "Seg"
+    ],
+    "properties": {
+      "id": "seg-1"
+    },
+    "type": "node"
+  },
+  {
+    "end": 6,
+    "id": 7,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 4,
+    "type": "relationship"
+  },
+  {
+    "id": 8,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "MorphologicalUnit",
+      "Word"
+    ],
+    "properties": {
+      "id": "word-1"
+    },
+    "type": "node"
+  },
+  {
+    "id": 9,
+    "labels": [
+      "Thing",
+      "Annotation"
+    ],
+    "properties": {
+      "content": "hello",
+      "mimeType": "text/plain",
+      "type": "lemma"
+    },
+    "type": "node"
+  },
+  {
+    "end": 9,
+    "id": 10,
+    "label": "annotatedBy",
+    "properties": {},
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "end": 8,
+    "id": 11,
+    "label": "annotates",
+    "properties": {},
+    "start": 9,
+    "type": "relationship"
+  },
+  {
+    "id": 12,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "h",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 12,
+    "id": 13,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "id": 14,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "e",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 14,
+    "id": 15,
+    "label": "contains",
+    "properties": {
+      "pos": 1
+    },
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "id": 16,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "l",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 16,
+    "id": 17,
+    "label": "contains",
+    "properties": {
+      "pos": 2
+    },
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "id": 18,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "l",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 18,
+    "id": 19,
+    "label": "contains",
+    "properties": {
+      "pos": 3
+    },
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "id": 20,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "o",
+      "whitespace": "\n            "
+    },
+    "type": "node"
+  },
+  {
+    "end": 20,
+    "id": 21,
+    "label": "contains",
+    "properties": {
+      "pos": 4
+    },
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "id": 22,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "MorphologicalUnit",
+      "Word"
+    ],
+    "properties": {
+      "id": "word-2"
+    },
+    "type": "node"
+  },
+  {
+    "id": 23,
+    "labels": [
+      "Thing",
+      "Annotation"
+    ],
+    "properties": {
+      "content": "world",
+      "mimeType": "text/plain",
+      "type": "lemma"
+    },
+    "type": "node"
+  },
+  {
+    "end": 23,
+    "id": 24,
+    "label": "annotatedBy",
+    "properties": {},
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "end": 22,
+    "id": 25,
+    "label": "annotates",
+    "properties": {},
+    "start": 23,
+    "type": "relationship"
+  },
+  {
+    "id": 26,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "w",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 26,
+    "id": 27,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "id": 28,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "o",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 28,
+    "id": 29,
+    "label": "contains",
+    "properties": {
+      "pos": 1
+    },
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "id": 30,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "r",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 30,
+    "id": 31,
+    "label": "contains",
+    "properties": {
+      "pos": 2
+    },
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "id": 32,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "l",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 32,
+    "id": 33,
+    "label": "contains",
+    "properties": {
+      "pos": 3
+    },
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "id": 34,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "d",
+      "whitespace": "\n          "
+    },
+    "type": "node"
+  },
+  {
+    "end": 34,
+    "id": 35,
+    "label": "contains",
+    "properties": {
+      "pos": 4
+    },
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "id": 36,
+    "labels": [
+      "Thing",
+      "TextInformationLayer",
+      "VocalisationLayer"
+    ],
+    "properties": {},
+    "type": "node"
+  },
+  {
+    "end": 36,
+    "id": 37,
+    "label": "hasLayer",
+    "properties": {},
+    "start": 0,
+    "type": "relationship"
+  },
+  {
+    "id": 38,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "PoetologicalUnit",
+      "Stanza"
+    ],
+    "properties": {},
+    "type": "node"
+  },
+  {
+    "end": 38,
+    "id": 39,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 36,
+    "type": "relationship"
+  },
+  {
+    "id": 40,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "PoetologicalUnit",
+      "Verse"
+    ],
+    "properties": {
+      "n": "1"
+    },
+    "type": "node"
+  },
+  {
+    "end": 40,
+    "id": 41,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 38,
+    "type": "relationship"
+  },
+  {
+    "id": 42,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "MorphologicalUnit",
+      "Word"
+    ],
+    "properties": {
+      "id": "q42"
+    },
+    "type": "node"
+  },
+  {
+    "id": 43,
+    "labels": [
+      "Thing",
+      "Annotation"
+    ],
+    "properties": {
+      "content": "test",
+      "mimeType": "text/plain",
+      "type": "lemma"
+    },
+    "type": "node"
+  },
+  {
+    "end": 43,
+    "id": 44,
+    "label": "annotatedBy",
+    "properties": {},
+    "start": 42,
+    "type": "relationship"
+  },
+  {
+    "end": 42,
+    "id": 45,
+    "label": "annotates",
+    "properties": {},
+    "start": 43,
+    "type": "relationship"
+  },
+  {
+    "id": 46,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "t",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 46,
+    "id": 47,
+    "label": "contains",
+    "properties": {
+      "pos": 0
+    },
+    "start": 42,
+    "type": "relationship"
+  },
+  {
+    "id": 48,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "e",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 48,
+    "id": 49,
+    "label": "contains",
+    "properties": {
+      "pos": 1
+    },
+    "start": 42,
+    "type": "relationship"
+  },
+  {
+    "id": 50,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "s",
+      "whitespace": ""
+    },
+    "type": "node"
+  },
+  {
+    "end": 50,
+    "id": 51,
+    "label": "contains",
+    "properties": {
+      "pos": 2
+    },
+    "start": 42,
+    "type": "relationship"
+  },
+  {
+    "id": 52,
+    "labels": [
+      "Thing",
+      "TextUnit",
+      "GrammaticalUnit",
+      "Character"
+    ],
+    "properties": {
+      "text": "t",
+      "whitespace": "\n        "
+    },
+    "type": "node"
+  },
+  {
+    "end": 52,
+    "id": 53,
+    "label": "contains",
+    "properties": {
+      "pos": 3
+    },
+    "start": 42,
+    "type": "relationship"
+  },
+  {
+    "id": 54,
+    "labels": [
+      "Thing",
+      "Annotation"
+    ],
+    "properties": {
+      "content": "\n      <p>This is a note about word-1</p>",
+      "mimeType": "text/xml",
+      "type": "editorial"
+    },
+    "type": "node"
+  },
+  {
+    "end": 54,
+    "id": 55,
+    "label": "annotatedBy",
+    "properties": {},
+    "start": 8,
+    "type": "relationship"
+  },
+  {
+    "end": 8,
+    "id": 56,
+    "label": "annotates",
+    "properties": {},
+    "start": 54,
+    "type": "relationship"
+  },
+  {
+    "id": 57,
+    "labels": [
+      "Thing",
+      "Annotation"
+    ],
+    "properties": {
+      "content": "\n      <p>This is a note about word-2</p>",
+      "mimeType": "text/xml",
+      "type": "editorial"
+    },
+    "type": "node"
+  },
+  {
+    "end": 57,
+    "id": 58,
+    "label": "annotatedBy",
+    "properties": {},
+    "start": 22,
+    "type": "relationship"
+  },
+  {
+    "end": 22,
+    "id": 59,
+    "label": "annotates",
+    "properties": {},
+    "start": 57,
+    "type": "relationship"
+  }
+]

@@ -151,6 +151,17 @@ export function executeCreateTokenNodesAction(action: ActionCanvasNode, ctx: Act
     .map(token => token.trim())
     .filter(token => token.length > 0 && filterRegex.test(token))
 
+  /*
+   * Start of modified token generation logic
+   * Supports two modes:
+   * 1. Flat: Parent -> Token1, Parent -> Token2, ... (default)
+   * 2. Chained: Parent -> Token1 -> Token2 -> ...
+   */
+  const structure = (action.config.structure as 'flat' | 'chained') || 'flat'
+  const nextRelationshipType = (action.config.nextRelationshipType as string) || 'next'
+
+  let previousTokenNode: GraphJsonNode | null = null
+
   filteredTokens.forEach((token, index) => {
     const properties: Record<string, unknown> = {}
 
@@ -192,20 +203,65 @@ export function executeCreateTokenNodesAction(action: ActionCanvasNode, ctx: Act
     }
     ctx.graphNodes.push(tokenNode)
 
-    const relType = ctx.relationships.find(r => r.type === relationshipType)
-    if (relType) {
-      const rel = ctx.createRelationship(parentGraphNode, tokenNode, relType)
-      ctx.graphRels.push(rel)
-    } else {
-      const rel: GraphJsonRelationship = {
-        id: ctx.relIdCounter.value++,
-        type: 'relationship',
-        label: relationshipType,
-        start: parentGraphNode.id,
-        end: tokenNode.id,
-        properties: {}
+    if (structure === 'chained') {
+      // Chained structure: 
+      // First token connects to parent
+      // Subsequent tokens connect to previous token
+      if (index === 0) {
+        // First token -> Connect to parent
+        const relType = ctx.relationships.find(r => r.type === relationshipType)
+        if (relType) {
+          const rel = ctx.createRelationship(parentGraphNode, tokenNode, relType)
+          ctx.graphRels.push(rel)
+        } else {
+          const rel: GraphJsonRelationship = {
+            id: ctx.relIdCounter.value++,
+            type: 'relationship',
+            label: relationshipType,
+            start: parentGraphNode.id,
+            end: tokenNode.id,
+            properties: {}
+          }
+          ctx.graphRels.push(rel)
+        }
+      } else if (previousTokenNode) {
+        // Subsequent token -> Connect to previous token using 'next' relationship
+        // We don't check ctx.relationships for 'next' usually as it might be implicit, 
+        // but let's try to find it first for consistency
+        const nextRelType = ctx.relationships.find(r => r.type === nextRelationshipType)
+        if (nextRelType) {
+            const rel = ctx.createRelationship(previousTokenNode, tokenNode, nextRelType)
+            ctx.graphRels.push(rel)
+        } else {
+            const rel: GraphJsonRelationship = {
+                id: ctx.relIdCounter.value++,
+                type: 'relationship',
+                label: nextRelationshipType,
+                start: previousTokenNode.id,
+                end: tokenNode.id,
+                properties: {}
+            }
+            ctx.graphRels.push(rel)
+        }
       }
-      ctx.graphRels.push(rel)
+      previousTokenNode = tokenNode
+    } else {
+      // Flat structure (default): Connect all to parent
+      const relType = ctx.relationships.find(r => r.type === relationshipType)
+      if (relType) {
+        const rel = ctx.createRelationship(parentGraphNode, tokenNode, relType)
+        ctx.graphRels.push(rel)
+      } else {
+        const rel: GraphJsonRelationship = {
+          id: ctx.relIdCounter.value++,
+          type: 'relationship',
+          label: relationshipType,
+          start: parentGraphNode.id,
+          end: tokenNode.id,
+          properties: {}
+        }
+        ctx.graphRels.push(rel)
+      }
     }
   })
 }

@@ -194,6 +194,50 @@ export function ActionCreateTokenNodesConfiguration({
             }}
           />
         </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Structure</Label>
+          <Select
+            value={createTokenNodesConfig.structure || 'flat'}
+            onValueChange={(value) => {
+              const updated = { ...createTokenNodesConfig, structure: value as 'flat' | 'chained' }
+              onCreateTokenNodesConfigChange(updated)
+              onUpdateActionNode(actionNodeId, {
+                config: { ...actionNode.config, structure: value }
+              })
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="flat">Flat (All connect to Parent)</SelectItem>
+              <SelectItem value="chained">Chained (Linked List)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground">
+            Flat: Parent -&gt; Token1, Parent -&gt; Token2<br />
+            Chained: Parent -&gt; Token1 -&gt; Token2
+          </p>
+        </div>
+
+        {createTokenNodesConfig.structure === 'chained' && (
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Next Token Relationship</Label>
+            <Input
+              placeholder="e.g., next"
+              className="h-8 text-xs"
+              value={createTokenNodesConfig.nextRelationshipType || 'next'}
+              onChange={(e) => {
+                const value = e.target.value
+                const updated = { ...createTokenNodesConfig, nextRelationshipType: value }
+                onCreateTokenNodesConfigChange(updated)
+                onUpdateActionNode(actionNodeId, {
+                  config: { ...actionNode.config, nextRelationshipType: value }
+                })
+              }}
+            />
+          </div>
+        )}
       </div>
     </CollapsibleSection>
   )
