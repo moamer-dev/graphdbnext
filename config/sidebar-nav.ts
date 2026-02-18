@@ -1,4 +1,4 @@
-import { type LucideIcon, Database, Code, Network, Users, Settings, Palette, MessageSquare, LayoutDashboard } from 'lucide-react'
+import { type LucideIcon, Database, Code, Network, Users, Settings, LayoutDashboard } from 'lucide-react'
 
 export interface SidebarNavItem {
   title: string
@@ -18,6 +18,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
     url: '/dashboard',
     icon: LayoutDashboard
   },
+
   {
     title: 'Graph',
     url: '/dashboard/graph',
