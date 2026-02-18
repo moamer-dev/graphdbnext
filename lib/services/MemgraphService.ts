@@ -233,8 +233,8 @@ let memgraphInstance: MemgraphService | null = null
 
 export function getMemgraphService (): MemgraphService {
   if (!memgraphInstance) {
-    const host = process.env.MEMGRAPH_HOST || '127.0.0.1'
-    const port = parseInt(process.env.MEMGRAPH_PORT || '7687')
+    const host = process.env.GRAPH_DB_HOST || '127.0.0.1'
+    const port = parseInt(process.env.GRAPH_DB_PORT || '7688')
     memgraphInstance = new MemgraphService(host, port)
   }
   return memgraphInstance
