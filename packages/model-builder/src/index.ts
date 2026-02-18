@@ -1,4 +1,3 @@
-// Main export
 export { ModelBuilder } from './components/ModelBuilder'
 export type { WorkflowPersistence, ModelBuilderProps } from './components/ModelBuilder'
 export { ModelBuilderCanvas } from './components/canvas/ModelBuilderCanvas'
@@ -15,7 +14,7 @@ export { XmlConversionPreview } from './components/viewer/XmlConversionPreview'
 export { SaveWorkflowDialog } from './components/dialogs/SaveWorkflowDialog'
 export { WorkflowChangeConfirmDialog } from './components/dialogs/WorkflowChangeConfirmDialog'
 
-// UI Components
+
 export {
   Dialog,
   DialogContent,
@@ -35,7 +34,7 @@ export {
   TooltipTrigger
 } from './components/ui/tooltip'
 
-// Store
+
 export { useModelBuilderStore } from './stores/modelBuilderStore'
 export type { ModelBuilderStore } from './stores/modelBuilderStore'
 export { useXmlImportWizardStore } from './stores/xmlImportWizardStore'
@@ -50,7 +49,6 @@ export type {
 export { useToolCanvasStore } from './stores/toolCanvasStore'
 export { useActionCanvasStore } from './stores/actionCanvasStore'
 
-// Types
 export type {
   Node,
   Relationship,
@@ -60,13 +58,10 @@ export type {
   Schema
 } from './types'
 
-// Hooks
 export * from './hooks'
 
-// Services
 export * from './services'
 
-// Utils
 export {
   convertBuilderToSchema,
   convertSchemaToBuilder,
@@ -75,7 +70,6 @@ export {
 export { parseMarkdownSchema, convertMarkdownSchemaToBuilder } from './utils/markdownParser'
 export { exportToJson, exportToMarkdown } from './utils/exportUtils'
 
-// XML Analysis
 export { XmlAnalyzer } from './services/xmlAnalyzer'
 export type {
   XmlStructureAnalysis,
@@ -85,7 +79,6 @@ export type {
   XmlAnalysisRules
 } from './services/xmlAnalyzer'
 
-// XML Converter
 export { XmlConverter, convertXmlToGraph } from './services/xmlConverter'
 export { MappingValidator } from './services/mappingValidator'
 export type {
@@ -99,20 +92,16 @@ export type {
   TextContentRule
 } from './types/mappingConfig'
 
-// Utils
 export {
   convertXmlMappingToGenericMapping,
   convertGenericMappingToXmlMapping
 } from './utils/mappingConfigConverter'
 export { convertBuilderToSchemaJson } from './utils/schemaJsonConverter'
 
-// Workflow execution
 export { executeWorkflow } from './services/workflowExecutor'
 export { validateWorkflowAgainstSchema, validateGraphAgainstSchema } from './services/workflowValidator'
 export { exportWorkflowConfig, importWorkflowConfig } from './utils/workflowConfigExport'
 export type { WorkflowConfigExport } from './utils/workflowConfigExport'
-
-// AI Settings
 export { AISettingsProvider, useAISettings, useAIFeature } from './ai/config'
 export { AISettingsPanel } from './components/ai/AISettingsPanel'
 export { AIChatbot } from './components/ai/AIChatbot'
