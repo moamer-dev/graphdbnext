@@ -18,7 +18,8 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
     relationshipRecommendation: false,
     nodePropertySuggestion: false,
     schemaOptimization: false,
-    aiAgentsAsTools: false
+    aiAgentsAsTools: false,
+    semanticEnrichment: false
   }
 }
 

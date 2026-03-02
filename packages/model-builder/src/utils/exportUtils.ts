@@ -8,25 +8,31 @@ export function exportToJson (state: ModelBuilderState): string {
     version?: string
     lastUpdated?: string
     source?: string
+    isSemanticEnabled?: boolean
+    selectedOntologyId?: string | null
     nodes: Record<string, {
       name: string
       superclassNames?: string[]
+      semantic?: any
       properties: Record<string, {
         name: string
         datatype: string
         values: unknown[]
         required: boolean
+        semantic?: any
       }>
       relationsOut?: Record<string, string[]>
       relationsIn?: Record<string, string[]>
     }>
     relations: Record<string, {
       name: string
+      semantic?: any
       properties?: Record<string, {
         name: string
         datatype: string
         values: unknown[]
         required: boolean
+        semantic?: any
       }>
       domains: Record<string, string[]>
     }>
@@ -34,6 +40,8 @@ export function exportToJson (state: ModelBuilderState): string {
     version: state.metadata.version || '1.0.0',
     lastUpdated: new Date().toISOString(),
     source: state.metadata.name || 'Model Builder',
+    isSemanticEnabled: state.isSemanticEnabled,
+    selectedOntologyId: state.selectedOntologyId,
     nodes: {},
     relations: {}
   }
@@ -55,17 +63,20 @@ export function exportToJson (state: ModelBuilderState): string {
     
     node.properties.forEach((prop) => {
       const datatype = mapPropertyTypeToDatatype(prop.type)
+      const propSemantic = (node.data as any)?.propertySemantics?.[prop.key]
       properties[prop.key] = {
         name: prop.key,
         datatype,
         values: prop.defaultValue ? [prop.defaultValue] : [],
-        required: prop.required
+        required: prop.required,
+        ...(propSemantic ? { semantic: propSemantic } : {})
       }
     })
     
     schemaJson.nodes[key] = {
       name: node.label,
       superclassNames: node.type !== node.label ? [node.type] : [],
+      ...( (node.data as any)?.semantic ? { semantic: (node.data as any).semantic } : {} ),
       properties,
       relationsOut: {},
       relationsIn: {}
@@ -77,6 +88,8 @@ export function exportToJson (state: ModelBuilderState): string {
     fromNodes: Set<string>
     toNodes: Set<string>
     properties?: Property[]
+    semantic?: any
+    propertySemantics?: Record<string, any>
   }>()
   
   // Group relationships by type
@@ -90,7 +103,9 @@ export function exportToJson (state: ModelBuilderState): string {
       relationsMap.set(rel.type, {
         fromNodes: new Set(),
         toNodes: new Set(),
-        properties: rel.properties && rel.properties.length > 0 ? rel.properties : undefined
+        properties: rel.properties && rel.properties.length > 0 ? rel.properties : undefined,
+        semantic: (rel.data as any)?.semantic,
+        propertySemantics: (rel.data as any)?.propertySemantics
       })
     }
     
@@ -106,16 +121,19 @@ export function exportToJson (state: ModelBuilderState): string {
       datatype: string
       values: unknown[]
       required: boolean
+      semantic?: any
     }> = {}
     
     if (relData.properties) {
       relData.properties.forEach((prop) => {
         const datatype = mapPropertyTypeToDatatype(prop.type)
+        const propSemantic = relData.propertySemantics?.[prop.key]
         properties[prop.key] = {
           name: prop.key,
           datatype,
           values: prop.defaultValue ? [prop.defaultValue] : [],
-          required: prop.required
+          required: prop.required,
+          ...(propSemantic ? { semantic: propSemantic } : {})
         }
       })
     }
@@ -140,6 +158,7 @@ export function exportToJson (state: ModelBuilderState): string {
     
     schemaJson.relations[relType] = {
       name: relType,
+      ...(relData.semantic ? { semantic: relData.semantic } : {}),
       properties: properties,
       domains
     }
@@ -199,6 +218,14 @@ export function exportToMarkdown (state: ModelBuilderState): string {
   }
   md += `**Last Updated:** ${new Date().toISOString()}\n\n`
   
+  if (state.isSemanticEnabled) {
+    md += `**Semantic Enabled:** true\n`
+    if (state.selectedOntologyId) {
+      md += `**Ontology ID:** ${state.selectedOntologyId}\n`
+    }
+    md += `\n`
+  }
+  
   md += `## NODES\n\n`
   
   // Export nodes
@@ -211,6 +238,11 @@ export function exportToMarkdown (state: ModelBuilderState): string {
       md += `**Labels**: \`${node.type}\`\n\n`
     } else {
       md += `**Labels**: \`${node.label}\`\n\n`
+    }
+    
+    const semantic = (node.data as any)?.semantic
+    if (semantic && semantic.classIri) {
+      md += `**Semantic Class**: ${semantic.classLabel || ''}${semantic.classCurie ? ` [${semantic.classCurie}]` : ''} (\`${semantic.classIri}\`)\n\n`
     }
     
     // Properties
@@ -226,6 +258,12 @@ export function exportToMarkdown (state: ModelBuilderState): string {
         if (prop.defaultValue) {
           md += ` - Default: ${prop.defaultValue}`
         }
+        
+        const propSemantic = (node.data as any)?.propertySemantics?.[prop.key]
+        if (propSemantic && propSemantic.propertyIri) {
+          md += ` - Semantic Property: ${propSemantic.propertyLabel || ''}${propSemantic.propertyCurie ? ` [${propSemantic.propertyCurie}]` : ''} (\`${propSemantic.propertyIri}\`)`
+        }
+
         md += `\n`
       })
       md += `\n`
@@ -294,13 +332,17 @@ export function exportToMarkdown (state: ModelBuilderState): string {
   const relationsByType = new Map<string, {
     properties?: Property[]
     domains: Record<string, string[]>
+    semantic?: any
+    propertySemantics?: Record<string, any>
   }>()
   
   state.relationships.forEach((rel) => {
     if (!relationsByType.has(rel.type)) {
       relationsByType.set(rel.type, {
         properties: rel.properties && rel.properties.length > 0 ? rel.properties : undefined,
-        domains: {}
+        domains: {},
+        semantic: (rel.data as any)?.semantic,
+        propertySemantics: (rel.data as any)?.propertySemantics
       })
     }
     
@@ -322,6 +364,10 @@ export function exportToMarkdown (state: ModelBuilderState): string {
   relationsByType.forEach((relData, relType) => {
     md += `### ${relType}\n\n`
     
+    if (relData.semantic && relData.semantic.propertyIri) {
+      md += `**Semantic Property**: ${relData.semantic.propertyLabel || ''}${relData.semantic.propertyCurie ? ` [${relData.semantic.propertyCurie}]` : ''} (\`${relData.semantic.propertyIri}\`)\n\n`
+    }
+    
     // Properties
     if (relData.properties && relData.properties.length > 0) {
       md += `**Properties:**\n`
@@ -335,6 +381,12 @@ export function exportToMarkdown (state: ModelBuilderState): string {
         if (prop.defaultValue) {
           md += ` - Default: ${prop.defaultValue}`
         }
+        
+        const propSemantic = relData.propertySemantics?.[prop.key]
+        if (propSemantic && propSemantic.propertyIri) {
+          md += ` - Semantic Property: ${propSemantic.propertyLabel || ''}${propSemantic.propertyCurie ? ` [${propSemantic.propertyCurie}]` : ''} (\`${propSemantic.propertyIri}\`)`
+        }
+
         md += `\n`
       })
       md += `\n`

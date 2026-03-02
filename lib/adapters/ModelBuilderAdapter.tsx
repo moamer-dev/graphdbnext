@@ -1,8 +1,17 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from 'react'
-import { ModelBuilder, useModelBuilderStore, useToolCanvasStore, useActionCanvasStore, AISettingsProvider } from '@graphdb/model-builder'
-import type { AISettings, WorkflowPersistence } from '@graphdb/model-builder'
+import {
+  ModelBuilder,
+  useModelBuilderStore,
+  useToolCanvasStore,
+  useActionCanvasStore,
+  AISettingsProvider
+} from '@graphdb/model-builder'
+import type {
+  AISettings,
+  WorkflowPersistence,
+} from '@graphdb/model-builder'
 import type { Model } from '@/lib/resources/ModelResource'
 import { DEFAULT_AI_SETTINGS } from '@/lib/ai/ApiAISettingsStorage'
 import { SaveWorkflowDialog, WorkflowChangeConfirmDialog } from '@graphdb/model-builder'
@@ -19,25 +28,15 @@ export interface ModelBuilderAdapterProps {
  * Adapter component that wraps the model-builder package
  * and connects it to the main app's Model database entity
  */
-export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | undefined) {
-  // Use safe defaults for null/undefined props
-  const safeProps = props || {
-    model: null,
-    onSave: async () => {
-      console.error('ModelBuilderAdapter: onSave called but props were null')
-    },
-    className: undefined
-  }
-
-  const {
-    model = null,
-    onSave,
-    className
-  } = safeProps
-
+export function ModelBuilderAdapter({
+  model = null,
+  onSave,
+  className
+}: ModelBuilderAdapterProps) {
   const { loadState, nodes, relationships, metadata, clear } = useModelBuilderStore()
   const onSaveRef = useRef(onSave)
   const loadedRef = useRef(false)
+  const lastModelIdRef = useRef<string | null>(model?.id || null)
   const [aiSettings, setAiSettings] = useState<AISettings | null>(null)
   const [saveWorkflowDialogOpen, setSaveWorkflowDialogOpen] = useState(false)
   const [currentWorkflowConfig, setCurrentWorkflowConfig] = useState<any>(null)
@@ -67,6 +66,12 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
 
   // Load model data into builder when model changes
   useEffect(() => {
+    // If model ID changed, reset loaded flag
+    if (model?.id !== lastModelIdRef.current) {
+      loadedRef.current = false
+      lastModelIdRef.current = model?.id || null
+    }
+
     if (!model || loadedRef.current) {
       return
     }
@@ -104,13 +109,17 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
             version?: string
             lastUpdated?: string
             source?: string
+            isSemanticEnabled?: boolean
+            selectedOntologyId?: string | null
           }
 
           if (schemaJson.nodes && schemaJson.relations) {
-            const converted = convertSchemaJsonToBuilder(schemaJson)
+            const converted = convertSchemaJsonToBuilder(schemaJson as any)
             loadState({
               nodes: converted.nodes,
               relationships: converted.relationships,
+              isSemanticEnabled: converted.isSemanticEnabled,
+              selectedOntologyId: converted.selectedOntologyId,
               metadata: {
                 name: model.name,
                 description: model.description || '',
@@ -129,6 +138,8 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
           loadState({
             nodes: converted.nodes,
             relationships: converted.relationships,
+            isSemanticEnabled: converted.isSemanticEnabled,
+            selectedOntologyId: converted.selectedOntologyId,
             metadata: {
               name: model.name,
               description: model.description || '',
@@ -293,7 +304,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
         isSavingRef.current = true
 
         try {
-          const { convertBuilderToSchemaJson, exportToMarkdown, useModelBuilderStore } = await import('@graphdb/model-builder')
+          const { convertBuilderToSchemaJson, exportToMarkdown } = await import('@graphdb/model-builder')
 
           // Get the full store state for export
           // IMPORTANT: Only use model nodes and relationships, NOT tools/actions
@@ -305,7 +316,12 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
           const currentRelationships = storeState.relationships
 
           // Convert to schema format (this only includes nodes and relationships, no tools/actions)
-          const schemaJson = convertBuilderToSchemaJson(currentNodes, currentRelationships)
+          const schemaJson = convertBuilderToSchemaJson(
+            currentNodes,
+            currentRelationships,
+            storeState.isSemanticEnabled,
+            storeState.selectedOntologyId
+          )
           const schemaMd = exportToMarkdown({
             nodes: currentNodes,
             relationships: currentRelationships,
@@ -314,6 +330,8 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
             relationshipTypes: storeState.relationshipTypes || [],
             selectedNode: storeState.selectedNode || null,
             selectedRelationship: storeState.selectedRelationship || null,
+            selectedOntologyId: storeState.selectedOntologyId || null,
+            isSemanticEnabled: storeState.isSemanticEnabled || false,
             hideUnconnectedNodes: storeState.hideUnconnectedNodes || false,
             rootNodeId: storeState.rootNodeId || null
           })
@@ -345,7 +363,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
 
       // Always check for workflows, regardless of whether model exists
       // Get current workflow config using fresh state from store (not refs)
-      const { exportWorkflowConfig, useToolCanvasStore, useActionCanvasStore, useModelBuilderStore } = await import('@graphdb/model-builder')
+      const { exportWorkflowConfig } = await import('@graphdb/model-builder')
       const storeState = useModelBuilderStore.getState()
       const toolNodes = useToolCanvasStore.getState().nodes
       const toolEdges = useToolCanvasStore.getState().edges
@@ -425,7 +443,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
 
   const getCurrentWorkflowConfig = async () => {
     try {
-      const { exportWorkflowConfig, useToolCanvasStore, useActionCanvasStore, useModelBuilderStore } = await import('@graphdb/model-builder')
+      const { exportWorkflowConfig } = await import('@graphdb/model-builder')
       const storeState = useModelBuilderStore.getState()
       const toolNodes = useToolCanvasStore.getState().nodes
       const toolEdges = useToolCanvasStore.getState().edges
@@ -636,7 +654,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
     }
 
     try {
-      const { exportWorkflowConfig, useModelBuilderStore, useToolCanvasStore, useActionCanvasStore } = await import('@graphdb/model-builder')
+      const { exportWorkflowConfig } = await import('@graphdb/model-builder')
       const currentNodes = useModelBuilderStore.getState().nodes
       const currentRelationships = useModelBuilderStore.getState().relationships
       const currentToolNodes = useToolCanvasStore.getState().nodes
@@ -873,7 +891,6 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
 
     try {
       // Clear existing tools and actions before loading new workflow
-      const { useToolCanvasStore, useActionCanvasStore } = await import('@graphdb/model-builder')
       useToolCanvasStore.getState().clear()
       useActionCanvasStore.getState().clear()
 
@@ -904,7 +921,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
     try {
       if (updateCurrent) {
         // Update current workflow first
-        const { exportWorkflowConfig, useModelBuilderStore, useToolCanvasStore, useActionCanvasStore } = await import('@graphdb/model-builder')
+        const { exportWorkflowConfig } = await import('@graphdb/model-builder')
         const currentNodes = useModelBuilderStore.getState().nodes
         const currentRelationships = useModelBuilderStore.getState().relationships
         const currentToolNodes = useToolCanvasStore.getState().nodes
@@ -977,7 +994,7 @@ export function ModelBuilderAdapter(props: ModelBuilderAdapterProps | null | und
   }
 
   return (
-    <AISettingsProvider settings={aiSettings}>
+    <AISettingsProvider settings={aiSettings || undefined}>
       <ModelBuilder
         className={className}
         workflowPersistence={workflowPersistence}

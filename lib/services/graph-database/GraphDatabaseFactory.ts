@@ -18,7 +18,7 @@ export class GraphDatabaseFactory {
       process.env.GRAPH_DB_PORT || 
       process.env.MEMGRAPH_PORT || 
       process.env.NEO4J_PORT || 
-      '7687'
+      '7688'
     )
     const username = process.env.GRAPH_DB_USERNAME || process.env.NEO4J_USERNAME || ''
     const password = process.env.GRAPH_DB_PASSWORD || process.env.NEO4J_PASSWORD || ''

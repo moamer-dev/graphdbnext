@@ -20,7 +20,9 @@ export function useSchemaImport () {
       loadState({
         nodes: result.nodes,
         relationships: result.relationships,
-        metadata: result.metadata
+        metadata: result.metadata,
+        isSemanticEnabled: result.isSemanticEnabled,
+        selectedOntologyId: result.selectedOntologyId
       })
 
       return result

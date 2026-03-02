@@ -11,6 +11,8 @@ export interface ImportResult {
     description: string
     version: string
   }
+  isSemanticEnabled?: boolean
+  selectedOntologyId?: string | null
   xmlAnalysis?: import('./xmlAnalyzer').XmlStructureAnalysis
   xmlMapping?: import('./xmlAnalyzer').XmlMappingConfig
 }
@@ -58,6 +60,14 @@ export class ImportService {
         description: `Imported from ${file.name}`,
         version: schemaJson.version || '1.0.0'
       }
+
+      return {
+        nodes,
+        relationships,
+        metadata,
+        isSemanticEnabled: converted.isSemanticEnabled,
+        selectedOntologyId: converted.selectedOntologyId
+      }
     } else if (fileExtension === 'md' || fileExtension === 'markdown') {
       // Parse Markdown schema
       const parsedSchema = parseMarkdownSchema(text)
@@ -76,6 +86,14 @@ export class ImportService {
         name: 'Imported Schema',
         description: `Imported from ${file.name}`,
         version: '1.0.0'
+      }
+
+      return {
+        nodes,
+        relationships,
+        metadata,
+        isSemanticEnabled: converted.isSemanticEnabled,
+        selectedOntologyId: converted.selectedOntologyId
       }
     } else if (fileExtension === 'xml') {
       // Analyze XML structure

@@ -5,25 +5,31 @@ import type { Node, Relationship, Property } from '../types'
  * Parses MD files in the format used by the schema templates
  */
 export interface ParsedMarkdownSchema {
+  isSemanticEnabled?: boolean
+  selectedOntologyId?: string | null
   nodes: Record<string, {
     name: string
     superclassNames: string[]
+    semantic?: any
     properties: Record<string, {
       name: string
       datatype: string | null
       values: string[]
       required: boolean
+      semantic?: any
     }>
     relationsOut: Record<string, string[]>
     relationsIn: Record<string, string[]>
   }>
   relations: Record<string, {
     name: string
+    semantic?: any
     properties: Record<string, {
       name: string
       datatype: string | null
       values: string[]
       required: boolean
+      semantic?: any
     }>
     domains: Record<string, string[]>
   }>
@@ -34,6 +40,17 @@ export interface ParsedMarkdownSchema {
  */
 export function parseMarkdownSchema (mdContent: string): ParsedMarkdownSchema {
   const schema: ParsedMarkdownSchema = { nodes: {}, relations: {} }
+
+  // Extract Semantic Enabled / Ontology ID
+  const semanticEnabledMatch = mdContent.match(/\*\*Semantic Enabled:\*\*\s*(true|false)/i)
+  if (semanticEnabledMatch) {
+    schema.isSemanticEnabled = semanticEnabledMatch[1].toLowerCase() === 'true'
+  }
+  
+  const ontologyIdMatch = mdContent.match(/\*\*Ontology ID:\*\*\s*(.+?)(?:\n|$)/)
+  if (ontologyIdMatch) {
+    schema.selectedOntologyId = ontologyIdMatch[1].trim()
+  }
 
   // Split into sections
   const nodesSection = extractSection(mdContent, '## NODES', '## RELATIONS')
@@ -54,6 +71,8 @@ export function parseMarkdownSchema (mdContent: string): ParsedMarkdownSchema {
 export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSchema): {
   nodes: Node[]
   relationships: Relationship[]
+  isSemanticEnabled?: boolean
+  selectedOntologyId?: string | null
 } {
   const nodeMap = new Map<string, Node>()
   const relationships: Relationship[] = []
@@ -95,7 +114,13 @@ export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSche
         x: (nodeIndex % 4) * 300 + Math.random() * 50,
         y: Math.floor(nodeIndex / 4) * 250 + Math.random() * 50
       },
-      order: nodeIndex
+      order: nodeIndex,
+      data: {
+        ...(nodeData.semantic ? { semantic: nodeData.semantic } : {}),
+        ...(Object.keys(nodeData.properties).some(p => nodeData.properties[p].semantic) 
+          ? { propertySemantics: Object.fromEntries(Object.entries(nodeData.properties).filter(([_, p]) => p.semantic).map(([k, p]) => [k, p.semantic])) } 
+          : {})
+      }
     }
 
     nodeMap.set(nodeName, node)
@@ -144,12 +169,26 @@ export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSche
             })
           : undefined
 
+        // Extract relationship property semantics
+        const propertySemantics: Record<string, any> = {}
+        if (relationDef?.properties) {
+          Object.entries(relationDef.properties).forEach(([propName, propData]) => {
+            if (propData.semantic) {
+              propertySemantics[propName] = propData.semantic
+            }
+          })
+        }
+
         relationships.push({
           id: `rel_${Date.now()}_${relIndex++}_${Math.random().toString(36).substr(2, 9)}`,
           type: relType,
           from: sourceNode.id,
           to: targetNode.id,
-          properties: relProperties && relProperties.length > 0 ? relProperties : undefined
+          properties: relProperties && relProperties.length > 0 ? relProperties : undefined,
+          data: {
+            ...(relationDef?.semantic ? { semantic: relationDef.semantic } : {}),
+            ...(Object.keys(propertySemantics).length > 0 ? { propertySemantics } : {})
+          }
         })
       })
     })
@@ -157,7 +196,9 @@ export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSche
 
   return {
     nodes: Array.from(nodeMap.values()),
-    relationships
+    relationships,
+    isSemanticEnabled: parsedSchema.isSemanticEnabled ?? !!parsedSchema.selectedOntologyId,
+    selectedOntologyId: parsedSchema.selectedOntologyId
   }
 }
 
@@ -196,9 +237,17 @@ function parseNodes (nodesSection: string, schema: ParsedMarkdownSchema): void {
     const relationsInMatch = content.match(/\*\*Relations \(incoming\)\*\*:\s*\n((?:- .+?\n)*)/)
     const relationsInStr = relationsInMatch ? relationsInMatch[1] : ''
 
+    const semanticMatch = content.match(/\*\*Semantic Class\*\*: (.*?) (?:\s*\[(.*?)\]\s+)?\(`(.*?)`\)/)
+    const semantic = semanticMatch ? { 
+      classLabel: semanticMatch[1].trim(), 
+      classCurie: semanticMatch[2] || undefined, 
+      classIri: semanticMatch[3] 
+    } : undefined
+
     schema.nodes[name] = {
       name,
       superclassNames: parseLabels(labelsStr),
+      semantic,
       properties: parseNodeProperties(propertiesStr),
       relationsOut: parseRelationsList(relationsOutStr),
       relationsIn: parseRelationsList(relationsInStr)
@@ -216,8 +265,8 @@ function parseLabels (labelsStr: string): string[] {
   return labels
 }
 
-function parseNodeProperties (propertiesStr: string): Record<string, { name: string; datatype: string | null; values: string[]; required: boolean }> {
-  const properties: Record<string, { name: string; datatype: string | null; values: string[]; required: boolean }> = {}
+function parseNodeProperties (propertiesStr: string): Record<string, { name: string; datatype: string | null; values: string[]; required: boolean; semantic?: any }> {
+  const properties: Record<string, { name: string; datatype: string | null; values: string[]; required: boolean; semantic?: any }> = {}
 
   if (!propertiesStr.trim() || propertiesStr.includes('None')) {
     return properties
@@ -238,11 +287,19 @@ function parseNodeProperties (propertiesStr: string): Record<string, { name: str
     const required = match[2] === 'required'
     const datatype = match[3] || null
 
+    const propSemanticMatch = trimmed.match(/- Semantic Property: (.*?) (?:\s*\[(.*?)\]\s+)?\(`(.*?)`\)/)
+    const semantic = propSemanticMatch ? { 
+      propertyLabel: propSemanticMatch[1].trim(), 
+      propertyCurie: propSemanticMatch[2] || undefined, 
+      propertyIri: propSemanticMatch[3] 
+    } : undefined
+
     properties[propName] = {
       name: propName,
       datatype: normalizeDatatype(datatype),
       values: [],
-      required
+      required,
+      semantic
     }
   })
 
@@ -297,17 +354,25 @@ function parseRelations (relationsSection: string, schema: ParsedMarkdownSchema)
 
     const rangeMatch = content.match(/\*\*Range \(to\)\*\*:\s*\n((?:- .+?\n)*)/)
     const rangeStr = rangeMatch ? rangeMatch[1] : ''
+    
+    const semanticMatch = content.match(/\*\*Semantic Property\*\*: (.*?) (?:\s*\[(.*?)\]\s+)?\(`(.*?)`\)/)
+    const semantic = semanticMatch ? { 
+      propertyLabel: semanticMatch[1].trim(), 
+      propertyCurie: semanticMatch[2] || undefined, 
+      propertyIri: semanticMatch[3] 
+    } : undefined
 
     schema.relations[name] = {
       name,
+      semantic,
       properties: parseRelationProperties(propertiesStr),
       domains: parseRelationDomains(domainsStr, rangeStr)
     }
   }
 }
 
-function parseRelationProperties (propertiesStr: string): Record<string, { name: string; datatype: string | null; values: string[]; required: boolean }> {
-  const properties: Record<string, { name: string; datatype: string | null; values: string[]; required: boolean }> = {}
+function parseRelationProperties (propertiesStr: string): Record<string, { name: string; datatype: string | null; values: string[]; required: boolean; semantic?: any }> {
+  const properties: Record<string, { name: string; datatype: string | null; values: string[]; required: boolean; semantic?: any }> = {}
 
   if (!propertiesStr.trim() || propertiesStr.includes('None')) {
     return properties
@@ -326,11 +391,19 @@ function parseRelationProperties (propertiesStr: string): Record<string, { name:
     const required = match[2] === 'required'
     const datatype = match[3] || null
 
+    const propSemanticMatch = trimmed.match(/- Semantic Property: (.*?) (?:\s*\[(.*?)\]\s+)?\(`(.*?)`\)/)
+    const semantic = propSemanticMatch ? { 
+      propertyLabel: propSemanticMatch[1].trim(), 
+      propertyCurie: propSemanticMatch[2] || undefined, 
+      propertyIri: propSemanticMatch[3] 
+    } : undefined
+
     properties[propName] = {
       name: propName,
       datatype: normalizeDatatype(datatype),
       values: [],
-      required
+      required,
+      semantic
     }
   })
 

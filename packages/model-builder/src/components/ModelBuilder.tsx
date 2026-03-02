@@ -227,8 +227,9 @@ function ModelBuilderContent({
   const selectedOntologyId = useModelBuilderStore((state) => state.selectedOntologyId)
   const setSelectedOntologyId = useModelBuilderStore((state) => state.setSelectedOntologyId)
   const isSemanticEnabled = useModelBuilderStore((state) => state.isSemanticEnabled)
+  const setIsSemanticEnabled = useModelBuilderStore((state) => state.setIsSemanticEnabled)
   const { importing, importError, importSchema } = useSchemaImport()
-  const { exportToJsonFile, exportToMarkdownFile, hasContent } = useSchemaExport()
+  const { exportToJsonFile, exportToMarkdownFile, exportToRdfFile, exportToTtlFile, hasContent } = useSchemaExport()
   const stepsByNodeId = useWorkflowStore((state) => state.stepsByNodeId)
   const workflowCanvasNodes = useWorkflowCanvasStore((state) => state.nodes)
   const selectedWfNodeId = useWorkflowCanvasStore((state) => state.selectedNodeId)
@@ -1305,7 +1306,7 @@ function ModelBuilderContent({
           value={metadata.name}
           onChange={(e) => updateMetadata({ name: e.target.value })}
           placeholder="Model name"
-          className="w-64 h-8 text-sm"
+          className="min-w-[120px] max-w-[200px] flex-1 h-8 text-sm"
         />
         {workflowPersistence && availableWorkflows.length > 0 && (
           <WorkflowSelector
@@ -1322,94 +1323,45 @@ function ModelBuilderContent({
             <span>{currentWorkflowName}</span>
           </div>
         )}
+        <div className="flex-1" />
         <div className="flex items-center gap-2">
-          {/* Import/Export Menu */}
-          <DropdownMenu open={importExportMenuOpen} onOpenChange={setImportExportMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs">
-                <Download className="h-3 w-3 mr-1" /> Import/Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuLabel>Import</DropdownMenuLabel>
-              <DropdownMenuItem
-                onSelect={() => {
-                  setImportExportMenuOpen(false)
-                  setImportDialogOpen(true)
-                }}
-              >
-                <Upload className="h-3 w-3 mr-2" />
-                Import Schema
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  setImportExportMenuOpen(false)
-                  setWorkflowConfigDialogOpen(true)
-                }}
-              >
-                <Upload className="h-3 w-3 mr-2" />
-                Import Workflow
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Export</DropdownMenuLabel>
-              {hasContent && (
-                <>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setImportExportMenuOpen(false)
-                      exportToJsonFile()
-                    }}
-                  >
-                    <Download className="h-3 w-3 mr-2" />
-                    Export JSON
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setImportExportMenuOpen(false)
-                      exportToMarkdownFile()
-                    }}
-                  >
-                    <Download className="h-3 w-3 mr-2" />
-                    Export MD
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setImportExportMenuOpen(false)
-                      handleExportWorkflowConfig()
-                    }}
-                  >
-                    <Download className="h-3 w-3 mr-2" />
-                    Export Workflow
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <DropdownMenuItem
-                onSelect={() => {
-                  setImportExportMenuOpen(false)
-                  handleDownloadNodeTemplate()
-                }}
-              >
-                <Download className="h-3 w-3 mr-2" />
-                Node CSV Template
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  setImportExportMenuOpen(false)
-                  handleDownloadRelationshipTemplate()
-                }}
-              >
-                <Download className="h-3 w-3 mr-2" />
-                Relationship CSV Template
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Semantic Layer Toggle */}
+          <div className={cn(
+            "flex items-center gap-1.5 border rounded-md px-2 py-1 transition-all duration-200",
+            isSemanticEnabled ? "bg-blue-50/50 border-blue-200" : "bg-muted/20"
+          )}>
+            <div className="flex items-center gap-1">
+              <Switch
+                id="model-builder-semantic"
+                checked={isSemanticEnabled}
+                onCheckedChange={setIsSemanticEnabled}
+                className="scale-75"
+              />
+              <Label htmlFor="model-builder-semantic" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer whitespace-nowrap hidden sm:block">
+                Semantic
+              </Label>
+            </div>
+            {isSemanticEnabled && (
+              <>
+                <div className="w-px h-4 bg-blue-200 mx-1" />
+                <div className="w-[150px]">
+                  <OntologyCombobox
+                    value={selectedOntologyId || undefined}
+                    onValueChange={(id) => setSelectedOntologyId(id)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="w-px h-6 bg-border mx-1" />
+
 
           {/* XML Preview Toggle */}
           {xmlContent && (
-            <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-              <Label htmlFor="show-xml-preview" className="text-[12px] text-muted-foreground cursor-pointer" title="Show XML Preview">
-                {/* <FileText className="h-3 w-3" /> */} XML Preview
+            <div className="flex items-center gap-1.5 border rounded-md px-2 py-1 bg-muted/20">
+              <Label htmlFor="show-xml-preview" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer" title="Show XML Preview">
+                XML
               </Label>
               <Switch
                 id="show-xml-preview"
@@ -1420,8 +1372,21 @@ function ModelBuilderContent({
             </div>
           )}
 
+          {/* Editor Sidebar Toggle */}
+          <div className="flex items-center gap-1.5 border rounded-md px-2 py-1 bg-muted/20">
+            <Label htmlFor="show-property-editor" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer" title="Show Property Editor">
+              Editor
+            </Label>
+            <Switch
+              id="show-property-editor"
+              checked={sidebarOpen}
+              onCheckedChange={setSidebarOpen}
+              className="scale-75"
+            />
+          </div>
+
           {/* Ontology Selector - only shown when semantic enrichment is enabled */}
-          {isSemanticEnabled && (
+          {/* {isSemanticEnabled && (
             <div className="flex items-center gap-2 mr-2">
               <OntologyCombobox
                 value={selectedOntologyId || undefined}
@@ -1429,56 +1394,91 @@ function ModelBuilderContent({
                 className="h-8 w-[250px]"
               />
             </div>
-          )}
+          )} */}
 
           {/* AI Agents Button */}
           {(isSchemaDesignEnabled || isWorkflowGenerationEnabled) && (
             <Button
               variant={agentsPanelOpen ? "default" : "outline"}
               size="sm"
-              className="h-8 text-xs"
+              className="h-8 w-8 p-0"
               onClick={() => setAgentsPanelOpen(!agentsPanelOpen)}
+              title="AI Agents"
             >
-              <Sparkles className="h-3 w-3 mr-1" /> Agents
+              <Sparkles className="h-3.5 w-3.5" />
             </Button>
           )}
 
-          {/* Settings Menu */}
-          <DropdownMenu open={settingsMenuOpen} onOpenChange={setSettingsMenuOpen}>
+          {/* Settings & Import/Export Combined */}
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs">
-                <Settings className="h-3 w-3 mr-1" /> Settings
+              <Button variant="outline" size="sm" className="h-8 px-2">
+                <Settings className="h-3.5 w-3.5 mr-1" />
+                <span className="text-xs hidden md:inline">Tools</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Project Actions</DropdownMenuLabel>
               <DropdownMenuItem
                 onSelect={() => {
-                  setSettingsMenuOpen(false)
                   setCredentialsDialogOpen(true)
                 }}
               >
-                <Key className="h-3 w-3 mr-2" />
-                Credentials
+                <Key className="h-3.5 w-3.5 mr-2" />
+                Credentials Manager
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2 text-xs">
-                <Layout className="h-3.5 w-3.5" />
-                View
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Configuration</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => setImportDialogOpen(true)}>
+                <Upload className="h-3.5 w-3.5 mr-2" />
+                Import Schema
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setWorkflowConfigDialogOpen(true)}>
+                <FileUp className="h-3.5 w-3.5 mr-2" />
+                Import Workflow
+              </DropdownMenuItem>
+              {hasContent && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Export Data</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={exportToJsonFile}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Export JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={exportToMarkdownFile}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Export Markdown
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={exportToRdfFile}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Export RDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={exportToTtlFile}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Export TTL
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleExportWorkflowConfig}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Export Workflow
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Templates</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={handleDownloadNodeTemplate}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Node CSV Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleDownloadRelationshipTemplate}>
+                    <Download className="h-3.5 w-3.5 mr-2" /> Relationship CSV Template
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>View Options</DropdownMenuLabel>
               <DropdownMenuCheckboxItem
                 checked={showToolbar}
                 onCheckedChange={setShowToolbar}
               >
+                <Layout className="h-3.5 w-3.5 mr-2" />
                 Show Canvas Toolbar
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+
 
           {/* Clear Workflow Button */}
           {(toolNodes.length > 0 || actionNodes.length > 0) && (
@@ -1486,11 +1486,10 @@ function ModelBuilderContent({
               variant="outline"
               size="sm"
               onClick={handleClearWorkflow}
-              className="h-8 text-xs"
-              title="Clear all workflow items (tools and actions)"
+              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+              title="Clear all workflow items"
             >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Clear Workflow
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
 
@@ -1502,29 +1501,29 @@ function ModelBuilderContent({
             className="hidden"
             onChange={handleUploadXml}
           />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => xmlUploadInputRef.current?.click()}
-            className="h-8 text-xs"
-            title={xmlFile ? `Current XML: ${xmlFile.name}` : "Upload XML file for graph generation"}
-          >
-            <FileUp className="h-3 w-3 mr-1" />
-            {xmlFile ? 'Change XML' : 'Upload XML'}
-          </Button>
-
-          {/* Generate Graph Button */}
-          {hasContent && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setRunDialogOpen(true)}
-              className="h-8 text-xs"
-            >
-              <PlayCircle className="h-3 w-3 mr-1" />
-              Generate Graph
-            </Button>
-          )}
+            <div className="flex items-center rounded-md border bg-background p-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => xmlUploadInputRef.current?.click()}
+                className="h-7 text-[10px] px-2"
+                title={xmlFile ? `Current XML: ${xmlFile.name}` : "Upload XML file"}
+              >
+                <FileUp className="h-3.5 w-3.5 lg:mr-1" />
+                <span className="hidden lg:inline">{xmlFile ? 'Change' : 'XML'}</span>
+              </Button>
+              <div className="w-px h-4 bg-border mx-0.5" />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setRunDialogOpen(true)}
+                className="h-7 text-[10px] px-2"
+                disabled={!hasContent}
+              >
+                <PlayCircle className="h-3.5 w-3.5 lg:mr-1" />
+                <span className="hidden lg:inline">Generate</span>
+              </Button>
+            </div>
         </div>
       </div>
 

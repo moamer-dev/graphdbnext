@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:gdb="https://graphdbnext.example.com/schema/">
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/W">
+    <rdfs:label>W</rdfs:label>
+    <skos:exactMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition" />
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Note">
+    <rdfs:label>Note</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/P">
+    <rdfs:label>P</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Edxml">
+    <rdfs:label>Edxml</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Header">
+    <rdfs:label>Header</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Title">
+    <rdfs:label>Title</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Author">
+    <rdfs:label>Author</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Text">
+    <rdfs:label>Text</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Surface">
+    <rdfs:label>Surface</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Column">
+    <rdfs:label>Column</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Line">
+    <rdfs:label>Line</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Seg">
+    <rdfs:label>Seg</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Structure">
+    <rdfs:label>Structure</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Stanza">
+    <rdfs:label>Stanza</rdfs:label>
+  </rdfs:Class>
+
+  <rdfs:Class rdf:about="https://graphdbnext.example.com/schema/Verse">
+    <rdfs:label>Verse</rdfs:label>
+  </rdfs:Class>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_HEADER">
+    <rdfs:label>CONTAINS_HEADER</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Edxml" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Header" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_TEXT">
+    <rdfs:label>CONTAINS_TEXT</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Edxml" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Text" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/HAS_TITLE">
+    <rdfs:label>HAS_TITLE</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Header" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Title" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/HAS_AUTHOR">
+    <rdfs:label>HAS_AUTHOR</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Header" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Author" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_SURFACE">
+    <rdfs:label>CONTAINS_SURFACE</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Text" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Surface" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_STRUCTURE">
+    <rdfs:label>CONTAINS_STRUCTURE</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Text" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Structure" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/HAS_NOTE">
+    <rdfs:label>HAS_NOTE</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Text" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Note" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_COLUMN">
+    <rdfs:label>CONTAINS_COLUMN</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Surface" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Column" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_LINE">
+    <rdfs:label>CONTAINS_LINE</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Column" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Line" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_SEG">
+    <rdfs:label>CONTAINS_SEG</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Line" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Seg" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_WORD">
+    <rdfs:label>CONTAINS_WORD</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Seg" />
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Verse" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/W" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_STANZA">
+    <rdfs:label>CONTAINS_STANZA</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Structure" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Stanza" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/CONTAINS_VERSE">
+    <rdfs:label>CONTAINS_VERSE</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Stanza" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/Verse" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/REFERS_TO">
+    <rdfs:label>REFERS_TO</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Note" />
+    <rdfs:range rdf:resource="https://graphdbnext.example.com/schema/W" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/W_id">
+    <rdfs:label>id</rdfs:label>
+    <skos:exactMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/P189_approximates" />
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/W" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/W_lemma">
+    <rdfs:label>lemma</rdfs:label>
+    <skos:exactMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/P111_added" />
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/W" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/W_text">
+    <rdfs:label>text</rdfs:label>
+    <skos:exactMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/P140_assigned_attribute_to" />
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/W" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Note_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Note" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Note_type">
+    <rdfs:label>type</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Note" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Note_target">
+    <rdfs:label>target</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Note" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Edxml_xmlns">
+    <rdfs:label>xmlns</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Edxml" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Edxml_tei">
+    <rdfs:label>tei</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Edxml" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Surface_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Surface" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Surface_n">
+    <rdfs:label>n</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Surface" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Column_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Column" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Column_n">
+    <rdfs:label>n</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Column" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Line_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Line" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Line_n">
+    <rdfs:label>n</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Line" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Seg_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Seg" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Seg_type">
+    <rdfs:label>type</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Seg" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Stanza_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Stanza" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Stanza_n">
+    <rdfs:label>n</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Stanza" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Verse_id">
+    <rdfs:label>id</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Verse" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string" />
+  </rdf:Property>
+
+  <rdf:Property rdf:about="https://graphdbnext.example.com/schema/Verse_n">
+    <rdfs:label>n</rdfs:label>
+    <rdfs:domain rdf:resource="https://graphdbnext.example.com/schema/Verse" />
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer" />
+  </rdf:Property>
+
+</rdf:RDF>

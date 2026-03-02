@@ -537,6 +537,8 @@ export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
       return {
         ...current,
         ...state,
+        isSemanticEnabled: state.isSemanticEnabled !== undefined ? state.isSemanticEnabled : current.isSemanticEnabled,
+        selectedOntologyId: state.selectedOntologyId !== undefined ? state.selectedOntologyId : current.selectedOntologyId,
         relationshipTypes: relationshipTypes.length > 0 ? relationshipTypes : (state.relationshipTypes || current.relationshipTypes)
       }
     })

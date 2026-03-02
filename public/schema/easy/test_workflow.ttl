@@ -1,0 +1,233 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix gdb: <https://graphdbnext.example.com/schema/> .
+
+### Nodes ###
+
+gdb:W a rdfs:Class ;
+    rdfs:label "W" ;
+    skos:exactMatch <http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition> .
+
+gdb:Note a rdfs:Class ;
+    rdfs:label "Note" .
+
+gdb:P a rdfs:Class ;
+    rdfs:label "P" .
+
+gdb:Edxml a rdfs:Class ;
+    rdfs:label "Edxml" .
+
+gdb:Header a rdfs:Class ;
+    rdfs:label "Header" .
+
+gdb:Title a rdfs:Class ;
+    rdfs:label "Title" .
+
+gdb:Author a rdfs:Class ;
+    rdfs:label "Author" .
+
+gdb:Text a rdfs:Class ;
+    rdfs:label "Text" .
+
+gdb:Surface a rdfs:Class ;
+    rdfs:label "Surface" .
+
+gdb:Column a rdfs:Class ;
+    rdfs:label "Column" .
+
+gdb:Line a rdfs:Class ;
+    rdfs:label "Line" .
+
+gdb:Seg a rdfs:Class ;
+    rdfs:label "Seg" .
+
+gdb:Structure a rdfs:Class ;
+    rdfs:label "Structure" .
+
+gdb:Stanza a rdfs:Class ;
+    rdfs:label "Stanza" .
+
+gdb:Verse a rdfs:Class ;
+    rdfs:label "Verse" .
+
+### Relationships ###
+
+gdb:CONTAINS_HEADER a rdf:Property ;
+    rdfs:label "CONTAINS_HEADER" ;
+    rdfs:domain gdb:Edxml ;
+    rdfs:range gdb:Header .
+
+gdb:CONTAINS_TEXT a rdf:Property ;
+    rdfs:label "CONTAINS_TEXT" ;
+    rdfs:domain gdb:Edxml ;
+    rdfs:range gdb:Text .
+
+gdb:HAS_TITLE a rdf:Property ;
+    rdfs:label "HAS_TITLE" ;
+    rdfs:domain gdb:Header ;
+    rdfs:range gdb:Title .
+
+gdb:HAS_AUTHOR a rdf:Property ;
+    rdfs:label "HAS_AUTHOR" ;
+    rdfs:domain gdb:Header ;
+    rdfs:range gdb:Author .
+
+gdb:CONTAINS_SURFACE a rdf:Property ;
+    rdfs:label "CONTAINS_SURFACE" ;
+    rdfs:domain gdb:Text ;
+    rdfs:range gdb:Surface .
+
+gdb:CONTAINS_STRUCTURE a rdf:Property ;
+    rdfs:label "CONTAINS_STRUCTURE" ;
+    rdfs:domain gdb:Text ;
+    rdfs:range gdb:Structure .
+
+gdb:HAS_NOTE a rdf:Property ;
+    rdfs:label "HAS_NOTE" ;
+    rdfs:domain gdb:Text ;
+    rdfs:range gdb:Note .
+
+gdb:CONTAINS_COLUMN a rdf:Property ;
+    rdfs:label "CONTAINS_COLUMN" ;
+    rdfs:domain gdb:Surface ;
+    rdfs:range gdb:Column .
+
+gdb:CONTAINS_LINE a rdf:Property ;
+    rdfs:label "CONTAINS_LINE" ;
+    rdfs:domain gdb:Column ;
+    rdfs:range gdb:Line .
+
+gdb:CONTAINS_SEG a rdf:Property ;
+    rdfs:label "CONTAINS_SEG" ;
+    rdfs:domain gdb:Line ;
+    rdfs:range gdb:Seg .
+
+gdb:CONTAINS_WORD a rdf:Property ;
+    rdfs:label "CONTAINS_WORD" ;
+    rdfs:domain gdb:Seg ;
+    rdfs:domain gdb:Verse ;
+    rdfs:range gdb:W .
+
+gdb:CONTAINS_STANZA a rdf:Property ;
+    rdfs:label "CONTAINS_STANZA" ;
+    rdfs:domain gdb:Structure ;
+    rdfs:range gdb:Stanza .
+
+gdb:CONTAINS_VERSE a rdf:Property ;
+    rdfs:label "CONTAINS_VERSE" ;
+    rdfs:domain gdb:Stanza ;
+    rdfs:range gdb:Verse .
+
+gdb:REFERS_TO a rdf:Property ;
+    rdfs:label "REFERS_TO" ;
+    rdfs:domain gdb:Note ;
+    rdfs:range gdb:W .
+
+### Node Properties ###
+
+gdb:W_id a rdf:Property ;
+    rdfs:label "id" ;
+    skos:exactMatch <http://www.cidoc-crm.org/cidoc-crm/P189_approximates> ;
+    rdfs:domain gdb:W ;
+    rdfs:range xsd:string .
+
+gdb:W_lemma a rdf:Property ;
+    rdfs:label "lemma" ;
+    skos:exactMatch <http://www.cidoc-crm.org/cidoc-crm/P111_added> ;
+    rdfs:domain gdb:W ;
+    rdfs:range xsd:string .
+
+gdb:W_text a rdf:Property ;
+    rdfs:label "text" ;
+    skos:exactMatch <http://www.cidoc-crm.org/cidoc-crm/P140_assigned_attribute_to> ;
+    rdfs:domain gdb:W ;
+    rdfs:range xsd:string .
+
+gdb:Note_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Note ;
+    rdfs:range xsd:string .
+
+gdb:Note_type a rdf:Property ;
+    rdfs:label "type" ;
+    rdfs:domain gdb:Note ;
+    rdfs:range xsd:string .
+
+gdb:Note_target a rdf:Property ;
+    rdfs:label "target" ;
+    rdfs:domain gdb:Note ;
+    rdfs:range xsd:string .
+
+gdb:Edxml_xmlns a rdf:Property ;
+    rdfs:label "xmlns" ;
+    rdfs:domain gdb:Edxml ;
+    rdfs:range xsd:string .
+
+gdb:Edxml_tei a rdf:Property ;
+    rdfs:label "tei" ;
+    rdfs:domain gdb:Edxml ;
+    rdfs:range xsd:string .
+
+gdb:Surface_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Surface ;
+    rdfs:range xsd:string .
+
+gdb:Surface_n a rdf:Property ;
+    rdfs:label "n" ;
+    rdfs:domain gdb:Surface ;
+    rdfs:range xsd:integer .
+
+gdb:Column_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Column ;
+    rdfs:range xsd:string .
+
+gdb:Column_n a rdf:Property ;
+    rdfs:label "n" ;
+    rdfs:domain gdb:Column ;
+    rdfs:range xsd:integer .
+
+gdb:Line_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Line ;
+    rdfs:range xsd:string .
+
+gdb:Line_n a rdf:Property ;
+    rdfs:label "n" ;
+    rdfs:domain gdb:Line ;
+    rdfs:range xsd:integer .
+
+gdb:Seg_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Seg ;
+    rdfs:range xsd:string .
+
+gdb:Seg_type a rdf:Property ;
+    rdfs:label "type" ;
+    rdfs:domain gdb:Seg ;
+    rdfs:range xsd:string .
+
+gdb:Stanza_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Stanza ;
+    rdfs:range xsd:string .
+
+gdb:Stanza_n a rdf:Property ;
+    rdfs:label "n" ;
+    rdfs:domain gdb:Stanza ;
+    rdfs:range xsd:integer .
+
+gdb:Verse_id a rdf:Property ;
+    rdfs:label "id" ;
+    rdfs:domain gdb:Verse ;
+    rdfs:range xsd:string .
+
+gdb:Verse_n a rdf:Property ;
+    rdfs:label "n" ;
+    rdfs:domain gdb:Verse ;
+    rdfs:range xsd:integer .
+
+### Relationship Properties ###

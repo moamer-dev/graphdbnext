@@ -1,0 +1,130 @@
+insert data {
+
+<https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme> a <http://www.w3.org/2004/02/skos/core#ConceptScheme>;
+  <http://purl.org/dc/terms/title> "Star of Redemption Reference Type Vocabulary"@en;
+  <http://purl.org/dc/terms/creator> "Nathanael E. Schweikhard"@en;
+  <http://purl.org/dc/terms/created> "2023-05-17"^^<http://www.w3.org/2001/XMLSchema#date>;
+  <http://purl.org/dc/terms/license> "CC-BY-SA".
+
+<https://star.sub.uni-goettingen.de/voc/referencetype/DirectReference> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ReferenceType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Literal quote"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Wörtliches Zitat"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A direct reference is a literal quotation, i.e. the quoted text is exactly or almost exactly identical to how it is in the literary source."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en;
+  <http://www.w3.org/2004/02/skos/core#scopeNote> ""@en.
+
+<https://star.sub.uni-goettingen.de/voc/referencetype/Paraphrase> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ReferenceType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Paraphrase"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Paraphrase"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "In a paraphrase, the referenced text differs from the way it is phrased in the literary source, e.g. by change of order or replacement of some terms."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+
+<https://star.sub.uni-goettingen.de/voc/referencetype/CoinedTerm> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ReferenceType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Coined term"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Geprägter Ausdruck"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A coined term is a word or phrase which can be attributed to a specific person who coined or popularized it, but not to only one specific passage of their works."@en;
+  <http://www.w3.org/2004/02/skos/core#example> "transzendentale Apperzeption"@en.
+  
+<https://star.sub.uni-goettingen.de/voc/referencetype/Allusion> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ReferenceType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Allusion"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Anspielung"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "An allusion describes or hints at a source without quoting it."@en;
+  <http://www.w3.org/2004/02/skos/core#example> "Schopenhauer fragte als erster unter den großen Denkern nicht nach dem Wesen, sondern nach dem Wert der Welt. Eine höchst unwissenschaftliche Frage, wenn sie wirklich so gemeint war, daß nicht nach dem objektiven Wert, dem Wert für irgend „etwas“, dem „Sinn“ oder „Zweck“ der Welt, gefragt sein sollte..."@en.
+
+<https://star.sub.uni-goettingen.de/voc/referencetype/Misquote> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ReferenceType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Misquote"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Falsches Zitat"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A misquote is a passage that looks like it is an intertextual reference, e.g. by having quotation marks or having a stated source, but which does not have any actual source."@en.
+
+<https://star.sub.uni-goettingen.de/voc/referencetype/Egotext> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ReferenceType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/referencetype/ReferenceTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Egotext Reference"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Egotext-Referenz"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A rerence in an egotext means that a passage in one of Franz Rosenzweig's egotexts refers to the annotated passage in the Star of Redemption or vice versa."@en.
+
+<https://star.sub.uni-goettingen.de/voc/contributionrole/ContributionRoleConceptScheme> a <http://www.w3.org/2004/02/skos/core#ConceptScheme>;
+  <http://purl.org/dc/terms/title> "Star of Redemption Contribution Role Vocabulary"@en;
+  <http://purl.org/dc/terms/creator> "Nathanael E. Schweikhard"@en;
+  <http://purl.org/dc/terms/created> "2023-05-24"^^<http://www.w3.org/2001/XMLSchema#date>;
+  <http://purl.org/dc/terms/license> "CC-BY-SA".
+
+<https://star.sub.uni-goettingen.de/voc/contributionrole/Author> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ContributionRole> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/contributionrole/ContributionRoleConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Author"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "AutorIn"@de;
+  <http://www.w3.org/2004/02/skos/core#closeMatch> <http://id.loc.gov/vocabulary/relators/#aut> ;
+  <http://www.w3.org/2004/02/skos/core#definition> "A person who wrote a work."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+
+<https://star.sub.uni-goettingen.de/voc/contributionrole/Editor> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ContributionRole> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/contributionrole/ContributionRoleConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Editor"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "EditorIn"@de;
+  <http://www.w3.org/2004/02/skos/core#closeMatch> <http://id.loc.gov/vocabulary/relators/#edt> ;
+  <http://www.w3.org/2004/02/skos/core#definition> "A person listed as the editor of an instance of a work."@en;
+  <http://www.w3.org/2004/02/skos/core#editorialNote> "Definition?";
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+  
+<https://star.sub.uni-goettingen.de/voc/contributionrole/Translator> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ContributionRole> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/contributionrole/ContributionRoleConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#closeMatch> <http://id.loc.gov/vocabulary/relators/#trl> ;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Translator"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "ÜbersetzerIn"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A person who translated a work."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+  
+<https://star.sub.uni-goettingen.de/voc/contributionrole/Recipient> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/ContributionRole> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/contributionrole/ContributionRoleConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Recipient"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "EmpfängerIn"@de;
+  <http://www.w3.org/2004/02/skos/core#closeMatch> <http://id.loc.gov/vocabulary/relators/#rcp> ;
+  <http://www.w3.org/2004/02/skos/core#definition> "A person towards whom a work (e.g. a letter) was addressed."@en;
+  <http://www.w3.org/2004/02/skos/core#editorialNote> "Only addressed or also sent?; Bibframe and MARC21 have Addressee/Recipient as a Contribution Role: https://wiki.deutsche-digitale-bibliothek.de/display/DFD/Feld+700 http://id.loc.gov/vocabulary/relators/rcp.html";
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+
+<https://star.sub.uni-goettingen.de/voc/egotexttype/EgotextTypeConceptScheme> a <http://www.w3.org/2004/02/skos/core#ConceptScheme>;
+  <http://purl.org/dc/terms/title> "Star of Redemption Egotext Type Vocabulary"@en;
+  <http://purl.org/dc/terms/creator> "Nathanael E. Schweikhard"@en;
+  <http://purl.org/dc/terms/created> "2025-01-14"^^<http://www.w3.org/2001/XMLSchema#date>;
+  <http://purl.org/dc/terms/license> "CC-BY-SA".
+
+<https://star.sub.uni-goettingen.de/voc/egotexttype/Letter> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/EgotextType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/egotexttype/EgotextTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#closeMatch> <http://vocab.getty.edu/page/aat/300207872> ;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Letter"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Brief"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A piece of writing addressed at and usually sent to another person or institution."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+
+<https://star.sub.uni-goettingen.de/voc/egotexttype/DiaryEntry> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/EgotextType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/egotexttype/EgotextTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Diary Entry"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Tagebucheintrag"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "An entry in a diary."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+
+<https://star.sub.uni-goettingen.de/voc/egotexttype/Essay> a <http://www.w3.org/2004/02/skos/core#Concept> ,
+<https://star.sub.uni-goettingen.de/model/EgotextType> ;
+  <http://www.w3.org/2004/02/skos/core#inScheme> <https://star.sub.uni-goettingen.de/voc/egotexttype/EgotextTypeConceptScheme>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Essay"@en;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Aufsatz"@de;
+  <http://www.w3.org/2004/02/skos/core#definition> "A short written work."@en;
+  <http://www.w3.org/2004/02/skos/core#example> ""@en.
+}

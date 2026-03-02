@@ -1,4 +1,4 @@
-import type { GraphNode } from '@/app/dashboard/hooks/useNodeList'
+import type { GraphNode } from '@/app/dashboard/hooks/database/useNodeList'
 
 export function getNodeSpecificLabel (node: GraphNode): string {
   const labels = node.labels || []

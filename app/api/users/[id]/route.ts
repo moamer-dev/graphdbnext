@@ -39,15 +39,7 @@ export async function GET (
       )
     }
 
-    // Format dates
-    const formattedUser = {
-      ...user,
-      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
-      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt,
-      emailVerified: user.emailVerified instanceof Date ? user.emailVerified.toISOString() : user.emailVerified
-    }
-
-    return NextResponse.json({ user: formattedUser })
+    return NextResponse.json({ user })
   } catch (error: unknown) {
     console.error('Error fetching user:', error)
     return NextResponse.json(
@@ -91,15 +83,7 @@ export async function PUT (
       ...(emailVerified !== undefined && { emailVerified: emailVerified ? new Date() : null })
     })
 
-    // Format dates
-    const formattedUser = {
-      ...user,
-      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
-      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : user.updatedAt,
-      emailVerified: user.emailVerified instanceof Date ? user.emailVerified.toISOString() : user.emailVerified
-    }
-
-    return NextResponse.json({ user: formattedUser })
+    return NextResponse.json({ user })
   } catch (error: unknown) {
     console.error('Error updating user:', error)
     
@@ -151,6 +135,14 @@ export async function DELETE (
 
     const { id } = await params
 
+    // Prevent deleting own account
+    if (session.user.id === id) {
+      return NextResponse.json(
+        { error: 'Cannot delete your own account' },
+        { status: 400 }
+      )
+    }
+
     // Use CrudService for consistent RBAC and delete logic
     await userCrudService.delete(session, id)
 
@@ -186,4 +178,3 @@ export async function DELETE (
     )
   }
 }
-

@@ -260,11 +260,14 @@ export interface ReferenceRule {
 export interface SchemaJson {
   nodes: Record<string, SchemaNode>
   relations: Record<string, SchemaRelation>
+  isSemanticEnabled?: boolean
+  selectedOntologyId?: string | null
 }
 
 export interface SchemaNode {
   name: string
   superclassNames?: string[]
+  semantic?: any
   properties: Record<string, SchemaProperty>
   relationsOut?: Record<string, string[]>
   relationsIn?: Record<string, string[]>
@@ -275,10 +278,12 @@ export interface SchemaProperty {
   datatype: string
   values?: unknown[]
   required: boolean
+  semantic?: any
 }
 
 export interface SchemaRelation {
   name: string
+  semantic?: any
   properties?: Record<string, SchemaProperty>
   domains: Record<string, string[]> // source node -> target nodes[]
 }

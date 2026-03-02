@@ -1,6 +1,6 @@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle2, XCircle } from 'lucide-react'
-import { Message } from '../app/dashboard/hooks/useMessage'
+import { Message } from '@/app/dashboard/hooks/util/useMessage'
 
 interface MessageAlertProps {
   message: Message | null

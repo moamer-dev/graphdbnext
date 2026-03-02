@@ -7,11 +7,15 @@ import type { SchemaJson } from '../types/mappingConfig'
  */
 export function convertBuilderToSchemaJson (
   nodes: Node[],
-  relationships: Relationship[]
+  relationships: Relationship[],
+  isSemanticEnabled?: boolean,
+  selectedOntologyId?: string | null
 ): SchemaJson {
   const schemaJson: SchemaJson = {
     nodes: {},
-    relations: {}
+    relations: {},
+    isSemanticEnabled,
+    selectedOntologyId
   }
 
   // Convert nodes
@@ -24,17 +28,20 @@ export function convertBuilderToSchemaJson (
     }> = {}
 
     node.properties.forEach((prop) => {
+      const propSemantic = (node.data as any)?.propertySemantics?.[prop.key]
       properties[prop.key] = {
         name: prop.key,
         datatype: mapPropertyTypeToDatatype(prop.type),
         values: prop.defaultValue ? [prop.defaultValue] : [],
-        required: prop.required
+        required: prop.required,
+        ...(propSemantic ? { semantic: propSemantic } : {})
       }
     })
 
     schemaJson.nodes[node.label] = {
       name: node.label,
       superclassNames: node.type !== node.label ? [node.type] : [],
+      ...((node.data as any)?.semantic ? { semantic: (node.data as any).semantic } : {}),
       properties,
       relationsOut: {},
       relationsIn: {}
@@ -43,11 +50,13 @@ export function convertBuilderToSchemaJson (
 
   // Convert relationships
   const relationsByType = new Map<string, {
+    semantic?: any
     properties?: Record<string, {
       name: string
       datatype: string
       values?: unknown[]
       required: boolean
+      semantic?: any
     }>
     domains: Record<string, string[]>
   }>()
@@ -68,16 +77,19 @@ export function convertBuilderToSchemaJson (
 
       if (rel.properties) {
         rel.properties.forEach((prop) => {
+          const propSemantic = (rel.data as any)?.propertySemantics?.[prop.key]
           relProperties[prop.key] = {
             name: prop.key,
             datatype: mapPropertyTypeToDatatype(prop.type),
             values: prop.defaultValue ? [prop.defaultValue] : [],
-            required: prop.required
+            required: prop.required,
+            ...(propSemantic ? { semantic: propSemantic } : {})
           }
         })
       }
 
       relationsByType.set(rel.type, {
+        semantic: (rel.data as any)?.semantic,
         properties: Object.keys(relProperties).length > 0 ? relProperties : undefined,
         domains: {}
       })
@@ -123,6 +135,7 @@ export function convertBuilderToSchemaJson (
   relationsByType.forEach((relData, relType) => {
     schemaJson.relations[relType] = {
       name: relType,
+      ...(relData.semantic ? { semantic: relData.semantic } : {}),
       properties: relData.properties,
       domains: relData.domains
     }

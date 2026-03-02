@@ -8,16 +8,20 @@ interface SchemaJsonFormat {
   version?: string
   lastUpdated?: string
   source?: string
+  isSemanticEnabled?: boolean
+  selectedOntologyId?: string | null
   nodes: {
     [nodeName: string]: {
       name: string
       superclassNames?: string[]
+      semantic?: any
       properties: {
         [propName: string]: {
           name: string
           datatype: string
           values: unknown[]
           required: boolean
+          semantic?: any
         }
       }
       relationsOut?: {
@@ -31,12 +35,14 @@ interface SchemaJsonFormat {
   relations: {
     [relName: string]: {
       name: string
+      semantic?: any
       properties?: {
         [propName: string]: {
           name: string
           datatype: string
           values: unknown[]
           required: boolean
+          semantic?: any
         }
       }
       domains: {
@@ -132,6 +138,8 @@ export function convertSchemaToBuilder(schema: Schema): {
 export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
   nodes: Node[]
   relationships: Relationship[]
+  isSemanticEnabled?: boolean
+  selectedOntologyId?: string | null
 } {
   const nodeMap = new Map<string, Node>()
   const relationships: Relationship[] = []
@@ -141,7 +149,6 @@ export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
   Object.entries(schemaJson.nodes).forEach(([nodeName, nodeData]) => {
     const nodeId = `node_${Date.now()}_${nodeIndex++}_${Math.random().toString(36).substr(2, 9)}`
     
-    // Convert properties
     const properties: Property[] = Object.entries(nodeData.properties || {}).map(([propName, propData]) => {
       // Map datatype to Property type
       let propType: Property['type'] = 'string'
@@ -165,11 +172,23 @@ export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
       }
     })
     
+    // Extract property semantics
+    const propertySemantics: Record<string, any> = {}
+    Object.entries(nodeData.properties || {}).forEach(([propName, propData]) => {
+      if (propData.semantic) {
+        propertySemantics[propName] = propData.semantic
+      }
+    })
+    
     const node: Node = {
       id: nodeId,
       label: nodeData.name,
       type: nodeData.name,
       properties,
+      data: {
+        ...(nodeData.semantic ? { semantic: nodeData.semantic } : {}),
+        ...(Object.keys(propertySemantics).length > 0 ? { propertySemantics } : {})
+      },
       position: {
         x: (nodeIndex % 4) * 300 + Math.random() * 50,
         y: Math.floor(nodeIndex / 4) * 250 + Math.random() * 50
@@ -263,12 +282,26 @@ export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
             })
           : undefined
         
+        // Extract relationship property semantics
+        const propertySemantics: Record<string, any> = {}
+        if (relationDef?.properties) {
+          Object.entries(relationDef.properties).forEach(([propName, propData]) => {
+            if (propData.semantic) {
+              propertySemantics[propName] = propData.semantic
+            }
+          })
+        }
+        
         relationships.push({
           id: `rel_${Date.now()}_${relIndex++}_${Math.random().toString(36).substr(2, 9)}`,
           type: relType,
           from: sourceNode.id,
           to: targetNode.id,
-          properties: relProperties && relProperties.length > 0 ? relProperties : undefined
+          properties: relProperties && relProperties.length > 0 ? relProperties : undefined,
+          data: {
+            ...(relationDef?.semantic ? { semantic: relationDef.semantic } : {}),
+            ...(Object.keys(propertySemantics).length > 0 ? { propertySemantics } : {})
+          }
         })
       })
     })
@@ -276,7 +309,9 @@ export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
   
   return {
     nodes: Array.from(nodeMap.values()),
-    relationships
+    relationships,
+    isSemanticEnabled: schemaJson.isSemanticEnabled ?? !!schemaJson.selectedOntologyId,
+    selectedOntologyId: schemaJson.selectedOntologyId
   }
 }
 

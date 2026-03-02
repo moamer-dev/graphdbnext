@@ -1,0 +1,34 @@
+# Social Profile Authentication Strategy
+
+## Overview
+Currently, the pipeline attempts to scrape all provided social links using a generic public scraper. This works fine for Public Pages, but fails on Personal Profiles for tightly guarded platforms like Facebook and LinkedIn.
+
+To resolve this, we need to allow the user to define what *type* of account they are trying to index, and provide the necessary authentication if it is a personal account.
+
+## User Review Required
+> [!IMPORTANT]
+> **OAuth is not supported by Facebook or LinkedIn for web scraping.**
+> Even if you build an OAuth "Login with Facebook" app, their APIs strictly forbid extracting full timeline/profile data. 
+> 
+> **The Solution:** The industry standard for Apify scrapers is **Session Cookie Injection**. We must ask the user to log into LinkedIn/Facebook on their browser, use a free Chrome Extension (like "EditThisCookie" or "ExportCookieJSON"), and paste the resulting JSON array into our application. We then pass these cookies to the Apify Actor to impersonate their browser session safely.
+
+## Proposed Changes
+
+### 1. Frontend Update ([TwinKnowledgeStep.tsx](file:///opt/lampp/htdocs/react-starter-kit/resources/js/components/personnas/steps/TwinKnowledgeStep.tsx))
+- Add an **Account Type** toggle (`Public Page` vs `Personal Account`).
+- When `Personal Account` is selected (specifically for Facebook or LinkedIn), display a new `<Textarea>` labeled **Session Cookies (JSON format)**.
+- Add a helper text/link explaining how users can grab their cookies via a browser extension.
+- Append this new `cookies` field to the `formData` sent to the backend.
+
+### 2. Backend API ([ProcessKnowledgeAssetJob.php](file:///opt/lampp/htdocs/react-starter-kit/app/Jobs/ProcessKnowledgeAssetJob.php) & Migration)
+- Add a nullable JSON column `scraping_cookies` to the `knowledge_assets` database table.
+- Pass the `cookies` payload from Laravel into the Omnichannel Job payload sent to NestJS.
+
+### 3. Engine Service ([omnichannel.processor.ts](file:///opt/lampp/htdocs/react-starter-kit/engine-service/src/modules/queue/omnichannel.processor.ts))
+- Update the Apify input mapper. 
+- If `cookies` are present in the job data, inject them into the corresponding Actor's input.
+- E.g. for `apify/linkedin-profile-scraper` or `apify/facebook-pages-scraper`, append `cookie: parsedCookiesArray`.
+
+## Verification Plan
+1. Simulate adding a Personal LinkedIn profile. Provide dummy JSON cookies.
+2. Verify the NestJS processor successfully receives the `cookies` array and injects it into the Apify input payload before launching the actor.

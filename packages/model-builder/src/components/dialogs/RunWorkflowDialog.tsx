@@ -20,6 +20,8 @@ import {
   SelectValue
 } from '../ui/select'
 import type { Node } from '../../types'
+import { useModelBuilderStore } from '../../stores/modelBuilderStore'
+import { exportDataToTtl, exportDataToRdf } from '../../utils/rdfExportUtils'
 
 interface RunWorkflowDialogProps {
   open: boolean
@@ -171,6 +173,48 @@ export function RunWorkflowDialog({
                   >
                     <Download className="h-3 w-3 mr-1" />
                     Export JSON
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const state = useModelBuilderStore.getState()
+                      const ttl = exportDataToTtl(state, graphPreview.fullGraph)
+                      const blob = new Blob([ttl], { type: 'text/turtle' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = 'graph_data.ttl'
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Export TTL
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const state = useModelBuilderStore.getState()
+                      const rdf = exportDataToRdf(state, graphPreview.fullGraph)
+                      const blob = new Blob([rdf], { type: 'application/rdf+xml' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = 'graph_data.rdf'
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Export RDF
                   </Button>
                 </div>
               </div>

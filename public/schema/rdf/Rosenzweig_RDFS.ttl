@@ -1,0 +1,678 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sorsh: <https://star.sub.uni-goettingen.de/schema/> .
+@prefix sor: <https://star.sub.uni-goettingen.de/model/> .
+@prefix sorvocE: <https://star.sub.uni-goettingen.de/voc/egotexttype/> .
+@prefix sorvocC: <https://star.sub.uni-goettingen.de/voc/contributionrole/> .
+@prefix sorvocR: <https://star.sub.uni-goettingen.de/voc/referencetype/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix roger: <https://www.sub.uni-goettingen.de/roger/schema#> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe-2-2-0/> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix intro: <https://w3id.org/lso/intro/beta202506#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix locvoc: <http://id.loc.gov/vocabulary/relators/#> .
+@prefix sord: <https://star.sub.uni-goettingen.de/data/> .
+
+###Web Annotation Model
+
+oa:Annotation
+    a rdfs:Class;
+    skos:definition "An annotation connects a resource (in the case of the Rosenzweig project a passage in Franz Rosenzweig's work 'Der Stern der Erlösung') with information about it (in this case about an intertextual relation it contains). In addition, it has properties in regards to the persons who created and last modified it and in regards to the time at which it was created and last modified, as well as in regards to links to related annotations."@en;
+    rdfs:comment "The class for Web Annotations." ;
+    #official comment
+    rdfs:label "Annotation"@en.
+    #official label
+    
+oa:hasTarget
+    a rdf:Property;
+    rdfs:domain oa:Annotation;
+    #offical domain
+    skos:note "Range is not officially specified. In the Rosenzweig project, oa:SpecificResource is used a the target as suggested in the documentation.";
+    rdfs:comment "The relationship between an Annotation and its Target." ;
+    #official comment
+    rdfs:label "hasTarget"@en.
+    #official label
+
+oa:SpecificResource
+    a rdfs:Class;
+    rdfs:comment "Instances of the SpecificResource class identify part of another resource (referenced with oa:hasSource), a particular representation of a resource, a resource with styling hints for renders, or any combination of these, as used within an Annotation." ;
+    #official comment
+    rdfs:label "SpecificResource"@en.
+    #official label
+
+oa:hasSource
+    a rdf:Property;
+    rdfs:domain oa:SpecificResource;
+    #official domain
+    skos:definition "The TEI-XML edition of the chapter in 'Der Stern der Erlösung' in which the intertextual relation is found, as hosted on TextGrid Lab."@en;
+    skos:note "The officially specified domain is oa:ResourceSelection, but only its subclass oa:SpecificResource is relevant in the Rosenzweig project and is included in the model. The range is not officially specified. In the project, the target is a URL linking to the XML file of the annotated text of 'Der Stern der Erlösung'";
+    rdfs:comment "The resource that the ResourceSelection, or its subclass SpecificResource, is refined from, or more specific than. Please note that the domain ( oa:ResourceSelection ) is not used directly in the Web Annotation model." ;
+    #official comment
+    rdfs:label "hasSource"@en.
+    #official label
+    
+oa:hasSelector
+    a rdf:Property;
+    rdfs:range oa:RangeSelector;
+    #official range
+    skos:note "The domain is not officially specified. The official range is oa:Selector, but only its subclass oa:XPathSelector is relevant in the Rosenzweig project."@en;
+   rdfs:comment "The object of the relationship is a Selector that describes the segment or region of interest within the source resource.  Please note that the domain ( oa:ResourceSelection ) is not used directly in the Web Annotation model." ;
+    #official comment
+    rdfs:label "hasSelector"@en.
+    #official label
+
+oa:RangeSelector
+    a rdfs:Class;
+    rdfs:comment "A Range Selector can be used to identify the beginning and the end of the selection by using other Selectors. The selection consists of everything from the beginning of the starting selector through to the beginning of the ending selector, but not including it." ;
+    #official comment
+    rdfs:label "RangeSelector" .
+    #official label
+    
+oa:hasStartSelector
+    a rdf:Property;
+    rdfs:domain oa:RangeSelector;
+    #official domain
+    skos:note "The official range is oa:Selector, but only its subclass oa:XPathSelector is relevant in the Rosenzweig project."@en;
+    rdfs:comment "The relationship between a RangeSelector and the Selector that describes the start position of the range. " ;
+    #official comment
+    rdfs:label "hasStartSelector"@en.
+    #official label
+    
+oa:hasEndSelector
+    a rdf:Property;
+    rdfs:domain oa:RangeSelector;
+    #official domain
+    skos:note "The official range is oa:Selector, but only its subclass oa:XPathSelector is relevant in the Rosenzweig project."@en;
+    rdfs:comment "The relationship between a RangeSelector and the Selector that describes the end position of the range. " ;
+    #official comment
+    rdfs:label "hasEndSelector"@en.
+    #official label
+    
+oa:XPathSelector
+    a rdfs:Class;
+    skos:definition "In the Rosenzweig project, the XPath specifying the start or end position of exact string of characters constituting the annotated passage in 'Der Stern der Erlösung' in the XML resource specified by oa:hasSource."@en;
+    rdfs:comment "An XPathSelector is used to select elements and content within a resource that supports the Document Object Model via a specified XPath value." ;
+    #official comment
+    rdfs:label "XPathSelector"@en.
+    #official label
+
+rdf:value
+    a rdf:Property;
+    skos:note "The official domain and range are rdfs:Resource. In the context of the Rosenzweig project, the domain used is oa:XPathSelector and the range used is rdfs:Literal." ;
+    rdfs:label "value"@en.
+    #official label
+
+oa:refinedBy a rdf:Property ;
+    skos:note "The domain and range are not officially specified. In the context of the Rosenzweig project, the domain used is oa:XPathSelector and the range used is the union of sor:XMLIDSelector, oa:TextQuoteSelector and oa:DataPositionSelector." ;
+    rdfs:comment "The relationship between a Selector and another Selector or a State and a Selector or State that should be applied to the results of the first to refine the processing of the source resource. " ;
+    #offical comment
+    rdfs:label "refinedBy" .
+    #offical label
+
+oa:TextQuoteSelector a rdfs:Class ;
+    rdfs:comment "The TextQuoteSelector describes a range of text by copying it, and including some of the text immediately before (a prefix) and after (a suffix) it to distinguish between multiple copies of the same sequence of characters." ;
+    #offical comment
+    rdfs:label "TextQuoteSelector" .
+    #offical label
+
+oa:exact a rdf:Property ;
+    rdfs:range xsd:string ;
+    #offical range
+    skos:note "The domain is not officially specified. In the context of the Rosenzweig project, the domain used is oa:TextQuoteSelector." ;
+    rdfs:comment "The relationship between a Selector and another Selector or a State and a Selector or State that should be applied to the results of the first to refine the processing of the source resource. " ;
+    rdfs:comment "The object of the predicate is a copy of the text which is being selected, after normalization." ;
+    #offical comment
+    rdfs:label "exact" .
+    #offical label
+
+sor:XMLIDSelector a rdfs:Class ;
+    skos:definition "The XMLIDSelector describes the XML IDs of the start point and end point of an annotated text passage to ensure unambiguous referencing."@en;
+    rdfs:label "XML ID Selector" .
+
+sor:startID a rdf:Property ;
+    rdfs:domain sor:XMLIDSelector ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The start position in form of an XML ID at which a range of content is selected from the data in the source resource." ;
+    rdfs:label "start ID" .
+
+sor:endID a rdf:Property ;
+    rdfs:domain sor:XMLIDSelector ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The end property is used to convey in form of an XML ID the end position of a range of content." ;
+    rdfs:label "end ID" .
+
+oa:DataPositionSelector a rdfs:Class ;
+    rdfs:comment "DataPositionSelector describes a range of data by recording the start and end positions of the selection in the stream. Position 0 would be immediately before the first byte, position 1 would be immediately before the second byte, and so on. The start byte is thus included in the list, but the end byte is not." ;
+    #offical comment
+    rdfs:label "DataPositionSelector" .
+    #offical label
+
+oa:start a rdf:Property ;
+    rdfs:range xsd:nonNegativeInteger ;
+    #offical range
+    skos:note "The domain is not officially specified. In the context of the Rosenzweig project, the domain used is oa:DataPositionSelector." ;
+    rdfs:comment "The start position in a 0-based index at which a range of content is selected from the data in the source resource." ;
+    #offical comment
+    rdfs:label "start" .
+    #official label
+
+oa:end a rdf:Property ;
+    rdfs:range xsd:nonNegativeInteger ;
+    #offical range
+    skos:note "The domain is not officially specified. In the context of the Rosenzweig project, the domain used is oa:DataPositionSelector." ;
+    rdfs:comment "The end property is used to convey the 0-based index of the end position of a range of content." ;
+    #offical comment
+    rdfs:label "end" .
+    #official label
+
+oa:hasBody
+    a rdf:Property;
+    rdfs:domain oa:Annotation;
+    #official domain;
+    rdfs:range intro:INT_Interpretation;
+    skos:note "The range is not officially specified. In the context of the Rosenzweig project, it is set to intro:INT_Interpretation as the body.";
+    rdfs:comment "The object of the relationship is a resource that is a body of the Annotation." ;
+    #official comment
+    rdfs:label "hasBody"@en.
+    #official label
+
+###User Management/FOAF/Reference Databases
+
+dct:created
+    a rdf:Property;
+    skos:definition "Date of creation of the resource."@en;
+    #official definition
+    skos:note "Domain is not officially specified. Range is officially specified as rdfs:Literal, but in the context of the Rosenzweig project, the more specific xsd:dateTime is used.";
+    rdfs:comment "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty.";
+    #official comment
+    rdfs:label "Date Created"@en.
+    #official label
+    
+dct:modified
+    a rdf:Property;
+    skos:definition "Date on which the resource was changed."@en;
+    #official definition
+    skos:note "Domain is not officially specified. Range is officially specified as rdfs:Literal, , but in the context of the Rosenzweig project, the more specific xsd:dateTime is used. As only one modified date is stored for each instance of a class at a time, this is the most recent change.";
+    rdfs:comment "Recommended practice is to describe the date, date/time, or period of time as recommended for the property Date, of which this is a subproperty.";
+    #official comment
+    rdfs:label "Date Modified"@en.
+    #official label
+
+foaf:Person
+    a rdfs:Class;
+    rdfs:comment "A person.";
+    #official comment
+    rdfs:label "Person"@en.
+    #official label
+    
+sor:Contributor
+    a rdfs:Class;
+    rdfs:subClassOf foaf:Person ;
+     skos:definition "A person having contributed as an author, recipient, editor or translator to a piece of literature or a passage thereof.";
+    rdfs:label "Contributor"@en.
+    
+sor:User
+    a rdfs:Class;
+    rdfs:subClassOf foaf:Person ;
+     skos:definition "A person who has an account on the website of the Rosenzweig project, which they can use to create and modify annotations and other resources.";
+    rdfs:label "User"@en.
+
+dct:contributor
+    a rdf:Property;
+    skos:definition "An entity responsible for making contributions to the resource."@en;
+    #official definition
+    skos:note "Domain and range are not officially specified (except the range including dct:Agent). In the Rosenzweig project, the domain used is oa:Annotation and the range used is sor:Contributor.";
+    rdfs:comment "The guidelines for using names of persons or organizations as creators apply to contributors.";
+    #offical comment
+    rdfs:label "Contributor"@en.
+    #official label
+    
+dct:creator
+    a rdf:Property;
+    rdfs:subPropertyOf dct:contributor;
+    skos:definition "An entity responsible for making the resource."@en;
+    skos:note "Domain and range are not officially specified (except the range including dct:Agent). In the Rosenzweig project, the domain used is oa:Annotation and the range used is sor:User.";
+    rdfs:comment "Recommended practice is to identify the creator with a URI. If this is not possible or feasible, a literal value that identifies the creator may be provided.";
+    #offical comment
+    rdfs:label "Creator"@en.
+    #official label
+
+sor:modifier
+    a rdf:Property;
+    rdfs:domain oa:Annotation;
+    rdfs:range sor:User;
+    rdfs:subPropertyOf dct:contributor;
+    skos:definition "An entity responsible for changing the resource."@en;
+    rdfs:label "modifier"@en.
+    
+foaf:name
+    a rdf:Property;
+    skos:note "In the Rosenzweig project, the name of a sor:User (with subproperties of it being the preferred name and alternative names of a sor:Contributor). Official domain (specified in prose) is foaf:Thing.";
+    rdfs:comment "A name for some thing.";
+    #official comment
+    rdfs:label "name"@en.
+    #official label
+
+sor:preferredName
+    a rdf:Property;
+    rdfs:subPropertyOf foaf:name;
+    rdfs:domain sor:Contributor;
+    rdfs:range rdfs:Literal;
+    skos:definition "The preferred name of a sor:Contributor.";
+    rdfs:label "preferred name"@en.
+
+sor:alternativeName
+    a rdf:Property;
+    rdfs:subPropertyOf foaf:name;
+    rdfs:domain sor:Contributor;
+    rdfs:range rdfs:Literal;
+    skos:definition "An alternative name of a sor:Contributor.";
+    rdfs:label "alternative name"@en.
+
+sor:ReferenceDatabase
+    a rdfs:Class;    
+    skos:definition "Instances of this class are entries in an external reference database, used for mapping persons and editions of literature in the local database to external resources."@en;
+    rdfs:label "Reference Database"@en.
+    
+sor:GND
+    a rdfs:Class;    
+    rdfs:subClassOf sor:ReferenceDatabase;
+    skos:definition "Instances of this class are entries in the external reference database GND (Gemeinsame Normdatei)."@en;
+    rdfs:label "GND"@en.
+    
+sor:LOC
+    a rdfs:Class;    
+    rdfs:subClassOf sor:ReferenceDatabase;
+    skos:definition "Instances of this class are entries in the external reference database of the LOC (Library of Congress)."@en;
+    rdfs:label "LOC"@en.
+
+sor:Wikidata
+    a rdfs:Class;    
+    rdfs:subClassOf sor:ReferenceDatabase;
+    skos:definition "Instances of this class are entries in the external reference database Wikidata. This reference database has the advantage that it is easy to add new entries to it."@en;
+    rdfs:label "Wikidata"@en.
+
+skos:closeMatch
+    a rdf:Property;
+    skos:note "In the Rosenzweig project, this specifies that a person is represented by the respective entry in an external reference database. Official domain and range is owl:Thing, used in the Rosenzweig project is sor:Contributor for the domain and sor:ReferenceDatabase for the range.";
+    rdfs:label "has close match"@en.
+    #official label
+    
+###Intertextual Relationships
+
+intro:INT_Interpretation
+    a rdfs:Class. 
+ 
+sor:note
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range rdfs:Literal;
+    skos:definition "This property provides a space for any unstructured notes."@en;
+    skos:note "I don't map sor:note to skos:note because that is an instance of owl:AnnotationProperty and thereby clearly more for the purpose of describing classes and properties rather than as a general field for taking notes on intertextual relations."@en;
+    skos:editorialNote "This property has the additional purpose of collecting data that might be given its own property."@en;
+    rdfs:label "note"@en.
+
+sor:hasType
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:ReferenceType;
+    skos:definition "The type of the intertextual relation. This can be literal quote, paraphrase, coined term, allusion, misquote or egotext reference."@en;
+    rdfs:label "has type"@en.
+
+sor:ReferenceType
+    a rdfs:Class;
+    rdfs:subClassOf intro:INT11_TypeOfInterrelation;
+    skos:definition "A controlled vocabulary providing options for the type of the intertextual relation - literal quote, paraphrase, coined term, allusion, misquote or egotext reference."@en;
+    rdfs:label "Reference Type"@en.
+
+intro:INT11_TypeOfInterrelation
+    a rdfs:Class.
+
+sor:hasQuotationMarks
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range xsd:boolean;
+    skos:definition "Whether the intertextual relation is marked explicitly in 'Der Stern der Erlösung' via quotation marks or not."@en;
+    rdfs:label "has quotation marks"@en.
+    
+sor:titleStated
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range xsd:string;
+    skos:definition "Whether the title of the source which the intertextual relation is from is stated explicitly in 'Der Stern der Erlösung' or alluded to or not. It takes the values 'explicitly', 'alluded' and 'no'."@en;
+    rdfs:label "title stated"@en.
+
+sor:misquoteTitleStated
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range xsd:string;
+    skos:definition "Whether the title of the alleged source of something that looks like an the intertextual relation is stated explicitly or alluded to in 'Der Stern der Erlösung' or not. It takes the values 'explicitly', 'alluded' and 'no'."@en;
+    rdfs:label "title stated"@en.
+    
+sor:authorStated
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range xsd:boolean;
+    skos:definition "Whether the coiner of the term or the author of the source which the (actual or seeming) intertextual relation is from is stated explicitly in 'Der Stern der Erlösung' or not. It takes the values 'explicitly', 'alluded' and 'no'."@en;
+    rdfs:label "author stated"@en.
+
+sor:statedAuthor
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:Contributor;
+    skos:definition "A person who is explicitly stated or alluded to in 'Der Stern der Erlösung' as the author of the cited term."@en;
+    rdfs:label "stated author"@en.
+
+sor:statedAuthor
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:Contributor;
+    skos:definition "A person who is not stated in 'Der Stern der Erlösung' as the author of the cited term but suggested by the annotator as an alternative to the stated author, thereby saying that the stated author is incorrect."@en;
+    rdfs:label "stated author"@en.
+
+sor:statedLiterarySource
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:SourcePassage;
+    skos:definition "A passage in a work of literature which the annotated passage in 'Der Stern der Erlösung' is explicitly stated or alluded to be based upon and which is deemed to be correct by the annotator."@en;
+    rdfs:label "stated source"@en.
+
+sor:wrongLiterarySource
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:SourcePassage;
+    skos:definition "A passage in a work of literature which the annotated passage in 'Der Stern der Erlösung' is explicitly stated or alluded to be based upon and which is deemed to be incorrect by the annotator."@en;
+    rdfs:label "stated source"@en.
+
+sor:misquoteLiterarySource
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:SourcePassage;
+    skos:definition "A passage in a work of literature which the annotated passage in 'Der Stern der Erlösung' is explicitly stated or alluded to be based upon but where the annotator proposes that the annotated passage does not have a source, i.e. is no intertextual relation."@en;
+    rdfs:label "stated source"@en.
+
+sor:proposedLiterarySource
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:SourcePassage;
+    skos:definition "A passage in a work of literature which the annotated passage in 'Der Stern der Erlösung' is proposed by the annotator to be based upon, in the absence of any stated source."@en;
+    rdfs:label "proposed source"@en.
+
+sor:alternativeLiterarySource
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:SourcePassage;
+    skos:definition "A passage in a work of literature which the annotated passage in 'Der Stern der Erlösung' is proposed by the annotator to be based upon, as an alternative suggestion to a stated source that is deemed to be incorrect."@en;
+    rdfs:label "proposed source"@en.
+
+sor:SourcePassage
+    a rdfs:Class;   
+    rdfs:subClassOf intro:INT21_TextPassage;
+    skos:definition "A passage in a work of literature which is either stated in 'Der Stern der Erlösung' as a source of a passage in there or which is proposed by an annotator to be a source of such a passage."@en;
+    rdfs:label "Source Passage"@en.
+
+sor:EmptySourcePassage
+    a rdfs:Class;
+    skos:definition "A passage implied to exist in a work of literature which is stated in 'Der Stern der Erlösung' as a source of a passage in 'Der Stern der Erlösung', but which is not actually found in that work of literature, therefore not having any further properties like wording or part."@en;
+    rdfs:label "Source Passage"@en.
+
+sor:passageAuthor
+    a rdf:Property;
+    rdfs:domain sor:SourcePassage;    
+    rdfs:range sor:Contributor;
+    skos:definition "The author of a passage, if that is a different person than the author of a piece of literature which the passage is part of."@en;
+    rdfs:label "passage author"@en.
+
+intro:R44_hasWording
+    a rdf:Property;
+    skos:note "The official domain is intro:INT16_Segment and intro:INT1_Passage. In the Rosenzweig project, wordings are only applied to sor:SourcePassage and sor:EgotextPassage, not to sor:ResearchLiteraturePassage, although all three are subclasses of a subclass of intro:INT1_Passage. The official range is not defined, it is rdfs:Literal in the context of the Rosenzweig project.";
+    rdfs:comment "Links an INT21 Text Passage or an INT16 Segment to a data string providing its exact wording."@en.
+    #official rdfs:comment
+
+sor:translatedWording
+    a rdf:Property;
+    rdfs:domain sor:SourcePassage;    
+    rdfs:range rdfs:Literal;
+    skos:definition "A translation of the text string stored as intro:R44_hasWording on the same node.".
+
+sor:context
+    a rdf:Property;
+    rdfs:domain sor:SourcePassage;    
+    rdfs:range rdfs:Literal;
+    skos:definition "The text string constituting a passage and its context. It's up to the annotator to decide what they deem an appropriate amount of context."@en;
+    rdfs:label "context"@en.
+
+sor:translatedContext
+    a rdf:Property;
+    rdfs:domain sor:SourcePassage;    
+    rdfs:range rdfs:Literal;
+    skos:definition "A translation of the text string stored as sor:context on the same node."@en;
+    skos:editorialNote "We need to decide how long the excerpt should be exactly - one paragraph?"@en;
+    rdfs:label "context"@en.
+
+sor:notedIn
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:ResearchLiteraturePassage;
+    skos:definition "A passage of a piece of research literature in which the intertextual relation identified by the interpretation was pointed out."@en;
+    rdfs:label "noted in"@en.
+     
+sor:ResearchLiteraturePassage
+    a rdfs:Class;   
+    rdfs:subClassOf intro:INT21_TextPassage;
+    skos:definition "A passage of a piece of research literature in which the intertextual relation identified by the interpretation was pointed out."@en;
+    rdfs:label "Research Literature Passage"@en.   
+
+sor:relatedEgotext
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:EgotextPassage;
+    skos:definition "A passage in another work by Franz Rosenzweig which is related to the intertextual relation."@en;
+    rdfs:label "egotext"@en.
+
+sor:referencingEgotext
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:EgotextPassage;
+    skos:definition "A passage in another work by Franz Rosenzweig which refers to a passage in 'The Star of Redemption'."@en;
+    rdfs:label "egotext"@en.
+
+sor:parallelEgotext
+    a rdf:Property;
+    rdfs:domain intro:INT_Interpretation;
+    rdfs:range sor:EgotextPassage;
+    skos:definition "A passage in another work by Franz Rosenzweig which contains the same intertextual relation as the one identified by the interpretation."@en;
+    rdfs:label "egotext"@en.
+
+sor:EgotextPassage
+    a rdfs:Class;   
+    rdfs:subClassOf intro:INT21_TextPassage;
+    skos:definition "A passage in another work by Franz Rosenzweig which is has some kind of connection to the intertextual relation."@en;
+    rdfs:label "Egotext Passage"@en.
+
+intro:INT21_TextPassage
+    a rdfs:Class.
+    
+bf:part
+    a rdf:Property;
+    rdfs:range rdfs:Literal;
+    #offical range
+    skos:definition "Part of a resource to which information applies."@en;
+    #official definition
+    skos:note "This specifies the verse(s) or page number/range of the passage. The official domain is rdfs:Resource, within the model of the Rosenzweig project, it is only intro:INT21_TextPassage.";
+    rdfs:label "Part"@en.
+    #official label
+
+sor:originalLink
+    a rdf:Property;
+    rdfs:domain intro:INT21_TextPassage;
+    rdfs:range xsd:anyURI;
+    skos:definition "An URL linking to a website hosting the work which the passage is from, in an edition that is likely to be close or identical to the one used by Franz Rosenzweig. If possible, the link leads directly to the respective passage."@en;
+    rdfs:label "original link"@en.
+
+sor:modifiedLink
+    a rdf:Property;
+    rdfs:domain intro:INT21_TextPassage;
+    rdfs:range xsd:anyURI;
+    skos:definition "An URL linking to a website hosting the work which the passage is from, in an edition that differs from the one likely used by Franz Rosenzweig but is easier to consume by users of the platform, e.g. due to translated from Hebrew or written in Antiqua rather than Blackletter script. If possible, the link leads directly to the respective passage."@en;
+    rdfs:label "modified link"@en.
+
+###Bibliographic Framework
+    
+bf:partOf
+    a rdf:Property;
+    skos:definition "Resource in which the described resource is physically or logically contained."@en;
+    #official definition
+    skos:note "The official domain is rdfs:Resource; within the model of the Rosenzweig project, it is bf:Instance and intro:INT21_TextPassage. The official range is rdfs:Resource; within this model is only range bf:Instance. It therefore links passages to their instance and instances like book chapters or articles to instances they are contained in, like books or journals.";
+    rdfs:label "Is part of"@en.
+    #official label
+
+bf:Instance
+    a rdfs:Class;
+    skos:definition "Resource reflecting an individual, material embodiment of a Work."@en;
+    #official definition
+    skos:note "In the Rosenzweig project, the edition which was consulted to identify the passage (for primary literature) or to find information about the intertextual relation (for other literature) or an edition of one of Rosenzweig's egotexts. In the case of primary literature, this should optimally be an edition as close as possible in content to the one likely used by Franz Rosenzweig.";
+    rdfs:label "Instance"@en.
+    #official label
+     
+sor:SourceLiterature
+    a rdfs:Class;
+    rdfs:subClassOf bf:Instance;
+    skos:definition "A piece of literature which is a stated or proposed source for an intertextual relation in 'Der Stern der Erlösung', in an edition which was consulted to identify the passage and which was deemed to be closest to what Rosenzweig likely used.";
+    rdfs:label "Source Literature"@en.
+
+sor:EgotextLiterature
+    a rdfs:Class;
+    rdfs:subClassOf bf:Instance;
+    skos:definition "A piece of literature written by or adressed to Franz Rosenzweig, besides 'Der Stern der Erlösung'. This includes his diaries, letters to and from him, and essays he wrote.";
+    rdfs:label "Egotext Literature"@en.
+
+sor:ResourceLiterature
+    a rdfs:Class;
+    rdfs:subClassOf bf:Instance;
+    skos:definition "A piece of research literature which contains relevant information about a intertextual relation in 'Der Stern der Erlösung'.";
+    rdfs:label "Resource Literature"@en.
+
+bf:instanceOf
+    a rdf:Property;
+    skos:definition "Work (as represented by an entry in a reference database) which the Instance described instantiates or manifests. For use to connect Instances to Works in the BIBFRAME structure."@en;
+    #official definition
+    skos:note "The official domain is bf:Instance, in the context of the Rosenzweig project, it is limited to sor:SourceLiterature. The official range is bf:Work, in this project it is instead sor:ReferenceDatabase, which are IDs of works.";
+    rdfs:label "Instance of"@en.
+    #offical label
+      
+sor:pages
+    a rdf:Property;
+    rdfs:domain bf:Instance;
+    rdfs:range rdfs:Literal;
+    skos:definition "The range of pages in which the instance can be found. Particularly for journal articles and book chapters that are part of other Instances."@en;
+    rdfs:label "pages"@en.
+
+bf:provisionActivity
+    a rdf:Property;
+    rdfs:domain bf:Instance;
+    #official domain
+    skos:definition "Place, name, and/or date information relating to the publication, printing, distribution, issue, release, production, etc. of a resource."@en;
+    #official definition
+    skos:note "The official range is bf:ProvisionActivity, but in the model of the Rosenzweig project, it is limited to its subproperty bf:Publication.";
+    rdfs:label "Provision activity"@en.
+    #official label 
+    
+bf:Publication
+    a rdfs:Class;
+    skos:definition "Information relating to publication of a resource."@en;
+    #official definition
+    rdfs:label "Publisher"@en.
+    #official label
+    
+bf:place
+    a rdf:Property;
+    skos:definition "Geographic location or place entity associated with a resource or element of description, such as the place associated with the publication, printing, distribution, issue, release or production of a resource, place of an event."@en;
+    #official definition
+    skos:note "The official domain and range is rdfs:Resource, but in the model of the Rosenzweig project, bf:Publication and rdfs:Literal, respectively.";
+    rdfs:label "Place"@en.
+    #official label
+
+bf:date
+    a rdf:Property;
+    rdfs:range rdfs:Literal;
+    #offical range
+    skos:definition "Date designation associated with a resource or element of description, such as date of title variation; year a degree was awarded; date associated with the publication, printing, distribution, issue, release or production of a resource. May be date typed."@en;
+    #official definition
+    skos:note "The official domain is rdfs:Resource, but in the model of the Rosenzweig project, it is only bf:Publication.";
+    rdfs:label "Date"@en.
+    #official label
+
+bf:contribution
+    a rdf:Property;
+    rdfs:range bf:Contribution;
+    #official range
+    skos:definition "Agent and its role in relation to the resource."@en;
+    #official definition
+    skos:note "Official domain is rdfs:resource; but in the model of the Rosenzweig project, it is limited to bf:Instance.";
+    rdfs:label "Contributor and role"@en.
+    #official label
+
+bf:Contribution
+    a rdfs:Class;
+    skos:definition "Agent and role with respect to the resource being described."@en.
+    #official definition
+
+bf:agent
+    a rdf:Property;
+    skos:definition "Entity associated with a resource or element of description, such as the name of the entity responsible for the content or of the publication, printing, distribution, issue, release or production of a resource."@en;
+    #official definition
+    skos:note "Official domain and range are rdfs:Resource; but in the model of the Rosenzweig project, they are limited to bf:Contribution and to sor:Contributor, respectively.";
+    rdfs:label "Associated agent"@en.
+    #official label
+ 
+bf:role
+    a rdf:Property;
+    rdfs:domain bf:Contribution;
+    #official domain
+    skos:definition "Function provided by a contributor, e.g., author, illustrator, etc."@en;
+    #official definition
+    skos:note "Official range is bf:Role, but in the model of the Rosenzweig project, it is sor:ContributionRole.";
+    rdfs:label "Contributor role"@en.
+    #official label
+   
+bf:Role
+    a rdfs:Class;
+    skos:definition "Function played or provided by a contributor, e.g., author, illustrator, etc."@en;
+    #official definition
+    rdfs:label "Role"@en.
+    #official label
+   
+sor:ContributionRole
+    a rdfs:Class;
+    rdfs:subClassOf bf:Role;
+    skos:definition "A controlled vocabulary of roles related to persons contributing to the creation or publication of a work or an instance of it. Includes author, recipient, editor and translator as possible values."@en;
+    rdfs:label "Contribution Role"@en.
+
+sor:hasEgotextType
+    a rdf:Property;
+    rdfs:domain sor:EgotextLiterature;
+    rdfs:range sor:EgotextType;
+    skos:definition "Type of egotext literature, i.e. letter, diary entry or essay."@en;
+    rdfs:label "Egotext Type"@en.
+   
+sor:EgotextType
+    a rdfs:Class;
+    skos:definition "A controlled vocabulary of types of egotext literature, i.e. letter, diary entry or essay."@en;
+    rdfs:label "Egotext Type"@en.
+
+dct:title
+    a rdf:Property;
+    rdfs:range rdfs:Literal;
+    #official range
+    skos:note "The official domain is not defined, in the context of the Rosenzweig project, it is limited to bf:Instance.";
+    skos:definition "A name given to the resource."@en;
+    #official definition
+    rdfs:label "Title"@en.
+    #official label

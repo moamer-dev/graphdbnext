@@ -26,6 +26,7 @@ export interface WorkflowConfigExport {
     type: string
     label: string
     targetNodeLabel: string
+    targetNodeSemantic?: any
     config: Record<string, unknown>
     position: { x: number; y: number }
     inputs?: number
@@ -101,6 +102,7 @@ export function exportWorkflowConfig(
         type: tool.type,
         label: tool.label,
         targetNodeLabel: targetNode?.label || '',
+        ...(targetNode && (targetNode.data as any)?.semantic ? { targetNodeSemantic: (targetNode.data as any).semantic } : {}),
         config: tool.config,
         position: tool.position,
         inputs: tool.inputs,

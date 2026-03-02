@@ -1,0 +1,146 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sorsh: <https://star.sub.uni-goettingen.de/schema/> .
+@prefix sor: <https://star.sub.uni-goettingen.de/model/> .
+@prefix sorvocE: <https://star.sub.uni-goettingen.de/voc/egotexttype/> .
+@prefix sorvocC: <https://star.sub.uni-goettingen.de/voc/contributionrole/> .
+@prefix sorvocR: <https://star.sub.uni-goettingen.de/voc/referencetype/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix roger: <https://www.sub.uni-goettingen.de/roger/schema#> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe-2-2-0/> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix intro: <https://w3id.org/lso/intro/beta202304#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix locvoc: <http://id.loc.gov/vocabulary/relators/#> .
+@prefix sord: <https://star.sub.uni-goettingen.de/data/> .
+
+## Person test data:
+
+sord:person_e3dec253-119d-456f-897a-306e6461732b a foaf:Person;
+	foaf:name "example person";
+	sor:GNDMatch "123";
+	sor:LOCMatch "n123";
+	sor:WikidataMatch "Q123".
+
+## Annotation test data:
+
+sord:annotation_1
+  a oa:Annotation;
+  sor:seeAlso sord:annotation_7e48170d-86c4-42e1-a585-41dbb1f10bea;
+  oa:hasBody [
+    a intro:INT7_Interpretament;
+    sor:authorStated true;
+    sor:hasQuotationMarks false;
+    sor:titleStated true;
+    intro:R21_identifies [
+      a intro:INT3_IntertextualRelationship;
+      intro:R19_has_type sorvocR:Paraphrase];
+    sor:note "example annotation";
+    sor:statedAuthor sord:person_8b4171f6-d3ee-4f7a-99d3-cabe596b3542;
+    sor:statedLiterarySource sord:sourcepassage_c51d4cb8-11b7-49e5-ab7f-990f177c5992;
+    sor:proposedLiterarySource sord:sourcepassage_456ed251-1116-4b45-8070-398681188d5e;
+sor:notedIn sord:egotextpassage_605fe6ca-832d-44e7-9033-bcea2fa7676c;
+    sor:egotext sord:egotextpassage_605fe6ca-832d-44e7-9033-bcea2fa7676b;
+    sor:proposedAuthor sord:person_e3dec253-119d-456f-897a-306e6461732b
+  ];
+  oa:hasTarget [
+    a oa:SpecificResource;
+    oa:hasSelector [
+    a oa:RangeSelector;
+      oa:hasEndSelector [a oa:XPathSelector;
+  rdf:value "/TEI/text/body/div[1]/div[1]/div[1]/p[1]/seg[1]"];
+      oa:hasStartSelector [a oa:XPathSelector;
+  rdf:value "/TEI/text/body/div[1]/div[1]/div[1]/p[1]/seg[1]"];
+      oa:refinedBy [a oa:TextQuoteSelector;
+  oa:exact "Erde"],
+        [a sor:XMLIDSelector;
+  sor:endID "d1e174";
+  sor:startID "d1e174"], [a oa:DataPositionSelector;
+  oa:end 562;
+  oa:start 558]
+    ];
+    oa:hasSource <https://gitlab.gwdg.de/-/ide/project/star/rosenzweig-models/edit/main/-/RDF/Rosenzweig_exampledata.ttl>
+  ].
+  
+## Source Literature test data:
+
+sord:sourceliterature_6341221b-7b5c-4480-a5c1-5a21d4d12045
+  a sor:SourceLiterature;
+  dct:title "example source literature";
+  sor:GNDMatch "123";
+  sor:LOCMatch "n123";
+  sor:WikidataMatch "Q123";
+  bf:contribution [a bf:Contribution;
+  bf:agent sord:person_e3dec253-119d-456f-897a-306e6461732b;
+  bf:role sorvocC:Editor];
+  bf:provisionActivity [a bf:Publication;
+  bf:date "date";
+  bf:place "place"];
+  sor:pages "1-10";
+  bf:partOf sord:sourceliterature_dee6798b-e73a-45ca-9856-acd9615df235 .
+
+## Source Passage test data:
+
+sord:sourcepassage_2fc5259c-4c4f-42f7-8387-d282cdfd8d5d
+  a sor:SourcePassage;
+  bf:partOf sord:sourceliterature_6341221b-7b5c-4480-a5c1-5a21d4d12045;
+  sor:context "example source passage";
+  intro:R44_has_wording "preview/valitation test source passage";
+  bf:part "1-10";
+  sor:modifiedLink "http://link2";
+  sor:originalLink "http://link1" .
+
+## Research Literature test data:
+
+sord:researchliterature_df5f3ad3-4966-4351-882b-317416c69d31
+  a sor:ResearchLiterature;
+  dct:title "example research literature";
+  bf:contribution [a bf:Contribution;
+  bf:agent sord:person_e3dec253-119d-456f-897a-306e6461732b;
+  bf:role sorvocC:Editor];
+  bf:provisionActivity [ a bf:Publication;
+  bf:date "date";
+  bf:place "place"];
+  sor:pages "1-10";
+  bf:partOf sord:researchliterature_2268074d-dae5-4af2-bfc0-18ad2fe145e3 .
+
+## Research Passage test data:
+
+sord:researchpassage_3bd68149-ea06-4a25-b299-804c66f9b0a9
+  a sor:ResearchLiteraturePassage;
+  bf:partOf sord:researchliterature_df5f3ad3-4966-4351-882b-317416c69d31;
+  bf:part "1-10";
+  sor:modifiedLink "http://link 2";
+  sor:originalLink "https://link 1" .
+
+## Egotext Literature test data:
+
+sord:egotextliterature_415961b6-e7e2-4628-8d6d-f13d556f5f75 a sor:EgotextLiterature;
+dct:title "example egotext literature";
+bf:contribution [
+  a	bf:Contribution;	
+  bf:agent sord:person_8b4171f6-d3ee-4f7a-99d3-cabe596b3542;
+  bf:role sorvocC:Author
+];
+bf:provisionActivity [
+  a bf:Publication;
+  bf:date "date";
+  bf:place "place"
+];
+sor:pages "1-10";
+bf:partOf sord:egotextliterature_f83e5ecf-c050-4e22-bd5e-aa263d792002;
+sor:hasEgotextType sorvocE:Letter.
+
+## Egotext Passage test data:
+
+sord:egotextpassage_b74f60d3-a2bd-4875-a5ae-8c05c89ab7a5 a sor:EgotextPassage;	
+intro:R44_has_wording "example egotext passage";
+bf:partOf sord:egotextliterature_415961b6-e7e2-4628-8d6d-f13d556f5f75;
+bf:part "5";	
+sor:modifiedLink "http://translated link";
+sor:originalLink "https://link".

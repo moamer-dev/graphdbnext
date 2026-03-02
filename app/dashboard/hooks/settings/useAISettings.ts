@@ -27,6 +27,7 @@ const DEFAULT_AI_SETTINGS: ExtendedAISettings = {
         nodePropertySuggestion: false,
         schemaOptimization: false,
         aiAgentsAsTools: false,
+        semanticEnrichment: false,
         queryAiAgent: false
     }
 }

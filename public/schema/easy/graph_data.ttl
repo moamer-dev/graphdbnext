@@ -1,0 +1,87 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sord: <https://star.sub.uni-goettingen.de/data/> .
+@prefix gdb: <https://graphdbnext.example.com/schema/> .
+@prefix ns1: <http://www.cidoc-crm.org/cidoc-crm/> .
+
+sord:edxml_0 a gdb:Edxml ;
+    gdb:Edxml_xmlns <http://sub.uni-goettingen.de/edxml#> ;
+    gdb:Edxml_xmlnstei <http://www.tei-c.org/ns/1.0> ;
+    gdb:CONTAINS_HEADER sord:header_1 ;
+    gdb:CONTAINS_TEXT sord:text_4 .
+
+sord:header_1 a gdb:Header ;
+    gdb:HAS_TITLE sord:title_2 ;
+    gdb:HAS_AUTHOR sord:author_3 .
+
+sord:title_2 a gdb:Title .
+
+sord:author_3 a gdb:Author .
+
+sord:text_4 a gdb:Text ;
+    gdb:CONTAINS_SURFACE sord:surface_5 ;
+    gdb:CONTAINS_STRUCTURE sord:structure_11 ;
+    gdb:HAS_NOTE sord:note_15 ;
+    gdb:HAS_NOTE sord:note_17 .
+
+sord:surface_5 a gdb:Surface ;
+    gdb:Surface_xmlid "surface-1" ;
+    gdb:Surface_n "1" ;
+    gdb:CONTAINS_COLUMN sord:column_6 .
+
+sord:column_6 a gdb:Column ;
+    gdb:Column_xmlid "col-1" ;
+    gdb:Column_n "1" ;
+    gdb:CONTAINS_LINE sord:line_7 .
+
+sord:line_7 a gdb:Line ;
+    gdb:Line_xmlid "line-1" ;
+    gdb:Line_n "1" ;
+    gdb:CONTAINS_SEG sord:seg_8 .
+
+sord:seg_8 a gdb:Seg ;
+    gdb:Seg_xmlid "seg-1" ;
+    gdb:Seg_type "text" ;
+    gdb:CONTAINS_WORD sord:w_9 ;
+    gdb:CONTAINS_WORD sord:w_10 .
+
+sord:w_9 a ns1:E8_Acquisition ;
+    gdb:W_xmlid "word-1" ;
+    ns1:P111_added "hello" ;
+    ns1:P140_assigned_attribute_to "hello" .
+
+sord:w_10 a ns1:E8_Acquisition ;
+    gdb:W_xmlid "word-2" ;
+    ns1:P111_added "world" ;
+    ns1:P140_assigned_attribute_to "world" .
+
+sord:structure_11 a gdb:Structure ;
+    gdb:CONTAINS_STANZA sord:stanza_12 .
+
+sord:stanza_12 a gdb:Stanza ;
+    gdb:Stanza_xmlid "stanza-1" ;
+    gdb:Stanza_n "1" ;
+    gdb:CONTAINS_VERSE sord:verse_13 .
+
+sord:verse_13 a gdb:Verse ;
+    gdb:Verse_xmlid "verse-1" ;
+    gdb:Verse_n "1" ;
+    gdb:CONTAINS_WORD sord:w_14 .
+
+sord:w_14 a ns1:E8_Acquisition ;
+    gdb:W_xmlid "q42" ;
+    ns1:P111_added "test" ;
+    ns1:P140_assigned_attribute_to "test" .
+
+sord:note_15 a gdb:Note ;
+    gdb:Note_xmlid "note-1" ;
+    gdb:Note_type "editorial" ;
+    gdb:Note_target "#word-1" .
+
+sord:p_16 a gdb:P .
+
+sord:note_17 a gdb:Note ;
+    gdb:Note_xmlid "note-2" ;
+    gdb:Note_type "editorial" ;
+    gdb:Note_target "#word-2" .
+
+sord:p_18 a gdb:P .
