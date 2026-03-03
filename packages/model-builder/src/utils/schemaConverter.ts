@@ -10,6 +10,7 @@ interface SchemaJsonFormat {
   source?: string
   isSemanticEnabled?: boolean
   selectedOntologyId?: string | null
+  rootNodeLabel?: string | null
   nodes: {
     [nodeName: string]: {
       name: string
@@ -140,6 +141,7 @@ export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
   relationships: Relationship[]
   isSemanticEnabled?: boolean
   selectedOntologyId?: string | null
+  rootNodeId?: string | null
 } {
   const nodeMap = new Map<string, Node>()
   const relationships: Relationship[] = []
@@ -311,7 +313,8 @@ export function convertSchemaJsonToBuilder(schemaJson: SchemaJsonFormat): {
     nodes: Array.from(nodeMap.values()),
     relationships,
     isSemanticEnabled: schemaJson.isSemanticEnabled ?? !!schemaJson.selectedOntologyId,
-    selectedOntologyId: schemaJson.selectedOntologyId
+    selectedOntologyId: schemaJson.selectedOntologyId,
+    rootNodeId: schemaJson.rootNodeLabel ? Array.from(nodeMap.values()).find(n => n.label === schemaJson.rootNodeLabel)?.id || null : null
   }
 }
 

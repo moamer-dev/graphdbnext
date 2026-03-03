@@ -157,24 +157,168 @@ export function ActionCreateNodeCompleteConfiguration({
             ))}
           </div>
         </div>
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Parent Relationship Type</Label>
-          <Input
-            placeholder="e.g., contains"
-            className="h-8 text-xs"
-            value={createNodeCompleteConfig.parentRelationship}
-            onChange={(e) => {
-              const value = e.target.value
-              const updated = { ...createNodeCompleteConfig, parentRelationship: value }
-              onCreateNodeCompleteConfigChange(updated)
-              onUpdateActionNode(actionNodeId, {
-                config: { ...actionNode.config, parentRelationship: value }
-              })
-            }}
-          />
-          <p className="text-[10px] text-muted-foreground">
-            Connects the new node to its parent context node.
-          </p>
+        <div className="space-y-3 pt-2 border-t mt-4">
+          <Label className="text-xs font-semibold">Relationship Configuration</Label>
+          <div className="space-y-2">
+            <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">Relationship Mode</Label>
+            <Select
+              value={createNodeCompleteConfig.relationship?.mode || 'connected'}
+              onValueChange={(value) => {
+                const mode = value as 'standalone' | 'connected' | 'existing' | 'deferred'
+                const updated = {
+                  ...createNodeCompleteConfig,
+                  relationship: {
+                    mode,
+                    type: createNodeCompleteConfig.relationship?.type || 'contains',
+                    direction: createNodeCompleteConfig.relationship?.direction || 'outgoing',
+                    targetNodeId: createNodeCompleteConfig.relationship?.targetNodeId,
+                    targetNodeLabel: createNodeCompleteConfig.relationship?.targetNodeLabel
+                  }
+                }
+                onCreateNodeCompleteConfigChange(updated)
+                onUpdateActionNode(actionNodeId, {
+                  config: { ...actionNode.config, relationship: updated.relationship }
+                })
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standalone">Standalone (No relationship)</SelectItem>
+                <SelectItem value="connected">Connected to Parent / Connected Node</SelectItem>
+                <SelectItem value="deferred">Deferred (Resolve by ID during generation)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(createNodeCompleteConfig.relationship?.mode === 'connected' || createNodeCompleteConfig.relationship?.mode === 'deferred') && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Relationship Type</Label>
+                <Input
+                  placeholder="e.g., contains, relatesTo"
+                  className="h-8 text-xs"
+                  value={createNodeCompleteConfig.relationship?.type || ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    const updated: ActionConfigurationState['createNodeCompleteConfig'] = {
+                      ...createNodeCompleteConfig,
+                      relationship: {
+                        mode: createNodeCompleteConfig.relationship?.mode || 'connected',
+                        direction: createNodeCompleteConfig.relationship?.direction || 'outgoing',
+                        targetNodeId: createNodeCompleteConfig.relationship?.targetNodeId,
+                        targetNodeLabel: createNodeCompleteConfig.relationship?.targetNodeLabel,
+                        type: value
+                      }
+                    }
+                    onCreateNodeCompleteConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, {
+                      config: { ...actionNode.config, relationship: updated.relationship }
+                    })
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Direction</Label>
+                <Select
+                  value={createNodeCompleteConfig.relationship?.direction || 'outgoing'}
+                  onValueChange={(value) => {
+                    const direction = value as 'outgoing' | 'incoming'
+                    const updated: ActionConfigurationState['createNodeCompleteConfig'] = {
+                      ...createNodeCompleteConfig,
+                      relationship: {
+                        mode: createNodeCompleteConfig.relationship?.mode || 'connected',
+                        type: createNodeCompleteConfig.relationship?.type || 'contains',
+                        targetNodeId: createNodeCompleteConfig.relationship?.targetNodeId,
+                        targetNodeLabel: createNodeCompleteConfig.relationship?.targetNodeLabel,
+                        direction
+                      }
+                    }
+                    onCreateNodeCompleteConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, {
+                      config: { ...actionNode.config, relationship: updated.relationship }
+                    })
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="outgoing">
+                      <div className="flex items-center gap-2">
+                        <ArrowRight className="h-3 w-3" />
+                        <span>Source → Created Node</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="incoming">
+                      <div className="flex items-center gap-2">
+                        <ArrowLeft className="h-3 w-3" />
+                        <span>Created Node → Source</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          {createNodeCompleteConfig.relationship?.mode === 'deferred' && (
+            <div className="space-y-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded">
+              <Label className="text-xs font-medium">Target Node Lookup</Label>
+              <div className="space-y-2">
+                <Label className="text-[10px]">Target Label</Label>
+                <Input
+                  placeholder="e.g., Person"
+                  className="h-7 text-xs"
+                  value={createNodeCompleteConfig.relationship?.targetNodeLabel || ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    const updated: ActionConfigurationState['createNodeCompleteConfig'] = {
+                      ...createNodeCompleteConfig,
+                      relationship: {
+                        mode: 'deferred',
+                        type: createNodeCompleteConfig.relationship?.type || 'relatesTo',
+                        direction: createNodeCompleteConfig.relationship?.direction || 'outgoing',
+                        targetNodeId: createNodeCompleteConfig.relationship?.targetNodeId,
+                        targetNodeLabel: value
+                      }
+                    }
+                    onCreateNodeCompleteConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, {
+                      config: { ...actionNode.config, relationship: updated.relationship }
+                    })
+                  }}
+                />
+              </div>
+              <div className="space-y-2 mt-2">
+                <Label className="text-[10px]">Target ID template</Label>
+                <Input
+                  placeholder="e.g., {{ $json.id }}"
+                  className="h-7 text-xs"
+                  value={createNodeCompleteConfig.relationship?.targetNodeId || ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    const updated: ActionConfigurationState['createNodeCompleteConfig'] = {
+                      ...createNodeCompleteConfig,
+                      relationship: {
+                        mode: 'deferred',
+                        type: createNodeCompleteConfig.relationship?.type || 'relatesTo',
+                        direction: createNodeCompleteConfig.relationship?.direction || 'outgoing',
+                        targetNodeLabel: createNodeCompleteConfig.relationship?.targetNodeLabel,
+                        targetNodeId: value
+                      }
+                    }
+                    onCreateNodeCompleteConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, {
+                      config: { ...actionNode.config, relationship: updated.relationship }
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </CollapsibleSection>

@@ -262,6 +262,7 @@ export interface SchemaJson {
   relations: Record<string, SchemaRelation>
   isSemanticEnabled?: boolean
   selectedOntologyId?: string | null
+  rootNodeLabel?: string | null
 }
 
 export interface SchemaNode {

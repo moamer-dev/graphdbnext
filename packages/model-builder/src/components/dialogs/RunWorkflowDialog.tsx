@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { PlayCircle, Loader2, ClipboardList, Download, Database } from 'lucide-react'
+import { PlayCircle, Loader2, ClipboardList, Download, Database, ChevronDown, Sparkles } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '../ui/dropdown-menu'
 import type { Node } from '../../types'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { exportDataToTtl, exportDataToRdf } from '../../utils/rdfExportUtils'
@@ -134,88 +142,97 @@ export function RunWorkflowDialog({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {onPushToDB && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        if (!onPushToDB) return
-                        setIsPushing(true)
-                        try {
-                          await onPushToDB(graphPreview.fullGraph)
-                        } finally {
-                          setIsPushing(false)
-                        }
-                      }}
-                      disabled={isPushing}
-                      className="h-7 text-xs"
-                    >
-                      {isPushing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Database className="h-3 w-3 mr-1" />}
-                      Push to Graph DB
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const json = JSON.stringify(graphPreview.fullGraph, null, 2)
-                      const blob = new Blob([json], { type: 'application/json' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = 'graph.json'
-                      document.body.appendChild(a)
-                      a.click()
-                      document.body.removeChild(a)
-                      URL.revokeObjectURL(url)
-                    }}
-                    className="h-7 text-xs"
-                  >
-                    <Download className="h-3 w-3 mr-1" />
-                    Export JSON
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const state = useModelBuilderStore.getState()
-                      const ttl = exportDataToTtl(state, graphPreview.fullGraph)
-                      const blob = new Blob([ttl], { type: 'text/turtle' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = 'graph_data.ttl'
-                      document.body.appendChild(a)
-                      a.click()
-                      document.body.removeChild(a)
-                      URL.revokeObjectURL(url)
-                    }}
-                    className="h-7 text-xs"
-                  >
-                    <Download className="h-3 w-3 mr-1" />
-                    Export TTL
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const state = useModelBuilderStore.getState()
-                      const rdf = exportDataToRdf(state, graphPreview.fullGraph)
-                      const blob = new Blob([rdf], { type: 'application/rdf+xml' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = 'graph_data.rdf'
-                      document.body.appendChild(a)
-                      a.click()
-                      document.body.removeChild(a)
-                      URL.revokeObjectURL(url)
-                    }}
-                    className="h-7 text-xs"
-                  >
-                    <Download className="h-3 w-3 mr-1" />
-                    Export RDF
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-primary/20 hover:border-primary/40 hover:bg-primary/5">
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                        Actions
+                        <ChevronDown className="h-3.5 w-3.5 ml-1.5 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Graph Operations</DropdownMenuLabel>
+                      {onPushToDB && (
+                        <DropdownMenuItem
+                          disabled={isPushing}
+                          onSelect={async () => {
+                            if (!onPushToDB) return
+                            setIsPushing(true)
+                            try {
+                              await onPushToDB(graphPreview.fullGraph)
+                            } finally {
+                              setIsPushing(false)
+                            }
+                          }}
+                        >
+                          {isPushing ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" />
+                          ) : (
+                            <Database className="h-3.5 w-3.5 mr-2 text-primary" />
+                          )}
+                          Push to Graph DB
+                        </DropdownMenuItem>
+                      )}
+                      
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Export Results</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          const json = JSON.stringify(graphPreview.fullGraph, null, 2)
+                          const blob = new Blob([json], { type: 'application/json' })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = 'graph.json'
+                          document.body.appendChild(a)
+                          a.click()
+                          document.body.removeChild(a)
+                          URL.revokeObjectURL(url)
+                        }}
+                      >
+                        <Download className="h-3.5 w-3.5 mr-2" /> Export JSON
+                      </DropdownMenuItem>
+                      
+                      {useModelBuilderStore.getState().isSemanticEnabled && (
+                        <>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              const state = useModelBuilderStore.getState()
+                              const ttl = exportDataToTtl(state, graphPreview.fullGraph)
+                              const blob = new Blob([ttl], { type: 'text/turtle' })
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = 'graph_data.ttl'
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                              URL.revokeObjectURL(url)
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5 mr-2" /> Export TTL
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              const state = useModelBuilderStore.getState()
+                              const rdf = exportDataToRdf(state, graphPreview.fullGraph)
+                              const blob = new Blob([rdf], { type: 'application/rdf+xml' })
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = 'graph_data.rdf'
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                              URL.revokeObjectURL(url)
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5 mr-2" /> Export RDF
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
               <div className="max-h-64 overflow-auto rounded border bg-muted/30 text-xs p-2">
@@ -230,4 +247,3 @@ export function RunWorkflowDialog({
     </Dialog>
   )
 }
-

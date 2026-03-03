@@ -56,7 +56,6 @@ export default function EditModelPage() {
         }
       })
       toast.success('Model updated successfully')
-      router.push(`${ModelResource.VIEW_PATH}/${modelId}`)
     } catch (error) {
       console.error('Error saving model:', error)
       toast.error('Failed to save model')

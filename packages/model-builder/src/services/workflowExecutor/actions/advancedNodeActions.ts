@@ -9,6 +9,9 @@ export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: Actio
   const nodeId = ctx.nodeIdCounter.value++
   const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
   
+  // Capture the node that "owns" this action execution
+  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
+  
   const nodeLabel = (action.config.nodeLabel as string) || ctx.builderNode.label
   if (nodeLabel) {
     graphNode.labels = [nodeLabel]
@@ -41,18 +44,18 @@ export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: Actio
   const propertyKey = (action.config.propertyKey as string) || 'text'
   graphNode.properties[propertyKey] = transformed
 
-  if (ctx.parentGraphNode) {
+  if (originNode) {
     const parentRelType = (action.config.parentRelationship as string) || 'contains'
     const relType = ctx.relationships.find(r => r.type === parentRelType)
     if (relType) {
-      const rel = ctx.createRelationship(ctx.parentGraphNode, graphNode, relType)
+      const rel = ctx.createRelationship(originNode, graphNode, relType)
       ctx.graphRels.push(rel)
     } else {
       const rel: GraphJsonRelationship = {
         id: ctx.relIdCounter.value++,
         type: 'relationship',
         label: parentRelType,
-        start: ctx.parentGraphNode.id,
+        start: originNode.id,
         end: graphNode.id,
         properties: {}
       }
@@ -274,6 +277,9 @@ export function executeCreateNodeWithAttributesAction(action: ActionCanvasNode, 
   const nodeId = ctx.nodeIdCounter.value++
   const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
   
+  // Capture the node that "owns" this action execution
+  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
+  
   const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
   if (nodeLabel) {
     graphNode.labels = [nodeLabel]
@@ -304,18 +310,18 @@ export function executeCreateNodeWithAttributesAction(action: ActionCanvasNode, 
   ctx.elementToGraph.set(ctx.xmlElement, graphNode)
   ctx.currentGraphNode = graphNode
 
-  if (ctx.parentGraphNode) {
+  if (originNode) {
     const parentRelType = (action.config.parentRelationship as string) || 'contains'
     const relType = ctx.relationships.find(r => r.type === parentRelType)
     if (relType) {
-      const rel = ctx.createRelationship(ctx.parentGraphNode, graphNode, relType)
+      const rel = ctx.createRelationship(originNode, graphNode, relType)
       ctx.graphRels.push(rel)
     } else {
       const rel: GraphJsonRelationship = {
         id: ctx.relIdCounter.value++,
         type: 'relationship',
         label: parentRelType,
-        start: ctx.parentGraphNode.id,
+        start: originNode.id,
         end: graphNode.id,
         properties: {}
       }

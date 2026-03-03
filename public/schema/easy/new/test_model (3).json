@@ -1,0 +1,412 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-02T16:52:57.667Z",
+  "source": "test_model",
+  "selectedOntologyId": "s4bldg",
+  "nodes": {
+    "P": {
+      "name": "P",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {},
+      "relationsIn": {
+        "CONTAINS_CONTENT": [
+          "Note"
+        ]
+      }
+    },
+    "W": {
+      "name": "W",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "text": {
+          "name": "text",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "lemma": {
+          "name": "lemma",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {},
+      "relationsIn": {
+        "CONTAINS_WORD": [
+          "Seg",
+          "Verse"
+        ],
+        "ANNOTATES_WORD": [
+          "Note"
+        ]
+      }
+    },
+    "Seg": {
+      "name": "Seg",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_WORD": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_SEG": [
+          "Line"
+        ]
+      }
+    },
+    "Line": {
+      "name": "Line",
+      "superclassNames": [],
+      "properties": {
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        },
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_SEG": [
+          "Seg"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_LINE": [
+          "Column"
+        ]
+      }
+    },
+    "Note": {
+      "name": "Note",
+      "superclassNames": [],
+      "semantic": {
+        "classIri": "https://saref.etsi.org/saref4bldg/Actuator",
+        "classCurie": "s4bldg:Actuator",
+        "classLabel": "Actuator",
+        "ontologyId": "s4bldg"
+      },
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "type": {
+          "name": "type",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        },
+        "target": {
+          "name": "target",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "ANNOTATES_WORD": [
+          "W"
+        ],
+        "CONTAINS_CONTENT": [
+          "P"
+        ]
+      },
+      "relationsIn": {
+        "HAS_NOTE": [
+          "Text"
+        ]
+      }
+    },
+    "Text": {
+      "name": "Text",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "HAS_NOTE": [
+          "Note"
+        ],
+        "HAS_STRUCTURE": [
+          "Structure"
+        ],
+        "CONTAINS_SURFACE": [
+          "Surface"
+        ]
+      },
+      "relationsIn": {}
+    },
+    "Verse": {
+      "name": "Verse",
+      "superclassNames": [],
+      "properties": {
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        },
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_WORD": [
+          "W"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_VERSE": [
+          "Stanza"
+        ]
+      }
+    },
+    "Column": {
+      "name": "Column",
+      "superclassNames": [],
+      "properties": {
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        },
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_LINE": [
+          "Line"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_COLUMN": [
+          "Surface"
+        ]
+      }
+    },
+    "Stanza": {
+      "name": "Stanza",
+      "superclassNames": [],
+      "properties": {
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true
+        },
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_VERSE": [
+          "Verse"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_STANZA": [
+          "Structure"
+        ]
+      }
+    },
+    "Surface": {
+      "name": "Surface",
+      "superclassNames": [],
+      "semantic": {
+        "classIri": "http://www.cidoc-crm.org/cidoc-crm/E8_Acquisition",
+        "classCurie": "CIDOC_E8_Acquisition",
+        "classLabel": "Acquisition",
+        "ontologyId": "cidoc"
+      },
+      "properties": {
+        "n": {
+          "name": "n",
+          "datatype": "integer",
+          "values": [],
+          "required": true,
+          "semantic": {
+            "ontologyId": "cidoc",
+            "propertyIri": "http://www.cidoc-crm.org/cidoc-crm/P141_assigned",
+            "propertyCurie": "CIDOC_P141_assigned",
+            "propertyLabel": "assigned"
+          }
+        },
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "CONTAINS_COLUMN": [
+          "Column"
+        ]
+      },
+      "relationsIn": {
+        "CONTAINS_SURFACE": [
+          "Text"
+        ]
+      }
+    },
+    "Structure": {
+      "name": "Structure",
+      "superclassNames": [],
+      "properties": {},
+      "relationsOut": {
+        "CONTAINS_STANZA": [
+          "Stanza"
+        ]
+      },
+      "relationsIn": {
+        "HAS_STRUCTURE": [
+          "Text"
+        ]
+      }
+    }
+  },
+  "relations": {
+    "CONTAINS_WORD": {
+      "name": "CONTAINS_WORD",
+      "properties": {},
+      "domains": {
+        "Seg": [
+          "W"
+        ],
+        "Verse": [
+          "W"
+        ]
+      }
+    },
+    "CONTAINS_SEG": {
+      "name": "CONTAINS_SEG",
+      "properties": {},
+      "domains": {
+        "Line": [
+          "Seg"
+        ]
+      }
+    },
+    "ANNOTATES_WORD": {
+      "name": "ANNOTATES_WORD",
+      "properties": {},
+      "domains": {
+        "Note": [
+          "W"
+        ]
+      }
+    },
+    "CONTAINS_CONTENT": {
+      "name": "CONTAINS_CONTENT",
+      "properties": {},
+      "domains": {
+        "Note": [
+          "P"
+        ]
+      }
+    },
+    "HAS_NOTE": {
+      "name": "HAS_NOTE",
+      "properties": {},
+      "domains": {
+        "Text": [
+          "Note"
+        ]
+      }
+    },
+    "HAS_STRUCTURE": {
+      "name": "HAS_STRUCTURE",
+      "properties": {},
+      "domains": {
+        "Text": [
+          "Structure"
+        ]
+      }
+    },
+    "CONTAINS_SURFACE": {
+      "name": "CONTAINS_SURFACE",
+      "properties": {},
+      "domains": {
+        "Text": [
+          "Surface"
+        ]
+      }
+    },
+    "CONTAINS_LINE": {
+      "name": "CONTAINS_LINE",
+      "properties": {},
+      "domains": {
+        "Column": [
+          "Line"
+        ]
+      }
+    },
+    "CONTAINS_VERSE": {
+      "name": "CONTAINS_VERSE",
+      "properties": {},
+      "domains": {
+        "Stanza": [
+          "Verse"
+        ]
+      }
+    },
+    "CONTAINS_COLUMN": {
+      "name": "CONTAINS_COLUMN",
+      "properties": {},
+      "domains": {
+        "Surface": [
+          "Column"
+        ]
+      }
+    },
+    "CONTAINS_STANZA": {
+      "name": "CONTAINS_STANZA",
+      "properties": {},
+      "domains": {
+        "Structure": [
+          "Stanza"
+        ]
+      }
+    }
+  }
+}

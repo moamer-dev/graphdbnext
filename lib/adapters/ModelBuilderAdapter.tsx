@@ -120,6 +120,7 @@ export function ModelBuilderAdapter({
               relationships: converted.relationships,
               isSemanticEnabled: converted.isSemanticEnabled,
               selectedOntologyId: converted.selectedOntologyId,
+              rootNodeId: converted.rootNodeId,
               metadata: {
                 name: model.name,
                 description: model.description || '',
@@ -140,6 +141,7 @@ export function ModelBuilderAdapter({
             relationships: converted.relationships,
             isSemanticEnabled: converted.isSemanticEnabled,
             selectedOntologyId: converted.selectedOntologyId,
+            rootNodeId: converted.rootNodeId,
             metadata: {
               name: model.name,
               description: model.description || '',
@@ -320,7 +322,8 @@ export function ModelBuilderAdapter({
             currentNodes,
             currentRelationships,
             storeState.isSemanticEnabled,
-            storeState.selectedOntologyId
+            storeState.selectedOntologyId,
+            storeState.rootNodeId
           )
           const schemaMd = exportToMarkdown({
             nodes: currentNodes,
@@ -377,7 +380,8 @@ export function ModelBuilderAdapter({
         toolNodes,
         toolEdges,
         actionNodes,
-        actionEdges
+        actionEdges,
+        storeState.rootNodeId
       )
       const workflowConfig = JSON.parse(workflowConfigJson)
 
@@ -457,7 +461,8 @@ export function ModelBuilderAdapter({
         toolNodes,
         toolEdges,
         actionNodes,
-        actionEdges
+        actionEdges,
+        storeState.rootNodeId
       )
       return JSON.parse(workflowConfigJson)
     } catch (error) {
@@ -677,7 +682,8 @@ export function ModelBuilderAdapter({
         currentToolNodes,
         currentToolEdges,
         currentActionNodes,
-        currentActionEdges
+        currentActionEdges,
+        useModelBuilderStore.getState().rootNodeId
       )
       const currentConfig = JSON.parse(currentConfigJson)
 
@@ -935,7 +941,8 @@ export function ModelBuilderAdapter({
           currentToolNodes,
           currentToolEdges,
           currentActionNodes,
-          currentActionEdges
+          currentActionEdges,
+          useModelBuilderStore.getState().rootNodeId
         )
         const workflowConfig = JSON.parse(workflowConfigJson)
 

@@ -257,9 +257,6 @@ PRIMARY ACTIONS (use these when they match the use case):
   This action automatically handles tokenization, node creation, and relationship creation
 - action:create-annotation-nodes - Create annotation nodes from XML annotations
 - action:create-reference-chain - Create reference chains
-- action:create-hierarchical-nodes - Create hierarchical node structures
-- action:create-node-with-attributes - Create a node and extract all attributes as properties
-- action:create-node-complete - Complete node creation with property extraction
 - action:extract-and-normalize-attributes - Extract and normalize XML attributes
 
 BASIC ACTIONS (use when specialized actions don't fit):

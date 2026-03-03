@@ -397,7 +397,8 @@ function ModelBuilderContent({
         currentToolNodes,
         currentToolEdges,
         currentActionNodes,
-        currentActionEdges
+        currentActionEdges,
+        useModelBuilderStore.getState().rootNodeId
       )
       return JSON.parse(configJson) as WorkflowConfigExport
     } catch (error) {
@@ -773,6 +774,11 @@ function ModelBuilderContent({
           actionEdgesAdded++
         }
       })
+
+      // Restore root node ID if present
+      if (imported.rootNodeId) {
+        setRootNodeId(imported.rootNodeId)
+      }
 
       toast.success('Workflow loaded successfully')
     } catch (error) {
@@ -1222,6 +1228,11 @@ function ModelBuilderContent({
       setWorkflowConfigDialogOpen(false)
       setWorkflowConfigFile(null)
       setWorkflowConfigImportError(null)
+
+      // Restore root node ID if present
+      if (imported.rootNodeId) {
+        setRootNodeId(imported.rootNodeId)
+      }
     } catch (err) {
       console.error('Failed to import workflow config:', err)
       setWorkflowConfigImportError(err instanceof Error ? err.message : 'Failed to import workflow configuration')

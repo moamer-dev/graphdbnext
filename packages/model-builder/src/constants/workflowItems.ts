@@ -243,29 +243,22 @@ export const actionCategories = {
     color: 'text-primary',
     bgColor: 'bg-primary/10',
     actions: [
+      { label: 'Create Node', type: 'action:create-node-complete', icon: CheckCircle2, description: 'Create complete node with all properties', isQuick: true, color: 'text-green-600', bgColor: 'bg-green-50' },
       { label: 'Create Text Node', type: 'action:create-text-node', icon: FileText, description: 'Create node with text content', isQuick: true, color: 'text-blue-600', bgColor: 'bg-blue-50' },
       { label: 'Create Token Nodes', type: 'action:create-token-nodes', icon: Type, description: 'Create nodes from text tokens', isQuick: true, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-      { label: 'Create Node (Attributes)', type: 'action:create-node-with-attributes', icon: Settings, description: 'Create node with attributes', isQuick: true, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
-      { label: 'Create Node Complete', type: 'action:create-node-complete', icon: CheckCircle2, description: 'Create complete node with all properties', isQuick: true, color: 'text-green-600', bgColor: 'bg-green-50' },
-      { label: 'Extract & Normalize Attributes', type: 'action:extract-and-normalize-attributes', icon: Settings, description: 'Extract and normalize element attributes', isQuick: true, color: 'text-teal-600', bgColor: 'bg-teal-50' },
       { label: 'Create Annotation Nodes', type: 'action:create-annotation-nodes', icon: Edit, description: 'Create annotation nodes from text', isQuick: true, color: 'text-pink-600', bgColor: 'bg-pink-50' },
+      { label: 'Extract & Normalize Attributes', type: 'action:extract-and-normalize-attributes', icon: Settings, description: 'Extract and normalize element attributes', isQuick: true, color: 'text-teal-600', bgColor: 'bg-teal-50' },
       { label: 'Create Reference Chain', type: 'action:create-reference-chain', icon: Link2, description: 'Create chain of reference relationships', isQuick: true, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
       { label: 'Merge Children Text', type: 'action:merge-children-text', icon: Merge, description: 'Merge text from child elements', isQuick: true, color: 'text-rose-600', bgColor: 'bg-rose-50' },
-      { label: 'Create Conditional Node', type: 'action:create-conditional-node', icon: GitBranch, description: 'Create node based on condition', isQuick: true, color: 'text-violet-600', bgColor: 'bg-violet-50' },
       { label: 'Extract & Compute Property', type: 'action:extract-and-compute-property', icon: Calculator, description: 'Extract and compute property value', isQuick: true, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
-      { label: 'Create Node (Filtered Children)', type: 'action:create-node-with-filtered-children', icon: FilterIcon, description: 'Create node with filtered children', isQuick: true, color: 'text-orange-600', bgColor: 'bg-orange-50' },
-      { label: 'Normalize & Deduplicate', type: 'action:normalize-and-deduplicate', icon: CheckCircle2, description: 'Normalize and remove duplicates', isQuick: true, color: 'text-lime-600', bgColor: 'bg-lime-50' },
-      { label: 'Create Hierarchical Nodes', type: 'action:create-hierarchical-nodes', icon: Layers, description: 'Create hierarchical node structure', isQuick: true, color: 'text-sky-600', bgColor: 'bg-sky-50' }
+      { label: 'Normalize & Deduplicate', type: 'action:normalize-and-deduplicate', icon: CheckCircle2, description: 'Normalize and remove duplicates', isQuick: true, color: 'text-lime-600', bgColor: 'bg-lime-50' }
     ]
   },
-  'Basic Actions': {
+  'Properties': {
     icon: FileText,
     color: 'text-blue-600',
     bgColor: 'bg-blue-100',
     actions: [
-      { label: 'Create Node', type: 'action:create-node', icon: Plus, description: 'Create a new graph node', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-      { label: 'Create Node for Text', type: 'action:create-node-text', icon: FileText, description: 'Create node from text content', color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
-      { label: 'Create Node for Tokens', type: 'action:create-node-tokens', icon: Type, description: 'Create nodes from tokens', color: 'text-purple-600', bgColor: 'bg-purple-50' },
       { label: 'Set Property', type: 'action:set-property', icon: Edit, description: 'Set node property value', color: 'text-pink-600', bgColor: 'bg-pink-50' },
       { label: 'Extract Property', type: 'action:extract-property', icon: FileDown, description: 'Extract property from element', color: 'text-teal-600', bgColor: 'bg-teal-50' }
     ]

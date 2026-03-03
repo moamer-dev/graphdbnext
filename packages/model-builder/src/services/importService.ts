@@ -13,6 +13,7 @@ export interface ImportResult {
   }
   isSemanticEnabled?: boolean
   selectedOntologyId?: string | null
+  rootNodeId?: string | null
   xmlAnalysis?: import('./xmlAnalyzer').XmlStructureAnalysis
   xmlMapping?: import('./xmlAnalyzer').XmlMappingConfig
 }
@@ -66,7 +67,8 @@ export class ImportService {
         relationships,
         metadata,
         isSemanticEnabled: converted.isSemanticEnabled,
-        selectedOntologyId: converted.selectedOntologyId
+        selectedOntologyId: converted.selectedOntologyId,
+        rootNodeId: converted.rootNodeId
       }
     } else if (fileExtension === 'md' || fileExtension === 'markdown') {
       // Parse Markdown schema
@@ -93,7 +95,8 @@ export class ImportService {
         relationships,
         metadata,
         isSemanticEnabled: converted.isSemanticEnabled,
-        selectedOntologyId: converted.selectedOntologyId
+        selectedOntologyId: converted.selectedOntologyId,
+        rootNodeId: converted.rootNodeId
       }
     } else if (fileExtension === 'xml') {
       // Analyze XML structure

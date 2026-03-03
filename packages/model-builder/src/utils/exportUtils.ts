@@ -10,6 +10,7 @@ export function exportToJson (state: ModelBuilderState): string {
     source?: string
     isSemanticEnabled?: boolean
     selectedOntologyId?: string | null
+    rootNodeLabel?: string | null
     nodes: Record<string, {
       name: string
       superclassNames?: string[]
@@ -42,6 +43,7 @@ export function exportToJson (state: ModelBuilderState): string {
     source: state.metadata.name || 'Model Builder',
     isSemanticEnabled: state.isSemanticEnabled,
     selectedOntologyId: state.selectedOntologyId,
+    rootNodeLabel: state.nodes.find(n => n.id === state.rootNodeId)?.label || null,
     nodes: {},
     relations: {}
   }
@@ -224,6 +226,11 @@ export function exportToMarkdown (state: ModelBuilderState): string {
       md += `**Ontology ID:** ${state.selectedOntologyId}\n`
     }
     md += `\n`
+  }
+
+  const rootNode = state.nodes.find(n => n.id === state.rootNodeId)
+  if (rootNode) {
+    md += `**Root Node:** ${rootNode.label}\n\n`
   }
   
   md += `## NODES\n\n`

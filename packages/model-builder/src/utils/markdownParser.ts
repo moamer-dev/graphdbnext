@@ -7,6 +7,7 @@ import type { Node, Relationship, Property } from '../types'
 export interface ParsedMarkdownSchema {
   isSemanticEnabled?: boolean
   selectedOntologyId?: string | null
+  rootNodeLabel?: string | null
   nodes: Record<string, {
     name: string
     superclassNames: string[]
@@ -52,6 +53,11 @@ export function parseMarkdownSchema (mdContent: string): ParsedMarkdownSchema {
     schema.selectedOntologyId = ontologyIdMatch[1].trim()
   }
 
+  const rootNodeMatch = mdContent.match(/\*\*Root Node:\*\*\s*(.+?)(?:\n|$)/)
+  if (rootNodeMatch) {
+    schema.rootNodeLabel = rootNodeMatch[1].trim()
+  }
+
   // Split into sections
   const nodesSection = extractSection(mdContent, '## NODES', '## RELATIONS')
   const relationsSection = extractSection(mdContent, '## RELATIONS', '## PROPERTIES REFERENCE')
@@ -73,6 +79,7 @@ export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSche
   relationships: Relationship[]
   isSemanticEnabled?: boolean
   selectedOntologyId?: string | null
+  rootNodeId?: string | null
 } {
   const nodeMap = new Map<string, Node>()
   const relationships: Relationship[] = []
@@ -198,7 +205,8 @@ export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSche
     nodes: Array.from(nodeMap.values()),
     relationships,
     isSemanticEnabled: parsedSchema.isSemanticEnabled ?? !!parsedSchema.selectedOntologyId,
-    selectedOntologyId: parsedSchema.selectedOntologyId
+    selectedOntologyId: parsedSchema.selectedOntologyId,
+    rootNodeId: parsedSchema.rootNodeLabel ? Array.from(nodeMap.values()).find(n => n.label === parsedSchema.rootNodeLabel)?.id || null : null
   }
 }
 

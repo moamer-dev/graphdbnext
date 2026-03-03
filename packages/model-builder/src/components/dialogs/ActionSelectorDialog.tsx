@@ -24,23 +24,16 @@ interface ActionSelectorDialogProps {
 const quickActions: Array<{ label: string; type: ActionNodeType }> = [
   { label: 'Create Text Node', type: 'action:create-text-node' },
   { label: 'Create Token Nodes', type: 'action:create-token-nodes' },
-  { label: 'Create Node (Attributes)', type: 'action:create-node-with-attributes' },
-  { label: 'Create Node Complete', type: 'action:create-node-complete' },
+  { label: 'Create Node', type: 'action:create-node-complete' },
   { label: 'Extract & Normalize Attributes', type: 'action:extract-and-normalize-attributes' },
   { label: 'Create Annotation Nodes', type: 'action:create-annotation-nodes' },
   { label: 'Create Reference Chain', type: 'action:create-reference-chain' },
   { label: 'Merge Children Text', type: 'action:merge-children-text' },
-  { label: 'Create Conditional Node', type: 'action:create-conditional-node' },
   { label: 'Extract & Compute Property', type: 'action:extract-and-compute-property' },
-  { label: 'Create Node (Filtered Children)', type: 'action:create-node-with-filtered-children' },
   { label: 'Normalize & Deduplicate', type: 'action:normalize-and-deduplicate' },
-  { label: 'Create Hierarchical Nodes', type: 'action:create-hierarchical-nodes' }
 ]
 
 const basicActions: Array<{ label: string; type: ActionNodeType }> = [
-  { label: 'Create Node', type: 'action:create-node' },
-  { label: 'Create Node for Text', type: 'action:create-node-text' },
-  { label: 'Create Node for Tokens', type: 'action:create-node-tokens' },
   { label: 'Set Property', type: 'action:set-property' },
   { label: 'Create Relationship', type: 'action:create-relationship' },
   { label: 'Skip Element', type: 'action:skip' },

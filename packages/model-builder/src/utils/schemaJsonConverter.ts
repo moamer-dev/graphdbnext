@@ -9,13 +9,16 @@ export function convertBuilderToSchemaJson (
   nodes: Node[],
   relationships: Relationship[],
   isSemanticEnabled?: boolean,
-  selectedOntologyId?: string | null
+  selectedOntologyId?: string | null,
+  startNodeId?: string | null
 ): SchemaJson {
+  const rootNode = startNodeId ? nodes.find(n => n.id === startNodeId) : null;
   const schemaJson: SchemaJson = {
     nodes: {},
     relations: {},
     isSemanticEnabled,
-    selectedOntologyId
+    selectedOntologyId,
+    rootNodeLabel: rootNode?.label || null
   }
 
   // Convert nodes

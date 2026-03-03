@@ -29,11 +29,7 @@ export interface ActionConfigurationState {
   showGraphModal: boolean
 
   // Action-specific configs
-  createNodeConfig: {
-    labels: string[]
-    properties: Array<{ key: string; value: string; source: 'attribute' | 'static' }>
-    parentRelationship: string
-  }
+
   createRelationshipConfig: {
     relationshipType: string
     fromNode: string
@@ -65,16 +61,7 @@ export interface ActionConfigurationState {
     includeChildren: boolean
     format: 'full' | 'minimal'
   }
-  createNodeTextConfig: {
-    parentRelationship: string
-  }
-  createNodeTokensConfig: {
-    targetLabel: string
-    relationshipType: string
-    splitBy: string
-    filterPattern: string
-    properties: Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>
-  }
+
   processChildrenConfig: {
     filterByTag: string[]
     excludeTags: string[]
@@ -101,32 +88,8 @@ export interface ActionConfigurationState {
     skipChildrenMode: 'all' | 'selected'
     skipChildrenTags: string[]
   }
-  createTextNodeConfig: {
-    nodeLabel: string
-    textSource: 'textContent' | 'attribute'
-    attributeName: string
-    transforms: TextTransform[]
-    propertyKey: string
-    parentRelationship: string
-  }
-  createTokenNodesConfig: {
-    parentNodeLabel: string
-    tokenNodeLabel: string
-    relationshipType: string
-    textSource: 'textContent' | 'attribute'
-    attributeName: string
-    splitBy: string
-    filterPattern: string
-    transforms: TextTransform[]
-    properties: Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>
-    structure?: 'flat' | 'chained'
-    nextRelationshipType?: string
-  }
-  createNodeWithAttributesConfig: {
-    nodeLabel: string
-    attributeMappings: Array<{ attributeName: string; propertyKey: string; defaultValue?: string }>
-    parentRelationship: string
-  }
+
+
   createNodeCompleteConfig: {
     nodeLabel: string
     attributeMappings: Array<{
@@ -138,8 +101,9 @@ export interface ActionConfigurationState {
     parentRelationship: string
     uniqueId?: string
     relationship?: {
+      mode: 'standalone' | 'connected' | 'existing' | 'deferred'
       type: string
-      targetNodeId: string
+      targetNodeId?: string
       targetNodeLabel?: string
       direction: 'outgoing' | 'incoming'
     }
@@ -170,18 +134,7 @@ export interface ActionConfigurationState {
     excludeTags: string[]
     transforms: TextTransform[]
   }
-  createConditionalNodeConfig: {
-    nodeLabel: string
-    conditions: Array<{
-      type: 'hasAttribute' | 'hasText' | 'hasChildren'
-      attributeName?: string
-      attributeValue?: string
-      minTextLength?: number
-      childTag?: string
-    }>
-    operator: 'AND' | 'OR'
-    parentRelationship: string
-  }
+
   extractAndComputePropertyConfig: {
     propertyKey: string
     sources: Array<{
@@ -192,26 +145,45 @@ export interface ActionConfigurationState {
     computation: 'concat' | 'sum' | 'join'
     separator: string
   }
-  createNodeWithFilteredChildrenConfig: {
+  createTextNodeConfig: {
     nodeLabel: string
+    textSource: 'textContent' | 'attribute'
+    attributeName: string
+    transforms: TextTransform[]
+    propertyKey: string
     parentRelationship: string
-    filterByTag: string[]
-    excludeTags: string[]
-    recursive: boolean
-    childRelationship: string
+  }
+  createTokenNodesConfig: {
+    parentNodeLabel: string
+    textSource: 'textContent' | 'attribute'
+    attributeName: string
+    transforms: TextTransform[]
+    splitBy: string
+    tokenNodeLabel: string
+    filterPattern: string
+    relationshipType: string
+    properties: Array<{
+      key: string
+      source: 'token' | 'attribute' | 'index' | 'static'
+      attributeName?: string
+      staticValue?: string
+    }>
+    structure: 'flat' | 'chained'
+    nextRelationshipType: string
+  }
+  createNodeWithAttributesConfig: {
+    nodeLabel: string
+    attributeMappings: Array<{
+      attributeName: string
+      propertyKey: string
+      defaultValue: string
+    }>
+    parentRelationship: string
   }
   normalizeAndDeduplicateConfig: {
     sourceProperty: string
     targetProperty: string
     transforms: TextTransform[]
-  }
-  createHierarchicalNodesConfig: {
-    parentNodeLabel: string
-    childNodeLabel: string
-    parentRelationship: string
-    childRelationship: string
-    filterByTag: string[]
-    recursive: boolean
   }
 
   // Actions (setters)
@@ -227,33 +199,27 @@ export interface ActionConfigurationState {
   setShowGraphModal: (show: boolean) => void
 
   // Config setters
-  setCreateNodeConfig: (config: Partial<ActionConfigurationState['createNodeConfig']>) => void
   setCreateRelationshipConfig: (config: Partial<ActionConfigurationState['createRelationshipConfig']>) => void
   setSetPropertyConfig: (config: Partial<ActionConfigurationState['setPropertyConfig']>) => void
   setExtractTextConfig: (config: Partial<ActionConfigurationState['extractTextConfig']>) => void
   setCreateAnnotationConfig: (config: Partial<ActionConfigurationState['createAnnotationConfig']>) => void
   setCreateReferenceConfig: (config: Partial<ActionConfigurationState['createReferenceConfig']>) => void
   setExtractXmlContentConfig: (config: Partial<ActionConfigurationState['extractXmlContentConfig']>) => void
-  setCreateNodeTextConfig: (config: Partial<ActionConfigurationState['createNodeTextConfig']>) => void
-  setCreateNodeTokensConfig: (config: Partial<ActionConfigurationState['createNodeTokensConfig']>) => void
   setProcessChildrenConfig: (config: Partial<ActionConfigurationState['processChildrenConfig']>) => void
   setExtractPropertyConfig: (config: Partial<ActionConfigurationState['extractPropertyConfig']>) => void
   setTransformTextConfig: (config: Partial<ActionConfigurationState['transformTextConfig']>) => void
   setDeferRelationshipConfig: (config: Partial<ActionConfigurationState['deferRelationshipConfig']>) => void
   setSkipConfig: (config: Partial<ActionConfigurationState['skipConfig']>) => void
-  setCreateTextNodeConfig: (config: Partial<ActionConfigurationState['createTextNodeConfig']>) => void
-  setCreateTokenNodesConfig: (config: Partial<ActionConfigurationState['createTokenNodesConfig']>) => void
-  setCreateNodeWithAttributesConfig: (config: Partial<ActionConfigurationState['createNodeWithAttributesConfig']>) => void
   setCreateNodeCompleteConfig: (config: Partial<ActionConfigurationState['createNodeCompleteConfig']>) => void
   setExtractAndNormalizeAttributesConfig: (config: Partial<ActionConfigurationState['extractAndNormalizeAttributesConfig']>) => void
   setCreateAnnotationNodesConfig: (config: Partial<ActionConfigurationState['createAnnotationNodesConfig']>) => void
   setCreateReferenceChainConfig: (config: Partial<ActionConfigurationState['createReferenceChainConfig']>) => void
   setMergeChildrenTextConfig: (config: Partial<ActionConfigurationState['mergeChildrenTextConfig']>) => void
-  setCreateConditionalNodeConfig: (config: Partial<ActionConfigurationState['createConditionalNodeConfig']>) => void
   setExtractAndComputePropertyConfig: (config: Partial<ActionConfigurationState['extractAndComputePropertyConfig']>) => void
-  setCreateNodeWithFilteredChildrenConfig: (config: Partial<ActionConfigurationState['createNodeWithFilteredChildrenConfig']>) => void
+  setCreateTextNodeConfig: (config: Partial<ActionConfigurationState['createTextNodeConfig']>) => void
+  setCreateTokenNodesConfig: (config: Partial<ActionConfigurationState['createTokenNodesConfig']>) => void
+  setCreateNodeWithAttributesConfig: (config: Partial<ActionConfigurationState['createNodeWithAttributesConfig']>) => void
   setNormalizeAndDeduplicateConfig: (config: Partial<ActionConfigurationState['normalizeAndDeduplicateConfig']>) => void
-  setCreateHierarchicalNodesConfig: (config: Partial<ActionConfigurationState['createHierarchicalNodesConfig']>) => void
 
   // Helper functions
   loadFromActionNode: (actionNode: ActionCanvasNode | null) => void
@@ -271,33 +237,27 @@ const initialState: Omit<ActionConfigurationState, keyof {
   setShowApiResponseModal: never
   setGraphResult: never
   setShowGraphModal: never
-  setCreateNodeConfig: never
   setCreateRelationshipConfig: never
   setSetPropertyConfig: never
   setExtractTextConfig: never
   setCreateAnnotationConfig: never
   setCreateReferenceConfig: never
   setExtractXmlContentConfig: never
-  setCreateNodeTextConfig: never
-  setCreateNodeTokensConfig: never
   setProcessChildrenConfig: never
   setExtractPropertyConfig: never
   setTransformTextConfig: never
   setDeferRelationshipConfig: never
   setSkipConfig: never
-  setCreateTextNodeConfig: never
-  setCreateTokenNodesConfig: never
-  setCreateNodeWithAttributesConfig: never
   setCreateNodeCompleteConfig: never
   setExtractAndNormalizeAttributesConfig: never
   setCreateAnnotationNodesConfig: never
   setCreateReferenceChainConfig: never
   setMergeChildrenTextConfig: never
-  setCreateConditionalNodeConfig: never
   setExtractAndComputePropertyConfig: never
-  setCreateNodeWithFilteredChildrenConfig: never
+  setCreateTextNodeConfig: never
+  setCreateTokenNodesConfig: never
+  setCreateNodeWithAttributesConfig: never
   setNormalizeAndDeduplicateConfig: never
-  setCreateHierarchicalNodesConfig: never
   loadFromActionNode: never
   getActionNodeConfig: never
 }> = {
@@ -311,11 +271,7 @@ const initialState: Omit<ActionConfigurationState, keyof {
   showApiResponseModal: false,
   graphResult: null,
   showGraphModal: false,
-  createNodeConfig: {
-    labels: [],
-    properties: [],
-    parentRelationship: 'contains'
-  },
+
   createRelationshipConfig: {
     relationshipType: 'relatedTo',
     fromNode: '',
@@ -347,16 +303,7 @@ const initialState: Omit<ActionConfigurationState, keyof {
     includeChildren: true,
     format: 'full'
   },
-  createNodeTextConfig: {
-    parentRelationship: 'contains'
-  },
-  createNodeTokensConfig: {
-    targetLabel: 'Character',
-    relationshipType: 'contains',
-    splitBy: '',
-    filterPattern: '[a-zA-Z0-9]',
-    properties: []
-  },
+
   processChildrenConfig: {
     filterByTag: [],
     excludeTags: [],
@@ -383,35 +330,17 @@ const initialState: Omit<ActionConfigurationState, keyof {
     skipChildrenMode: 'all',
     skipChildrenTags: []
   },
-  createTextNodeConfig: {
-    nodeLabel: '',
-    textSource: 'textContent',
-    attributeName: '',
-    transforms: [],
-    propertyKey: 'text',
-    parentRelationship: 'contains'
-  },
-  createTokenNodesConfig: {
-    parentNodeLabel: '',
-    tokenNodeLabel: 'Character',
-    relationshipType: 'contains',
-    textSource: 'textContent',
-    attributeName: '',
-    splitBy: '',
-    filterPattern: '[a-zA-Z0-9]',
-    transforms: [],
-    properties: []
-  },
-  createNodeWithAttributesConfig: {
-    nodeLabel: '',
-    attributeMappings: [],
-    parentRelationship: 'contains'
-  },
+
   createNodeCompleteConfig: {
     nodeLabel: '',
     attributeMappings: [],
     parentRelationship: 'contains',
-    uniqueId: ''
+    uniqueId: '',
+    relationship: {
+      mode: 'connected',
+      type: 'contains',
+      direction: 'outgoing'
+    }
   },
   extractAndNormalizeAttributesConfig: {
     attributeMappings: []
@@ -434,38 +363,43 @@ const initialState: Omit<ActionConfigurationState, keyof {
     excludeTags: [],
     transforms: []
   },
-  createConditionalNodeConfig: {
-    nodeLabel: '',
-    conditions: [],
-    operator: 'AND',
-    parentRelationship: 'contains'
-  },
+
   extractAndComputePropertyConfig: {
     propertyKey: '',
     sources: [],
     computation: 'concat',
     separator: ' '
   },
-  createNodeWithFilteredChildrenConfig: {
+  createTextNodeConfig: {
     nodeLabel: '',
-    parentRelationship: 'contains',
-    filterByTag: [],
-    excludeTags: [],
-    recursive: false,
-    childRelationship: 'contains'
+    textSource: 'textContent',
+    attributeName: '',
+    transforms: [],
+    propertyKey: 'text',
+    parentRelationship: 'contains'
+  },
+  createTokenNodesConfig: {
+    parentNodeLabel: '',
+    textSource: 'textContent',
+    attributeName: '',
+    transforms: [],
+    splitBy: '',
+    tokenNodeLabel: 'Character',
+    filterPattern: '[a-zA-Z0-9]',
+    relationshipType: 'contains',
+    properties: [],
+    structure: 'flat',
+    nextRelationshipType: 'next'
+  },
+  createNodeWithAttributesConfig: {
+    nodeLabel: '',
+    attributeMappings: [],
+    parentRelationship: 'contains'
   },
   normalizeAndDeduplicateConfig: {
     sourceProperty: '',
     targetProperty: '',
     transforms: []
-  },
-  createHierarchicalNodesConfig: {
-    parentNodeLabel: '',
-    childNodeLabel: '',
-    parentRelationship: 'contains',
-    childRelationship: 'contains',
-    filterByTag: [],
-    recursive: false
   }
 }
 
@@ -483,33 +417,27 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
   setGraphResult: (result) => set({ graphResult: result }),
   setShowGraphModal: (show) => set({ showGraphModal: show }),
 
-  setCreateNodeConfig: (config) => set((state) => ({ createNodeConfig: { ...state.createNodeConfig, ...config } })),
   setCreateRelationshipConfig: (config) => set((state) => ({ createRelationshipConfig: { ...state.createRelationshipConfig, ...config } })),
   setSetPropertyConfig: (config) => set((state) => ({ setPropertyConfig: { ...state.setPropertyConfig, ...config } })),
   setExtractTextConfig: (config) => set((state) => ({ extractTextConfig: { ...state.extractTextConfig, ...config } })),
   setCreateAnnotationConfig: (config) => set((state) => ({ createAnnotationConfig: { ...state.createAnnotationConfig, ...config } })),
   setCreateReferenceConfig: (config) => set((state) => ({ createReferenceConfig: { ...state.createReferenceConfig, ...config } })),
   setExtractXmlContentConfig: (config) => set((state) => ({ extractXmlContentConfig: { ...state.extractXmlContentConfig, ...config } })),
-  setCreateNodeTextConfig: (config) => set((state) => ({ createNodeTextConfig: { ...state.createNodeTextConfig, ...config } })),
-  setCreateNodeTokensConfig: (config) => set((state) => ({ createNodeTokensConfig: { ...state.createNodeTokensConfig, ...config } })),
   setProcessChildrenConfig: (config) => set((state) => ({ processChildrenConfig: { ...state.processChildrenConfig, ...config } })),
   setExtractPropertyConfig: (config) => set((state) => ({ extractPropertyConfig: { ...state.extractPropertyConfig, ...config } })),
   setTransformTextConfig: (config) => set((state) => ({ transformTextConfig: { ...state.transformTextConfig, ...config } })),
   setDeferRelationshipConfig: (config) => set((state) => ({ deferRelationshipConfig: { ...state.deferRelationshipConfig, ...config } })),
   setSkipConfig: (config) => set((state) => ({ skipConfig: { ...state.skipConfig, ...config } })),
-  setCreateTextNodeConfig: (config) => set((state) => ({ createTextNodeConfig: { ...state.createTextNodeConfig, ...config } })),
-  setCreateTokenNodesConfig: (config) => set((state) => ({ createTokenNodesConfig: { ...state.createTokenNodesConfig, ...config } })),
-  setCreateNodeWithAttributesConfig: (config) => set((state) => ({ createNodeWithAttributesConfig: { ...state.createNodeWithAttributesConfig, ...config } })),
   setCreateNodeCompleteConfig: (config) => set((state) => ({ createNodeCompleteConfig: { ...state.createNodeCompleteConfig, ...config } })),
   setExtractAndNormalizeAttributesConfig: (config) => set((state) => ({ extractAndNormalizeAttributesConfig: { ...state.extractAndNormalizeAttributesConfig, ...config } })),
   setCreateAnnotationNodesConfig: (config) => set((state) => ({ createAnnotationNodesConfig: { ...state.createAnnotationNodesConfig, ...config } })),
   setCreateReferenceChainConfig: (config) => set((state) => ({ createReferenceChainConfig: { ...state.createReferenceChainConfig, ...config } })),
   setMergeChildrenTextConfig: (config) => set((state) => ({ mergeChildrenTextConfig: { ...state.mergeChildrenTextConfig, ...config } })),
-  setCreateConditionalNodeConfig: (config) => set((state) => ({ createConditionalNodeConfig: { ...state.createConditionalNodeConfig, ...config } })),
   setExtractAndComputePropertyConfig: (config) => set((state) => ({ extractAndComputePropertyConfig: { ...state.extractAndComputePropertyConfig, ...config } })),
-  setCreateNodeWithFilteredChildrenConfig: (config) => set((state) => ({ createNodeWithFilteredChildrenConfig: { ...state.createNodeWithFilteredChildrenConfig, ...config } })),
+  setCreateTextNodeConfig: (config) => set((state) => ({ createTextNodeConfig: { ...state.createTextNodeConfig, ...config } })),
+  setCreateTokenNodesConfig: (config) => set((state) => ({ createTokenNodesConfig: { ...state.createTokenNodesConfig, ...config } })),
+  setCreateNodeWithAttributesConfig: (config) => set((state) => ({ createNodeWithAttributesConfig: { ...state.createNodeWithAttributesConfig, ...config } })),
   setNormalizeAndDeduplicateConfig: (config) => set((state) => ({ normalizeAndDeduplicateConfig: { ...state.normalizeAndDeduplicateConfig, ...config } })),
-  setCreateHierarchicalNodesConfig: (config) => set((state) => ({ createHierarchicalNodesConfig: { ...state.createHierarchicalNodesConfig, ...config } })),
 
   loadFromActionNode: (actionNode) => {
     if (!actionNode) {
@@ -537,15 +465,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
     const config = actionNode.config || {}
 
     switch (actionNode.type) {
-      case 'action:create-node':
-        set({
-          createNodeConfig: {
-            labels: (config.labels as string[]) || state.createNodeConfig.labels,
-            properties: (config.properties as Array<{ key: string; value: string; source: 'attribute' | 'static' }>) || state.createNodeConfig.properties,
-            parentRelationship: (config.parentRelationship as string) || state.createNodeConfig.parentRelationship
-          }
-        })
-        break
       case 'action:create-relationship':
         set({
           createRelationshipConfig: {
@@ -598,24 +517,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
             includeAttributes: (config.includeAttributes as boolean) ?? state.extractXmlContentConfig.includeAttributes,
             includeChildren: (config.includeChildren as boolean) ?? state.extractXmlContentConfig.includeChildren,
             format: (config.format as 'full' | 'minimal') || state.extractXmlContentConfig.format
-          }
-        })
-        break
-      case 'action:create-node-text':
-        set({
-          createNodeTextConfig: {
-            parentRelationship: (config.parentRelationship as string) || state.createNodeTextConfig.parentRelationship
-          }
-        })
-        break
-      case 'action:create-node-tokens':
-        set({
-          createNodeTokensConfig: {
-            targetLabel: (config.targetLabel as string) || state.createNodeTokensConfig.targetLabel,
-            relationshipType: (config.relationshipType as string) || state.createNodeTokensConfig.relationshipType,
-            splitBy: (config.splitBy as string) ?? state.createNodeTokensConfig.splitBy,
-            filterPattern: (config.filterPattern as string) || state.createNodeTokensConfig.filterPattern,
-            properties: (config.properties as Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>) || state.createNodeTokensConfig.properties
           }
         })
         break
@@ -683,44 +584,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:create-text-node':
-        set({
-          createTextNodeConfig: {
-            nodeLabel: (config.nodeLabel as string) || state.createTextNodeConfig.nodeLabel,
-            textSource: (config.textSource as 'textContent' | 'attribute') || state.createTextNodeConfig.textSource,
-            attributeName: (config.attributeName as string) || state.createTextNodeConfig.attributeName,
-            transforms: (config.transforms as TextTransform[]) || state.createTextNodeConfig.transforms,
-            propertyKey: (config.propertyKey as string) || state.createTextNodeConfig.propertyKey,
-            parentRelationship: (config.parentRelationship as string) || state.createTextNodeConfig.parentRelationship
-          }
-        })
-        break
-      case 'action:create-token-nodes':
-        set({
-          createTokenNodesConfig: {
-            parentNodeLabel: (config.parentNodeLabel as string) || state.createTokenNodesConfig.parentNodeLabel,
-            tokenNodeLabel: (config.tokenNodeLabel as string) || state.createTokenNodesConfig.tokenNodeLabel,
-            relationshipType: (config.relationshipType as string) || state.createTokenNodesConfig.relationshipType,
-            textSource: (config.textSource as 'textContent' | 'attribute') || state.createTokenNodesConfig.textSource,
-            attributeName: (config.attributeName as string) || state.createTokenNodesConfig.attributeName,
-            splitBy: (config.splitBy as string) ?? state.createTokenNodesConfig.splitBy,
-            filterPattern: (config.filterPattern as string) || state.createTokenNodesConfig.filterPattern,
-            transforms: (config.transforms as TextTransform[]) || state.createTokenNodesConfig.transforms,
-            properties: (config.properties as Array<{ key: string; source: 'token' | 'attribute' | 'index' | 'static'; attributeName?: string; staticValue?: string }>) || state.createTokenNodesConfig.properties,
-            structure: (config.structure as 'flat' | 'chained') || state.createTokenNodesConfig.structure,
-            nextRelationshipType: (config.nextRelationshipType as string) || state.createTokenNodesConfig.nextRelationshipType
-          }
-        })
-        break
-      case 'action:create-node-with-attributes':
-        set({
-          createNodeWithAttributesConfig: {
-            nodeLabel: (config.nodeLabel as string) || state.createNodeWithAttributesConfig.nodeLabel,
-            attributeMappings: (config.attributeMappings as Array<{ attributeName: string; propertyKey: string; defaultValue?: string }>) || state.createNodeWithAttributesConfig.attributeMappings,
-            parentRelationship: (config.parentRelationship as string) || state.createNodeWithAttributesConfig.parentRelationship
-          }
-        })
-        break
       case 'action:create-node-complete':
         set({
           createNodeCompleteConfig: {
@@ -734,8 +597,9 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
             parentRelationship: (config.parentRelationship as string) || state.createNodeCompleteConfig.parentRelationship,
             uniqueId: (config.uniqueId as string) || state.createNodeCompleteConfig.uniqueId,
             relationship: (config.relationship as {
+              mode: 'standalone' | 'connected' | 'existing' | 'deferred'
               type: string
-              targetNodeId: string
+              targetNodeId?: string
               targetNodeLabel?: string
               direction: 'outgoing' | 'incoming'
             }) || state.createNodeCompleteConfig.relationship
@@ -784,22 +648,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:create-conditional-node':
-        set({
-          createConditionalNodeConfig: {
-            nodeLabel: (config.nodeLabel as string) || state.createConditionalNodeConfig.nodeLabel,
-            conditions: (config.conditions as Array<{
-              type: 'hasAttribute' | 'hasText' | 'hasChildren'
-              attributeName?: string
-              attributeValue?: string
-              minTextLength?: number
-              childTag?: string
-            }>) || state.createConditionalNodeConfig.conditions,
-            operator: (config.operator as 'AND' | 'OR') || state.createConditionalNodeConfig.operator,
-            parentRelationship: (config.parentRelationship as string) || state.createConditionalNodeConfig.parentRelationship
-          }
-        })
-        break
       case 'action:extract-and-compute-property':
         set({
           extractAndComputePropertyConfig: {
@@ -814,15 +662,32 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:create-node-with-filtered-children':
+      case 'action:create-text-node':
         set({
-          createNodeWithFilteredChildrenConfig: {
-            nodeLabel: (config.nodeLabel as string) || state.createNodeWithFilteredChildrenConfig.nodeLabel,
-            parentRelationship: (config.parentRelationship as string) || state.createNodeWithFilteredChildrenConfig.parentRelationship,
-            filterByTag: (config.filterByTag as string[]) || state.createNodeWithFilteredChildrenConfig.filterByTag,
-            excludeTags: (config.excludeTags as string[]) || state.createNodeWithFilteredChildrenConfig.excludeTags,
-            recursive: (config.recursive as boolean) ?? state.createNodeWithFilteredChildrenConfig.recursive,
-            childRelationship: (config.childRelationship as string) || state.createNodeWithFilteredChildrenConfig.childRelationship
+          createTextNodeConfig: {
+            nodeLabel: (config.nodeLabel as string) || state.createTextNodeConfig.nodeLabel,
+            textSource: (config.textSource as 'textContent' | 'attribute') || state.createTextNodeConfig.textSource,
+            attributeName: (config.attributeName as string) || state.createTextNodeConfig.attributeName,
+            transforms: (config.transforms as TextTransform[]) || state.createTextNodeConfig.transforms,
+            propertyKey: (config.propertyKey as string) || state.createTextNodeConfig.propertyKey,
+            parentRelationship: (config.parentRelationship as string) || state.createTextNodeConfig.parentRelationship
+          }
+        })
+        break
+      case 'action:create-token-nodes':
+        set({
+          createTokenNodesConfig: {
+            parentNodeLabel: (config.parentNodeLabel as string) || state.createTokenNodesConfig.parentNodeLabel,
+            textSource: (config.textSource as 'textContent' | 'attribute') || state.createTokenNodesConfig.textSource,
+            attributeName: (config.attributeName as string) || state.createTokenNodesConfig.attributeName,
+            transforms: (config.transforms as TextTransform[]) || state.createTokenNodesConfig.transforms,
+            splitBy: (config.splitBy as string) || state.createTokenNodesConfig.splitBy,
+            tokenNodeLabel: (config.tokenNodeLabel as string) || state.createTokenNodesConfig.tokenNodeLabel,
+            filterPattern: (config.filterPattern as string) || state.createTokenNodesConfig.filterPattern,
+            relationshipType: (config.relationshipType as string) || state.createTokenNodesConfig.relationshipType,
+            properties: (config.properties as any[]) || state.createTokenNodesConfig.properties,
+            structure: (config.structure as 'flat' | 'chained') || state.createTokenNodesConfig.structure,
+            nextRelationshipType: (config.nextRelationshipType as string) || state.createTokenNodesConfig.nextRelationshipType
           }
         })
         break
@@ -835,18 +700,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:create-hierarchical-nodes':
-        set({
-          createHierarchicalNodesConfig: {
-            parentNodeLabel: (config.parentNodeLabel as string) || state.createHierarchicalNodesConfig.parentNodeLabel,
-            childNodeLabel: (config.childNodeLabel as string) || state.createHierarchicalNodesConfig.childNodeLabel,
-            parentRelationship: (config.parentRelationship as string) || state.createHierarchicalNodesConfig.parentRelationship,
-            childRelationship: (config.childRelationship as string) || state.createHierarchicalNodesConfig.childRelationship,
-            filterByTag: (config.filterByTag as string[]) || state.createHierarchicalNodesConfig.filterByTag,
-            recursive: (config.recursive as boolean) ?? state.createHierarchicalNodesConfig.recursive
-          }
-        })
-        break
     }
   },
 
@@ -855,52 +708,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
     const config: Record<string, unknown> = {}
 
     switch (actionType) {
-      case 'action:create-node':
-        config.labels = state.createNodeConfig.labels
-        config.properties = state.createNodeConfig.properties
-        config.parentRelationship = state.createNodeConfig.parentRelationship
-        break
-      case 'action:create-relationship':
-        config.relationshipType = state.createRelationshipConfig.relationshipType
-        config.fromNode = state.createRelationshipConfig.fromNode
-        config.toNode = state.createRelationshipConfig.toNode
-        config.properties = state.createRelationshipConfig.properties
-        break
-      case 'action:set-property':
-        config.propertyKey = state.setPropertyConfig.propertyKey
-        config.propertyValue = state.setPropertyConfig.propertyValue
-        config.valueSource = state.setPropertyConfig.valueSource
-        break
-      case 'action:extract-text':
-        config.extractionMode = state.extractTextConfig.extractionMode
-        config.createNodes = state.extractTextConfig.createNodes
-        config.nodeType = state.extractTextConfig.nodeType
-        break
-      case 'action:create-annotation':
-        config.annotationTypes = state.createAnnotationConfig.annotationTypes
-        config.targetAttributes = state.createAnnotationConfig.targetAttributes
-        config.mimeType = state.createAnnotationConfig.mimeType
-        break
-      case 'action:create-reference':
-        config.referenceAttribute = state.createReferenceConfig.referenceAttribute
-        config.relationshipType = state.createReferenceConfig.relationshipType
-        config.resolveStrategy = state.createReferenceConfig.resolveStrategy
-        break
-      case 'action:extract-xml-content':
-        config.includeAttributes = state.extractXmlContentConfig.includeAttributes
-        config.includeChildren = state.extractXmlContentConfig.includeChildren
-        config.format = state.extractXmlContentConfig.format
-        break
-      case 'action:create-node-text':
-        config.parentRelationship = state.createNodeTextConfig.parentRelationship
-        break
-      case 'action:create-node-tokens':
-        config.targetLabel = state.createNodeTokensConfig.targetLabel
-        config.relationshipType = state.createNodeTokensConfig.relationshipType
-        config.splitBy = state.createNodeTokensConfig.splitBy
-        config.filterPattern = state.createNodeTokensConfig.filterPattern
-        config.properties = state.createNodeTokensConfig.properties
-        break
       case 'action:process-children':
         config.filterByTag = state.processChildrenConfig.filterByTag
         config.excludeTags = state.processChildrenConfig.excludeTags
@@ -927,35 +734,6 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         config.skipChildrenMode = state.skipConfig.skipChildrenMode
         config.skipChildrenTags = state.skipConfig.skipChildrenTags
         break
-      case 'action:create-text-node':
-        config.nodeLabel = state.createTextNodeConfig.nodeLabel
-        config.textSource = state.createTextNodeConfig.textSource
-        config.attributeName = state.createTextNodeConfig.attributeName
-        config.transforms = state.createTextNodeConfig.transforms
-        config.propertyKey = state.createTextNodeConfig.propertyKey
-        config.parentRelationship = state.createTextNodeConfig.parentRelationship
-        break
-      case 'action:create-token-nodes':
-        config.parentNodeLabel = state.createTokenNodesConfig.parentNodeLabel
-        config.tokenNodeLabel = state.createTokenNodesConfig.tokenNodeLabel
-        config.relationshipType = state.createTokenNodesConfig.relationshipType
-        config.textSource = state.createTokenNodesConfig.textSource
-        config.attributeName = state.createTokenNodesConfig.attributeName
-        config.splitBy = state.createTokenNodesConfig.splitBy
-        config.filterPattern = state.createTokenNodesConfig.filterPattern
-        config.transforms = state.createTokenNodesConfig.transforms
-        config.properties = state.createTokenNodesConfig.properties
-        break
-      case 'action:create-node-with-attributes':
-        config.nodeLabel = state.createNodeWithAttributesConfig.nodeLabel
-        config.attributeMappings = state.createNodeWithAttributesConfig.attributeMappings
-        config.parentRelationship = state.createNodeWithAttributesConfig.parentRelationship
-        break
-      case 'action:create-node-complete':
-        config.nodeLabel = state.createNodeCompleteConfig.nodeLabel
-        config.attributeMappings = state.createNodeCompleteConfig.attributeMappings
-        config.parentRelationship = state.createNodeCompleteConfig.parentRelationship
-        break
       case 'action:extract-and-normalize-attributes':
         config.attributeMappings = state.extractAndNormalizeAttributesConfig.attributeMappings
         break
@@ -977,38 +755,42 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         config.excludeTags = state.mergeChildrenTextConfig.excludeTags
         config.transforms = state.mergeChildrenTextConfig.transforms
         break
-      case 'action:create-conditional-node':
-        config.nodeLabel = state.createConditionalNodeConfig.nodeLabel
-        config.conditions = state.createConditionalNodeConfig.conditions
-        config.operator = state.createConditionalNodeConfig.operator
-        config.parentRelationship = state.createConditionalNodeConfig.parentRelationship
-        break
       case 'action:extract-and-compute-property':
         config.propertyKey = state.extractAndComputePropertyConfig.propertyKey
         config.sources = state.extractAndComputePropertyConfig.sources
         config.computation = state.extractAndComputePropertyConfig.computation
         config.separator = state.extractAndComputePropertyConfig.separator
         break
-      case 'action:create-node-with-filtered-children':
-        config.nodeLabel = state.createNodeWithFilteredChildrenConfig.nodeLabel
-        config.parentRelationship = state.createNodeWithFilteredChildrenConfig.parentRelationship
-        config.filterByTag = state.createNodeWithFilteredChildrenConfig.filterByTag
-        config.excludeTags = state.createNodeWithFilteredChildrenConfig.excludeTags
-        config.recursive = state.createNodeWithFilteredChildrenConfig.recursive
-        config.childRelationship = state.createNodeWithFilteredChildrenConfig.childRelationship
+      case 'action:create-text-node':
+        config.nodeLabel = state.createTextNodeConfig.nodeLabel
+        config.textSource = state.createTextNodeConfig.textSource
+        config.attributeName = state.createTextNodeConfig.attributeName
+        config.transforms = state.createTextNodeConfig.transforms
+        config.propertyKey = state.createTextNodeConfig.propertyKey
+        config.parentRelationship = state.createTextNodeConfig.parentRelationship
+        break
+      case 'action:create-token-nodes':
+        config.parentNodeLabel = state.createTokenNodesConfig.parentNodeLabel
+        config.textSource = state.createTokenNodesConfig.textSource
+        config.attributeName = state.createTokenNodesConfig.attributeName
+        config.transforms = state.createTokenNodesConfig.transforms
+        config.splitBy = state.createTokenNodesConfig.splitBy
+        config.tokenNodeLabel = state.createTokenNodesConfig.tokenNodeLabel
+        config.filterPattern = state.createTokenNodesConfig.filterPattern
+        config.relationshipType = state.createTokenNodesConfig.relationshipType
+        config.properties = state.createTokenNodesConfig.properties
+        config.structure = state.createTokenNodesConfig.structure
+        config.nextRelationshipType = state.createTokenNodesConfig.nextRelationshipType
+        break
+      case 'action:create-node-with-attributes':
+        config.nodeLabel = state.createNodeWithAttributesConfig.nodeLabel
+        config.attributeMappings = state.createNodeWithAttributesConfig.attributeMappings
+        config.parentRelationship = state.createNodeWithAttributesConfig.parentRelationship
         break
       case 'action:normalize-and-deduplicate':
         config.sourceProperty = state.normalizeAndDeduplicateConfig.sourceProperty
         config.targetProperty = state.normalizeAndDeduplicateConfig.targetProperty
         config.transforms = state.normalizeAndDeduplicateConfig.transforms
-        break
-      case 'action:create-hierarchical-nodes':
-        config.parentNodeLabel = state.createHierarchicalNodesConfig.parentNodeLabel
-        config.childNodeLabel = state.createHierarchicalNodesConfig.childNodeLabel
-        config.parentRelationship = state.createHierarchicalNodesConfig.parentRelationship
-        config.childRelationship = state.createHierarchicalNodesConfig.childRelationship
-        config.filterByTag = state.createHierarchicalNodesConfig.filterByTag
-        config.recursive = state.createHierarchicalNodesConfig.recursive
         break
     }
 

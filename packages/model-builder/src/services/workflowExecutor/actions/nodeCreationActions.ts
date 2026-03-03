@@ -10,6 +10,9 @@ export function executeCreateNodeAction(action: ActionCanvasNode, ctx: ActionExe
   const nodeId = ctx.nodeIdCounter.value++
   const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
   
+  // Capture the node that "owns" this action execution
+  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
+  
   if (labels.length > 0) {
     graphNode.labels = labels.map(label => ctx.evaluateTemplate(label, apiResponseData))
   }
@@ -18,11 +21,11 @@ export function executeCreateNodeAction(action: ActionCanvasNode, ctx: ActionExe
   ctx.elementToGraph.set(ctx.xmlElement, graphNode)
   ctx.currentGraphNode = graphNode
 
-  if (ctx.parentGraphNode) {
+  if (originNode) {
     const parentRelType = ctx.evaluateTemplate((action.config.parentRelationship as string) || 'contains', apiResponseData)
     const relType = ctx.relationships.find(r => r.type === parentRelType) || ctx.relationships[0]
     if (relType) {
-      const rel = ctx.createRelationship(ctx.parentGraphNode, graphNode, relType)
+      const rel = ctx.createRelationship(originNode, graphNode, relType)
       ctx.graphRels.push(rel)
     }
   }
@@ -34,15 +37,18 @@ export function executeCreateNodeTextAction(action: ActionCanvasNode, ctx: Actio
   const nodeId = ctx.nodeIdCounter.value++
   const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
 
+  // Capture the node that "owns" this action execution
+  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
+
   ctx.graphNodes.push(graphNode)
   ctx.elementToGraph.set(ctx.xmlElement, graphNode)
   ctx.currentGraphNode = graphNode
 
-  if (ctx.parentGraphNode) {
+  if (originNode) {
     const parentRelType = (action.config.parentRelationship as string) || 'contains'
     const relType = ctx.relationships.find(r => r.type === parentRelType) || ctx.relationships[0]
     if (relType) {
-      const rel = ctx.createRelationship(ctx.parentGraphNode, graphNode, relType)
+      const rel = ctx.createRelationship(originNode, graphNode, relType)
       ctx.graphRels.push(rel)
     }
   }

@@ -10,6 +10,7 @@ export interface WorkflowConfigExport {
     name?: string
     description?: string
   }
+  rootNodeLabel?: string | null
   relationships?: Array<{
     fromNodeLabel: string
     toNodeLabel: string
@@ -70,9 +71,11 @@ export function exportWorkflowConfig(
   toolNodes: ToolCanvasNode[],
   toolEdges: ToolCanvasEdge[],
   actionNodes: ActionCanvasNode[],
-  actionEdges: ActionCanvasEdge[]
+  actionEdges: ActionCanvasEdge[],
+  rootNodeId: string | null
 ): string {
   const nodeLabelToId = new Map(nodes.map(n => [n.label, n.id]))
+  const rootNode = nodes.find(n => n.id === rootNodeId)
   const toolIdToNode = new Map(toolNodes.map(t => [t.id, t]))
   const actionIdToNode = new Map(actionNodes.map(a => [a.id, a]))
 
@@ -93,6 +96,10 @@ export function exportWorkflowConfig(
     version: 1,
     type: 'workflow-config',
     createdAt: new Date().toISOString(),
+    metadata: {
+      // Exclude metadata name/desc as they are usually handled by the persistence layer
+    },
+    rootNodeLabel: rootNode?.label || null,
     // Exclude relationships from workflow export as per requirement to separate schema and workflow
     relationships: [], 
 
@@ -265,6 +272,7 @@ export interface ImportedWorkflowConfig {
     toolEdges: number
     actionEdges: number
   }
+  rootNodeId?: string | null
 }
 
 export function importWorkflowConfig(
@@ -422,6 +430,7 @@ export function importWorkflowConfig(
     toolEdges,
     actions: actionsWithRemappedChildren,
     actionEdges,
+    rootNodeId: config.rootNodeLabel ? nodeLabelToId.get(config.rootNodeLabel) || null : null,
     _originalCounts: {
       relationships: config.relationships?.length || 0,
       tools: config.tools.length,

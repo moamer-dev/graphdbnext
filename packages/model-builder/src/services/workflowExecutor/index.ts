@@ -170,7 +170,7 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
         const ctx: ExecutionContext = {
           xmlElement: element,
           parentGraphNode,
-          currentGraphNode: null,
+          currentGraphNode: elementToGraph.get(element) || null,
           builderNode,
           elementToGraph,
           deferredRelationships,
@@ -242,6 +242,26 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
         }
 
         const attachedTools = toolNodesByTarget.get(builderNode.id) || []
+        
+        // Create the primary node for this element BEFORE tools run if tools are present
+        // This ensures actions can relate to the "Current Node" (the one they are attached to)
+        if (attachedTools.length > 0 && ctx.currentGraphNode === null) {
+          const nodeId = nodeIdCounter.value++
+          const graphNode = createGraphNodeWrapper(builderNode, element, nodeId)
+          graphNodes.push(graphNode)
+          elementToGraph.set(element, graphNode)
+          ctx.currentGraphNode = graphNode
+          createdForElement = graphNode
+
+          if (parentGraphNode) {
+            const relDef = findRelType(parentGraphNode.labels[0], graphNode.labels[0])
+            if (relDef) {
+              const rel = createRelationshipWrapper(parentGraphNode, graphNode, relDef)
+              graphRels.push(rel)
+            }
+          }
+        }
+
         for (const tool of attachedTools) {
           await processToolRecursive(tool, ctx)
         }

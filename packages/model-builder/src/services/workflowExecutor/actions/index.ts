@@ -4,7 +4,7 @@ import type { ActionExecutionContext, ActionExecutor } from './types'
 import { executeCreateNodeAction, executeCreateNodeTextAction, executeCreateNodeTokensAction } from './nodeCreationActions'
 import { executeSetPropertyAction, executeExtractTextAction, executeExtractPropertyAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction, executeTransformTextAction } from './propertyActions'
 import { executeCreateRelationshipAction, executeDeferRelationshipAction, executeUpdateRelationshipAction, executeDeleteRelationshipAction, executeReverseRelationshipAction } from './relationshipActions'
-import { executeCreateTextNodeAction, executeCreateTokenNodesAction, executeCreateNodeWithAttributesAction } from './advancedNodeActions'
+import { executeCreateTextNodeAction, executeCreateTokenNodesAction } from './advancedNodeActions'
 import { executeCreateAnnotationAction, executeCreateReferenceAction, executeCreateAnnotationNodesAction, executeCreateReferenceChainAction, executeExtractXmlContentAction } from './referenceActions'
 import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeCreateConditionalNodeAction, executeExtractAndComputePropertyAction, executeNormalizeAndDeduplicateAction } from './complexActions'
 import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction, executeValidateNodeAction, executeValidateRelationshipAction, executeReportErrorAction, executeAddMetadataAction, executeTagNodeAction, executeSetTimestampAction } from './nodeManipulationActions'
@@ -25,7 +25,6 @@ const actionRegistry: Record<string, ActionExecutor> = {
   'action:defer-relationship': executeDeferRelationshipAction,
   'action:create-text-node': executeCreateTextNodeAction,
   'action:create-token-nodes': executeCreateTokenNodesAction,
-  'action:create-node-with-attributes': executeCreateNodeWithAttributesAction,
   'action:create-node-complete': executeCreateNodeCompleteAction,
   'action:extract-and-normalize-attributes': executeExtractAndNormalizeAttributesAction,
   'action:create-annotation-nodes': executeCreateAnnotationNodesAction,
@@ -77,10 +76,6 @@ export function executeActionWithWalk(
 
   if (action.type === 'action:process-children') {
     executeProcessChildrenAction(action, ctx)
-  } else if (action.type === 'action:create-node-with-filtered-children') {
-    executeCreateNodeWithFilteredChildrenAction(action, ctx)
-  } else if (action.type === 'action:create-hierarchical-nodes') {
-    executeCreateHierarchicalNodesAction(action, ctx)
   } else {
     executeAction(action, ctx)
   }

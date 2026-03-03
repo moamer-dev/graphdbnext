@@ -42,6 +42,9 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
   if (!ctx.builderNode) return
 
   const apiResponseData = ctx.getApiResponseData(action)
+  
+  // Capture the node that "owns" this action execution (the anchor point)
+  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
 
   // 1. Resolve Node (Upsert Logic)
   let graphNode: GraphJsonNode | undefined
@@ -171,72 +174,45 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     }
   })
 
-  // 3. Create Relationship
-  // Check for Custom Relationship Config first
-  const relationshipConfig = action.config.relationship as {
+  // 3. Relationship Creation
+  const relConfig = action.config.relationship as {
+    mode: 'standalone' | 'connected' | 'deferred'
     type: string
-    targetNodeId: string
+    targetNodeId?: string
     targetNodeLabel?: string
     direction?: 'outgoing' | 'incoming'
   } | undefined
 
-  if (relationshipConfig && relationshipConfig.targetNodeId) {
-    // Custom Relationship Logic
-    const targetId = ctx.evaluateTemplate(relationshipConfig.targetNodeId, apiResponseData)
-    const relLabel = relationshipConfig.type || 'relatedTo'
-    const direction = relationshipConfig.direction || 'outgoing'
+  const relMode = relConfig?.mode || 'connected'
+  const relType = relConfig?.type || (action.config.parentRelationship as string) || 'contains'
+  const direction = relConfig?.direction || 'outgoing'
 
-    if (targetId) {
-      // Find target node in current graph
-      // Assuming targetId matches the 'id' or '_id' property we use for uniqueness
-      const targetNode = ctx.graphNodes.find(n => n.properties.id === targetId || n.properties._id === targetId)
+  if (relMode === 'standalone') {
+    // Do nothing
+  } else if (relMode === 'connected' && originNode) {
+    const startNode = direction === 'outgoing' ? originNode : graphNode
+    const endNode = direction === 'outgoing' ? graphNode : originNode
 
-      if (targetNode) {
-        // Create relationship immediately
-        const startNode = direction === 'outgoing' ? graphNode : targetNode
-        const endNode = direction === 'outgoing' ? targetNode : graphNode
-
-        const rel: GraphJsonRelationship = {
-          id: ctx.relIdCounter.value++,
-          type: 'relationship',
-          label: relLabel,
-          start: startNode.id,
-          end: endNode.id,
-          properties: {}
-        }
-        ctx.graphRels.push(rel)
-      } else {
-        // Target not found yet? Defer it?
-        // The current context doesn't explicitly support a queue for "defer by property ID", 
-        // only "defer by parent relationship".
-        // But we can implement a basic deferral if needed, or just log warning.
-        // For now, let's assume the user ensures topological sort or existence.
-        // If we NEED deferral, we would push to a pending list.
-        // Let's log for now.
-        // console.warn(`Target node with ID ${targetId} not found for relationship ${relLabel}`)
-
-        // Optionally create a "Placeholder" node if we want to ensure structural completeness?
-        // No, simpler to just skip or fail.
-        // But wait, if we are in a "Create Node Complete" action, maybe we shouldn't fail silently.
-      }
+    const rel: GraphJsonRelationship = {
+      id: ctx.relIdCounter.value++,
+      type: 'relationship',
+      label: relType,
+      start: startNode.id,
+      end: endNode.id,
+      properties: {}
     }
-  } else if (ctx.parentGraphNode) {
-    // Fallback: Parent Relationship (Backward Compatibility)
-    const parentRelType = (action.config.parentRelationship as string) || 'contains'
-    const relType = ctx.relationships.find(r => r.type === parentRelType)
-    if (relType) {
-      const rel = ctx.createRelationship(ctx.parentGraphNode, graphNode, relType)
-      ctx.graphRels.push(rel)
-    } else {
-      const rel: GraphJsonRelationship = {
-        id: ctx.relIdCounter.value++,
-        type: 'relationship',
-        label: parentRelType,
-        start: ctx.parentGraphNode.id,
-        end: graphNode.id,
-        properties: {}
-      }
-      ctx.graphRels.push(rel)
+    ctx.graphRels.push(rel)
+  } else if (relMode === 'deferred') {
+    const targetId = relConfig?.targetNodeId ? ctx.evaluateTemplate(relConfig.targetNodeId, apiResponseData) : undefined
+    
+    if (targetId) {
+      ctx.deferredRelationships.push({
+        from: graphNode,
+        to: null,
+        type: relType,
+        properties: {},
+        targetId: targetId
+      })
     }
   }
 }
@@ -279,6 +255,9 @@ export function executeCreateConditionalNodeAction(action: ActionCanvasNode, ctx
   if (!ctx.builderNode) return
 
   const apiResponseData = ctx.getApiResponseData(action)
+  
+  // Capture the node that "owns" this action execution
+  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
   const conditions = (action.config.conditions as Array<{
     type: 'hasAttribute' | 'hasText' | 'hasChildren'
     attributeName?: string
@@ -334,18 +313,18 @@ export function executeCreateConditionalNodeAction(action: ActionCanvasNode, ctx
   ctx.elementToGraph.set(ctx.xmlElement, graphNode)
   ctx.currentGraphNode = graphNode
 
-  if (ctx.parentGraphNode) {
+  if (originNode) {
     const parentRelType = ctx.evaluateTemplate((action.config.parentRelationship as string) || 'contains', apiResponseData)
     const relType = ctx.relationships.find(r => r.type === parentRelType)
     if (relType) {
-      const rel = ctx.createRelationship(ctx.parentGraphNode, graphNode, relType)
+      const rel = ctx.createRelationship(originNode, graphNode, relType)
       ctx.graphRels.push(rel)
     } else {
       const rel: GraphJsonRelationship = {
         id: ctx.relIdCounter.value++,
         type: 'relationship',
         label: parentRelType,
-        start: ctx.parentGraphNode.id,
+        start: originNode.id,
         end: graphNode.id,
         properties: {}
       }

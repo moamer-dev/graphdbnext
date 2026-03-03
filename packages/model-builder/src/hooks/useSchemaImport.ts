@@ -22,7 +22,8 @@ export function useSchemaImport () {
         relationships: result.relationships,
         metadata: result.metadata,
         isSemanticEnabled: result.isSemanticEnabled,
-        selectedOntologyId: result.selectedOntologyId
+        selectedOntologyId: result.selectedOntologyId,
+        rootNodeId: result.rootNodeId
       })
 
       return result
