@@ -39,8 +39,7 @@ const basicActions: Array<{ label: string; type: ActionNodeType }> = [
   { label: 'Skip Element', type: 'action:skip' },
 
 
-  { label: 'Transform Text', type: 'action:transform-text' },
-  { label: 'Extract Text', type: 'action:extract-text' },
+
 ]
 
 const advancedActions: Array<{ label: string; type: ActionNodeType }> = [
@@ -66,9 +65,6 @@ const dataActions: Array<{ label: string; type: ActionNodeType }> = [
   { label: 'Add Metadata', type: 'action:add-metadata' },
   { label: 'Tag Node', type: 'action:tag-node' },
   { label: 'Set Timestamp', type: 'action:set-timestamp' },
-  { label: 'Extract XML Content', type: 'action:extract-xml-content' },
-  { label: 'Create Annotation', type: 'action:create-annotation' },
-  { label: 'Create Reference', type: 'action:create-reference' },
   { label: 'Defer Relationship', type: 'action:defer-relationship' },
 ]
 

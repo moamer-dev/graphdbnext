@@ -2,10 +2,10 @@ import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 import type { ActionExecutionContext, ActionExecutor } from './types'
 
 import { executeCreateNodeAction } from './nodeCreationActions'
-import { executeSetPropertyAction, executeExtractTextAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction, executeTransformTextAction } from './propertyActions'
+import { executeSetPropertyAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction } from './propertyActions'
 import { executeCreateRelationshipAction, executeDeferRelationshipAction, executeUpdateRelationshipAction, executeDeleteRelationshipAction, executeReverseRelationshipAction } from './relationshipActions'
 import { executeCreateTextNodeAction, executeCreateTokenNodesAction } from './advancedNodeActions'
-import { executeCreateAnnotationAction, executeCreateReferenceAction, executeCreateAnnotationNodesAction, executeCreateReferenceChainAction, executeExtractXmlContentAction } from './referenceActions'
+import { executeCreateAnnotationNodesAction, executeCreateReferenceChainAction } from './referenceActions'
 import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeCreateConditionalNodeAction, executeExtractAndComputePropertyAction } from './complexActions'
 import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction, executeValidateNodeAction, executeValidateRelationshipAction, executeReportErrorAction, executeAddMetadataAction, executeTagNodeAction, executeSetTimestampAction } from './nodeManipulationActions'
 import { executeSkipAction, executeCreateNodeWithFilteredChildrenAction, executeCreateHierarchicalNodesAction, type SpecialActionExecutionContext } from './specialActions'
@@ -14,11 +14,7 @@ const actionRegistry: Record<string, ActionExecutor> = {
   'action:create-node': executeCreateNodeAction,
   'action:create-relationship': executeCreateRelationshipAction,
   'action:set-property': executeSetPropertyAction,
-  'action:extract-text': executeExtractTextAction,
-  'action:create-annotation': executeCreateAnnotationAction,
-  'action:create-reference': executeCreateReferenceAction,
-  'action:extract-xml-content': executeExtractXmlContentAction,
-  'action:transform-text': executeTransformTextAction,
+
   'action:defer-relationship': executeDeferRelationshipAction,
   'action:create-text-node': executeCreateTextNodeAction,
   'action:create-token-nodes': executeCreateTokenNodesAction,

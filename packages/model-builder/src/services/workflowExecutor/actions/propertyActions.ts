@@ -19,24 +19,7 @@ export function executeSetPropertyAction(action: ActionCanvasNode, ctx: ActionEx
   }
 }
 
-export function executeExtractTextAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const apiResponseData = ctx.getApiResponseData(action)
-  const extractionMode = (action.config.extractionMode as 'text' | 'tail' | 'xmlContent') || 'text'
-  let text = ''
 
-  if (extractionMode === 'text') {
-    text = ctx.xmlElement.textContent || ''
-  } else if (extractionMode === 'tail') {
-    text = ctx.xmlElement.textContent || ''
-  } else if (extractionMode === 'xmlContent') {
-    text = ctx.xmlElement.outerHTML || ''
-  }
-
-  if (ctx.currentGraphNode && text) {
-    const propertyKey = ctx.evaluateTemplate((action.config.propertyKey as string) || 'textContent', apiResponseData)
-    ctx.currentGraphNode.properties[propertyKey] = text
-  }
-}
 
 
 
@@ -147,31 +130,5 @@ export function executeFormatPropertyAction(action: ActionCanvasNode, ctx: Actio
   ctx.currentGraphNode.properties[propertyKey] = formatted
 }
 
-export function executeTransformTextAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
 
-  const updateInPlace = (action.config.updateInPlace as boolean) ?? false
-  const targetProperty = (action.config.targetProperty as string) || ''
-  
-  let text = ctx.xmlElement.textContent || ''
-  
-  if (updateInPlace && targetProperty && ctx.currentGraphNode.properties[targetProperty]) {
-    text = String(ctx.currentGraphNode.properties[targetProperty])
-  } else if (ctx.currentGraphNode.properties.textContent) {
-    text = String(ctx.currentGraphNode.properties.textContent)
-  }
-
-  const transforms = (action.config.transforms as Array<{
-    type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'
-    replaceFrom?: string
-    replaceTo?: string
-    regexPattern?: string
-    regexReplacement?: string
-  }>) || []
-
-  const transformed = ctx.applyTransforms(text, transforms)
-
-  const finalProperty = targetProperty || 'transformedText'
-  ctx.currentGraphNode.properties[finalProperty] = transformed
-}
 

@@ -26,15 +26,10 @@ import { HelpTooltip } from '../shared/HelpTooltip'
 import { executeWorkflow as executeWorkflowExecutor } from '../../services/workflowExecutor'
 import { convertBuilderToSchemaJson } from '../../utils/schemaJsonConverter'
 import { ActionConfigurationHeader } from './ActionConfigurationSidebar/ActionConfigurationHeader'
-import { ActionExtractTextConfiguration } from './ActionConfigurationSidebar/ActionExtractTextConfiguration'
 import { ActionCreateRelationshipConfiguration } from './ActionConfigurationSidebar/ActionCreateRelationshipConfiguration'
 import { ActionSetPropertyConfiguration } from './ActionConfigurationSidebar/ActionSetPropertyConfiguration'
-import { ActionCreateAnnotationConfiguration } from './ActionConfigurationSidebar/ActionCreateAnnotationConfiguration'
-import { ActionCreateReferenceConfiguration } from './ActionConfigurationSidebar/ActionCreateReferenceConfiguration'
-import { ActionExtractXmlContentConfiguration } from './ActionConfigurationSidebar/ActionExtractXmlContentConfiguration'
 import { ActionDeferRelationshipConfiguration } from './ActionConfigurationSidebar/ActionDeferRelationshipConfiguration'
 import { ActionSkipConfiguration } from './ActionConfigurationSidebar/ActionSkipConfiguration'
-import { ActionTransformTextConfiguration } from './ActionConfigurationSidebar/ActionTransformTextConfiguration'
 import { ActionCreateNodeCompleteConfiguration } from './ActionConfigurationSidebar/ActionCreateNodeCompleteConfiguration'
 import { ActionExtractAndNormalizeAttributesConfiguration } from './ActionConfigurationSidebar/ActionExtractAndNormalizeAttributesConfiguration'
 import { ActionCreateAnnotationNodesConfiguration } from './ActionConfigurationSidebar/ActionCreateAnnotationNodesConfiguration'
@@ -243,18 +238,10 @@ export function ActionConfigurationSidebar({
   const setCreateRelationshipConfig = useActionConfigurationStore((state) => state.setCreateRelationshipConfig)
   const setPropertyConfig = useActionConfigurationStore((state) => state.setPropertyConfig)
   const setSetPropertyConfig = useActionConfigurationStore((state) => state.setSetPropertyConfig)
-  const extractTextConfig = useActionConfigurationStore((state) => state.extractTextConfig)
-  const setExtractTextConfig = useActionConfigurationStore((state) => state.setExtractTextConfig)
-  const createAnnotationConfig = useActionConfigurationStore((state) => state.createAnnotationConfig)
-  const setCreateAnnotationConfig = useActionConfigurationStore((state) => state.setCreateAnnotationConfig)
-  const createReferenceConfig = useActionConfigurationStore((state) => state.createReferenceConfig)
-  const setCreateReferenceConfig = useActionConfigurationStore((state) => state.setCreateReferenceConfig)
-  const extractXmlContentConfig = useActionConfigurationStore((state) => state.extractXmlContentConfig)
-  const setExtractXmlContentConfig = useActionConfigurationStore((state) => state.setExtractXmlContentConfig)
 
 
-  const transformTextConfig = useActionConfigurationStore((state) => state.transformTextConfig)
-  const setTransformTextConfig = useActionConfigurationStore((state) => state.setTransformTextConfig)
+
+
   const deferRelationshipConfig = useActionConfigurationStore((state) => state.deferRelationshipConfig)
   const setDeferRelationshipConfig = useActionConfigurationStore((state) => state.setDeferRelationshipConfig)
   const skipConfig = useActionConfigurationStore((state) => state.skipConfig)
@@ -402,45 +389,6 @@ export function ActionConfigurationSidebar({
           />
         )}
 
-        {actionNode.type === 'action:extract-text' && (
-          <ActionExtractTextConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            extractTextConfig={extractTextConfig}
-            onExtractTextConfigChange={setExtractTextConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {actionNode.type === 'action:create-annotation' && (
-          <ActionCreateAnnotationConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            createAnnotationConfig={createAnnotationConfig}
-            onCreateAnnotationConfigChange={setCreateAnnotationConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {actionNode.type === 'action:create-reference' && (
-          <ActionCreateReferenceConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            createReferenceConfig={createReferenceConfig}
-            onCreateReferenceConfigChange={setCreateReferenceConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {actionNode.type === 'action:extract-xml-content' && (
-          <ActionExtractXmlContentConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            extractXmlContentConfig={extractXmlContentConfig}
-            onExtractXmlContentConfigChange={setExtractXmlContentConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
 
 
 
@@ -448,15 +396,6 @@ export function ActionConfigurationSidebar({
 
 
 
-        {actionNode.type === 'action:transform-text' && (
-          <ActionTransformTextConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            transformTextConfig={transformTextConfig}
-            onTransformTextConfigChange={setTransformTextConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
 
         {actionNode.type === 'action:defer-relationship' && (
           <ActionDeferRelationshipConfiguration

@@ -2,57 +2,9 @@ import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 import type { ActionExecutionContext } from './types'
 import type { GraphJsonNode, GraphJsonRelationship } from '../types'
 
-export function executeCreateAnnotationAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const annotationTypes = (action.config.annotationTypes as string[]) || []
 
-  annotationTypes.forEach(attrName => {
-    const value = ctx.xmlElement.getAttribute(attrName)
-    if (value && ctx.currentGraphNode) {
-      const annotationNode: GraphJsonNode = {
-        id: ctx.nodeIdCounter.value++,
-        type: 'node',
-        labels: ['Thing', 'Annotation'],
-        properties: {
-          content: value,
-          mimeType: 'text/plain',
-          type: attrName
-        }
-      }
-      ctx.graphNodes.push(annotationNode)
 
-      const rel: GraphJsonRelationship = {
-        id: ctx.relIdCounter.value++,
-        type: 'relationship',
-        label: 'annotates',
-        start: ctx.currentGraphNode.id,
-        end: annotationNode.id,
-        properties: {}
-      }
-      ctx.graphRels.push(rel)
-    }
-  })
-}
 
-export function executeCreateReferenceAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const referenceAttribute = (action.config.referenceAttribute as string) || 'corresp'
-  const relationshipType = (action.config.relationshipType as string) || 'refersTo'
-  const value = ctx.xmlElement.getAttribute(referenceAttribute)
-
-  if (value && ctx.currentGraphNode) {
-    const cleanId = value.replace('#', '').split(' ')[0]
-    const targetElement = ctx.findElementById(ctx.doc, cleanId)
-    if (targetElement) {
-      const targetNode = ctx.elementToGraph.get(targetElement)
-      if (targetNode) {
-        const relType = ctx.relationships.find(r => r.type === relationshipType) || ctx.relationships[0]
-        if (relType) {
-          const rel = ctx.createRelationship(ctx.currentGraphNode, targetNode, relType)
-          ctx.graphRels.push(rel)
-        }
-      }
-    }
-  }
-}
 
 export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.builderNode) return
@@ -208,19 +160,5 @@ export function executeCreateReferenceChainAction(action: ActionCanvasNode, ctx:
   }
 }
 
-export function executeExtractXmlContentAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const includeAttributes = (action.config.includeAttributes as boolean) ?? true
-  const includeChildren = (action.config.includeChildren as boolean) ?? true
 
-  if (ctx.currentGraphNode) {
-    if (includeAttributes && includeChildren) {
-      ctx.currentGraphNode.properties.xmlContent = ctx.xmlElement.outerHTML
-    } else if (includeAttributes) {
-      const attrs = Array.from(ctx.xmlElement.attributes)
-        .map(attr => `${attr.name}="${attr.value}"`)
-        .join(' ')
-      ctx.currentGraphNode.properties.xmlContent = `<${ctx.xmlElement.tagName} ${attrs} />`
-    }
-  }
-}
 

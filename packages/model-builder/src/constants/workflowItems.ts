@@ -279,23 +279,12 @@ export const actionCategories = {
 
     ]
   },
-  'Text Processing': {
-    icon: Type,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-    actions: [
-      { label: 'Transform Text', type: 'action:transform-text', icon: Wand2, description: 'Transform text content', color: 'text-violet-600', bgColor: 'bg-violet-50' },
-      { label: 'Extract Text', type: 'action:extract-text', icon: FileText, description: 'Extract text from element', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-      { label: 'Extract XML Content', type: 'action:extract-xml-content', icon: FileText, description: 'Extract XML content', color: 'text-cyan-600', bgColor: 'bg-cyan-50' }
-    ]
-  },
+
   'Advanced': {
     icon: Layers,
     color: 'text-slate-600',
     bgColor: 'bg-slate-100',
     actions: [
-      { label: 'Create Annotation', type: 'action:create-annotation', icon: Edit, description: 'Create annotation', color: 'text-pink-600', bgColor: 'bg-pink-50' },
-      { label: 'Create Reference', type: 'action:create-reference', icon: Link2, description: 'Create reference', color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
       { label: 'Defer Relationship', type: 'action:defer-relationship', icon: Link2, description: 'Defer relationship creation', color: 'text-slate-600', bgColor: 'bg-slate-50' }
     ]
   },

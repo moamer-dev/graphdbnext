@@ -41,34 +41,14 @@ export interface ActionConfigurationState {
     propertyValue: string
     valueSource: 'static' | 'attribute'
   }
-  extractTextConfig: {
-    extractionMode: 'text' | 'tail' | 'xmlContent'
-    createNodes: boolean
-    nodeType: 'Character' | 'Sign'
-  }
-  createAnnotationConfig: {
-    annotationTypes: string[]
-    targetAttributes: string[]
-    mimeType: 'text/plain' | 'text/xml'
-  }
-  createReferenceConfig: {
-    referenceAttribute: string
-    relationshipType: string
-    resolveStrategy: 'id' | 'xpath'
-  }
-  extractXmlContentConfig: {
-    includeAttributes: boolean
-    includeChildren: boolean
-    format: 'full' | 'minimal'
-  }
 
 
 
-  transformTextConfig: {
-    transforms: TextTransform[]
-    targetProperty: string
-    updateInPlace: boolean
-  }
+
+
+
+
+
   deferRelationshipConfig: {
     relationshipType: string
     targetNodeLabel: string
@@ -252,13 +232,10 @@ export interface ActionConfigurationState {
   // Config setters
   setCreateRelationshipConfig: (config: Partial<ActionConfigurationState['createRelationshipConfig']>) => void
   setSetPropertyConfig: (config: Partial<ActionConfigurationState['setPropertyConfig']>) => void
-  setExtractTextConfig: (config: Partial<ActionConfigurationState['extractTextConfig']>) => void
-  setCreateAnnotationConfig: (config: Partial<ActionConfigurationState['createAnnotationConfig']>) => void
-  setCreateReferenceConfig: (config: Partial<ActionConfigurationState['createReferenceConfig']>) => void
-  setExtractXmlContentConfig: (config: Partial<ActionConfigurationState['extractXmlContentConfig']>) => void
 
 
-  setTransformTextConfig: (config: Partial<ActionConfigurationState['transformTextConfig']>) => void
+
+
   setDeferRelationshipConfig: (config: Partial<ActionConfigurationState['deferRelationshipConfig']>) => void
   setSkipConfig: (config: Partial<ActionConfigurationState['skipConfig']>) => void
   setCreateNodeCompleteConfig: (config: Partial<ActionConfigurationState['createNodeCompleteConfig']>) => void
@@ -302,13 +279,10 @@ const initialState: Omit<ActionConfigurationState, keyof {
   setShowGraphModal: never
   setCreateRelationshipConfig: never
   setSetPropertyConfig: never
-  setExtractTextConfig: never
-  setCreateAnnotationConfig: never
-  setCreateReferenceConfig: never
-  setExtractXmlContentConfig: never
+
   setProcessChildrenConfig: never
   setExtractPropertyConfig: never
-  setTransformTextConfig: never
+
   setDeferRelationshipConfig: never
   setSkipConfig: never
   setCreateNodeCompleteConfig: never
@@ -358,34 +332,14 @@ const initialState: Omit<ActionConfigurationState, keyof {
     propertyValue: '',
     valueSource: 'static'
   },
-  extractTextConfig: {
-    extractionMode: 'text',
-    createNodes: false,
-    nodeType: 'Character'
-  },
-  createAnnotationConfig: {
-    annotationTypes: [],
-    targetAttributes: [],
-    mimeType: 'text/plain'
-  },
-  createReferenceConfig: {
-    referenceAttribute: 'corresp',
-    relationshipType: 'refersTo',
-    resolveStrategy: 'id'
-  },
-  extractXmlContentConfig: {
-    includeAttributes: true,
-    includeChildren: true,
-    format: 'full'
-  },
 
 
 
-  transformTextConfig: {
-    transforms: [],
-    targetProperty: '',
-    updateInPlace: false
-  },
+
+
+
+
+
   deferRelationshipConfig: {
     relationshipType: 'contains',
     targetNodeLabel: '',
@@ -536,13 +490,10 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
 
   setCreateRelationshipConfig: (config) => set((state) => ({ createRelationshipConfig: { ...state.createRelationshipConfig, ...config } })),
   setSetPropertyConfig: (config) => set((state) => ({ setPropertyConfig: { ...state.setPropertyConfig, ...config } })),
-  setExtractTextConfig: (config) => set((state) => ({ extractTextConfig: { ...state.extractTextConfig, ...config } })),
-  setCreateAnnotationConfig: (config) => set((state) => ({ createAnnotationConfig: { ...state.createAnnotationConfig, ...config } })),
-  setCreateReferenceConfig: (config) => set((state) => ({ createReferenceConfig: { ...state.createReferenceConfig, ...config } })),
-  setExtractXmlContentConfig: (config) => set((state) => ({ extractXmlContentConfig: { ...state.extractXmlContentConfig, ...config } })),
 
 
-  setTransformTextConfig: (config) => set((state) => ({ transformTextConfig: { ...state.transformTextConfig, ...config } })),
+
+
   setDeferRelationshipConfig: (config) => set((state) => ({ deferRelationshipConfig: { ...state.deferRelationshipConfig, ...config } })),
   setSkipConfig: (config) => set((state) => ({ skipConfig: { ...state.skipConfig, ...config } })),
   setCreateNodeCompleteConfig: (config) => set((state) => ({ createNodeCompleteConfig: { ...state.createNodeCompleteConfig, ...config } })),
@@ -613,71 +564,10 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:extract-text':
-        set({
-          extractTextConfig: {
-            extractionMode: (config.extractionMode as 'text' | 'tail' | 'xmlContent') || state.extractTextConfig.extractionMode,
-            createNodes: (config.createNodes as boolean) ?? state.extractTextConfig.createNodes,
-            nodeType: (config.nodeType as 'Character' | 'Sign') || state.extractTextConfig.nodeType
-          }
-        })
-        break
-      case 'action:create-annotation':
-        set({
-          createAnnotationConfig: {
-            annotationTypes: (config.annotationTypes as string[]) || state.createAnnotationConfig.annotationTypes,
-            targetAttributes: (config.targetAttributes as string[]) || state.createAnnotationConfig.targetAttributes,
-            mimeType: (config.mimeType as 'text/plain' | 'text/xml') || state.createAnnotationConfig.mimeType
-          }
-        })
-        break
-      case 'action:create-reference':
-        set({
-          createReferenceConfig: {
-            referenceAttribute: (config.referenceAttribute as string) || state.createReferenceConfig.referenceAttribute,
-            relationshipType: (config.relationshipType as string) || state.createReferenceConfig.relationshipType,
-            resolveStrategy: (config.resolveStrategy as 'id' | 'xpath') || state.createReferenceConfig.resolveStrategy
-          }
-        })
-        break
-      case 'action:extract-xml-content':
-        set({
-          extractXmlContentConfig: {
-            includeAttributes: (config.includeAttributes as boolean) ?? state.extractXmlContentConfig.includeAttributes,
-            includeChildren: (config.includeChildren as boolean) ?? state.extractXmlContentConfig.includeChildren,
-            format: (config.format as 'full' | 'minimal') || state.extractXmlContentConfig.format
-          }
-        })
-        break
 
 
-      case 'action:transform-text':
-        if (config.transforms) {
-          set({
-            transformTextConfig: {
-              transforms: (config.transforms as TextTransform[]) || state.transformTextConfig.transforms,
-              targetProperty: (config.targetProperty as string) || state.transformTextConfig.targetProperty,
-              updateInPlace: (config.updateInPlace as boolean) ?? state.transformTextConfig.updateInPlace
-            }
-          })
-        } else if (config.transformType) {
-          // Backward compatibility
-          const singleTransform: TextTransform = {
-            type: config.transformType as TextTransform['type'],
-            replaceFrom: config.replaceFrom as string | undefined,
-            replaceTo: config.replaceTo as string | undefined,
-            regexPattern: config.regexPattern as string | undefined,
-            regexReplacement: config.regexReplacement as string | undefined
-          }
-          set({
-            transformTextConfig: {
-              transforms: [singleTransform],
-              targetProperty: (config.targetProperty as string) || state.transformTextConfig.targetProperty,
-              updateInPlace: (config.updateInPlace as boolean) ?? state.transformTextConfig.updateInPlace
-            }
-          })
-        }
-        break
+
+
       case 'action:defer-relationship':
         set({
           deferRelationshipConfig: {
@@ -917,11 +807,7 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
     switch (actionType) {
 
 
-      case 'action:transform-text':
-        config.transforms = state.transformTextConfig.transforms
-        config.targetProperty = state.transformTextConfig.targetProperty
-        config.updateInPlace = state.transformTextConfig.updateInPlace
-        break
+
       case 'action:defer-relationship':
         config.relationshipType = state.deferRelationshipConfig.relationshipType
         config.targetNodeLabel = state.deferRelationshipConfig.targetNodeLabel
