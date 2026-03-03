@@ -32,8 +32,6 @@ import { ActionSetPropertyConfiguration } from './ActionConfigurationSidebar/Act
 import { ActionCreateAnnotationConfiguration } from './ActionConfigurationSidebar/ActionCreateAnnotationConfiguration'
 import { ActionCreateReferenceConfiguration } from './ActionConfigurationSidebar/ActionCreateReferenceConfiguration'
 import { ActionExtractXmlContentConfiguration } from './ActionConfigurationSidebar/ActionExtractXmlContentConfiguration'
-import { ActionProcessChildrenConfiguration } from './ActionConfigurationSidebar/ActionProcessChildrenConfiguration'
-import { ActionExtractPropertyConfiguration } from './ActionConfigurationSidebar/ActionExtractPropertyConfiguration'
 import { ActionDeferRelationshipConfiguration } from './ActionConfigurationSidebar/ActionDeferRelationshipConfiguration'
 import { ActionSkipConfiguration } from './ActionConfigurationSidebar/ActionSkipConfiguration'
 import { ActionTransformTextConfiguration } from './ActionConfigurationSidebar/ActionTransformTextConfiguration'
@@ -46,7 +44,6 @@ import { ActionCreateTokenNodesConfiguration } from './ActionConfigurationSideba
 import { ActionCreateNodeWithAttributesConfiguration } from './ActionConfigurationSidebar/ActionCreateNodeWithAttributesConfiguration'
 import { ActionMergeChildrenTextConfiguration } from './ActionConfigurationSidebar/ActionMergeChildrenTextConfiguration'
 import { ActionExtractAndComputePropertyConfiguration } from './ActionConfigurationSidebar/ActionExtractAndComputePropertyConfiguration'
-import { ActionNormalizeAndDeduplicateConfiguration } from './ActionConfigurationSidebar/ActionNormalizeAndDeduplicateConfiguration'
 import { ActionGroupConfiguration } from './ActionConfigurationSidebar/ActionGroupConfiguration'
 import { ActionCopyPropertyConfiguration } from './ActionConfigurationSidebar/ActionCopyPropertyConfiguration'
 import { ActionMergePropertiesConfiguration } from './ActionConfigurationSidebar/ActionMergePropertiesConfiguration'
@@ -65,6 +62,9 @@ import { ActionReportErrorConfiguration } from './ActionConfigurationSidebar/Act
 import { ActionAddMetadataConfiguration } from './ActionConfigurationSidebar/ActionAddMetadataConfiguration'
 import { ActionTagNodeConfiguration } from './ActionConfigurationSidebar/ActionTagNodeConfiguration'
 import { ActionSetTimestampConfiguration } from './ActionConfigurationSidebar/ActionSetTimestampConfiguration'
+import { ActionCreateConditionalNodeConfiguration } from './ActionConfigurationSidebar/ActionCreateConditionalNodeConfiguration'
+import { ActionCreateHierarchicalNodesConfiguration } from './ActionConfigurationSidebar/ActionCreateHierarchicalNodesConfiguration'
+import { ActionCreateNodeWithFilteredChildrenConfiguration } from './ActionConfigurationSidebar/ActionCreateNodeWithFilteredChildrenConfiguration'
 
 interface ActionConfigurationSidebarProps {
   actionNodeId: string | null
@@ -251,10 +251,8 @@ export function ActionConfigurationSidebar({
   const setCreateReferenceConfig = useActionConfigurationStore((state) => state.setCreateReferenceConfig)
   const extractXmlContentConfig = useActionConfigurationStore((state) => state.extractXmlContentConfig)
   const setExtractXmlContentConfig = useActionConfigurationStore((state) => state.setExtractXmlContentConfig)
-  const processChildrenConfig = useActionConfigurationStore((state) => state.processChildrenConfig)
-  const setProcessChildrenConfig = useActionConfigurationStore((state) => state.setProcessChildrenConfig)
-  const extractPropertyConfig = useActionConfigurationStore((state) => state.extractPropertyConfig)
-  const setExtractPropertyConfig = useActionConfigurationStore((state) => state.setExtractPropertyConfig)
+
+
   const transformTextConfig = useActionConfigurationStore((state) => state.transformTextConfig)
   const setTransformTextConfig = useActionConfigurationStore((state) => state.setTransformTextConfig)
   const deferRelationshipConfig = useActionConfigurationStore((state) => state.deferRelationshipConfig)
@@ -280,8 +278,12 @@ export function ActionConfigurationSidebar({
   const setMergeChildrenTextConfig = useActionConfigurationStore((state) => state.setMergeChildrenTextConfig)
   const extractAndComputePropertyConfig = useActionConfigurationStore((state) => state.extractAndComputePropertyConfig)
   const setExtractAndComputePropertyConfig = useActionConfigurationStore((state) => state.setExtractAndComputePropertyConfig)
-  const normalizeAndDeduplicateConfig = useActionConfigurationStore((state) => state.normalizeAndDeduplicateConfig)
-  const setNormalizeAndDeduplicateConfig = useActionConfigurationStore((state) => state.setNormalizeAndDeduplicateConfig)
+  const createConditionalNodeConfig = useActionConfigurationStore((state) => state.createConditionalNodeConfig)
+  const setCreateConditionalNodeConfig = useActionConfigurationStore((state) => state.setCreateConditionalNodeConfig)
+  const createHierarchicalNodesConfig = useActionConfigurationStore((state) => state.createHierarchicalNodesConfig)
+  const setCreateHierarchicalNodesConfig = useActionConfigurationStore((state) => state.setCreateHierarchicalNodesConfig)
+  const createNodeWithFilteredChildrenConfig = useActionConfigurationStore((state) => state.createNodeWithFilteredChildrenConfig)
+  const setCreateNodeWithFilteredChildrenConfig = useActionConfigurationStore((state) => state.setCreateNodeWithFilteredChildrenConfig)
 
   useEffect(() => {
     loadFromActionNode(actionNode || null)
@@ -442,25 +444,9 @@ export function ActionConfigurationSidebar({
 
 
 
-        {actionNode.type === 'action:process-children' && (
-          <ActionProcessChildrenConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            processChildrenConfig={processChildrenConfig}
-            onProcessChildrenConfigChange={setProcessChildrenConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
 
-        {actionNode.type === 'action:extract-property' && (
-          <ActionExtractPropertyConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            extractPropertyConfig={extractPropertyConfig}
-            onExtractPropertyConfigChange={setExtractPropertyConfig}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
+
+
 
         {actionNode.type === 'action:transform-text' && (
           <ActionTransformTextConfiguration
@@ -500,7 +486,9 @@ export function ActionConfigurationSidebar({
         {actionNode.type === 'action:create-reference-chain' && (<ActionCreateReferenceChainConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createReferenceChainConfig={createReferenceChainConfig} onCreateReferenceChainConfigChange={setCreateReferenceChainConfig} onUpdateActionNode={updateActionNode} />)}
         {actionNode.type === 'action:merge-children-text' && (<ActionMergeChildrenTextConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} mergeChildrenTextConfig={mergeChildrenTextConfig} onMergeChildrenTextConfigChange={setMergeChildrenTextConfig} onUpdateActionNode={updateActionNode} />)}
         {actionNode.type === 'action:extract-and-compute-property' && (<ActionExtractAndComputePropertyConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} extractAndComputePropertyConfig={extractAndComputePropertyConfig} onExtractAndComputePropertyConfigChange={setExtractAndComputePropertyConfig} onUpdateActionNode={updateActionNode} />)}
-        {actionNode.type === 'action:normalize-and-deduplicate' && (<ActionNormalizeAndDeduplicateConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} normalizeAndDeduplicateConfig={normalizeAndDeduplicateConfig} onNormalizeAndDeduplicateConfigChange={setNormalizeAndDeduplicateConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-conditional-node' && (<ActionCreateConditionalNodeConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createConditionalNodeConfig={createConditionalNodeConfig} onCreateConditionalNodeConfigChange={setCreateConditionalNodeConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-hierarchical-nodes' && (<ActionCreateHierarchicalNodesConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createHierarchicalNodesConfig={createHierarchicalNodesConfig} onCreateHierarchicalNodesConfigChange={setCreateHierarchicalNodesConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-node-with-filtered-children' && (<ActionCreateNodeWithFilteredChildrenConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createNodeWithFilteredChildrenConfig={createNodeWithFilteredChildrenConfig} onCreateNodeWithFilteredChildrenConfigChange={setCreateNodeWithFilteredChildrenConfig} onUpdateActionNode={updateActionNode} />)}
         {/* Action Group Configuration */}
         {(actionNode?.type === 'action:group' || actionNode?.isGroup) && (
           <ActionGroupConfiguration

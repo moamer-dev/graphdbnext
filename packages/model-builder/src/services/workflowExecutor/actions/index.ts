@@ -1,19 +1,17 @@
 import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 import type { ActionExecutionContext, ActionExecutor } from './types'
 
-import { executeCreateNodeAction, executeCreateNodeTextAction, executeCreateNodeTokensAction } from './nodeCreationActions'
-import { executeSetPropertyAction, executeExtractTextAction, executeExtractPropertyAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction, executeTransformTextAction } from './propertyActions'
+import { executeCreateNodeAction } from './nodeCreationActions'
+import { executeSetPropertyAction, executeExtractTextAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction, executeTransformTextAction } from './propertyActions'
 import { executeCreateRelationshipAction, executeDeferRelationshipAction, executeUpdateRelationshipAction, executeDeleteRelationshipAction, executeReverseRelationshipAction } from './relationshipActions'
 import { executeCreateTextNodeAction, executeCreateTokenNodesAction } from './advancedNodeActions'
 import { executeCreateAnnotationAction, executeCreateReferenceAction, executeCreateAnnotationNodesAction, executeCreateReferenceChainAction, executeExtractXmlContentAction } from './referenceActions'
-import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeCreateConditionalNodeAction, executeExtractAndComputePropertyAction, executeNormalizeAndDeduplicateAction } from './complexActions'
+import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeCreateConditionalNodeAction, executeExtractAndComputePropertyAction } from './complexActions'
 import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction, executeValidateNodeAction, executeValidateRelationshipAction, executeReportErrorAction, executeAddMetadataAction, executeTagNodeAction, executeSetTimestampAction } from './nodeManipulationActions'
-import { executeSkipAction, executeProcessChildrenAction, executeCreateNodeWithFilteredChildrenAction, executeCreateHierarchicalNodesAction, type SpecialActionExecutionContext } from './specialActions'
+import { executeSkipAction, executeCreateNodeWithFilteredChildrenAction, executeCreateHierarchicalNodesAction, type SpecialActionExecutionContext } from './specialActions'
 
 const actionRegistry: Record<string, ActionExecutor> = {
   'action:create-node': executeCreateNodeAction,
-  'action:create-node-text': executeCreateNodeTextAction,
-  'action:create-node-tokens': executeCreateNodeTokensAction,
   'action:create-relationship': executeCreateRelationshipAction,
   'action:set-property': executeSetPropertyAction,
   'action:extract-text': executeExtractTextAction,
@@ -21,7 +19,6 @@ const actionRegistry: Record<string, ActionExecutor> = {
   'action:create-reference': executeCreateReferenceAction,
   'action:extract-xml-content': executeExtractXmlContentAction,
   'action:transform-text': executeTransformTextAction,
-  'action:extract-property': executeExtractPropertyAction,
   'action:defer-relationship': executeDeferRelationshipAction,
   'action:create-text-node': executeCreateTextNodeAction,
   'action:create-token-nodes': executeCreateTokenNodesAction,
@@ -49,9 +46,8 @@ const actionRegistry: Record<string, ActionExecutor> = {
   'action:add-metadata': executeAddMetadataAction,
   'action:tag-node': executeTagNodeAction,
   'action:set-timestamp': executeSetTimestampAction,
-  'action:normalize-and-deduplicate': executeNormalizeAndDeduplicateAction,
   'action:skip': executeSkipAction,
-  'action:process-children': executeProcessChildrenAction as ActionExecutor,
+
   'action:create-node-with-filtered-children': executeCreateNodeWithFilteredChildrenAction as ActionExecutor,
   'action:create-hierarchical-nodes': executeCreateHierarchicalNodesAction as ActionExecutor
 }
@@ -73,12 +69,7 @@ export function executeActionWithWalk(
     })
     return
   }
-
-  if (action.type === 'action:process-children') {
-    executeProcessChildrenAction(action, ctx)
-  } else {
-    executeAction(action, ctx)
-  }
+  executeAction(action, ctx)
 }
 
 export function executeAction(

@@ -38,16 +38,7 @@ export function executeExtractTextAction(action: ActionCanvasNode, ctx: ActionEx
   }
 }
 
-export function executeExtractPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
 
-  const sourceProperty = (action.config.sourceProperty as string) || ''
-  const targetProperty = (action.config.targetProperty as string) || sourceProperty
-
-  if (sourceProperty && ctx.currentGraphNode.properties[sourceProperty]) {
-    ctx.currentGraphNode.properties[targetProperty] = ctx.currentGraphNode.properties[sourceProperty]
-  }
-}
 
 export function executeCopyPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.currentGraphNode) return

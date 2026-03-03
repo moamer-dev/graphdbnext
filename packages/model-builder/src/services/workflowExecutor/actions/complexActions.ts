@@ -22,18 +22,31 @@ export function executeExtractAndNormalizeAttributesAction(action: ActionCanvasN
   }>) || []
 
   attributeMappings.forEach(mapping => {
-    const propertyKey = ctx.evaluateTemplate(mapping.propertyKey, apiResponseData)
+    const propertyKey = mapping.propertyKey
+      ? ctx.evaluateTemplate(mapping.propertyKey, apiResponseData)
+      : mapping.attributeName
+
     let attrValue = ctx.xmlElement.getAttribute(mapping.attributeName)
-    if (attrValue === null) {
-      attrValue = mapping.defaultValue || ''
-      if (mapping.defaultValue && mapping.defaultValue.includes('{{ $json.')) {
-        const evaluated = evaluateExpression(mapping.defaultValue, { json: apiResponseData })
-        attrValue = String(evaluated || attrValue)
+    // Use default value if attribute is missing OR if it is an empty string
+    if (attrValue === null || attrValue === '') {
+      const defaultValue = mapping.defaultValue !== undefined ? mapping.defaultValue : null
+      if (defaultValue !== null) {
+        attrValue = defaultValue
+        if (attrValue.includes('{{ $json.')) {
+          const evaluated = evaluateExpression(attrValue, { json: apiResponseData })
+          attrValue = String(evaluated || attrValue)
+        }
       }
     }
-    if (propertyKey && attrValue) {
+
+    if (propertyKey && attrValue !== null) {
       const normalized = ctx.applyTransforms(attrValue, mapping.transforms)
       ctx.currentGraphNode!.properties[propertyKey] = normalized
+
+      // If removeOriginal is set and we mapped to a different key, remove the raw attribute property
+      if (action.config.removeOriginal && propertyKey !== mapping.attributeName) {
+        delete ctx.currentGraphNode!.properties[mapping.attributeName]
+      }
     }
   })
 }
@@ -387,38 +400,5 @@ export function executeExtractAndComputePropertyAction(action: ActionCanvasNode,
   ctx.currentGraphNode.properties[propertyKey] = computed
 }
 
-export function executeNormalizeAndDeduplicateAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
 
-  const sourceProperty = (action.config.sourceProperty as string) || ''
-  const targetProperty = (action.config.targetProperty as string) || ''
-  const transforms = (action.config.transforms as Array<{
-    type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'
-    replaceFrom?: string
-    replaceTo?: string
-    regexPattern?: string
-    regexReplacement?: string
-  }>) || []
-  const deduplicate = (action.config.deduplicate as boolean) ?? true
-
-  if (!sourceProperty || !targetProperty) return
-
-  const sourceValue = ctx.currentGraphNode.properties[sourceProperty]
-  if (sourceValue === undefined) return
-
-  let values: string[] = []
-  if (Array.isArray(sourceValue)) {
-    values = sourceValue.map(v => String(v))
-  } else {
-    const str = String(sourceValue)
-    values = str.includes(',') ? str.split(',').map(v => v.trim()) : [str]
-  }
-
-  let normalized = values.map(v => ctx.applyTransforms(v, transforms))
-  if (deduplicate) {
-    normalized = Array.from(new Set(normalized))
-  }
-
-  ctx.currentGraphNode.properties[targetProperty] = normalized.length === 1 ? normalized[0] : normalized
-}
 

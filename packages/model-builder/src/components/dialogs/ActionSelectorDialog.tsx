@@ -24,27 +24,52 @@ interface ActionSelectorDialogProps {
 const quickActions: Array<{ label: string; type: ActionNodeType }> = [
   { label: 'Create Text Node', type: 'action:create-text-node' },
   { label: 'Create Token Nodes', type: 'action:create-token-nodes' },
-  { label: 'Create Node', type: 'action:create-node-complete' },
-  { label: 'Extract & Normalize Attributes', type: 'action:extract-and-normalize-attributes' },
+  { label: 'Create Node (Complete)', type: 'action:create-node-complete' },
+  { label: 'Bulk Attribute Mapper', type: 'action:extract-and-normalize-attributes' },
   { label: 'Create Annotation Nodes', type: 'action:create-annotation-nodes' },
   { label: 'Create Reference Chain', type: 'action:create-reference-chain' },
-  { label: 'Merge Children Text', type: 'action:merge-children-text' },
-  { label: 'Extract & Compute Property', type: 'action:extract-and-compute-property' },
-  { label: 'Normalize & Deduplicate', type: 'action:normalize-and-deduplicate' },
+  { label: 'Create Conditional Node', type: 'action:create-conditional-node' },
+  { label: 'Create Hierarchical Nodes', type: 'action:create-hierarchical-nodes' },
+  { label: 'Create Node with Filtered Children', type: 'action:create-node-with-filtered-children' },
 ]
 
 const basicActions: Array<{ label: string; type: ActionNodeType }> = [
   { label: 'Set Property', type: 'action:set-property' },
   { label: 'Create Relationship', type: 'action:create-relationship' },
   { label: 'Skip Element', type: 'action:skip' },
-  { label: 'Process Children', type: 'action:process-children' },
-  { label: 'Extract Property', type: 'action:extract-property' },
+
+
   { label: 'Transform Text', type: 'action:transform-text' },
   { label: 'Extract Text', type: 'action:extract-text' },
+]
+
+const advancedActions: Array<{ label: string; type: ActionNodeType }> = [
+  { label: 'Update Node', type: 'action:update-node' },
+  { label: 'Delete Node', type: 'action:delete-node' },
+  { label: 'Clone Node', type: 'action:clone-node' },
+  { label: 'Merge Nodes', type: 'action:merge-nodes' },
+  { label: 'Update Relationship', type: 'action:update-relationship' },
+  { label: 'Delete Relationship', type: 'action:delete-relationship' },
+  { label: 'Reverse Relationship', type: 'action:reverse-relationship' },
+  { label: 'Validate Node', type: 'action:validate-node' },
+  { label: 'Validate Relationship', type: 'action:validate-relationship' },
+  { label: 'Report Error', type: 'action:report-error' },
+]
+
+const dataActions: Array<{ label: string; type: ActionNodeType }> = [
+  { label: 'Extract & Compute Property', type: 'action:extract-and-compute-property' },
+  { label: 'Copy Property', type: 'action:copy-property' },
+  { label: 'Merge Properties', type: 'action:merge-properties' },
+  { label: 'Split Property', type: 'action:split-property' },
+  { label: 'Format Property', type: 'action:format-property' },
+  { label: 'Merge Children Text', type: 'action:merge-children-text' },
+  { label: 'Add Metadata', type: 'action:add-metadata' },
+  { label: 'Tag Node', type: 'action:tag-node' },
+  { label: 'Set Timestamp', type: 'action:set-timestamp' },
+  { label: 'Extract XML Content', type: 'action:extract-xml-content' },
   { label: 'Create Annotation', type: 'action:create-annotation' },
   { label: 'Create Reference', type: 'action:create-reference' },
   { label: 'Defer Relationship', type: 'action:defer-relationship' },
-  { label: 'Extract XML Content', type: 'action:extract-xml-content' }
 ]
 
 export function ActionSelectorDialog ({ open, onClose, onSelect, existingActionTypes = [] }: ActionSelectorDialogProps) {
@@ -56,6 +81,14 @@ export function ActionSelectorDialog ({ open, onClose, onSelect, existingActionT
   )
 
   const filteredBasicActions = basicActions.filter(action =>
+    action.label.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredAdvancedActions = advancedActions.filter(action =>
+    action.label.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredDataActions = dataActions.filter(action =>
     action.label.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -154,12 +187,12 @@ export function ActionSelectorDialog ({ open, onClose, onSelect, existingActionT
             </div>
           </div>
 
-          {/* Basic Actions Section */}
+          {/* Advanced Actions Section */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">Basic Actions</Label>
+            <Label className="text-sm font-semibold">Node & Relationship Manipulation</Label>
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
-              {filteredBasicActions.length > 0 ? (
-                filteredBasicActions.map((action) => {
+              {filteredAdvancedActions.length > 0 ? (
+                filteredAdvancedActions.map((action) => {
                   const isSelected = selectedActions.has(action.type)
                   const isExisting = existingActionTypes.includes(action.type)
                   const isDisabled = isExisting
@@ -196,7 +229,55 @@ export function ActionSelectorDialog ({ open, onClose, onSelect, existingActionT
                 })
               ) : (
                 <div className="col-span-2 text-center text-xs text-muted-foreground py-4">
-                  No basic actions found
+                  No advanced actions found
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Data Actions Section */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Data, Metadata & Mapping</Label>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
+              {filteredDataActions.length > 0 ? (
+                filteredDataActions.map((action) => {
+                  const isSelected = selectedActions.has(action.type)
+                  const isExisting = existingActionTypes.includes(action.type)
+                  const isDisabled = isExisting
+                  return (
+                    <button
+                      key={action.type}
+                      onClick={() => !isDisabled && toggleAction(action.type)}
+                      disabled={isDisabled}
+                      className={`p-2 text-left text-xs rounded border transition-colors ${
+                        isDisabled
+                          ? 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed'
+                          : isSelected
+                          ? 'bg-purple-100 border-purple-300'
+                          : 'bg-background border-border hover:bg-muted'
+                      }`}
+                      title={isDisabled ? 'Already in group' : undefined}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                          isDisabled
+                            ? 'bg-gray-300 border-gray-300'
+                            : isSelected
+                            ? 'bg-purple-600 border-purple-600'
+                            : 'border-gray-300'
+                        }`}>
+                          {isSelected && !isDisabled && <Check className="h-3 w-3 text-white" />}
+                          {isDisabled && <span className="text-[8px] text-gray-500">✓</span>}
+                        </div>
+                        <span className="flex-1">{action.label}</span>
+                        {isDisabled && <span className="text-[9px] text-gray-500">(in group)</span>}
+                      </div>
+                    </button>
+                  )
+                })
+              ) : (
+                <div className="col-span-2 text-center text-xs text-muted-foreground py-4">
+                  No data actions found
                 </div>
               )}
             </div>

@@ -29,31 +29,7 @@ export function executeSkipAction(action: ActionCanvasNode, ctx: ActionExecution
   }
 }
 
-export function executeProcessChildrenAction(action: ActionCanvasNode, ctx: SpecialActionExecutionContext): void {
-  const filterByTag = (action.config.filterByTag as string[]) || []
-  const excludeTags = (action.config.excludeTags as string[]) || []
-  const recursive = (action.config.recursive as boolean) ?? false
 
-  if (!ctx.xmlElement) return
-
-  const children = ctx.xmlElement.childNodes ? Array.from(ctx.xmlElement.childNodes).filter((n: Node) => n.nodeType === 1) as Element[] : []
-  
-  children.forEach((child) => {
-    const tag = child.tagName ? child.tagName.toLowerCase() : ''
-    
-    if (excludeTags.includes(tag)) {
-      return
-    }
-    
-    if (filterByTag.length > 0 && !filterByTag.includes(tag)) {
-      return
-    }
-
-    if (recursive) {
-      ctx.walk(child, ctx.currentGraphNode, 0)
-    }
-  })
-}
 
 export function executeCreateNodeWithFilteredChildrenAction(action: ActionCanvasNode, ctx: SpecialActionExecutionContext): void {
   if (!ctx.builderNode) return

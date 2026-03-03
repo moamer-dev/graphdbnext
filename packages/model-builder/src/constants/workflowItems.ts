@@ -259,8 +259,7 @@ export const actionCategories = {
     color: 'text-blue-600',
     bgColor: 'bg-blue-100',
     actions: [
-      { label: 'Set Property', type: 'action:set-property', icon: Edit, description: 'Set node property value', color: 'text-pink-600', bgColor: 'bg-pink-50' },
-      { label: 'Extract Property', type: 'action:extract-property', icon: FileDown, description: 'Extract property from element', color: 'text-teal-600', bgColor: 'bg-teal-50' }
+      { label: 'Set Property', type: 'action:set-property', icon: Edit, description: 'Set node property value', color: 'text-pink-600', bgColor: 'bg-pink-50' }
     ]
   },
   'Relationships': {
@@ -277,7 +276,7 @@ export const actionCategories = {
     bgColor: 'bg-red-100',
     actions: [
       { label: 'Skip Element', type: 'action:skip', icon: SkipForward, description: 'Skip processing this element', color: 'text-red-600', bgColor: 'bg-red-50' },
-      { label: 'Process Children', type: 'action:process-children', icon: Play, description: 'Process child elements', color: 'text-green-600', bgColor: 'bg-green-50' }
+
     ]
   },
   'Text Processing': {

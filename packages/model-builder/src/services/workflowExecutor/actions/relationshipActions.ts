@@ -2,20 +2,46 @@ import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 import type { ActionExecutionContext } from './types'
 
 export function executeCreateRelationshipAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode || !ctx.parentGraphNode) return
-
   const apiResponseData = ctx.getApiResponseData(action)
+  
+  // 1. Determine Source Node
+  const fromNodeAlias = (action.config.fromNode as string) || 'current'
+  const sourceNode = fromNodeAlias === 'parent' ? ctx.parentGraphNode : ctx.currentGraphNode
+  
+  // 2. Determine Target Node
+  const toNodeAlias = (action.config.toNode as string) || 'parent'
+  const targetNode = toNodeAlias === 'current' ? ctx.currentGraphNode : ctx.parentGraphNode
+  
+  if (!sourceNode || !targetNode) return
+
+  // 3. Resolve Relationship Type
   const relTypeName = ctx.evaluateTemplate((action.config.relationshipType as string) || 'relatedTo', apiResponseData)
   const relType = ctx.relationships.find(r => r.type === relTypeName) || ctx.relationships[0]
   
   if (relType) {
-    const rel = ctx.createRelationship(ctx.currentGraphNode, ctx.parentGraphNode, relType)
+    // 4. Resolve Properties
+    const properties: Record<string, unknown> = {}
+    const configProperties = (action.config.properties as Array<{ key: string, value: string }>) || []
+    
+    configProperties.forEach(prop => {
+      if (prop.key) {
+        properties[prop.key] = ctx.evaluateTemplate(prop.value, apiResponseData)
+      }
+    })
+
+    const finalRelType = relType 
+      ? { ...relType, type: relTypeName } 
+      : { type: relTypeName, from: '', to: '', id: '', cardinality: '1:N' as const }
+
+    const rel = ctx.createRelationship(sourceNode, targetNode, finalRelType as any, properties)
     ctx.graphRels.push(rel)
   }
 }
 
 export function executeDeferRelationshipAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const relationshipType = (action.config.relationshipType as string) || 'relatedTo'
+  const apiResponseData = ctx.getApiResponseData(action)
+  const relationshipTypeTemplate = (action.config.relationshipType as string) || 'relatedTo'
+  const relationshipType = ctx.evaluateTemplate(relationshipTypeTemplate, apiResponseData)
   const targetNodeLabel = (action.config.targetNodeLabel as string) || ''
   const condition = (action.config.condition as 'always' | 'hasAttribute' | 'hasText') || 'always'
 
@@ -34,8 +60,12 @@ export function executeDeferRelationshipAction(action: ActionCanvasNode, ctx: Ac
 
   if (shouldCreate && ctx.currentGraphNode && ctx.parentGraphNode && targetNodeLabel) {
     const relType = ctx.relationships.find(r => r.type === relationshipType) || ctx.relationships[0]
-    if (relType) {
-      const rel = ctx.createRelationship(ctx.currentGraphNode, ctx.parentGraphNode, relType)
+    if (relType || relationshipType) {
+      const finalRelType = relType 
+        ? { ...relType, type: relationshipType } 
+        : { type: relationshipType, from: '', to: '', id: '', cardinality: '1:N' as const }
+        
+      const rel = ctx.createRelationship(ctx.currentGraphNode, ctx.parentGraphNode, finalRelType as any)
       ctx.graphRels.push(rel)
     }
   }

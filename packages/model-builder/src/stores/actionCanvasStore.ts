@@ -44,6 +44,21 @@ export type ActionNodeType =
   | 'action:add-metadata'
   | 'action:tag-node'
   | 'action:set-timestamp'
+  | 'action:report-error'
+  | 'action:add-metadata'
+  | 'action:update-node'
+  | 'action:delete-node'
+  | 'action:clone-node'
+  | 'action:merge-nodes'
+  | 'action:validate-node'
+  | 'action:validate-relationship'
+  | 'action:create-conditional-node'
+  | 'action:create-hierarchical-nodes'
+  | 'action:create-node-with-filtered-children'
+  | 'action:copy-property'
+  | 'action:merge-properties'
+  | 'action:split-property'
+  | 'action:format-property'
 
 export interface ActionCanvasNode {
   id: string

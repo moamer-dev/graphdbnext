@@ -62,16 +62,8 @@ export interface ActionConfigurationState {
     format: 'full' | 'minimal'
   }
 
-  processChildrenConfig: {
-    filterByTag: string[]
-    excludeTags: string[]
-    recursive: boolean
-  }
-  extractPropertyConfig: {
-    sourceAttribute: string
-    targetPropertyKey: string
-    defaultValue: string
-  }
+
+
   transformTextConfig: {
     transforms: TextTransform[]
     targetProperty: string
@@ -115,6 +107,7 @@ export interface ActionConfigurationState {
       transforms: TextTransform[]
       defaultValue?: string
     }>
+    removeOriginal: boolean
   }
   createAnnotationNodesConfig: {
     referenceAttribute: string
@@ -180,10 +173,68 @@ export interface ActionConfigurationState {
     }>
     parentRelationship: string
   }
-  normalizeAndDeduplicateConfig: {
-    sourceProperty: string
-    targetProperty: string
-    transforms: TextTransform[]
+
+  updateNodeConfig: {
+    properties: Record<string, unknown>
+    labels: string[]
+  }
+  deleteNodeConfig: {
+    condition: {
+      propertyMatch?: Record<string, unknown>
+    }
+  }
+  cloneNodeConfig: {
+    modifications: Record<string, unknown>
+    newLabels?: string[]
+  }
+  mergeNodesConfig: {
+    targetNodeIds: number[]
+    mergeStrategy: 'union' | 'preferSource' | 'preferTarget'
+  }
+  validateNodeConfig: {
+    schema?: Record<string, unknown>
+    requiredProperties: string[]
+  }
+  reportErrorConfig: {
+    errorMessage: string
+    errorCode: string
+    severity: 'error' | 'warning' | 'info'
+  }
+  addMetadataConfig: {
+    metadata: Record<string, unknown>
+  }
+  tagNodeConfig: {
+    tags: string[]
+  }
+  setTimestampConfig: {
+    timestampType: 'created' | 'modified' | 'both'
+  }
+  createConditionalNodeConfig: {
+    conditions: Array<{
+      type: 'hasAttribute' | 'hasText' | 'hasChildren'
+      attributeName?: string
+      attributeValue?: string
+      minTextLength?: number
+      childTag?: string
+    }>
+    operator: 'AND' | 'OR'
+    nodeLabel: string
+    parentRelationship: string
+  }
+  createHierarchicalNodesConfig: {
+    parentNodeLabel: string
+    childNodeLabel: string
+    parentRelationship: string
+    childRelationship: string
+    filterByTag: string[]
+    recursive: boolean
+  }
+  createNodeWithFilteredChildrenConfig: {
+    nodeLabel: string
+    filterByTag: string[]
+    excludeTags: string[]
+    recursive: boolean
+    parentRelationship: string
   }
 
   // Actions (setters)
@@ -205,8 +256,8 @@ export interface ActionConfigurationState {
   setCreateAnnotationConfig: (config: Partial<ActionConfigurationState['createAnnotationConfig']>) => void
   setCreateReferenceConfig: (config: Partial<ActionConfigurationState['createReferenceConfig']>) => void
   setExtractXmlContentConfig: (config: Partial<ActionConfigurationState['extractXmlContentConfig']>) => void
-  setProcessChildrenConfig: (config: Partial<ActionConfigurationState['processChildrenConfig']>) => void
-  setExtractPropertyConfig: (config: Partial<ActionConfigurationState['extractPropertyConfig']>) => void
+
+
   setTransformTextConfig: (config: Partial<ActionConfigurationState['transformTextConfig']>) => void
   setDeferRelationshipConfig: (config: Partial<ActionConfigurationState['deferRelationshipConfig']>) => void
   setSkipConfig: (config: Partial<ActionConfigurationState['skipConfig']>) => void
@@ -219,7 +270,19 @@ export interface ActionConfigurationState {
   setCreateTextNodeConfig: (config: Partial<ActionConfigurationState['createTextNodeConfig']>) => void
   setCreateTokenNodesConfig: (config: Partial<ActionConfigurationState['createTokenNodesConfig']>) => void
   setCreateNodeWithAttributesConfig: (config: Partial<ActionConfigurationState['createNodeWithAttributesConfig']>) => void
-  setNormalizeAndDeduplicateConfig: (config: Partial<ActionConfigurationState['normalizeAndDeduplicateConfig']>) => void
+
+  setUpdateNodeConfig: (config: Partial<ActionConfigurationState['updateNodeConfig']>) => void
+  setDeleteNodeConfig: (config: Partial<ActionConfigurationState['deleteNodeConfig']>) => void
+  setCloneNodeConfig: (config: Partial<ActionConfigurationState['cloneNodeConfig']>) => void
+  setMergeNodesConfig: (config: Partial<ActionConfigurationState['mergeNodesConfig']>) => void
+  setValidateNodeConfig: (config: Partial<ActionConfigurationState['validateNodeConfig']>) => void
+  setReportErrorConfig: (config: Partial<ActionConfigurationState['reportErrorConfig']>) => void
+  setAddMetadataConfig: (config: Partial<ActionConfigurationState['addMetadataConfig']>) => void
+  setTagNodeConfig: (config: Partial<ActionConfigurationState['tagNodeConfig']>) => void
+  setSetTimestampConfig: (config: Partial<ActionConfigurationState['setTimestampConfig']>) => void
+  setCreateConditionalNodeConfig: (config: Partial<ActionConfigurationState['createConditionalNodeConfig']>) => void
+  setCreateHierarchicalNodesConfig: (config: Partial<ActionConfigurationState['createHierarchicalNodesConfig']>) => void
+  setCreateNodeWithFilteredChildrenConfig: (config: Partial<ActionConfigurationState['createNodeWithFilteredChildrenConfig']>) => void
 
   // Helper functions
   loadFromActionNode: (actionNode: ActionCanvasNode | null) => void
@@ -258,6 +321,18 @@ const initialState: Omit<ActionConfigurationState, keyof {
   setCreateTokenNodesConfig: never
   setCreateNodeWithAttributesConfig: never
   setNormalizeAndDeduplicateConfig: never
+  setUpdateNodeConfig: never
+  setDeleteNodeConfig: never
+  setCloneNodeConfig: never
+  setMergeNodesConfig: never
+  setValidateNodeConfig: never
+  setReportErrorConfig: never
+  setAddMetadataConfig: never
+  setTagNodeConfig: never
+  setSetTimestampConfig: never
+  setCreateConditionalNodeConfig: never
+  setCreateHierarchicalNodesConfig: never
+  setCreateNodeWithFilteredChildrenConfig: never
   loadFromActionNode: never
   getActionNodeConfig: never
 }> = {
@@ -304,16 +379,8 @@ const initialState: Omit<ActionConfigurationState, keyof {
     format: 'full'
   },
 
-  processChildrenConfig: {
-    filterByTag: [],
-    excludeTags: [],
-    recursive: true
-  },
-  extractPropertyConfig: {
-    sourceAttribute: '',
-    targetPropertyKey: '',
-    defaultValue: ''
-  },
+
+
   transformTextConfig: {
     transforms: [],
     targetProperty: '',
@@ -343,7 +410,8 @@ const initialState: Omit<ActionConfigurationState, keyof {
     }
   },
   extractAndNormalizeAttributesConfig: {
-    attributeMappings: []
+    attributeMappings: [],
+    removeOriginal: false
   },
   createAnnotationNodesConfig: {
     referenceAttribute: '',
@@ -396,10 +464,59 @@ const initialState: Omit<ActionConfigurationState, keyof {
     attributeMappings: [],
     parentRelationship: 'contains'
   },
-  normalizeAndDeduplicateConfig: {
-    sourceProperty: '',
-    targetProperty: '',
-    transforms: []
+
+  updateNodeConfig: {
+    properties: {},
+    labels: []
+  },
+  deleteNodeConfig: {
+    condition: {}
+  },
+  cloneNodeConfig: {
+    modifications: {},
+    newLabels: []
+  },
+  mergeNodesConfig: {
+    targetNodeIds: [],
+    mergeStrategy: 'union'
+  },
+  validateNodeConfig: {
+    requiredProperties: []
+  },
+  reportErrorConfig: {
+    errorMessage: 'Validation error',
+    errorCode: 'ERROR',
+    severity: 'error'
+  },
+  addMetadataConfig: {
+    metadata: {}
+  },
+  tagNodeConfig: {
+    tags: []
+  },
+  setTimestampConfig: {
+    timestampType: 'both'
+  },
+  createConditionalNodeConfig: {
+    conditions: [],
+    operator: 'AND',
+    nodeLabel: '',
+    parentRelationship: 'contains'
+  },
+  createHierarchicalNodesConfig: {
+    parentNodeLabel: '',
+    childNodeLabel: '',
+    parentRelationship: 'contains',
+    childRelationship: 'contains',
+    filterByTag: [],
+    recursive: true
+  },
+  createNodeWithFilteredChildrenConfig: {
+    nodeLabel: '',
+    filterByTag: [],
+    excludeTags: [],
+    recursive: false,
+    parentRelationship: 'contains'
   }
 }
 
@@ -423,8 +540,8 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
   setCreateAnnotationConfig: (config) => set((state) => ({ createAnnotationConfig: { ...state.createAnnotationConfig, ...config } })),
   setCreateReferenceConfig: (config) => set((state) => ({ createReferenceConfig: { ...state.createReferenceConfig, ...config } })),
   setExtractXmlContentConfig: (config) => set((state) => ({ extractXmlContentConfig: { ...state.extractXmlContentConfig, ...config } })),
-  setProcessChildrenConfig: (config) => set((state) => ({ processChildrenConfig: { ...state.processChildrenConfig, ...config } })),
-  setExtractPropertyConfig: (config) => set((state) => ({ extractPropertyConfig: { ...state.extractPropertyConfig, ...config } })),
+
+
   setTransformTextConfig: (config) => set((state) => ({ transformTextConfig: { ...state.transformTextConfig, ...config } })),
   setDeferRelationshipConfig: (config) => set((state) => ({ deferRelationshipConfig: { ...state.deferRelationshipConfig, ...config } })),
   setSkipConfig: (config) => set((state) => ({ skipConfig: { ...state.skipConfig, ...config } })),
@@ -437,7 +554,19 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
   setCreateTextNodeConfig: (config) => set((state) => ({ createTextNodeConfig: { ...state.createTextNodeConfig, ...config } })),
   setCreateTokenNodesConfig: (config) => set((state) => ({ createTokenNodesConfig: { ...state.createTokenNodesConfig, ...config } })),
   setCreateNodeWithAttributesConfig: (config) => set((state) => ({ createNodeWithAttributesConfig: { ...state.createNodeWithAttributesConfig, ...config } })),
-  setNormalizeAndDeduplicateConfig: (config) => set((state) => ({ normalizeAndDeduplicateConfig: { ...state.normalizeAndDeduplicateConfig, ...config } })),
+
+  setUpdateNodeConfig: (config) => set((state) => ({ updateNodeConfig: { ...state.updateNodeConfig, ...config } })),
+  setDeleteNodeConfig: (config) => set((state) => ({ deleteNodeConfig: { ...state.deleteNodeConfig, ...config } })),
+  setCloneNodeConfig: (config) => set((state) => ({ cloneNodeConfig: { ...state.cloneNodeConfig, ...config } })),
+  setMergeNodesConfig: (config) => set((state) => ({ mergeNodesConfig: { ...state.mergeNodesConfig, ...config } })),
+  setValidateNodeConfig: (config) => set((state) => ({ validateNodeConfig: { ...state.validateNodeConfig, ...config } })),
+  setReportErrorConfig: (config) => set((state) => ({ reportErrorConfig: { ...state.reportErrorConfig, ...config } })),
+  setAddMetadataConfig: (config) => set((state) => ({ addMetadataConfig: { ...state.addMetadataConfig, ...config } })),
+  setTagNodeConfig: (config) => set((state) => ({ tagNodeConfig: { ...state.tagNodeConfig, ...config } })),
+  setSetTimestampConfig: (config) => set((state) => ({ setTimestampConfig: { ...state.setTimestampConfig, ...config } })),
+  setCreateConditionalNodeConfig: (config) => set((state) => ({ createConditionalNodeConfig: { ...state.createConditionalNodeConfig, ...config } })),
+  setCreateHierarchicalNodesConfig: (config) => set((state) => ({ createHierarchicalNodesConfig: { ...state.createHierarchicalNodesConfig, ...config } })),
+  setCreateNodeWithFilteredChildrenConfig: (config) => set((state) => ({ createNodeWithFilteredChildrenConfig: { ...state.createNodeWithFilteredChildrenConfig, ...config } })),
 
   loadFromActionNode: (actionNode) => {
     if (!actionNode) {
@@ -520,24 +649,8 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:process-children':
-        set({
-          processChildrenConfig: {
-            filterByTag: (config.filterByTag as string[]) || state.processChildrenConfig.filterByTag,
-            excludeTags: (config.excludeTags as string[]) || state.processChildrenConfig.excludeTags,
-            recursive: (config.recursive as boolean) ?? state.processChildrenConfig.recursive
-          }
-        })
-        break
-      case 'action:extract-property':
-        set({
-          extractPropertyConfig: {
-            sourceAttribute: (config.sourceAttribute as string) || state.extractPropertyConfig.sourceAttribute,
-            targetPropertyKey: (config.targetPropertyKey as string) || state.extractPropertyConfig.targetPropertyKey,
-            defaultValue: (config.defaultValue as string) ?? state.extractPropertyConfig.defaultValue
-          }
-        })
-        break
+
+
       case 'action:transform-text':
         if (config.transforms) {
           set({
@@ -614,7 +727,8 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
               propertyKey: string
               transforms: TextTransform[]
               defaultValue?: string
-            }>) || state.extractAndNormalizeAttributesConfig.attributeMappings
+            }>) || state.extractAndNormalizeAttributesConfig.attributeMappings,
+            removeOriginal: (config.removeOriginal as boolean) ?? state.extractAndNormalizeAttributesConfig.removeOriginal
           }
         })
         break
@@ -691,12 +805,105 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-      case 'action:normalize-and-deduplicate':
+      case 'action:update-node':
         set({
-          normalizeAndDeduplicateConfig: {
-            sourceProperty: (config.sourceProperty as string) || state.normalizeAndDeduplicateConfig.sourceProperty,
-            targetProperty: (config.targetProperty as string) || state.normalizeAndDeduplicateConfig.targetProperty,
-            transforms: (config.transforms as TextTransform[]) || state.normalizeAndDeduplicateConfig.transforms
+          updateNodeConfig: {
+            properties: (config.properties as Record<string, unknown>) || state.updateNodeConfig.properties,
+            labels: (config.labels as string[]) || state.updateNodeConfig.labels
+          }
+        })
+        break
+      case 'action:delete-node':
+        set({
+          deleteNodeConfig: {
+            condition: (config.condition as any) || state.deleteNodeConfig.condition
+          }
+        })
+        break
+      case 'action:clone-node':
+        set({
+          cloneNodeConfig: {
+            modifications: (config.modifications as Record<string, unknown>) || state.cloneNodeConfig.modifications,
+            newLabels: (config.newLabels as string[]) || state.cloneNodeConfig.newLabels
+          }
+        })
+        break
+      case 'action:merge-nodes':
+        set({
+          mergeNodesConfig: {
+            targetNodeIds: (config.targetNodeIds as number[]) || state.mergeNodesConfig.targetNodeIds,
+            mergeStrategy: (config.mergeStrategy as 'union' | 'preferSource' | 'preferTarget') || state.mergeNodesConfig.mergeStrategy
+          }
+        })
+        break
+      case 'action:validate-node':
+        set({
+          validateNodeConfig: {
+            schema: (config.schema as Record<string, unknown>) || state.validateNodeConfig.schema,
+            requiredProperties: (config.requiredProperties as string[]) || state.validateNodeConfig.requiredProperties
+          }
+        })
+        break
+      case 'action:report-error':
+        set({
+          reportErrorConfig: {
+            errorMessage: (config.errorMessage as string) || state.reportErrorConfig.errorMessage,
+            errorCode: (config.errorCode as string) || state.reportErrorConfig.errorCode,
+            severity: (config.severity as 'error' | 'warning' | 'info') || state.reportErrorConfig.severity
+          }
+        })
+        break
+      case 'action:add-metadata':
+        set({
+          addMetadataConfig: {
+            metadata: (config.metadata as Record<string, unknown>) || state.addMetadataConfig.metadata
+          }
+        })
+        break
+      case 'action:tag-node':
+        set({
+          tagNodeConfig: {
+            tags: (config.tags as string[]) || state.tagNodeConfig.tags
+          }
+        })
+        break
+      case 'action:set-timestamp':
+        set({
+          setTimestampConfig: {
+            timestampType: (config.timestampType as 'created' | 'modified' | 'both') || state.setTimestampConfig.timestampType
+          }
+        })
+        break
+      case 'action:create-conditional-node':
+        set({
+          createConditionalNodeConfig: {
+            conditions: (config.conditions as any[]) || state.createConditionalNodeConfig.conditions,
+            operator: (config.operator as 'AND' | 'OR') || state.createConditionalNodeConfig.operator,
+            nodeLabel: (config.nodeLabel as string) || state.createConditionalNodeConfig.nodeLabel,
+            parentRelationship: (config.parentRelationship as string) || state.createConditionalNodeConfig.parentRelationship
+          }
+        })
+        break
+      case 'action:create-hierarchical-nodes':
+        set({
+          createHierarchicalNodesConfig: {
+            parentNodeLabel: (config.parentNodeLabel as string) || state.createHierarchicalNodesConfig.parentNodeLabel,
+            childNodeLabel: (config.childNodeLabel as string) || state.createHierarchicalNodesConfig.childNodeLabel,
+            parentRelationship: (config.parentRelationship as string) || state.createHierarchicalNodesConfig.parentRelationship,
+            childRelationship: (config.childRelationship as string) || state.createHierarchicalNodesConfig.childRelationship,
+            filterByTag: (config.filterByTag as string[]) || state.createHierarchicalNodesConfig.filterByTag,
+            recursive: config.recursive !== undefined ? (config.recursive as boolean) : state.createHierarchicalNodesConfig.recursive
+          }
+        })
+        break
+      case 'action:create-node-with-filtered-children':
+        set({
+          createNodeWithFilteredChildrenConfig: {
+            nodeLabel: (config.nodeLabel as string) || state.createNodeWithFilteredChildrenConfig.nodeLabel,
+            filterByTag: (config.filterByTag as string[]) || state.createNodeWithFilteredChildrenConfig.filterByTag,
+            excludeTags: (config.excludeTags as string[]) || state.createNodeWithFilteredChildrenConfig.excludeTags,
+            recursive: config.recursive !== undefined ? (config.recursive as boolean) : state.createNodeWithFilteredChildrenConfig.recursive,
+            parentRelationship: (config.parentRelationship as string) || state.createNodeWithFilteredChildrenConfig.parentRelationship
           }
         })
         break
@@ -708,16 +915,8 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
     const config: Record<string, unknown> = {}
 
     switch (actionType) {
-      case 'action:process-children':
-        config.filterByTag = state.processChildrenConfig.filterByTag
-        config.excludeTags = state.processChildrenConfig.excludeTags
-        config.recursive = state.processChildrenConfig.recursive
-        break
-      case 'action:extract-property':
-        config.sourceAttribute = state.extractPropertyConfig.sourceAttribute
-        config.targetPropertyKey = state.extractPropertyConfig.targetPropertyKey
-        config.defaultValue = state.extractPropertyConfig.defaultValue
-        break
+
+
       case 'action:transform-text':
         config.transforms = state.transformTextConfig.transforms
         config.targetProperty = state.transformTextConfig.targetProperty
@@ -736,6 +935,7 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         break
       case 'action:extract-and-normalize-attributes':
         config.attributeMappings = state.extractAndNormalizeAttributesConfig.attributeMappings
+        config.removeOriginal = state.extractAndNormalizeAttributesConfig.removeOriginal
         break
       case 'action:create-annotation-nodes':
         config.referenceAttribute = state.createAnnotationNodesConfig.referenceAttribute
@@ -787,10 +987,60 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         config.attributeMappings = state.createNodeWithAttributesConfig.attributeMappings
         config.parentRelationship = state.createNodeWithAttributesConfig.parentRelationship
         break
-      case 'action:normalize-and-deduplicate':
-        config.sourceProperty = state.normalizeAndDeduplicateConfig.sourceProperty
-        config.targetProperty = state.normalizeAndDeduplicateConfig.targetProperty
-        config.transforms = state.normalizeAndDeduplicateConfig.transforms
+
+      case 'action:update-node':
+        config.properties = state.updateNodeConfig.properties
+        config.labels = state.updateNodeConfig.labels
+        break
+      case 'action:delete-node':
+        config.condition = state.deleteNodeConfig.condition
+        break
+      case 'action:clone-node':
+        config.modifications = state.cloneNodeConfig.modifications
+        config.newLabels = state.cloneNodeConfig.newLabels
+        break
+      case 'action:merge-nodes':
+        config.targetNodeIds = state.mergeNodesConfig.targetNodeIds
+        config.mergeStrategy = state.mergeNodesConfig.mergeStrategy
+        break
+      case 'action:validate-node':
+        config.schema = state.validateNodeConfig.schema
+        config.requiredProperties = state.validateNodeConfig.requiredProperties
+        break
+      case 'action:report-error':
+        config.errorMessage = state.reportErrorConfig.errorMessage
+        config.errorCode = state.reportErrorConfig.errorCode
+        config.severity = state.reportErrorConfig.severity
+        break
+      case 'action:add-metadata':
+        config.metadata = state.addMetadataConfig.metadata
+        break
+      case 'action:tag-node':
+        config.tags = state.tagNodeConfig.tags
+        break
+      case 'action:set-timestamp':
+        config.timestampType = state.setTimestampConfig.timestampType
+        break
+      case 'action:create-conditional-node':
+        config.conditions = state.createConditionalNodeConfig.conditions
+        config.operator = state.createConditionalNodeConfig.operator
+        config.nodeLabel = state.createConditionalNodeConfig.nodeLabel
+        config.parentRelationship = state.createConditionalNodeConfig.parentRelationship
+        break
+      case 'action:create-hierarchical-nodes':
+        config.parentNodeLabel = state.createHierarchicalNodesConfig.parentNodeLabel
+        config.childNodeLabel = state.createHierarchicalNodesConfig.childNodeLabel
+        config.parentRelationship = state.createHierarchicalNodesConfig.parentRelationship
+        config.childRelationship = state.createHierarchicalNodesConfig.childRelationship
+        config.filterByTag = state.createHierarchicalNodesConfig.filterByTag
+        config.recursive = state.createHierarchicalNodesConfig.recursive
+        break
+      case 'action:create-node-with-filtered-children':
+        config.nodeLabel = state.createNodeWithFilteredChildrenConfig.nodeLabel
+        config.filterByTag = state.createNodeWithFilteredChildrenConfig.filterByTag
+        config.excludeTags = state.createNodeWithFilteredChildrenConfig.excludeTags
+        config.recursive = state.createNodeWithFilteredChildrenConfig.recursive
+        config.parentRelationship = state.createNodeWithFilteredChildrenConfig.parentRelationship
         break
     }
 

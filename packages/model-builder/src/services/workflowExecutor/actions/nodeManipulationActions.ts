@@ -48,6 +48,10 @@ export function executeDeleteNodeAction(action: ActionCanvasNode, ctx: ActionExe
       for (let i = relsToRemove.length - 1; i >= 0; i--) {
         ctx.graphRels.splice(relsToRemove[i], 1)
       }
+      
+      if (ctx.currentGraphNode) {
+        ctx.currentGraphNode = null
+      }
     }
   }
 }
