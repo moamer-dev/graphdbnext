@@ -42,7 +42,12 @@ export function executeDeferRelationshipAction(action: ActionCanvasNode, ctx: Ac
   const apiResponseData = ctx.getApiResponseData(action)
   const relationshipTypeTemplate = (action.config.relationshipType as string) || 'relatedTo'
   const relationshipType = ctx.evaluateTemplate(relationshipTypeTemplate, apiResponseData)
-  const targetNodeLabel = (action.config.targetNodeLabel as string) || ''
+  
+  const targetTag = ctx.evaluateTemplate((action.config.targetTag as string) || '', apiResponseData)
+  const targetAttributeName = ctx.evaluateTemplate((action.config.targetAttributeName as string) || '', apiResponseData)
+  const targetAttributeValue = ctx.evaluateTemplate((action.config.targetAttributeValue as string) || '', apiResponseData)
+  const searchScope = (action.config.searchScope as 'children' | 'descendants' | 'global') || 'children'
+  
   const condition = (action.config.condition as 'always' | 'hasAttribute' | 'hasText') || 'always'
 
   let shouldCreate = false
@@ -58,76 +63,69 @@ export function executeDeferRelationshipAction(action: ActionCanvasNode, ctx: Ac
       break
   }
 
-  if (shouldCreate && ctx.currentGraphNode && ctx.parentGraphNode && targetNodeLabel) {
-    const relType = ctx.relationships.find(r => r.type === relationshipType) || ctx.relationships[0]
-    if (relType || relationshipType) {
-      const finalRelType = relType 
-        ? { ...relType, type: relationshipType } 
-        : { type: relationshipType, from: '', to: '', id: '', cardinality: '1:N' as const }
-        
-      const rel = ctx.createRelationship(ctx.currentGraphNode, ctx.parentGraphNode, finalRelType as any)
-      ctx.graphRels.push(rel)
+  if (shouldCreate && ctx.currentGraphNode && targetTag) {
+    let candidates: Element[] = []
+    
+    if (searchScope === 'children') {
+      candidates = Array.from(ctx.xmlElement.childNodes)
+        .filter(n => n.nodeType === 1 && (n as Element).tagName.toLowerCase() === targetTag.toLowerCase()) as Element[]
+    } else if (searchScope === 'descendants') {
+      candidates = Array.from(ctx.xmlElement.getElementsByTagName(targetTag))
+    } else if (searchScope === 'global') {
+      candidates = Array.from(ctx.doc.getElementsByTagName(targetTag))
+    }
+
+    const matchedElement = candidates.find(el => {
+      if (targetAttributeName) {
+        const attrValue = el.getAttribute(targetAttributeName)
+        if (attrValue === null) return false
+        if (targetAttributeValue && attrValue !== targetAttributeValue) return false
+      }
+      return true
+    })
+
+    if (matchedElement) {
+      ctx.deferredRelationships.push({
+        from: ctx.currentGraphNode,
+        to: null,
+        type: relationshipType,
+        targetElement: matchedElement,
+        properties: {}
+      })
     }
   }
 }
 
 export function executeUpdateRelationshipAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   const apiResponseData = ctx.getApiResponseData(action)
-  const relationshipId = action.config.relationshipId as number | undefined
-  const properties = (action.config.properties as Record<string, unknown>) || {}
-
-  if (relationshipId !== undefined) {
-    const rel = ctx.graphRels.find(r => r.id === relationshipId)
-    if (rel) {
-      Object.entries(properties).forEach(([key, value]) => {
-        const evaluatedValue = typeof value === 'string' ? ctx.evaluateTemplate(value, apiResponseData) : value
-        rel.properties[key] = evaluatedValue
-      })
-    }
-  }
+  ctx.deferredOperations.push({
+    type: 'update-relationship',
+    contextNode: ctx.currentGraphNode,
+    parentNode: ctx.parentGraphNode,
+    config: action.config,
+    apiData: apiResponseData as Record<string, unknown>
+  })
 }
 
 export function executeDeleteRelationshipAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const condition = action.config.condition as Record<string, unknown> | undefined
-  const relationshipType = condition?.type as string | undefined
-  const propertyMatch = condition?.propertyMatch as Record<string, unknown> | undefined
-
-  if (relationshipType) {
-    const toDelete: number[] = []
-    ctx.graphRels.forEach((rel, idx) => {
-      if (rel.label === relationshipType) {
-        if (propertyMatch) {
-          let matches = true
-          Object.entries(propertyMatch).forEach(([key, value]) => {
-            if (rel.properties[key] !== value) {
-              matches = false
-            }
-          })
-          if (matches) {
-            toDelete.push(idx)
-          }
-        } else {
-          toDelete.push(idx)
-        }
-      }
-    })
-    
-    for (let i = toDelete.length - 1; i >= 0; i--) {
-      ctx.graphRels.splice(toDelete[i], 1)
-    }
-  }
+  const apiResponseData = ctx.getApiResponseData(action)
+  ctx.deferredOperations.push({
+    type: 'delete-relationship',
+    contextNode: ctx.currentGraphNode,
+    parentNode: ctx.parentGraphNode,
+    config: action.config,
+    apiData: apiResponseData as Record<string, unknown>
+  })
 }
 
 export function executeReverseRelationshipAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  const relationshipId = action.config.relationshipId as number | undefined
-
-  if (relationshipId !== undefined) {
-    const rel = ctx.graphRels.find(r => r.id === relationshipId)
-    if (rel) {
-      const temp = rel.start
-      rel.start = rel.end
-      rel.end = temp
-    }
-  }
+  const apiResponseData = ctx.getApiResponseData(action)
+  ctx.deferredOperations.push({
+    type: 'reverse-relationship',
+    contextNode: ctx.currentGraphNode,
+    parentNode: ctx.parentGraphNode,
+    config: action.config,
+    apiData: apiResponseData as Record<string, unknown>
+  })
 }
 

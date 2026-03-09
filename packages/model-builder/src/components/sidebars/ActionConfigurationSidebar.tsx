@@ -36,7 +36,7 @@ import { ActionCreateAnnotationNodesConfiguration } from './ActionConfigurationS
 import { ActionCreateReferenceChainConfiguration } from './ActionConfigurationSidebar/ActionCreateReferenceChainConfiguration'
 import { ActionCreateTextNodeConfiguration } from './ActionConfigurationSidebar/ActionCreateTextNodeConfiguration'
 import { ActionCreateTokenNodesConfiguration } from './ActionConfigurationSidebar/ActionCreateTokenNodesConfiguration'
-import { ActionCreateNodeWithAttributesConfiguration } from './ActionConfigurationSidebar/ActionCreateNodeWithAttributesConfiguration'
+import { ActionCreateNodeWithLookupConfiguration } from './ActionConfigurationSidebar/ActionCreateNodeWithLookupConfiguration'
 import { ActionMergeChildrenTextConfiguration } from './ActionConfigurationSidebar/ActionMergeChildrenTextConfiguration'
 import { ActionExtractAndComputePropertyConfiguration } from './ActionConfigurationSidebar/ActionExtractAndComputePropertyConfiguration'
 import { ActionGroupConfiguration } from './ActionConfigurationSidebar/ActionGroupConfiguration'
@@ -51,15 +51,8 @@ import { ActionUpdateNodeConfiguration } from './ActionConfigurationSidebar/Acti
 import { ActionDeleteNodeConfiguration } from './ActionConfigurationSidebar/ActionDeleteNodeConfiguration'
 import { ActionCloneNodeConfiguration } from './ActionConfigurationSidebar/ActionCloneNodeConfiguration'
 import { ActionMergeNodesConfiguration } from './ActionConfigurationSidebar/ActionMergeNodesConfiguration'
-import { ActionValidateNodeConfiguration } from './ActionConfigurationSidebar/ActionValidateNodeConfiguration'
-import { ActionValidateRelationshipConfiguration } from './ActionConfigurationSidebar/ActionValidateRelationshipConfiguration'
-import { ActionReportErrorConfiguration } from './ActionConfigurationSidebar/ActionReportErrorConfiguration'
-import { ActionAddMetadataConfiguration } from './ActionConfigurationSidebar/ActionAddMetadataConfiguration'
-import { ActionTagNodeConfiguration } from './ActionConfigurationSidebar/ActionTagNodeConfiguration'
-import { ActionSetTimestampConfiguration } from './ActionConfigurationSidebar/ActionSetTimestampConfiguration'
-import { ActionCreateConditionalNodeConfiguration } from './ActionConfigurationSidebar/ActionCreateConditionalNodeConfiguration'
-import { ActionCreateHierarchicalNodesConfiguration } from './ActionConfigurationSidebar/ActionCreateHierarchicalNodesConfiguration'
-import { ActionCreateNodeWithFilteredChildrenConfiguration } from './ActionConfigurationSidebar/ActionCreateNodeWithFilteredChildrenConfiguration'
+
+
 
 interface ActionConfigurationSidebarProps {
   actionNodeId: string | null
@@ -253,8 +246,6 @@ export function ActionConfigurationSidebar({
   const setCreateTextNodeConfig = useActionConfigurationStore((state) => state.setCreateTextNodeConfig)
   const createTokenNodesConfig = useActionConfigurationStore((state) => state.createTokenNodesConfig)
   const setCreateTokenNodesConfig = useActionConfigurationStore((state) => state.setCreateTokenNodesConfig)
-  const createNodeWithAttributesConfig = useActionConfigurationStore((state) => state.createNodeWithAttributesConfig)
-  const setCreateNodeWithAttributesConfig = useActionConfigurationStore((state) => state.setCreateNodeWithAttributesConfig)
   const extractAndNormalizeAttributesConfig = useActionConfigurationStore((state) => state.extractAndNormalizeAttributesConfig)
   const setExtractAndNormalizeAttributesConfig = useActionConfigurationStore((state) => state.setExtractAndNormalizeAttributesConfig)
   const createAnnotationNodesConfig = useActionConfigurationStore((state) => state.createAnnotationNodesConfig)
@@ -265,12 +256,24 @@ export function ActionConfigurationSidebar({
   const setMergeChildrenTextConfig = useActionConfigurationStore((state) => state.setMergeChildrenTextConfig)
   const extractAndComputePropertyConfig = useActionConfigurationStore((state) => state.extractAndComputePropertyConfig)
   const setExtractAndComputePropertyConfig = useActionConfigurationStore((state) => state.setExtractAndComputePropertyConfig)
-  const createConditionalNodeConfig = useActionConfigurationStore((state) => state.createConditionalNodeConfig)
-  const setCreateConditionalNodeConfig = useActionConfigurationStore((state) => state.setCreateConditionalNodeConfig)
-  const createHierarchicalNodesConfig = useActionConfigurationStore((state) => state.createHierarchicalNodesConfig)
-  const setCreateHierarchicalNodesConfig = useActionConfigurationStore((state) => state.setCreateHierarchicalNodesConfig)
-  const createNodeWithFilteredChildrenConfig = useActionConfigurationStore((state) => state.createNodeWithFilteredChildrenConfig)
-  const setCreateNodeWithFilteredChildrenConfig = useActionConfigurationStore((state) => state.setCreateNodeWithFilteredChildrenConfig)
+  const createNodeWithLookupConfig = useActionConfigurationStore((state) => state.createNodeWithLookupConfig)
+  const setCreateNodeWithLookupConfig = useActionConfigurationStore((state) => state.setCreateNodeWithLookupConfig)
+
+  const copyPropertyConfig = useActionConfigurationStore((state) => state.copyPropertyConfig)
+  const setCopyPropertyConfig = useActionConfigurationStore((state) => state.setCopyPropertyConfig)
+  const formatPropertyConfig = useActionConfigurationStore((state) => state.formatPropertyConfig)
+  const setFormatPropertyConfig = useActionConfigurationStore((state) => state.setFormatPropertyConfig)
+  const splitPropertyConfig = useActionConfigurationStore((state) => state.splitPropertyConfig)
+  const setSplitPropertyConfig = useActionConfigurationStore((state) => state.setSplitPropertyConfig)
+  const mergePropertiesConfig = useActionConfigurationStore((state) => state.mergePropertiesConfig)
+  const setMergePropertiesConfig = useActionConfigurationStore((state) => state.setMergePropertiesConfig)
+
+  const updateRelationshipConfig = useActionConfigurationStore((state) => state.updateRelationshipConfig)
+  const setUpdateRelationshipConfig = useActionConfigurationStore((state) => state.setUpdateRelationshipConfig)
+  const deleteRelationshipConfig = useActionConfigurationStore((state) => state.deleteRelationshipConfig)
+  const setDeleteRelationshipConfig = useActionConfigurationStore((state) => state.setDeleteRelationshipConfig)
+  const reverseRelationshipConfig = useActionConfigurationStore((state) => state.reverseRelationshipConfig)
+  const setReverseRelationshipConfig = useActionConfigurationStore((state) => state.setReverseRelationshipConfig)
 
   useEffect(() => {
     loadFromActionNode(actionNode || null)
@@ -389,14 +392,6 @@ export function ActionConfigurationSidebar({
           />
         )}
 
-
-
-
-
-
-
-
-
         {actionNode.type === 'action:defer-relationship' && (
           <ActionDeferRelationshipConfiguration
             actionNodeId={actionNodeId!}
@@ -425,9 +420,15 @@ export function ActionConfigurationSidebar({
         {actionNode.type === 'action:create-reference-chain' && (<ActionCreateReferenceChainConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createReferenceChainConfig={createReferenceChainConfig} onCreateReferenceChainConfigChange={setCreateReferenceChainConfig} onUpdateActionNode={updateActionNode} />)}
         {actionNode.type === 'action:merge-children-text' && (<ActionMergeChildrenTextConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} mergeChildrenTextConfig={mergeChildrenTextConfig} onMergeChildrenTextConfigChange={setMergeChildrenTextConfig} onUpdateActionNode={updateActionNode} />)}
         {actionNode.type === 'action:extract-and-compute-property' && (<ActionExtractAndComputePropertyConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} extractAndComputePropertyConfig={extractAndComputePropertyConfig} onExtractAndComputePropertyConfigChange={setExtractAndComputePropertyConfig} onUpdateActionNode={updateActionNode} />)}
-        {actionNode.type === 'action:create-conditional-node' && (<ActionCreateConditionalNodeConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createConditionalNodeConfig={createConditionalNodeConfig} onCreateConditionalNodeConfigChange={setCreateConditionalNodeConfig} onUpdateActionNode={updateActionNode} />)}
-        {actionNode.type === 'action:create-hierarchical-nodes' && (<ActionCreateHierarchicalNodesConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createHierarchicalNodesConfig={createHierarchicalNodesConfig} onCreateHierarchicalNodesConfigChange={setCreateHierarchicalNodesConfig} onUpdateActionNode={updateActionNode} />)}
-        {actionNode.type === 'action:create-node-with-filtered-children' && (<ActionCreateNodeWithFilteredChildrenConfiguration actionNodeId={actionNodeId!} actionNode={actionNode} createNodeWithFilteredChildrenConfig={createNodeWithFilteredChildrenConfig} onCreateNodeWithFilteredChildrenConfigChange={setCreateNodeWithFilteredChildrenConfig} onUpdateActionNode={updateActionNode} />)}
+        {actionNode.type === 'action:create-node-with-lookup' && (
+          <ActionCreateNodeWithLookupConfiguration
+            actionNodeId={actionNodeId!}
+            actionNode={actionNode}
+            createNodeWithLookupConfig={createNodeWithLookupConfig}
+            onCreateNodeWithLookupConfigChange={setCreateNodeWithLookupConfig}
+            onUpdateActionNode={updateActionNode}
+          />
+        )}
         {/* Action Group Configuration */}
         {(actionNode?.type === 'action:group' || actionNode?.isGroup) && (
           <ActionGroupConfiguration
@@ -446,7 +447,8 @@ export function ActionConfigurationSidebar({
           <ActionCopyPropertyConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
-            apiResponse={apiResponse}
+            copyPropertyConfig={copyPropertyConfig}
+            onCopyPropertyConfigChange={setCopyPropertyConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -456,6 +458,8 @@ export function ActionConfigurationSidebar({
           <ActionMergePropertiesConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
+            mergePropertiesConfig={mergePropertiesConfig}
+            onMergePropertiesConfigChange={setMergePropertiesConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -465,6 +469,8 @@ export function ActionConfigurationSidebar({
           <ActionSplitPropertyConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
+            splitPropertyConfig={splitPropertyConfig}
+            onSplitPropertyConfigChange={setSplitPropertyConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -474,6 +480,8 @@ export function ActionConfigurationSidebar({
           <ActionFormatPropertyConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
+            formatPropertyConfig={formatPropertyConfig}
+            onFormatPropertyConfigChange={setFormatPropertyConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -483,6 +491,8 @@ export function ActionConfigurationSidebar({
           <ActionUpdateRelationshipConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
+            updateRelationshipConfig={updateRelationshipConfig}
+            onUpdateRelationshipConfigChange={setUpdateRelationshipConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -492,6 +502,8 @@ export function ActionConfigurationSidebar({
           <ActionDeleteRelationshipConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
+            deleteRelationshipConfig={deleteRelationshipConfig}
+            onDeleteRelationshipConfigChange={setDeleteRelationshipConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -501,6 +513,8 @@ export function ActionConfigurationSidebar({
           <ActionReverseRelationshipConfiguration
             actionNodeId={actionNodeId!}
             actionNode={actionNode}
+            reverseRelationshipConfig={reverseRelationshipConfig}
+            onReverseRelationshipConfigChange={setReverseRelationshipConfig}
             onUpdateActionNode={updateActionNode}
           />
         )}
@@ -541,61 +555,6 @@ export function ActionConfigurationSidebar({
           />
         )}
 
-        {/* Validate Node Action Configuration */}
-        {actionNode?.type === 'action:validate-node' && (
-          <ActionValidateNodeConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {/* Validate Relationship Action Configuration */}
-        {actionNode?.type === 'action:validate-relationship' && (
-          <ActionValidateRelationshipConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {/* Report Error Action Configuration */}
-        {actionNode?.type === 'action:report-error' && (
-          <ActionReportErrorConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            apiResponse={apiResponse}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {/* Add Metadata Action Configuration */}
-        {actionNode?.type === 'action:add-metadata' && (
-          <ActionAddMetadataConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {/* Tag Node Action Configuration */}
-        {actionNode?.type === 'action:tag-node' && (
-          <ActionTagNodeConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            apiResponse={apiResponse}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
-
-        {/* Set Timestamp Action Configuration */}
-        {actionNode?.type === 'action:set-timestamp' && (
-          <ActionSetTimestampConfiguration
-            actionNodeId={actionNodeId!}
-            actionNode={actionNode}
-            onUpdateActionNode={updateActionNode}
-          />
-        )}
 
         {/* Test Execution Section */}
         <div className="mt-6 pt-4 border-t">

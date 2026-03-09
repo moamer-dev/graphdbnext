@@ -51,7 +51,10 @@ export interface ActionConfigurationState {
 
   deferRelationshipConfig: {
     relationshipType: string
-    targetNodeLabel: string
+    targetTag: string
+    targetAttributeName: string
+    targetAttributeValue: string
+    searchScope: 'children' | 'descendants' | 'global'
     condition: 'always' | 'hasAttribute' | 'hasText'
   }
   skipConfig: {
@@ -125,6 +128,8 @@ export interface ActionConfigurationState {
     transforms: TextTransform[]
     propertyKey: string
     parentRelationship: string
+    inheritProperties: boolean
+    propertyMappings: Array<{ key: string; value: string }>
   }
   createTokenNodesConfig: {
     parentNodeLabel: string
@@ -144,77 +149,93 @@ export interface ActionConfigurationState {
     structure: 'flat' | 'chained'
     nextRelationshipType: string
   }
-  createNodeWithAttributesConfig: {
+  createNodeWithLookupConfig: {
     nodeLabel: string
     attributeMappings: Array<{
       attributeName: string
       propertyKey: string
       defaultValue: string
     }>
-    parentRelationship: string
+    lookupLabel: string
+    lookupPropertyKey: string
+    lookupPropertyValue: string
+    relationshipType: string
+    direction: 'outgoing' | 'incoming'
+    mustResolve: boolean
+    inheritProperties: boolean
   }
 
   updateNodeConfig: {
-    properties: Record<string, unknown>
+    targetAlias: 'current' | 'parent' | 'lookup'
+    targetLookup?: { label: string; propertyKey: string; propertyValue: string }
+    properties: Array<{ key: string; value: string }>
     labels: string[]
   }
   deleteNodeConfig: {
-    condition: {
-      propertyMatch?: Record<string, unknown>
-    }
+    targetAlias: 'current' | 'parent' | 'lookup'
+    targetLookup?: { label: string; propertyKey: string; propertyValue: string }
+    propertyMatch: Array<{ key: string; value: string }>
   }
   cloneNodeConfig: {
-    modifications: Record<string, unknown>
+    targetAlias: 'current' | 'parent' | 'lookup'
+    targetLookup?: { label: string; propertyKey: string; propertyValue: string }
+    modifications: Array<{ key: string; value: string }>
     newLabels?: string[]
+    relationshipType?: string
+    relationshipDirection?: 'outgoing' | 'incoming'
+    relationshipTargetAlias?: 'original' | 'parent' | 'current' | 'lookup'
+    relationshipTargetLookup?: { label: string; propertyKey: string; propertyValue: string }
   }
   mergeNodesConfig: {
-    targetNodeIds: number[]
+    targetAlias: 'current' | 'parent' | 'lookup'
+    targetLookup?: { label: string; propertyKey: string; propertyValue: string }
+    sourceAlias: 'current' | 'parent' | 'lookup'
+    sourceLookup?: { label: string; propertyKey: string; propertyValue: string }
     mergeStrategy: 'union' | 'preferSource' | 'preferTarget'
   }
-  validateNodeConfig: {
-    schema?: Record<string, unknown>
-    requiredProperties: string[]
+  updateRelationshipConfig: {
+    fromAlias: 'current' | 'parent' | 'lookup'
+    fromLookup?: { label: string; propertyKey: string; propertyValue: string }
+    toAlias: 'current' | 'parent' | 'lookup'
+    toLookup?: { label: string; propertyKey: string; propertyValue: string }
+    relationshipType: string
+    newRelationshipType?: string
+    properties: Array<{ key: string; value: string }>
   }
-  reportErrorConfig: {
-    errorMessage: string
-    errorCode: string
-    severity: 'error' | 'warning' | 'info'
+  deleteRelationshipConfig: {
+    fromAlias: 'current' | 'parent' | 'lookup'
+    fromLookup?: { label: string; propertyKey: string; propertyValue: string }
+    toAlias: 'current' | 'parent' | 'lookup'
+    toLookup?: { label: string; propertyKey: string; propertyValue: string }
+    relationshipType: string
+    propertyMatch?: Array<{ key: string; value: string }>
   }
-  addMetadataConfig: {
-    metadata: Record<string, unknown>
+  reverseRelationshipConfig: {
+    fromAlias: 'current' | 'parent' | 'lookup'
+    fromLookup?: { label: string; propertyKey: string; propertyValue: string }
+    toAlias: 'current' | 'parent' | 'lookup'
+    toLookup?: { label: string; propertyKey: string; propertyValue: string }
+    relationshipType: string
   }
-  tagNodeConfig: {
-    tags: string[]
+  copyPropertyConfig: {
+    sourceProperty: string
+    targetProperty: string
+    sourceNodeId?: string
   }
-  setTimestampConfig: {
-    timestampType: 'created' | 'modified' | 'both'
+  formatPropertyConfig: {
+    propertyKey: string
+    format: 'date' | 'number' | 'currency' | 'percentage' | 'text'
+    formatString: string
   }
-  createConditionalNodeConfig: {
-    conditions: Array<{
-      type: 'hasAttribute' | 'hasText' | 'hasChildren'
-      attributeName?: string
-      attributeValue?: string
-      minTextLength?: number
-      childTag?: string
-    }>
-    operator: 'AND' | 'OR'
-    nodeLabel: string
-    parentRelationship: string
+  splitPropertyConfig: {
+    sourceProperty: string
+    separator: string
+    targetProperties: string[]
   }
-  createHierarchicalNodesConfig: {
-    parentNodeLabel: string
-    childNodeLabel: string
-    parentRelationship: string
-    childRelationship: string
-    filterByTag: string[]
-    recursive: boolean
-  }
-  createNodeWithFilteredChildrenConfig: {
-    nodeLabel: string
-    filterByTag: string[]
-    excludeTags: string[]
-    recursive: boolean
-    parentRelationship: string
+  mergePropertiesConfig: {
+    sourceProperties: string[]
+    targetProperty: string
+    mergeStrategy: 'concat' | 'object' | 'array'
   }
 
   // Actions (setters)
@@ -246,20 +267,19 @@ export interface ActionConfigurationState {
   setExtractAndComputePropertyConfig: (config: Partial<ActionConfigurationState['extractAndComputePropertyConfig']>) => void
   setCreateTextNodeConfig: (config: Partial<ActionConfigurationState['createTextNodeConfig']>) => void
   setCreateTokenNodesConfig: (config: Partial<ActionConfigurationState['createTokenNodesConfig']>) => void
-  setCreateNodeWithAttributesConfig: (config: Partial<ActionConfigurationState['createNodeWithAttributesConfig']>) => void
+  setCreateNodeWithLookupConfig: (config: Partial<ActionConfigurationState['createNodeWithLookupConfig']>) => void
 
   setUpdateNodeConfig: (config: Partial<ActionConfigurationState['updateNodeConfig']>) => void
   setDeleteNodeConfig: (config: Partial<ActionConfigurationState['deleteNodeConfig']>) => void
   setCloneNodeConfig: (config: Partial<ActionConfigurationState['cloneNodeConfig']>) => void
   setMergeNodesConfig: (config: Partial<ActionConfigurationState['mergeNodesConfig']>) => void
-  setValidateNodeConfig: (config: Partial<ActionConfigurationState['validateNodeConfig']>) => void
-  setReportErrorConfig: (config: Partial<ActionConfigurationState['reportErrorConfig']>) => void
-  setAddMetadataConfig: (config: Partial<ActionConfigurationState['addMetadataConfig']>) => void
-  setTagNodeConfig: (config: Partial<ActionConfigurationState['tagNodeConfig']>) => void
-  setSetTimestampConfig: (config: Partial<ActionConfigurationState['setTimestampConfig']>) => void
-  setCreateConditionalNodeConfig: (config: Partial<ActionConfigurationState['createConditionalNodeConfig']>) => void
-  setCreateHierarchicalNodesConfig: (config: Partial<ActionConfigurationState['createHierarchicalNodesConfig']>) => void
-  setCreateNodeWithFilteredChildrenConfig: (config: Partial<ActionConfigurationState['createNodeWithFilteredChildrenConfig']>) => void
+  setUpdateRelationshipConfig: (config: Partial<ActionConfigurationState['updateRelationshipConfig']>) => void
+  setDeleteRelationshipConfig: (config: Partial<ActionConfigurationState['deleteRelationshipConfig']>) => void
+  setReverseRelationshipConfig: (config: Partial<ActionConfigurationState['reverseRelationshipConfig']>) => void
+  setCopyPropertyConfig: (config: Partial<ActionConfigurationState['copyPropertyConfig']>) => void
+  setFormatPropertyConfig: (config: Partial<ActionConfigurationState['formatPropertyConfig']>) => void
+  setSplitPropertyConfig: (config: Partial<ActionConfigurationState['splitPropertyConfig']>) => void
+  setMergePropertiesConfig: (config: Partial<ActionConfigurationState['mergePropertiesConfig']>) => void
 
   // Helper functions
   loadFromActionNode: (actionNode: ActionCanvasNode | null) => void
@@ -293,17 +313,20 @@ const initialState: Omit<ActionConfigurationState, keyof {
   setExtractAndComputePropertyConfig: never
   setCreateTextNodeConfig: never
   setCreateTokenNodesConfig: never
+  setCreateNodeWithLookupConfig: never
   setCreateNodeWithAttributesConfig: never
   setNormalizeAndDeduplicateConfig: never
   setUpdateNodeConfig: never
   setDeleteNodeConfig: never
   setCloneNodeConfig: never
   setMergeNodesConfig: never
-  setValidateNodeConfig: never
-  setReportErrorConfig: never
-  setAddMetadataConfig: never
-  setTagNodeConfig: never
-  setSetTimestampConfig: never
+  setUpdateRelationshipConfig: never
+  setDeleteRelationshipConfig: never
+  setReverseRelationshipConfig: never
+  setCopyPropertyConfig: never
+  setFormatPropertyConfig: never
+  setSplitPropertyConfig: never
+  setMergePropertiesConfig: never
   setCreateConditionalNodeConfig: never
   setCreateHierarchicalNodesConfig: never
   setCreateNodeWithFilteredChildrenConfig: never
@@ -342,7 +365,10 @@ const initialState: Omit<ActionConfigurationState, keyof {
 
   deferRelationshipConfig: {
     relationshipType: 'contains',
-    targetNodeLabel: '',
+    targetTag: '',
+    targetAttributeName: '',
+    targetAttributeValue: '',
+    searchScope: 'children',
     condition: 'always'
   },
   skipConfig: {
@@ -398,7 +424,9 @@ const initialState: Omit<ActionConfigurationState, keyof {
     attributeName: '',
     transforms: [],
     propertyKey: 'text',
-    parentRelationship: 'contains'
+    parentRelationship: 'contains',
+    inheritProperties: true,
+    propertyMappings: []
   },
   createTokenNodesConfig: {
     parentNodeLabel: '',
@@ -413,65 +441,81 @@ const initialState: Omit<ActionConfigurationState, keyof {
     structure: 'flat',
     nextRelationshipType: 'next'
   },
-  createNodeWithAttributesConfig: {
+  createNodeWithLookupConfig: {
     nodeLabel: '',
     attributeMappings: [],
-    parentRelationship: 'contains'
+    lookupLabel: '',
+    lookupPropertyKey: '',
+    lookupPropertyValue: '',
+    relationshipType: 'relatedTo',
+    direction: 'outgoing',
+    mustResolve: true,
+    inheritProperties: true
   },
 
   updateNodeConfig: {
-    properties: {},
+    targetAlias: 'current',
+    properties: [],
     labels: []
   },
   deleteNodeConfig: {
-    condition: {}
+    targetAlias: 'current',
+    propertyMatch: []
   },
   cloneNodeConfig: {
-    modifications: {},
-    newLabels: []
+    targetAlias: 'current',
+    modifications: [],
+    newLabels: [],
+    relationshipType: '',
+    relationshipDirection: 'outgoing',
+    relationshipTargetAlias: 'original'
   },
   mergeNodesConfig: {
-    targetNodeIds: [],
+    targetAlias: 'current',
+    sourceAlias: 'parent',
     mergeStrategy: 'union'
   },
-  validateNodeConfig: {
-    requiredProperties: []
+  updateRelationshipConfig: {
+    fromAlias: 'current',
+    toAlias: 'parent',
+    relationshipType: '',
+    properties: []
   },
-  reportErrorConfig: {
-    errorMessage: 'Validation error',
-    errorCode: 'ERROR',
-    severity: 'error'
+  deleteRelationshipConfig: {
+    fromAlias: 'current',
+    toAlias: 'parent',
+    relationshipType: ''
   },
-  addMetadataConfig: {
-    metadata: {}
+  reverseRelationshipConfig: {
+    fromAlias: 'current',
+    toAlias: 'parent',
+    relationshipType: ''
   },
-  tagNodeConfig: {
-    tags: []
+  copyPropertyConfig: {
+    sourceProperty: '',
+    targetProperty: '',
+    sourceNodeId: ''
   },
-  setTimestampConfig: {
-    timestampType: 'both'
+  formatPropertyConfig: {
+    propertyKey: '',
+    format: 'text',
+    formatString: ''
   },
-  createConditionalNodeConfig: {
-    conditions: [],
-    operator: 'AND',
-    nodeLabel: '',
-    parentRelationship: 'contains'
+  splitPropertyConfig: {
+    sourceProperty: '',
+    separator: ' ',
+    targetProperties: []
   },
-  createHierarchicalNodesConfig: {
-    parentNodeLabel: '',
-    childNodeLabel: '',
-    parentRelationship: 'contains',
-    childRelationship: 'contains',
-    filterByTag: [],
-    recursive: true
-  },
-  createNodeWithFilteredChildrenConfig: {
-    nodeLabel: '',
-    filterByTag: [],
-    excludeTags: [],
-    recursive: false,
-    parentRelationship: 'contains'
+  mergePropertiesConfig: {
+    sourceProperties: [],
+    targetProperty: 'merged',
+    mergeStrategy: 'object'
   }
+}
+
+const recordToEntries = (record: Record<string, unknown> | undefined): Array<{ key: string; value: string }> => {
+  if (!record) return []
+  return Object.entries(record).map(([key, value]) => ({ key, value: String(value) }))
 }
 
 export const useActionConfigurationStore = create<ActionConfigurationState>((set, get) => ({
@@ -504,20 +548,19 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
   setExtractAndComputePropertyConfig: (config) => set((state) => ({ extractAndComputePropertyConfig: { ...state.extractAndComputePropertyConfig, ...config } })),
   setCreateTextNodeConfig: (config) => set((state) => ({ createTextNodeConfig: { ...state.createTextNodeConfig, ...config } })),
   setCreateTokenNodesConfig: (config) => set((state) => ({ createTokenNodesConfig: { ...state.createTokenNodesConfig, ...config } })),
-  setCreateNodeWithAttributesConfig: (config) => set((state) => ({ createNodeWithAttributesConfig: { ...state.createNodeWithAttributesConfig, ...config } })),
+  setCreateNodeWithLookupConfig: (config) => set((state) => ({ createNodeWithLookupConfig: { ...state.createNodeWithLookupConfig, ...config } })),
 
   setUpdateNodeConfig: (config) => set((state) => ({ updateNodeConfig: { ...state.updateNodeConfig, ...config } })),
   setDeleteNodeConfig: (config) => set((state) => ({ deleteNodeConfig: { ...state.deleteNodeConfig, ...config } })),
   setCloneNodeConfig: (config) => set((state) => ({ cloneNodeConfig: { ...state.cloneNodeConfig, ...config } })),
   setMergeNodesConfig: (config) => set((state) => ({ mergeNodesConfig: { ...state.mergeNodesConfig, ...config } })),
-  setValidateNodeConfig: (config) => set((state) => ({ validateNodeConfig: { ...state.validateNodeConfig, ...config } })),
-  setReportErrorConfig: (config) => set((state) => ({ reportErrorConfig: { ...state.reportErrorConfig, ...config } })),
-  setAddMetadataConfig: (config) => set((state) => ({ addMetadataConfig: { ...state.addMetadataConfig, ...config } })),
-  setTagNodeConfig: (config) => set((state) => ({ tagNodeConfig: { ...state.tagNodeConfig, ...config } })),
-  setSetTimestampConfig: (config) => set((state) => ({ setTimestampConfig: { ...state.setTimestampConfig, ...config } })),
-  setCreateConditionalNodeConfig: (config) => set((state) => ({ createConditionalNodeConfig: { ...state.createConditionalNodeConfig, ...config } })),
-  setCreateHierarchicalNodesConfig: (config) => set((state) => ({ createHierarchicalNodesConfig: { ...state.createHierarchicalNodesConfig, ...config } })),
-  setCreateNodeWithFilteredChildrenConfig: (config) => set((state) => ({ createNodeWithFilteredChildrenConfig: { ...state.createNodeWithFilteredChildrenConfig, ...config } })),
+  setUpdateRelationshipConfig: (config) => set((state) => ({ updateRelationshipConfig: { ...state.updateRelationshipConfig, ...config } })),
+  setDeleteRelationshipConfig: (config) => set((state) => ({ deleteRelationshipConfig: { ...state.deleteRelationshipConfig, ...config } })),
+  setReverseRelationshipConfig: (config) => set((state) => ({ reverseRelationshipConfig: { ...state.reverseRelationshipConfig, ...config } })),
+  setCopyPropertyConfig: (config) => set((state) => ({ copyPropertyConfig: { ...state.copyPropertyConfig, ...config } })),
+  setFormatPropertyConfig: (config) => set((state) => ({ formatPropertyConfig: { ...state.formatPropertyConfig, ...config } })),
+  setSplitPropertyConfig: (config) => set((state) => ({ splitPropertyConfig: { ...state.splitPropertyConfig, ...config } })),
+  setMergePropertiesConfig: (config) => set((state) => ({ mergePropertiesConfig: { ...state.mergePropertiesConfig, ...config } })),
 
   loadFromActionNode: (actionNode) => {
     if (!actionNode) {
@@ -564,15 +607,86 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
-
-
-
-
+      case 'action:copy-property':
+        set({
+          copyPropertyConfig: {
+            sourceProperty: (config.sourceProperty as string) || state.copyPropertyConfig.sourceProperty,
+            targetProperty: (config.targetProperty as string) || state.copyPropertyConfig.targetProperty,
+            sourceNodeId: (config.sourceNodeId as string) || state.copyPropertyConfig.sourceNodeId
+          }
+        })
+        break
+      case 'action:format-property':
+        set({
+          formatPropertyConfig: {
+            propertyKey: (config.propertyKey as string) || state.formatPropertyConfig.propertyKey,
+            format: (config.format as 'date' | 'number' | 'currency' | 'percentage' | 'text') || state.formatPropertyConfig.format,
+            formatString: (config.formatString as string) || state.formatPropertyConfig.formatString
+          }
+        })
+        break
+      case 'action:split-property':
+        set({
+          splitPropertyConfig: {
+            sourceProperty: (config.sourceProperty as string) || state.splitPropertyConfig.sourceProperty,
+            separator: (config.separator as string) || state.splitPropertyConfig.separator,
+            targetProperties: (config.targetProperties as string[]) || state.splitPropertyConfig.targetProperties
+          }
+        })
+        break
+      case 'action:reverse-relationship':
+        set({
+          reverseRelationshipConfig: {
+            fromAlias: (config.fromAlias as any) || state.reverseRelationshipConfig.fromAlias,
+            fromLookup: (config.fromLookup as any) || state.reverseRelationshipConfig.fromLookup,
+            toAlias: (config.toAlias as any) || state.reverseRelationshipConfig.toAlias,
+            toLookup: (config.toLookup as any) || state.reverseRelationshipConfig.toLookup,
+            relationshipType: (config.relationshipType as string) || state.reverseRelationshipConfig.relationshipType
+          }
+        })
+        break
+      case 'action:update-relationship':
+        set({
+          updateRelationshipConfig: {
+            fromAlias: (config.fromAlias as any) || state.updateRelationshipConfig.fromAlias,
+            fromLookup: (config.fromLookup as any) || state.updateRelationshipConfig.fromLookup,
+            toAlias: (config.toAlias as any) || state.updateRelationshipConfig.toAlias,
+            toLookup: (config.toLookup as any) || state.updateRelationshipConfig.toLookup,
+            relationshipType: (config.relationshipType as string) || state.updateRelationshipConfig.relationshipType,
+            newRelationshipType: (config.newRelationshipType as string) || state.updateRelationshipConfig.newRelationshipType,
+            properties: (config.properties as any) || state.updateRelationshipConfig.properties
+          }
+        })
+        break
+      case 'action:delete-relationship':
+        set({
+          deleteRelationshipConfig: {
+            fromAlias: (config.fromAlias as any) || state.deleteRelationshipConfig.fromAlias,
+            fromLookup: (config.fromLookup as any) || state.deleteRelationshipConfig.fromLookup,
+            toAlias: (config.toAlias as any) || state.deleteRelationshipConfig.toAlias,
+            toLookup: (config.toLookup as any) || state.deleteRelationshipConfig.toLookup,
+            relationshipType: (config.relationshipType as string) || state.deleteRelationshipConfig.relationshipType,
+            propertyMatch: (config.propertyMatch as any) || state.deleteRelationshipConfig.propertyMatch
+          }
+        })
+        break
+      case 'action:merge-properties':
+        set({
+          mergePropertiesConfig: {
+            sourceProperties: (config.sourceProperties as string[]) || state.mergePropertiesConfig.sourceProperties,
+            targetProperty: (config.targetProperty as string) || state.mergePropertiesConfig.targetProperty,
+            mergeStrategy: (config.mergeStrategy as 'concat' | 'object' | 'array') || state.mergePropertiesConfig.mergeStrategy
+          }
+        })
+        break
       case 'action:defer-relationship':
         set({
           deferRelationshipConfig: {
             relationshipType: (config.relationshipType as string) || state.deferRelationshipConfig.relationshipType,
-            targetNodeLabel: (config.targetNodeLabel as string) || state.deferRelationshipConfig.targetNodeLabel,
+            targetTag: (config.targetTag as string) || state.deferRelationshipConfig.targetTag,
+            targetAttributeName: (config.targetAttributeName as string) || state.deferRelationshipConfig.targetAttributeName,
+            targetAttributeValue: (config.targetAttributeValue as string) || state.deferRelationshipConfig.targetAttributeValue,
+            searchScope: (config.searchScope as 'children' | 'descendants' | 'global') || state.deferRelationshipConfig.searchScope,
             condition: (config.condition as 'always' | 'hasAttribute' | 'hasText') || state.deferRelationshipConfig.condition
           }
         })
@@ -674,7 +788,9 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
             attributeName: (config.attributeName as string) || state.createTextNodeConfig.attributeName,
             transforms: (config.transforms as TextTransform[]) || state.createTextNodeConfig.transforms,
             propertyKey: (config.propertyKey as string) || state.createTextNodeConfig.propertyKey,
-            parentRelationship: (config.parentRelationship as string) || state.createTextNodeConfig.parentRelationship
+            parentRelationship: (config.parentRelationship as string) || state.createTextNodeConfig.parentRelationship,
+            inheritProperties: (config.inheritProperties as boolean) ?? state.createTextNodeConfig.inheritProperties,
+            propertyMappings: (config.propertyMappings as Array<{ key: string; value: string }>) || state.createTextNodeConfig.propertyMappings
           }
         })
         break
@@ -695,105 +811,63 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
           }
         })
         break
+      case 'action:create-node-with-lookup':
+        set({
+          createNodeWithLookupConfig: {
+            nodeLabel: (config.nodeLabel as string) || state.createNodeWithLookupConfig.nodeLabel,
+            attributeMappings: (config.attributeMappings as any[]) || state.createNodeWithLookupConfig.attributeMappings,
+            lookupLabel: (config.lookupLabel as string) || state.createNodeWithLookupConfig.lookupLabel,
+            lookupPropertyKey: (config.lookupPropertyKey as string) || state.createNodeWithLookupConfig.lookupPropertyKey,
+            lookupPropertyValue: (config.lookupPropertyValue as string) || state.createNodeWithLookupConfig.lookupPropertyValue,
+            relationshipType: (config.relationshipType as string) || state.createNodeWithLookupConfig.relationshipType,
+            direction: (config.direction as 'outgoing' | 'incoming') || state.createNodeWithLookupConfig.direction,
+            mustResolve: (config.mustResolve as boolean) ?? state.createNodeWithLookupConfig.mustResolve,
+            inheritProperties: (config.inheritProperties as boolean) ?? state.createNodeWithLookupConfig.inheritProperties
+          }
+        })
+        break
       case 'action:update-node':
         set({
           updateNodeConfig: {
-            properties: (config.properties as Record<string, unknown>) || state.updateNodeConfig.properties,
+            targetAlias: (config.targetAlias as any) || state.updateNodeConfig.targetAlias,
+            targetLookup: (config.targetLookup as any) || state.updateNodeConfig.targetLookup,
+            properties: Array.isArray(config.properties) ? config.properties : recordToEntries(config.properties as Record<string, unknown>),
             labels: (config.labels as string[]) || state.updateNodeConfig.labels
           }
         })
         break
       case 'action:delete-node':
+        const condition = (config.condition as any) || {}
         set({
           deleteNodeConfig: {
-            condition: (config.condition as any) || state.deleteNodeConfig.condition
+            targetAlias: (config.targetAlias as any) || state.deleteNodeConfig.targetAlias,
+            targetLookup: (config.targetLookup as any) || state.deleteNodeConfig.targetLookup,
+            propertyMatch: Array.isArray(condition.propertyMatch) ? condition.propertyMatch : recordToEntries(condition.propertyMatch as Record<string, unknown>)
           }
         })
         break
       case 'action:clone-node':
         set({
           cloneNodeConfig: {
-            modifications: (config.modifications as Record<string, unknown>) || state.cloneNodeConfig.modifications,
-            newLabels: (config.newLabels as string[]) || state.cloneNodeConfig.newLabels
+            targetAlias: (config.targetAlias as any) || state.cloneNodeConfig.targetAlias,
+            targetLookup: (config.targetLookup as any) || state.cloneNodeConfig.targetLookup,
+            modifications: Array.isArray(config.modifications) ? config.modifications : recordToEntries(config.modifications as Record<string, unknown>),
+            newLabels: (config.newLabels as string[]) || state.cloneNodeConfig.newLabels,
+            relationshipType: (config.relationshipType as string) || state.cloneNodeConfig.relationshipType,
+            relationshipDirection: (config.relationshipDirection as 'outgoing' | 'incoming') || state.cloneNodeConfig.relationshipDirection,
+            relationshipTargetAlias: (config.relationshipTargetAlias as any) || state.cloneNodeConfig.relationshipTargetAlias,
+            relationshipTargetLookup: (config.relationshipTargetLookup as any) || state.cloneNodeConfig.relationshipTargetLookup
           }
         })
         break
       case 'action:merge-nodes':
         set({
           mergeNodesConfig: {
-            targetNodeIds: (config.targetNodeIds as number[]) || state.mergeNodesConfig.targetNodeIds,
+            targetAlias: (config.targetAlias as any) || state.mergeNodesConfig.targetAlias,
+            targetLookup: (config.targetLookup as any) || state.mergeNodesConfig.targetLookup,
+            sourceAlias: (config.sourceAlias as any) || state.mergeNodesConfig.sourceAlias,
+            sourceLookup: (config.sourceLookup as any) || state.mergeNodesConfig.sourceLookup,
             mergeStrategy: (config.mergeStrategy as 'union' | 'preferSource' | 'preferTarget') || state.mergeNodesConfig.mergeStrategy
-          }
-        })
-        break
-      case 'action:validate-node':
-        set({
-          validateNodeConfig: {
-            schema: (config.schema as Record<string, unknown>) || state.validateNodeConfig.schema,
-            requiredProperties: (config.requiredProperties as string[]) || state.validateNodeConfig.requiredProperties
-          }
-        })
-        break
-      case 'action:report-error':
-        set({
-          reportErrorConfig: {
-            errorMessage: (config.errorMessage as string) || state.reportErrorConfig.errorMessage,
-            errorCode: (config.errorCode as string) || state.reportErrorConfig.errorCode,
-            severity: (config.severity as 'error' | 'warning' | 'info') || state.reportErrorConfig.severity
-          }
-        })
-        break
-      case 'action:add-metadata':
-        set({
-          addMetadataConfig: {
-            metadata: (config.metadata as Record<string, unknown>) || state.addMetadataConfig.metadata
-          }
-        })
-        break
-      case 'action:tag-node':
-        set({
-          tagNodeConfig: {
-            tags: (config.tags as string[]) || state.tagNodeConfig.tags
-          }
-        })
-        break
-      case 'action:set-timestamp':
-        set({
-          setTimestampConfig: {
-            timestampType: (config.timestampType as 'created' | 'modified' | 'both') || state.setTimestampConfig.timestampType
-          }
-        })
-        break
-      case 'action:create-conditional-node':
-        set({
-          createConditionalNodeConfig: {
-            conditions: (config.conditions as any[]) || state.createConditionalNodeConfig.conditions,
-            operator: (config.operator as 'AND' | 'OR') || state.createConditionalNodeConfig.operator,
-            nodeLabel: (config.nodeLabel as string) || state.createConditionalNodeConfig.nodeLabel,
-            parentRelationship: (config.parentRelationship as string) || state.createConditionalNodeConfig.parentRelationship
-          }
-        })
-        break
-      case 'action:create-hierarchical-nodes':
-        set({
-          createHierarchicalNodesConfig: {
-            parentNodeLabel: (config.parentNodeLabel as string) || state.createHierarchicalNodesConfig.parentNodeLabel,
-            childNodeLabel: (config.childNodeLabel as string) || state.createHierarchicalNodesConfig.childNodeLabel,
-            parentRelationship: (config.parentRelationship as string) || state.createHierarchicalNodesConfig.parentRelationship,
-            childRelationship: (config.childRelationship as string) || state.createHierarchicalNodesConfig.childRelationship,
-            filterByTag: (config.filterByTag as string[]) || state.createHierarchicalNodesConfig.filterByTag,
-            recursive: config.recursive !== undefined ? (config.recursive as boolean) : state.createHierarchicalNodesConfig.recursive
-          }
-        })
-        break
-      case 'action:create-node-with-filtered-children':
-        set({
-          createNodeWithFilteredChildrenConfig: {
-            nodeLabel: (config.nodeLabel as string) || state.createNodeWithFilteredChildrenConfig.nodeLabel,
-            filterByTag: (config.filterByTag as string[]) || state.createNodeWithFilteredChildrenConfig.filterByTag,
-            excludeTags: (config.excludeTags as string[]) || state.createNodeWithFilteredChildrenConfig.excludeTags,
-            recursive: config.recursive !== undefined ? (config.recursive as boolean) : state.createNodeWithFilteredChildrenConfig.recursive,
-            parentRelationship: (config.parentRelationship as string) || state.createNodeWithFilteredChildrenConfig.parentRelationship
           }
         })
         break
@@ -810,7 +884,10 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
 
       case 'action:defer-relationship':
         config.relationshipType = state.deferRelationshipConfig.relationshipType
-        config.targetNodeLabel = state.deferRelationshipConfig.targetNodeLabel
+        config.targetTag = state.deferRelationshipConfig.targetTag
+        config.targetAttributeName = state.deferRelationshipConfig.targetAttributeName
+        config.targetAttributeValue = state.deferRelationshipConfig.targetAttributeValue
+        config.searchScope = state.deferRelationshipConfig.searchScope
         config.condition = state.deferRelationshipConfig.condition
         break
       case 'action:skip':
@@ -868,65 +945,44 @@ export const useActionConfigurationStore = create<ActionConfigurationState>((set
         config.structure = state.createTokenNodesConfig.structure
         config.nextRelationshipType = state.createTokenNodesConfig.nextRelationshipType
         break
-      case 'action:create-node-with-attributes':
-        config.nodeLabel = state.createNodeWithAttributesConfig.nodeLabel
-        config.attributeMappings = state.createNodeWithAttributesConfig.attributeMappings
-        config.parentRelationship = state.createNodeWithAttributesConfig.parentRelationship
+      case 'action:create-node-with-lookup':
+        config.nodeLabel = state.createNodeWithLookupConfig.nodeLabel
+        config.attributeMappings = state.createNodeWithLookupConfig.attributeMappings
+        config.lookupLabel = state.createNodeWithLookupConfig.lookupLabel
+        config.lookupPropertyKey = state.createNodeWithLookupConfig.lookupPropertyKey
+        config.lookupPropertyValue = state.createNodeWithLookupConfig.lookupPropertyValue
+        config.relationshipType = state.createNodeWithLookupConfig.relationshipType
+        config.direction = state.createNodeWithLookupConfig.direction
         break
-
       case 'action:update-node':
+        config.targetAlias = state.updateNodeConfig.targetAlias
+        config.targetLookup = state.updateNodeConfig.targetLookup
         config.properties = state.updateNodeConfig.properties
         config.labels = state.updateNodeConfig.labels
         break
       case 'action:delete-node':
-        config.condition = state.deleteNodeConfig.condition
+        config.targetAlias = state.deleteNodeConfig.targetAlias
+        config.targetLookup = state.deleteNodeConfig.targetLookup
+        config.condition = {
+          propertyMatch: state.deleteNodeConfig.propertyMatch
+        }
         break
       case 'action:clone-node':
+        config.targetAlias = state.cloneNodeConfig.targetAlias
+        config.targetLookup = state.cloneNodeConfig.targetLookup
         config.modifications = state.cloneNodeConfig.modifications
         config.newLabels = state.cloneNodeConfig.newLabels
+        config.relationshipType = state.cloneNodeConfig.relationshipType
+        config.relationshipDirection = state.cloneNodeConfig.relationshipDirection
+        config.relationshipTargetAlias = state.cloneNodeConfig.relationshipTargetAlias
+        config.relationshipTargetLookup = state.cloneNodeConfig.relationshipTargetLookup
         break
       case 'action:merge-nodes':
-        config.targetNodeIds = state.mergeNodesConfig.targetNodeIds
+        config.targetAlias = state.mergeNodesConfig.targetAlias
+        config.targetLookup = state.mergeNodesConfig.targetLookup
+        config.sourceAlias = state.mergeNodesConfig.sourceAlias
+        config.sourceLookup = state.mergeNodesConfig.sourceLookup
         config.mergeStrategy = state.mergeNodesConfig.mergeStrategy
-        break
-      case 'action:validate-node':
-        config.schema = state.validateNodeConfig.schema
-        config.requiredProperties = state.validateNodeConfig.requiredProperties
-        break
-      case 'action:report-error':
-        config.errorMessage = state.reportErrorConfig.errorMessage
-        config.errorCode = state.reportErrorConfig.errorCode
-        config.severity = state.reportErrorConfig.severity
-        break
-      case 'action:add-metadata':
-        config.metadata = state.addMetadataConfig.metadata
-        break
-      case 'action:tag-node':
-        config.tags = state.tagNodeConfig.tags
-        break
-      case 'action:set-timestamp':
-        config.timestampType = state.setTimestampConfig.timestampType
-        break
-      case 'action:create-conditional-node':
-        config.conditions = state.createConditionalNodeConfig.conditions
-        config.operator = state.createConditionalNodeConfig.operator
-        config.nodeLabel = state.createConditionalNodeConfig.nodeLabel
-        config.parentRelationship = state.createConditionalNodeConfig.parentRelationship
-        break
-      case 'action:create-hierarchical-nodes':
-        config.parentNodeLabel = state.createHierarchicalNodesConfig.parentNodeLabel
-        config.childNodeLabel = state.createHierarchicalNodesConfig.childNodeLabel
-        config.parentRelationship = state.createHierarchicalNodesConfig.parentRelationship
-        config.childRelationship = state.createHierarchicalNodesConfig.childRelationship
-        config.filterByTag = state.createHierarchicalNodesConfig.filterByTag
-        config.recursive = state.createHierarchicalNodesConfig.recursive
-        break
-      case 'action:create-node-with-filtered-children':
-        config.nodeLabel = state.createNodeWithFilteredChildrenConfig.nodeLabel
-        config.filterByTag = state.createNodeWithFilteredChildrenConfig.filterByTag
-        config.excludeTags = state.createNodeWithFilteredChildrenConfig.excludeTags
-        config.recursive = state.createNodeWithFilteredChildrenConfig.recursive
-        config.parentRelationship = state.createNodeWithFilteredChildrenConfig.parentRelationship
         break
     }
 

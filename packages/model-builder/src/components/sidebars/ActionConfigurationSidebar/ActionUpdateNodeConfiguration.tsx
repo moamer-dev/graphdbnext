@@ -3,6 +3,8 @@
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { NodeTargetingSection } from '../../shared/NodeTargetingSection'
+import { KeyValueEditor } from '../../shared/KeyValueEditor'
 import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 
 interface ActionUpdateNodeConfigurationProps {
@@ -18,37 +20,42 @@ export function ActionUpdateNodeConfiguration({
 }: ActionUpdateNodeConfigurationProps) {
   if (!actionNode) return null
 
+  const config = actionNode.config as any
+
   return (
     <CollapsibleSection title="Update Node Configuration" defaultOpen={true}>
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Properties (JSON)</Label>
-          <textarea
-            className="w-full h-32 text-xs font-mono p-2 border rounded"
-            placeholder='{"key": "value"}'
-            value={JSON.stringify((actionNode.config.properties as Record<string, unknown>) || {}, null, 2)}
-            onChange={(e) => {
-              try {
-                const properties = JSON.parse(e.target.value)
-                onUpdateActionNode(actionNodeId, {
-                  config: { ...actionNode.config, properties }
-                })
-              } catch {
-                // Invalid JSON, ignore
-              }
-            }}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Labels (comma-separated, optional)</Label>
+        <NodeTargetingSection
+          title="Target Node"
+          alias={config.targetAlias || 'current'}
+          lookup={config.targetLookup || {}}
+          onAliasChange={(val) => onUpdateActionNode(actionNodeId, { 
+            config: { ...config, targetAlias: val } 
+          })}
+          onLookupChange={(lookup) => onUpdateActionNode(actionNodeId, {
+            config: { ...config, targetLookup: lookup }
+          })}
+        />
+
+        <KeyValueEditor
+          title="Property Updates"
+          description="Update or add properties to the target node"
+          entries={config.properties || []}
+          onEntriesChange={(properties) => onUpdateActionNode(actionNodeId, {
+            config: { ...config, properties }
+          })}
+        />
+
+        <div className="space-y-2 pt-2 border-t">
+          <Label className="text-xs font-medium">Add/Replace Labels (comma-separated)</Label>
           <Input
-            placeholder="e.g., Person, Author"
+            placeholder="e.g., Person, Employee"
             className="h-8 text-xs"
-            value={((actionNode.config.labels as string[]) || []).join(', ')}
+            value={(config.labels || []).join(', ')}
             onChange={(e) => {
               const labels = e.target.value.split(',').map(l => l.trim()).filter(Boolean)
               onUpdateActionNode(actionNodeId, {
-                config: { ...actionNode.config, labels }
+                config: { ...config, labels }
               })
             }}
           />
@@ -57,4 +64,3 @@ export function ActionUpdateNodeConfiguration({
     </CollapsibleSection>
   )
 }
-

@@ -24,27 +24,43 @@ export function executeSetPropertyAction(action: ActionCanvasNode, ctx: ActionEx
 
 
 export function executeCopyPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
+  const node = ctx.currentGraphNode || ctx.parentGraphNode
+  if (!node) return
 
   const apiResponseData = ctx.getApiResponseData(action)
   const sourceProperty = ctx.evaluateTemplate((action.config.sourceProperty as string) || '', apiResponseData)
   const targetProperty = ctx.evaluateTemplate((action.config.targetProperty as string) || '', apiResponseData)
-  const sourceNodeId = action.config.sourceNodeId as number | undefined
+  
+  if (!sourceProperty || !targetProperty) return
 
-  if (sourceNodeId) {
-    const sourceNode = ctx.graphNodes.find(n => n.id === sourceNodeId)
-    if (sourceNode && sourceNode.properties[sourceProperty]) {
-      ctx.currentGraphNode.properties[targetProperty] = sourceNode.properties[sourceProperty]
+  const sourceNodeIdRaw = action.config.sourceNodeId
+  let sourceValue: unknown = undefined
+
+  if (sourceNodeIdRaw !== undefined && sourceNodeIdRaw !== '') {
+    const id = typeof sourceNodeIdRaw === 'string' ? parseInt(sourceNodeIdRaw) : (sourceNodeIdRaw as number)
+    if (!isNaN(id)) {
+      const sourceNode = ctx.graphNodes.find(n => n.id === id)
+      if (sourceNode) {
+        sourceValue = sourceNode.properties[sourceProperty]
+      }
     }
-  } else if (ctx.parentGraphNode) {
-    if (ctx.parentGraphNode.properties[sourceProperty]) {
-      ctx.currentGraphNode.properties[targetProperty] = ctx.parentGraphNode.properties[sourceProperty]
+  } else {
+    // If no ID provided, try current node properties first, then parent node
+    if (ctx.currentGraphNode && ctx.currentGraphNode.properties[sourceProperty] !== undefined) {
+      sourceValue = ctx.currentGraphNode.properties[sourceProperty]
+    } else if (ctx.parentGraphNode && ctx.parentGraphNode.properties[sourceProperty] !== undefined) {
+      sourceValue = ctx.parentGraphNode.properties[sourceProperty]
     }
+  }
+
+  if (sourceValue !== undefined) {
+    node.properties[targetProperty] = sourceValue
   }
 }
 
 export function executeMergePropertiesAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
+  const node = ctx.currentGraphNode || ctx.parentGraphNode
+  if (!node) return
 
   const apiResponseData = ctx.getApiResponseData(action)
   const sourceProperties = (action.config.sourceProperties as string[]) || []
@@ -52,55 +68,60 @@ export function executeMergePropertiesAction(action: ActionCanvasNode, ctx: Acti
   const mergeStrategy = (action.config.mergeStrategy as 'concat' | 'object' | 'array') || 'object'
 
   const values: unknown[] = []
+  const availableProps: string[] = []
+  
   sourceProperties.forEach(prop => {
-    const value = ctx.currentGraphNode?.properties[prop]
+    const value = node.properties[prop]
     if (value !== undefined) {
       values.push(value)
+      availableProps.push(prop)
     }
   })
 
   if (mergeStrategy === 'concat') {
-    ctx.currentGraphNode.properties[targetProperty] = values.join(' ')
+    node.properties[targetProperty] = values.join(' ')
   } else if (mergeStrategy === 'array') {
-    ctx.currentGraphNode.properties[targetProperty] = values
+    node.properties[targetProperty] = values
   } else {
     const merged: Record<string, unknown> = {}
-    sourceProperties.forEach((prop, idx) => {
-      if (values[idx] !== undefined) {
-        merged[prop] = values[idx]
-      }
+    availableProps.forEach((prop, idx) => {
+      merged[prop] = values[idx]
     })
-    ctx.currentGraphNode.properties[targetProperty] = merged
+    node.properties[targetProperty] = merged
   }
 }
 
 export function executeSplitPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
+  const node = ctx.currentGraphNode || ctx.parentGraphNode
+  if (!node) return
 
   const apiResponseData = ctx.getApiResponseData(action)
   const sourceProperty = ctx.evaluateTemplate((action.config.sourceProperty as string) || '', apiResponseData)
   const separator = ctx.evaluateTemplate((action.config.separator as string) || ' ', apiResponseData)
   const targetProperties = (action.config.targetProperties as string[]) || []
 
-  const sourceValue = String(ctx.currentGraphNode.properties[sourceProperty] || '')
+  const sourceValue = String(node.properties[sourceProperty] || '')
+  if (!sourceValue) return
+
   const parts = sourceValue.split(separator)
 
   targetProperties.forEach((targetProp, idx) => {
-    if (parts[idx] !== undefined && ctx.currentGraphNode) {
-      ctx.currentGraphNode.properties[targetProp] = parts[idx].trim()
+    if (parts[idx] !== undefined) {
+      node.properties[targetProp] = parts[idx].trim()
     }
   })
 }
 
 export function executeFormatPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.currentGraphNode) return
+  const node = ctx.currentGraphNode || ctx.parentGraphNode
+  if (!node) return
 
   const apiResponseData = ctx.getApiResponseData(action)
   const propertyKey = ctx.evaluateTemplate((action.config.propertyKey as string) || '', apiResponseData)
-  const format = (action.config.format as 'date' | 'number' | 'currency' | 'percentage') || 'text'
-  const formatString = (action.config.formatString as string) || ''
+  const format = (action.config.format as 'date' | 'number' | 'currency' | 'percentage' | 'text') || 'text'
+  const formatString = ctx.evaluateTemplate((action.config.formatString as string) || '', apiResponseData)
 
-  const value = ctx.currentGraphNode.properties[propertyKey]
+  const value = node.properties[propertyKey]
   if (value === undefined) return
 
   let formatted: string = String(value)
@@ -108,12 +129,13 @@ export function executeFormatPropertyAction(action: ActionCanvasNode, ctx: Actio
   if (format === 'date') {
     const date = new Date(String(value))
     if (!isNaN(date.getTime())) {
-      formatted = formatString ? date.toLocaleDateString('en-US', { format: formatString } as Intl.DateTimeFormatOptions) : date.toISOString()
+      // Very basic formatting if string provided, otherwise ISO
+      formatted = formatString ? date.toLocaleDateString(formatString) : date.toISOString()
     }
   } else if (format === 'number') {
     const num = parseFloat(String(value))
     if (!isNaN(num)) {
-      formatted = formatString ? num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(num)
+      formatted = formatString ? num.toLocaleString(formatString) : String(num)
     }
   } else if (format === 'currency') {
     const num = parseFloat(String(value))
@@ -127,7 +149,7 @@ export function executeFormatPropertyAction(action: ActionCanvasNode, ctx: Actio
     }
   }
 
-  ctx.currentGraphNode.properties[propertyKey] = formatted
+  node.properties[propertyKey] = formatted
 }
 
 

@@ -72,6 +72,21 @@ export const executeIfTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: Exe
         const text = (element.textContent || '').trim()
         return text.length > 0
       }
+      case 'HasDescendant': {
+        const values = condition.values || (condition.value ? [condition.value] : [])
+        const childElements = element.getElementsByTagName('*')
+        const descendantNames = Array.from(childElements).map(c => {
+          const tagName = c.tagName ? c.tagName.toLowerCase() : ''
+          const localName = tagName.includes(':') ? tagName.split(':').pop() || tagName : tagName
+          return localName
+        })
+        const operator = condition.internalOperator || 'OR'
+        if (operator === 'AND') {
+          return values.every((v: string) => descendantNames.includes(v.toLowerCase().trim()))
+        } else {
+          return values.some((v: string) => descendantNames.includes(v.toLowerCase().trim()))
+        }
+      }
       case 'ElementNameEquals': {
         const value = condition.value || ''
         return element.tagName.toLowerCase() === value.toLowerCase().trim()
@@ -82,8 +97,8 @@ export const executeIfTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: Exe
         return element.getAttribute(attrName) === value
       }
       case 'ChildCount': {
-        const min = Number(condition.minCount || 0)
-        const max = Number(condition.maxCount || Infinity)
+        const min = Number(condition.min !== undefined ? condition.min : 0)
+        const max = Number(condition.max !== undefined ? condition.max : Infinity)
         const count = element.children ? element.children.length : 0
         return count >= min && count <= max
       }
@@ -144,7 +159,5 @@ export const executeSwitchTool: ToolExecutor = async (tool: ToolCanvasNode, ctx:
   return { result: value, outputPath }
 }
 
-export const executeLoopTool: ToolExecutor = async (_tool: ToolCanvasNode, _ctx: ExecutionContext) => {
-  return { result: true }
-}
+
 

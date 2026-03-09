@@ -107,8 +107,9 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     }
 
     ctx.graphNodes.push(graphNode)
-    // Only map element if new? Or always?
-    ctx.elementToGraph.set(ctx.xmlElement, graphNode)
+    if (!ctx.currentGraphNode) {
+      ctx.elementToGraph.set(ctx.xmlElement, graphNode)
+    }
   }
 
   // Ensure graphNode is defined (TS check)
@@ -123,7 +124,9 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     }
   }
 
-  ctx.currentGraphNode = graphNode
+  if (!ctx.currentGraphNode) {
+    ctx.currentGraphNode = graphNode
+  }
 
   // 2. Map Attributes (Properties)
   const attributeMappings = (action.config.attributeMappings as Array<{
@@ -264,87 +267,8 @@ export function executeMergeChildrenTextAction(action: ActionCanvasNode, ctx: Ac
   ctx.currentGraphNode.properties[propertyKey] = transformed
 }
 
-export function executeCreateConditionalNodeAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.builderNode) return
 
-  const apiResponseData = ctx.getApiResponseData(action)
-  
-  // Capture the node that "owns" this action execution
-  const originNode = ctx.currentGraphNode || ctx.parentGraphNode
-  const conditions = (action.config.conditions as Array<{
-    type: 'hasAttribute' | 'hasText' | 'hasChildren'
-    attributeName?: string
-    attributeValue?: string
-    minTextLength?: number
-    childTag?: string
-  }>) || []
-  const operator = (action.config.operator as 'AND' | 'OR') || 'AND'
 
-  let conditionMet = false
-  if (conditions.length === 0) {
-    conditionMet = true
-  } else {
-    const results = conditions.map(condition => {
-      switch (condition.type) {
-        case 'hasAttribute':
-          if (!condition.attributeName) return false
-          const attrName = ctx.evaluateTemplate(condition.attributeName, apiResponseData)
-          const attrValue = ctx.xmlElement.getAttribute(attrName)
-          if (condition.attributeValue) {
-            const expectedValue = ctx.evaluateTemplate(condition.attributeValue, apiResponseData)
-            return attrValue === expectedValue
-          }
-          return attrValue !== null
-        case 'hasText':
-          const minLength = condition.minTextLength || 1
-          const text = (ctx.xmlElement.textContent || '').trim()
-          return text.length >= minLength
-        case 'hasChildren':
-          if (!condition.childTag) return false
-          const childTag = ctx.evaluateTemplate(condition.childTag, apiResponseData)
-          const children = ctx.xmlElement.childNodes ? Array.from(ctx.xmlElement.childNodes).filter((n: Node) => n.nodeType === 1) as Element[] : []
-          return children.some(c => c.tagName.toLowerCase() === childTag.toLowerCase())
-        default:
-          return false
-      }
-    })
-
-    conditionMet = operator === 'AND' ? results.every(r => r) : results.some(r => r)
-  }
-
-  if (!conditionMet) return
-
-  const nodeId = ctx.nodeIdCounter.value++
-  const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
-
-  const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
-  if (nodeLabel) {
-    graphNode.labels = [nodeLabel]
-  }
-
-  ctx.graphNodes.push(graphNode)
-  ctx.elementToGraph.set(ctx.xmlElement, graphNode)
-  ctx.currentGraphNode = graphNode
-
-  if (originNode) {
-    const parentRelType = ctx.evaluateTemplate((action.config.parentRelationship as string) || 'contains', apiResponseData)
-    const relType = ctx.relationships.find(r => r.type === parentRelType)
-    if (relType) {
-      const rel = ctx.createRelationship(originNode, graphNode, relType)
-      ctx.graphRels.push(rel)
-    } else {
-      const rel: GraphJsonRelationship = {
-        id: ctx.relIdCounter.value++,
-        type: 'relationship',
-        label: parentRelType,
-        start: originNode.id,
-        end: graphNode.id,
-        properties: {}
-      }
-      ctx.graphRels.push(rel)
-    }
-  }
-}
 
 export function executeExtractAndComputePropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.currentGraphNode) return
@@ -398,6 +322,77 @@ export function executeExtractAndComputePropertyAction(action: ActionCanvasNode,
   }
 
   ctx.currentGraphNode.properties[propertyKey] = computed
+}
+
+
+
+
+export function executeCreateNodeWithLookupAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
+  if (!ctx.builderNode) return
+
+  const apiResponseData = ctx.getApiResponseData(action)
+  
+  const lookupKey = ctx.evaluateTemplate((action.config.lookupPropertyKey as string), apiResponseData)
+  const lookupValue = ctx.evaluateTemplate((action.config.lookupPropertyValue as string), apiResponseData)
+
+  // Early Exit Check 1: If searching by property but value is mysteriously empty, skip node creation entirely.
+  if (lookupKey && (!lookupValue || String(lookupValue).trim() === '')) {
+    return
+  }
+
+  // Early Exit Check 2: If it's an ID lookup and ID doesn't exist in XML, skip node creation entirely.
+  if (lookupKey === 'id' || lookupKey === 'xml:id' || lookupKey === 'xmlid' || lookupKey === 'uri') {
+    const targetExists = ctx.findElementById(ctx.doc, lookupValue)
+    if (!targetExists) {
+      return
+    }
+  }
+
+  // Always create a NEW separate node for the lookup action, do NOT overwrite ctx.currentGraphNode!
+  const nodeId = ctx.nodeIdCounter.value++
+  const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId, {
+    inheritProperties: action.config.inheritProperties !== false
+  })
+  
+  const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+  if (nodeLabel) {
+    graphNode.labels = [nodeLabel]
+  }
+
+  const mappings = (action.config.attributeMappings as any[]) || []
+  mappings.forEach(m => {
+    const attributeName = ctx.evaluateTemplate(m.attributeName, apiResponseData)
+    const propertyKey = ctx.evaluateTemplate(m.propertyKey || m.attributeName, apiResponseData)
+    const val = ctx.xmlElement.getAttribute(attributeName) || m.defaultValue
+    
+    if (val !== null && val !== undefined) {
+      graphNode.properties[propertyKey] = val
+    }
+  })
+
+  // Add the newly created node to the graph
+  ctx.graphNodes.push(graphNode)
+  
+  // Note: We deliberately do NOT update ctx.currentGraphNode here. This node is intended to be 
+  // freestanding, connected only to its lookup target via the deferred relationship.
+
+  // Defer relationship with lookup target
+  const direction = (action.config.direction as 'outgoing' | 'incoming') || 'outgoing'
+  const lookupLabel = ctx.evaluateTemplate((action.config.lookupLabel as string), apiResponseData)
+
+  ctx.deferredRelationships.push({
+    from: graphNode,
+    to: null,
+    type: ctx.evaluateTemplate((action.config.relationshipType as string) || 'relatedTo', apiResponseData),
+    properties: {},
+    targetLookup: {
+      label: lookupLabel,
+      propertyKey: lookupKey,
+      propertyValue: lookupValue
+    },
+    direction: direction,
+    mustResolve: true // Always treat as mandatory for this action, dropping graphNode if unresolved
+  })
 }
 
 

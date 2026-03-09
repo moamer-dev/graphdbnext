@@ -17,7 +17,9 @@ CRITICAL: Always prefer specialized actions over generic ones. For example:
 - Use "action:create-token-nodes" to tokenize text and create token nodes with relationships
 - Use "action:create-annotation-nodes" for annotation processing
 - Use "action:create-reference-chain" for reference processing
-- Use "action:create-hierarchical-nodes" for hierarchical structures
+- Use "action:create-node-complete" for standard node creation
+- Use "action:create-text-node" for text-only nodes
+- Use "action:create-node-with-lookup" for deferred node creation with graph lookup
 
 Guidelines:
 - Generate workflows that are logically structured and efficient
@@ -214,60 +216,47 @@ ${JSON.stringify(schemaSummary, null, 2)}
 
 Available Workflow Components:
 
-Tools (for conditional logic and data processing):
-- tool:if - Conditional logic with condition groups (check HasAttribute, HasTextContent, HasChildren, etc.)
-  Config example for checking attribute: {
+Tools (for conditional logic, timing, and external services):
+- tool:if - Conditional logic with condition groups (check HasAttribute, HasTextContent, HasChildren, HasParent, ElementNameEquals, etc.)
+  Config example: {
     "conditionGroups": [{
-      "conditions": [{
-        "type": "HasAttribute",
-        "attributeName": "text"  // or use "value" field
-      }],
+      "conditions": [{ "type": "HasAttribute", "attributeName": "id" }],
       "internalOperator": "AND",
       "operator": "AND"
     }]
   }
-  Output paths: "true" or "false"
 - tool:switch - Multi-branch conditional based on attribute/elementName/textContent
-- tool:loop - Iterate over collections
-- tool:filter - Filter data based on conditions
-- tool:transform - Transform data structures
-- tool:merge - Merge multiple data streams
-- tool:map - Map over arrays
-- tool:split - Split data into multiple streams
-- tool:aggregate, tool:sort, tool:limit, tool:collect, tool:traverse, etc.
+- tool:delay - Add a pause in processing (ms), useful for external API rate limiting
 - tool:fetch-api - Fetch data from research APIs (Wikidata, GND, VIAF, ORCID, etc.)
-  Use when: User asks to fetch data from external sources like Wikidata
-  Config example: {
-    "apiProvider": "wikidata",
-    "idSource": "attribute",
-    "idAttribute": "wikiId"
-  }
-- tool:lookup - Internal lookup (DO NOT use for external APIs like Wikidata)
+  Config example: { "apiProvider": "wikidata", "idSource": "attribute", "idAttribute": "ref" }
+- tool:http - Generic HTTP request to any endpoint
+- tool:webhook - Send outbound notifications to a URL
 
-Actions (for graph operations - USE SPECIALIZED ACTIONS WHEN AVAILABLE):
-PRIMARY ACTIONS (use these when they match the use case):
-- action:create-token-nodes - Tokenize text from an attribute and create token nodes with relationships
-  Use when: You need to split text into tokens and create nodes for each token
-  Config includes: parentNodeLabel, tokenNodeLabel, tokenNodeType, relationshipType (default: "includes"), textSource ("attribute" or "textContent"), attributeName (required if textSource is "attribute")
-  splitBy: Optional. Only include if user explicitly requests splitting (e.g., "split by space", "split by comma"). 
-    - If splitBy is NOT included in config or is empty: Creates one token node per character (character-level tokenization)
-    - If splitBy is provided (e.g., " "): Splits text by the specified delimiter (e.g., space splits into words)
-  IMPORTANT: If reading from an attribute, you MUST set textSource: "attribute" and attributeName to the attribute name (e.g., "text")
-  IMPORTANT: Do NOT include splitBy in config unless the user explicitly asks to split the text by a delimiter. By default (when splitBy is not specified), the action will create one token node per character.
-  This action automatically handles tokenization, node creation, and relationship creation
-- action:create-annotation-nodes - Create annotation nodes from XML annotations
-- action:create-reference-chain - Create reference chains
-- action:extract-and-normalize-attributes - Extract and normalize XML attributes
+Actions (for graph operations):
+NODE ACTIONS:
+- action:create-node-complete - Standard node creation with property mapping and optional relationship
+- action:create-text-node - Create node specifically for normalized text content
+- action:create-token-nodes - Tokenize text and create token nodes with relationships
+- action:create-annotation-nodes - Create annotation nodes from references
+- action:create-node-with-lookup - Fetch existing node or create if missing (Upsert)
+- action:update-node, action:delete-node, action:clone-node, action:merge-nodes
 
-BASIC ACTIONS (use when specialized actions don't fit):
-- action:create-node - Create a basic graph node
-- action:create-relationship - Create a relationship between existing nodes
-- action:set-property - Set property on a node
-- action:extract-property - Extract property from XML/data
-- action:transform-text - Transform text content
-- action:extract-text - Extract text content
-- action:skip - Skip processing current item
-- action:process-children - Process child elements
+PROPERTY ACTIONS:
+- action:set-property - Set a specific property value (supports templates)
+- action:copy-property - Copy property between related nodes
+- action:merge-properties - Combine multiple properties into one
+- action:split-property - Split property string into parts
+- action:format-property - Normalize data types (date, number)
+- action:extract-and-compute-property - Multi-source extraction and computation
+- action:extract-and-normalize-attributes - Bulk extraction with normalization
+
+RELATIONSHIP ACTIONS:
+- action:create-relationship, action:defer-relationship, action:update-relationship, action:delete-relationship, action:reverse-relationship, action:create-reference-chain
+
+WORKFLOW & CONTROL:
+- action:group - Container for organizing actions
+- action:skip - Skip processing current element or its children
+- action:merge-children-text - Flatten nested XML text into a single property
 
 COMMON PATTERNS:
 
@@ -315,8 +304,8 @@ Pattern 1: Check if element has attribute, then tokenize:
 }
 
 IMPORTANT RULES:
-1. For tokenization: Always use "action:create-token-nodes" instead of action:create-node + action:create-relationship
-2. For conditional checks: Use "tool:if" with HasAttribute condition type, NOT tool:filter
+1. For tokenization: Always use "action:create-token-nodes" instead of action:create-node-complete + action:create-relationship
+2. For conditional checks: Use "tool:if" with appropriate condition groups (e.g. HasAttribute).
 3. Connect tool:if "true" output to actions that should execute when condition is met
 4. Use specialized actions (action:create-token-nodes, action:create-annotation-nodes, etc.) instead of generic actions when they match your use case
 5. Start with XML input (implicit trigger:xml-start)

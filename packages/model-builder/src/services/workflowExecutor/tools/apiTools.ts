@@ -49,61 +49,7 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
   return { result: true }
 }
 
-export const executeAuthenticatedApiTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
-  const providerMap: Record<string, ApiProvider> = {
-    'tool:fetch-orcid': 'orcid',
-    'tool:fetch-geonames': 'geonames',
-    'tool:fetch-europeana': 'europeana',
-    'tool:fetch-getty': 'getty'
-  }
 
-  const provider = providerMap[tool.type] || 'orcid'
-  const idSource = (tool.config.idSource as 'attribute' | 'textContent' | 'xpath') || 'attribute'
-  const idAttribute = tool.config.idAttribute as string | undefined
-  const idXpath = tool.config.idXpath as string | undefined
-  const credentialId = tool.config.credentialId as string | undefined
-  const timeout = (tool.config.timeout as number) || 10000
-  const storeInContext = (tool.config.storeInContext as string) || provider
-
-  if (!credentialId) {
-    console.warn(`[Authenticated API Tool] No credential ID configured for ${provider}`)
-    return { result: false }
-  }
-
-  const id = extractIdFromElement(ctx.xmlElement, idSource, idAttribute, idXpath)
-
-  if (!id) {
-    console.warn(`[Authenticated API Tool] No ID found for provider ${provider}`)
-    return { result: false }
-  }
-
-  if (!ctx.apiData) {
-    ctx.apiData = {}
-  }
-
-  try {
-    const response = await fetchFromApi({
-      provider,
-      id,
-      credentialId,
-      timeout
-    }, () => {
-      return undefined
-    })
-
-    if (response.success && response.data) {
-      if (ctx.apiData) {
-        ctx.apiData[storeInContext] = response.data
-      }
-    } else {
-      console.warn(`[Authenticated API Tool] API request failed: ${response.error}`)
-    }
-  } catch (error) {
-    console.error(`[Authenticated API Tool] Error:`, error)
-  }
-
-  return { result: true }
-}
 
 export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const method = (tool.config.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH') || 'GET'

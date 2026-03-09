@@ -2,6 +2,8 @@
 
 import { Label } from '../../ui/label'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { NodeTargetingSection } from '../../shared/NodeTargetingSection'
+import { KeyValueEditor } from '../../shared/KeyValueEditor'
 import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 
 interface ActionDeleteNodeConfigurationProps {
@@ -17,38 +19,36 @@ export function ActionDeleteNodeConfiguration({
 }: ActionDeleteNodeConfigurationProps) {
   if (!actionNode) return null
 
+  const config = actionNode.config as any
+
   return (
     <CollapsibleSection title="Delete Node Configuration" defaultOpen={true}>
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Property Match (JSON)</Label>
-          <textarea
-            className="w-full h-24 text-xs font-mono p-2 border rounded"
-            placeholder='{"key": "value"}'
-            value={JSON.stringify(((actionNode.config.condition as Record<string, unknown>)?.propertyMatch as Record<string, unknown>) || {}, null, 2)}
-            onChange={(e) => {
-              try {
-                const propertyMatch = JSON.parse(e.target.value)
-                onUpdateActionNode(actionNodeId, {
-                  config: {
-                    ...actionNode.config,
-                    condition: {
-                      ...((actionNode.config.condition as Record<string, unknown>) || {}),
-                      propertyMatch
-                    }
-                  }
-                })
-              } catch {
-                // Invalid JSON, ignore
-              }
-            }}
-          />
-          <div className="text-[10px] text-muted-foreground">
-            Only delete nodes matching these properties
-          </div>
+        <NodeTargetingSection
+          title="Target Node"
+          alias={config.targetAlias || 'current'}
+          lookup={config.targetLookup || {}}
+          onAliasChange={(val) => onUpdateActionNode(actionNodeId, { 
+            config: { ...config, targetAlias: val } 
+          })}
+          onLookupChange={(lookup) => onUpdateActionNode(actionNodeId, {
+            config: { ...config, targetLookup: lookup }
+          })}
+        />
+
+        <KeyValueEditor
+          title="Property Match"
+          description="Only delete nodes if all these properties match"
+          entries={config.propertyMatch || []}
+          onEntriesChange={(propertyMatch) => onUpdateActionNode(actionNodeId, {
+            config: { ...config, propertyMatch }
+          })}
+        />
+        
+        <div className="text-[10px] text-muted-foreground italic px-1">
+          If no properties are specified, the target node will be deleted regardless of its state.
         </div>
       </div>
     </CollapsibleSection>
   )
 }
-

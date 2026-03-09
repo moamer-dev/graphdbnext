@@ -26,15 +26,19 @@ Key capabilities:
 - Help users create and modify graph schemas (nodes and relationships)
 - Explain schema structures and suggest improvements
 - Guide users through the XML import wizard
-- Assist with workflow design and optimization
+- Assist with workflow design (using tool:if, tool:switch, tool:delay, tool:fetch-api, tool:http, tool:webhook and various actions like action:create-node-complete, action:create-token-nodes)
 - Answer questions about graph database concepts and best practices
+
+Workflow Component Reference:
+Tools: tool:if, tool:switch, tool:delay, tool:fetch-api, tool:http, tool:webhook
+Primary Actions: action:create-node-complete, action:create-text-node, action:create-token-nodes, action:create-annotation-nodes, action:create-node-with-lookup, action:create-relationship
 
 Guidelines:
 - Be concise but thorough
-- Use the available tools to interact with the application when appropriate
+- Use the available tools (create_node, create_relationship, etc. via langchain) to interact with the application when appropriate
 - Explain concepts clearly for researchers who may not be database experts
 - Suggest best practices for graph database design
-- When asked to create schemas, use the create_node and create_relationship tools
+- When asked about workflows, only suggest component types that currently exist in the system
 - Always provide context and reasoning for your suggestions`
 
 /**
@@ -75,7 +79,7 @@ export async function invokeResearchAssistant(
         contextInfo += `\n- Selected Relationship: ${state.selectedRelationshipId}`
       }
     }
-    // temporary context aware solution until we apply vector embeddings
+    // temporary context aware solution until applying vector embeddings
     if (appContext.xmlContent) {
       const truncatedXml = appContext.xmlContent.length > 5000
         ? appContext.xmlContent.substring(0, 5000) + '... (truncated)'
@@ -153,8 +157,6 @@ export async function invokeResearchAssistant(
     // Call the model again with full conversation history including tool results
     response = await modelWithTools.invoke(conversationMessages)
   }
-
-  // Final response doesn't need to be added to conversationMessages as it's returned
 
   return response
 }

@@ -6,9 +6,9 @@ import { executeSetPropertyAction, executeCopyPropertyAction, executeMergeProper
 import { executeCreateRelationshipAction, executeDeferRelationshipAction, executeUpdateRelationshipAction, executeDeleteRelationshipAction, executeReverseRelationshipAction } from './relationshipActions'
 import { executeCreateTextNodeAction, executeCreateTokenNodesAction } from './advancedNodeActions'
 import { executeCreateAnnotationNodesAction, executeCreateReferenceChainAction } from './referenceActions'
-import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeCreateConditionalNodeAction, executeExtractAndComputePropertyAction } from './complexActions'
-import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction, executeValidateNodeAction, executeValidateRelationshipAction, executeReportErrorAction, executeAddMetadataAction, executeTagNodeAction, executeSetTimestampAction } from './nodeManipulationActions'
-import { executeSkipAction, executeCreateNodeWithFilteredChildrenAction, executeCreateHierarchicalNodesAction, type SpecialActionExecutionContext } from './specialActions'
+import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeExtractAndComputePropertyAction, executeCreateNodeWithLookupAction } from './complexActions'
+import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction } from './nodeManipulationActions'
+import { executeSkipAction, type SpecialActionExecutionContext } from './specialActions'
 
 const actionRegistry: Record<string, ActionExecutor> = {
   'action:create-node': executeCreateNodeAction,
@@ -23,7 +23,6 @@ const actionRegistry: Record<string, ActionExecutor> = {
   'action:create-annotation-nodes': executeCreateAnnotationNodesAction,
   'action:create-reference-chain': executeCreateReferenceChainAction,
   'action:merge-children-text': executeMergeChildrenTextAction,
-  'action:create-conditional-node': executeCreateConditionalNodeAction,
   'action:extract-and-compute-property': executeExtractAndComputePropertyAction,
   'action:copy-property': executeCopyPropertyAction,
   'action:merge-properties': executeMergePropertiesAction,
@@ -36,16 +35,9 @@ const actionRegistry: Record<string, ActionExecutor> = {
   'action:delete-node': executeDeleteNodeAction,
   'action:clone-node': executeCloneNodeAction,
   'action:merge-nodes': executeMergeNodesAction,
-  'action:validate-node': executeValidateNodeAction,
-  'action:validate-relationship': executeValidateRelationshipAction,
-  'action:report-error': executeReportErrorAction,
-  'action:add-metadata': executeAddMetadataAction,
-  'action:tag-node': executeTagNodeAction,
-  'action:set-timestamp': executeSetTimestampAction,
   'action:skip': executeSkipAction,
 
-  'action:create-node-with-filtered-children': executeCreateNodeWithFilteredChildrenAction as ActionExecutor,
-  'action:create-hierarchical-nodes': executeCreateHierarchicalNodesAction as ActionExecutor
+  'action:create-node-with-lookup': executeCreateNodeWithLookupAction
 }
 
 export function executeActionWithWalk(
@@ -66,6 +58,15 @@ export function executeActionWithWalk(
     return
   }
   executeAction(action, ctx)
+
+  // Recurse through action edges
+  const outgoingEdges = ctx.actionEdgesBySource.get(action.id) || []
+  outgoingEdges.forEach(edge => {
+    const nextAction = ctx.actionNodes.find(a => a.id === edge.target)
+    if (nextAction) {
+      executeActionWithWalk(nextAction, ctx)
+    }
+  })
 }
 
 export function executeAction(

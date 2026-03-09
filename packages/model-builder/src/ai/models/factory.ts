@@ -16,7 +16,7 @@ export function createChatModel(config: AIModelConfig): BaseChatModel {
   const modelOptions = {
     temperature: config.temperature ?? 0.7,
     maxTokens: config.maxTokens ?? 4000,
-    timeout: 30000, // 30 second timeout
+    timeout: 30000,
     ...config.customConfig,
   }
 
@@ -40,7 +40,6 @@ export function createChatModel(config: AIModelConfig): BaseChatModel {
         apiKey: config.apiKey || undefined,
         temperature: modelOptions.temperature,
         maxTokens: modelOptions.maxTokens,
-        // Note: Anthropic doesn't support timeout in constructor
       })
     }
 
@@ -51,14 +50,13 @@ export function createChatModel(config: AIModelConfig): BaseChatModel {
         apiKey: config.apiKey || undefined,
         temperature: modelOptions.temperature,
         maxTokens: modelOptions.maxTokens,
-        // Note: Mistral doesn't support timeout in constructor
       })
     }
 
     case 'ollama': {
       return new ChatOpenAI({
         modelName: config.modelName === 'llama2' ? 'llama2' : config.modelName === 'mistral' ? 'mistral' : 'llama2',
-        apiKey: config.apiKey || 'ollama', // Ollama doesn't require a real API key
+        apiKey: config.apiKey || 'ollama',
         configuration: { baseURL: config.baseUrl || 'http://localhost:11434/v1' },
         temperature: modelOptions.temperature,
         maxTokens: modelOptions.maxTokens,

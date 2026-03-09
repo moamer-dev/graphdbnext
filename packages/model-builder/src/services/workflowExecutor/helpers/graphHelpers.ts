@@ -6,7 +6,8 @@ export function createGraphNode(
   builderNode: BuilderNode,
   element: Element,
   id: number,
-  schemaJson?: SchemaJson
+  schemaJson?: SchemaJson,
+  options: { inheritProperties?: boolean } = { inheritProperties: true }
 ): GraphJsonNode {
   const schemaNode = schemaJson?.nodes?.[builderNode.label]
   const labels = schemaNode
@@ -15,9 +16,11 @@ export function createGraphNode(
 
   const properties: Record<string, unknown> = {}
   
-  Array.from(element.attributes || []).forEach((attr) => {
-    properties[attr.name] = attr.value
-  })
+  if (options.inheritProperties !== false) {
+    Array.from(element.attributes || []).forEach((attr) => {
+      properties[attr.name] = attr.value
+    })
+  }
 
   if (builderNode.properties) {
     builderNode.properties.forEach(prop => {

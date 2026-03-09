@@ -28,9 +28,7 @@ const quickActions: Array<{ label: string; type: ActionNodeType }> = [
   { label: 'Bulk Attribute Mapper', type: 'action:extract-and-normalize-attributes' },
   { label: 'Create Annotation Nodes', type: 'action:create-annotation-nodes' },
   { label: 'Create Reference Chain', type: 'action:create-reference-chain' },
-  { label: 'Create Conditional Node', type: 'action:create-conditional-node' },
-  { label: 'Create Hierarchical Nodes', type: 'action:create-hierarchical-nodes' },
-  { label: 'Create Node with Filtered Children', type: 'action:create-node-with-filtered-children' },
+  { label: 'Create Node with Lookup', type: 'action:create-node-with-lookup' },
 ]
 
 const basicActions: Array<{ label: string; type: ActionNodeType }> = [

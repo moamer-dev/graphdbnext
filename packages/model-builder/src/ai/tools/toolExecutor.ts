@@ -27,7 +27,7 @@ export function createToolExecutor(context: ToolExecutionContext) {
     }): Promise<string> {
       // Get fresh store and nodes state each time
       const store = context.getStore()
-      const nodes = context.getNodes() // Get current nodes state
+      const nodes = context.getNodes()
       
       // Check if node with same name/type already exists (case-insensitive)
       const nodeLabel = args.label || args.name
@@ -142,7 +142,7 @@ export function createToolExecutor(context: ToolExecutionContext) {
     }): Promise<string> {
       // Get fresh store and state each time
       const store = context.getStore()
-      const nodes = context.getNodes() // Get current nodes state (after any previous creations)
+      const nodes = context.getNodes()
       const relationships = context.getRelationships()
 
       // Find nodes by label, type, or ID (case-insensitive for label/type matching)

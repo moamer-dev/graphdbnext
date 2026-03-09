@@ -136,21 +136,3 @@ export function createModelBuilderTools(executor: ReturnType<typeof import('./to
   ]
 }
 
-/**
- * Legacy export for backwards compatibility (tools without executor)
- * These return JSON strings and don't execute actions
- * @deprecated Use createModelBuilderTools with executor instead
- */
-export const modelBuilderTools = [
-  tool(
-    async () => {
-      return 'Tool execution requires a ToolExecutionContext. Please use createModelBuilderTools with an executor.'
-    },
-    {
-      name: 'create_node',
-      description: 'Create a new node (requires executor)',
-      schema: z.object({}),
-    }
-  ),
-]
-

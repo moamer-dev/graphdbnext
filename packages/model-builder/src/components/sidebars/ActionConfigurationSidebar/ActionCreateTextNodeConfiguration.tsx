@@ -11,6 +11,8 @@ import {
   SelectValue
 } from '../../ui/select'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
+import { Switch } from '../../ui/switch'
+import { Plus, Trash2 } from 'lucide-react'
 import { TransformEditor } from './TransformEditor'
 import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
 import type { ActionConfigurationState, TextTransform } from '../../../stores/actionConfigurationStore'
@@ -157,6 +159,91 @@ export function ActionCreateTextNodeConfiguration({
               onCreateTextNodeConfigChange(updated)
               onUpdateActionNode(actionNodeId, {
                 config: { ...actionNode.config, parentRelationship: value }
+              })
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-medium">Extra Properties</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const updated = {
+                  ...createTextNodeConfig,
+                  propertyMappings: [...(createTextNodeConfig.propertyMappings || []), { key: '', value: '' }]
+                }
+                onCreateTextNodeConfigChange(updated)
+                onUpdateActionNode(actionNodeId, { config: updated })
+              }}
+              className="h-6 px-2 text-[10px]"
+            >
+              <Plus size={12} className="mr-1" /> Add
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            {(createTextNodeConfig.propertyMappings || []).map((mapping, idx) => (
+              <div key={idx} className="grid grid-cols-[1fr,1fr,auto] gap-2 items-center">
+                <Input
+                  placeholder="Key"
+                  className="h-7 text-xs"
+                  value={mapping.key}
+                  onChange={(e) => {
+                    const newMappings = [...createTextNodeConfig.propertyMappings]
+                    newMappings[idx].key = e.target.value
+                    const updated = { ...createTextNodeConfig, propertyMappings: newMappings }
+                    onCreateTextNodeConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, { config: updated })
+                  }}
+                />
+                <Input
+                  placeholder="Value (or template)"
+                  className="h-7 text-xs"
+                  value={mapping.value}
+                  onChange={(e) => {
+                    const newMappings = [...createTextNodeConfig.propertyMappings]
+                    newMappings[idx].value = e.target.value
+                    const updated = { ...createTextNodeConfig, propertyMappings: newMappings }
+                    onCreateTextNodeConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, { config: updated })
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const newMappings = createTextNodeConfig.propertyMappings.filter((_, i) => i !== idx)
+                    const updated = { ...createTextNodeConfig, propertyMappings: newMappings }
+                    onCreateTextNodeConfigChange(updated)
+                    onUpdateActionNode(actionNodeId, { config: updated })
+                  }}
+                  className="h-7 w-7 p-0 text-destructive"
+                >
+                  <Trash2 size={12} />
+                </Button>
+              </div>
+            ))}
+            {(!createTextNodeConfig.propertyMappings || createTextNodeConfig.propertyMappings.length === 0) && (
+              <p className="text-[10px] text-muted-foreground italic">No extra properties defined.</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900/50 border rounded">
+          <div className="space-y-0.5">
+            <Label className="text-xs font-medium">Inherit Properties</Label>
+            <p className="text-[10px] text-muted-foreground">Include all attributes from the XML element</p>
+          </div>
+          <Switch
+            checked={createTextNodeConfig.inheritProperties}
+            onCheckedChange={(checked) => {
+              const updated = { ...createTextNodeConfig, inheritProperties: checked }
+              onCreateTextNodeConfigChange(updated)
+              onUpdateActionNode(actionNodeId, {
+                config: { ...actionNode.config, inheritProperties: checked }
               })
             }}
           />

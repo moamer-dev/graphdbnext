@@ -6,20 +6,22 @@ import { evaluateExpression } from '../../../utils/jsonPathExpression'
 export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.builderNode) return
 
-  const nodeId = ctx.nodeIdCounter.value++
-  const graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
+  const apiResponseData = ctx.getApiResponseData(action)
   
-  // Capture the node that "owns" this action execution
+  // Use current node as origin if available
   const originNode = ctx.currentGraphNode || ctx.parentGraphNode
   
-  const nodeLabel = (action.config.nodeLabel as string) || ctx.builderNode.label
+  const nodeId = ctx.nodeIdCounter.value++
+  const textNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId, {
+    inheritProperties: action.config.inheritProperties as boolean
+  })
+  
+  const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
   if (nodeLabel) {
-    graphNode.labels = [nodeLabel]
+    textNode.labels = [nodeLabel]
   }
 
-  ctx.graphNodes.push(graphNode)
-  ctx.elementToGraph.set(ctx.xmlElement, graphNode)
-  ctx.currentGraphNode = graphNode
+  ctx.graphNodes.push(textNode)
 
   const textSource = (action.config.textSource as 'textContent' | 'attribute') || 'textContent'
   let text = ''
@@ -42,13 +44,23 @@ export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: Actio
   const transformed = ctx.applyTransforms(text, transforms)
 
   const propertyKey = (action.config.propertyKey as string) || 'text'
-  graphNode.properties[propertyKey] = transformed
+  textNode.properties[propertyKey] = transformed
+
+  // Apply extra property mappings
+  const propertyMappings = (action.config.propertyMappings as Array<{ key: string; value: string }>) || []
+  propertyMappings.forEach(mapping => {
+    const key = ctx.evaluateTemplate(mapping.key, apiResponseData)
+    const val = ctx.evaluateTemplate(mapping.value, apiResponseData)
+    if (key) {
+      textNode.properties[key] = val
+    }
+  })
 
   if (originNode) {
-    const parentRelType = (action.config.parentRelationship as string) || 'contains'
+    const parentRelType = ctx.evaluateTemplate((action.config.parentRelationship as string) || 'contains', apiResponseData)
     const relType = ctx.relationships.find(r => r.type === parentRelType)
     if (relType) {
-      const rel = ctx.createRelationship(originNode, graphNode, relType)
+      const rel = ctx.createRelationship(originNode, textNode, relType)
       ctx.graphRels.push(rel)
     } else {
       const rel: GraphJsonRelationship = {
@@ -56,7 +68,7 @@ export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: Actio
         type: 'relationship',
         label: parentRelType,
         start: originNode.id,
-        end: graphNode.id,
+        end: textNode.id,
         properties: {}
       }
       ctx.graphRels.push(rel)

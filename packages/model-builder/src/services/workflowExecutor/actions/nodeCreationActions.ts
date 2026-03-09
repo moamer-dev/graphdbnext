@@ -18,8 +18,10 @@ export function executeCreateNodeAction(action: ActionCanvasNode, ctx: ActionExe
   }
 
   ctx.graphNodes.push(graphNode)
-  ctx.elementToGraph.set(ctx.xmlElement, graphNode)
-  ctx.currentGraphNode = graphNode
+  if (!ctx.currentGraphNode) {
+    ctx.elementToGraph.set(ctx.xmlElement, graphNode)
+    ctx.currentGraphNode = graphNode
+  }
 
   if (originNode) {
     const parentRelType = ctx.evaluateTemplate((action.config.parentRelationship as string) || 'contains', apiResponseData)

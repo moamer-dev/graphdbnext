@@ -51,44 +51,22 @@ export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx
   }
 
   if (attrValue) {
-    // ID Reference Mode (Always)
     const cleanId = attrValue.replace(/^#/, '').split(' ')[0]
     const targetElement = ctx.findElementById(ctx.doc, cleanId)
-
-    // Try to find target node
-    const targetNode = targetElement ? ctx.elementToGraph.get(targetElement) : undefined
-
-    // Determine relationship type
     const relLabel = relationshipType || 'annotates'
-    const relType = ctx.relationships.find(r => r.type === relLabel)
 
-    if (targetNode) {
-      // Both nodes exist, create relationship
-      if (relType) {
-        const rel = ctx.createRelationship(currentNode, targetNode, relType)
-        ctx.graphRels.push(rel)
-      } else {
-        const rel: GraphJsonRelationship = {
-          id: ctx.relIdCounter.value++,
-          type: 'relationship',
-          label: relLabel,
-          start: currentNode.id,
-          end: targetNode.id,
-          properties: {}
-        }
-        ctx.graphRels.push(rel)
-      }
-    } else {
-      // Defer relationship if target likely exists but isn't processed yet
-      ctx.deferredRelationships.push({
-        from: currentNode,
-        to: null,
-        type: relLabel,
-        properties: {},
-        targetId: cleanId,
-        targetElement: targetElement || undefined
-      })
-    }
+    // Always defer to handle multiple matches (e.g., inherited IDs on child nodes)
+    // and to ensure all nodes are created before linking.
+    ctx.deferredRelationships.push({
+      from: currentNode,
+      to: null,
+      type: relLabel,
+      properties: {},
+      targetId: cleanId,
+      targetElement: targetElement || undefined,
+      direction: 'outgoing',
+      mustResolve: true
+    })
   }
 }
 

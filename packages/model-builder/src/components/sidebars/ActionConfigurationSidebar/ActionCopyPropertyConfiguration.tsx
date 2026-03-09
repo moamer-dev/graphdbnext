@@ -2,88 +2,66 @@
 
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import { JsonFieldSelector } from '../../viewer/JsonFieldSelector'
-import { HelpTooltip } from '../../shared/HelpTooltip'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import type { ActionCanvasNode } from '../../../stores/actionCanvasStore'
+import type { ActionConfigurationState } from '../../../stores/actionConfigurationStore'
 
 interface ActionCopyPropertyConfigurationProps {
   actionNodeId: string
   actionNode: ActionCanvasNode | null
-  apiResponse: unknown
+  copyPropertyConfig: ActionConfigurationState['copyPropertyConfig']
+  onCopyPropertyConfigChange: (config: ActionConfigurationState['copyPropertyConfig']) => void
   onUpdateActionNode: (id: string, updates: Partial<ActionCanvasNode>) => void
 }
 
 export function ActionCopyPropertyConfiguration({
   actionNodeId,
   actionNode,
-  apiResponse,
+  copyPropertyConfig,
+  onCopyPropertyConfigChange,
   onUpdateActionNode
 }: ActionCopyPropertyConfigurationProps) {
   if (!actionNode) return null
+
+  const handleConfigChange = (key: keyof ActionConfigurationState['copyPropertyConfig'], value: any) => {
+    const updated = { ...copyPropertyConfig, [key]: value }
+    onCopyPropertyConfigChange(updated)
+    onUpdateActionNode(actionNodeId, { config: updated })
+  }
 
   return (
     <CollapsibleSection title="Copy Property Configuration" defaultOpen={true}>
       <div className="space-y-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Label className="text-xs font-medium">Source Property</Label>
-            <HelpTooltip content="The property name to copy from" />
-          </div>
-          {apiResponse ? (
-            <JsonFieldSelector
-              data={apiResponse}
-              value={(actionNode.config.sourceProperty as string) || ''}
-              onChange={(value) => {
-                onUpdateActionNode(actionNodeId, {
-                  config: { ...actionNode.config, sourceProperty: value }
-                })
-              }}
-              placeholder="Select or enter property name"
-            />
-          ) : (
-            <Input
-              placeholder="e.g., name, title"
-              className="h-8 text-xs"
-              value={(actionNode.config.sourceProperty as string) || ''}
-              onChange={(e) => {
-                onUpdateActionNode(actionNodeId, {
-                  config: { ...actionNode.config, sourceProperty: e.target.value }
-                })
-              }}
-            />
-          )}
+          <Label className="text-xs font-medium">Source Property</Label>
+          <Input
+            placeholder="e.g., name"
+            className="h-8 text-xs"
+            value={copyPropertyConfig.sourceProperty || ''}
+            onChange={(e) => handleConfigChange('sourceProperty', e.target.value)}
+          />
+          <p className="text-[10px] text-muted-foreground italic">Supports {"{{ templates }}"}</p>
         </div>
         <div className="space-y-2">
           <Label className="text-xs font-medium">Target Property</Label>
           <Input
-            placeholder="e.g., copiedName"
+            placeholder="e.g., displayName"
             className="h-8 text-xs"
-            value={(actionNode.config.targetProperty as string) || ''}
-            onChange={(e) => {
-              onUpdateActionNode(actionNodeId, {
-                config: { ...actionNode.config, targetProperty: e.target.value }
-              })
-            }}
+            value={copyPropertyConfig.targetProperty || ''}
+            onChange={(e) => handleConfigChange('targetProperty', e.target.value)}
           />
+          <p className="text-[10px] text-muted-foreground italic">Supports {"{{ templates }}"}</p>
         </div>
         <div className="space-y-2">
-          <Label className="text-xs font-medium">Source Node ID (optional)</Label>
+          <Label className="text-xs font-medium">Source Node ID (optional if parent)</Label>
           <Input
-            type="number"
-            placeholder="Leave empty to use parent node"
+            placeholder="leave empty for parent node"
             className="h-8 text-xs"
-            value={(actionNode.config.sourceNodeId as number) || ''}
-            onChange={(e) => {
-              const value = e.target.value ? parseInt(e.target.value) : undefined
-              onUpdateActionNode(actionNodeId, {
-                config: { ...actionNode.config, sourceNodeId: value }
-              })
-            }}
+            value={copyPropertyConfig.sourceNodeId || ''}
+            onChange={(e) => handleConfigChange('sourceNodeId', e.target.value)}
           />
         </div>
       </div>
     </CollapsibleSection>
   )
 }
-
