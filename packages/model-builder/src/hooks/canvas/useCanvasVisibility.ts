@@ -12,14 +12,17 @@ export function useCanvasVisibility() {
   } = useModelBuilderStore()
 
   const visibleNodeIds = useMemo(() => {
+    const nodes = Array.isArray(storeNodes) ? storeNodes : []
+    const relationships = Array.isArray(storeRelationships) ? storeRelationships : []
+    
     if (!hideUnconnectedNodes) {
-      return new Set(storeNodes.map((n: BuilderNode) => n.id))
+      return new Set(nodes.map((n: BuilderNode) => n.id))
     }
     
     if (selectedNode) {
       const visible = new Set<string>([selectedNode])
       
-      storeRelationships.forEach((rel: Relationship) => {
+      relationships.forEach((rel: Relationship) => {
         if (rel.from === selectedNode) {
           visible.add(rel.to)
         }
@@ -32,7 +35,7 @@ export function useCanvasVisibility() {
     }
     
     if (selectedRelationship) {
-      const rel = storeRelationships.find((r: Relationship) => r.id === selectedRelationship)
+      const rel = relationships.find((r: Relationship) => r.id === selectedRelationship)
       if (rel) {
         return new Set<string>([rel.from, rel.to])
       }
@@ -40,6 +43,7 @@ export function useCanvasVisibility() {
     
     return new Set<string>()
   }, [hideUnconnectedNodes, storeNodes, storeRelationships, selectedNode, selectedRelationship])
+
 
   const isNodeVisible = useCallback((nodeId: string) => {
     return visibleNodeIds.has(nodeId)

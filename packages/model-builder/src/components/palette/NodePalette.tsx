@@ -162,8 +162,8 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
   // Drag and drop - keeping complex logic in component for now (group handling, etc.)
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  const nodes = useModelBuilderStore((state) => state.nodes)
-  const groups = useModelBuilderStore((state) => state.groups)
+  const nodes = Array.isArray(useModelBuilderStore((state) => state.nodes)) ? useModelBuilderStore((state) => state.nodes) : []
+  const groups = Array.isArray(useModelBuilderStore((state) => state.groups)) ? useModelBuilderStore((state) => state.groups) : []
   const selectedNode = useModelBuilderStore((state) => state.selectedNode)
   const rootNodeId = useModelBuilderStore((state) => state.rootNodeId)
   const addNode = useModelBuilderStore((state) => state.addNode)
@@ -204,16 +204,18 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
     const grouped: Record<string, Node[]> = {}
     const ungrouped: Node[] = []
 
-    filtered.forEach((node) => {
-      if (node.groupId) {
-        if (!grouped[node.groupId]) {
-          grouped[node.groupId] = []
+    if (Array.isArray(filtered)) {
+      filtered.forEach((node) => {
+        if (node.groupId) {
+          if (!grouped[node.groupId]) {
+            grouped[node.groupId] = []
+          }
+          grouped[node.groupId].push(node)
+        } else {
+          ungrouped.push(node)
         }
-        grouped[node.groupId].push(node)
-      } else {
-        ungrouped.push(node)
-      }
-    })
+      })
+    }
 
     return {
       filteredNodes: filtered,

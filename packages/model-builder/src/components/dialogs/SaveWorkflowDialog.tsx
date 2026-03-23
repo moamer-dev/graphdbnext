@@ -33,6 +33,7 @@ interface SaveWorkflowDialogProps {
     updatedAt: string
   }>
   isNewModel: boolean
+  selectedWorkflowId?: string | null
   onSave: (workflowAction: {
     action: 'skip' | 'create' | 'update'
     workflowId?: string
@@ -48,6 +49,7 @@ export function SaveWorkflowDialog({
   currentWorkflowConfig,
   existingWorkflows = [],
   isNewModel,
+  selectedWorkflowId: headerSelectedWorkflowId,
   onSave
 }: SaveWorkflowDialogProps) {
   const [saveWorkflow, setSaveWorkflow] = useState(false)
@@ -65,12 +67,15 @@ export function SaveWorkflowDialog({
       const hasActions = currentWorkflowConfig.actions && currentWorkflowConfig.actions.length > 0
       setHasWorkflow(hasTools || hasActions)
       
-      // For editing: if there are existing workflows, default to update the first one
+      // For editing: default to update the currently selected workflow (if available)
       if (!isNewModel && existingWorkflows.length > 0) {
-        const firstWorkflow = existingWorkflows[0]
-        setSelectedWorkflowId(firstWorkflow.id)
-        setWorkflowName(firstWorkflow.name)
-        setWorkflowDescription(firstWorkflow.description || '')
+        const defaultWorkflow = headerSelectedWorkflowId
+          ? existingWorkflows.find((workflow) => workflow.id === headerSelectedWorkflowId) || existingWorkflows[0]
+          : existingWorkflows[0]
+
+        setSelectedWorkflowId(defaultWorkflow?.id ?? null)
+        setWorkflowName(defaultWorkflow?.name ?? '')
+        setWorkflowDescription(defaultWorkflow?.description || '')
         setAction('update')
         setSaveWorkflow(true)
       } else {
@@ -81,7 +86,7 @@ export function SaveWorkflowDialog({
         setAction('create')
       }
     }
-  }, [open, currentWorkflowConfig, existingWorkflows, isNewModel])
+  }, [open, currentWorkflowConfig, existingWorkflows, isNewModel, headerSelectedWorkflowId])
 
   const handleSave = async () => {
     if (!currentWorkflowConfig) {

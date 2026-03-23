@@ -537,9 +537,12 @@ export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
       return {
         ...current,
         ...state,
+        nodes: Array.isArray(state.nodes) ? state.nodes : (Array.isArray(current.nodes) ? current.nodes : []),
+        relationships: Array.isArray(state.relationships) ? state.relationships : (Array.isArray(current.relationships) ? current.relationships : []),
+        groups: Array.isArray(state.groups) ? state.groups : (Array.isArray(current.groups) ? current.groups : []),
+        relationshipTypes: relationshipTypes.length > 0 ? relationshipTypes : (Array.isArray(state.relationshipTypes) ? state.relationshipTypes : (Array.isArray(current.relationshipTypes) ? current.relationshipTypes : [])),
         isSemanticEnabled: state.isSemanticEnabled !== undefined ? state.isSemanticEnabled : current.isSemanticEnabled,
-        selectedOntologyId: state.selectedOntologyId !== undefined ? state.selectedOntologyId : current.selectedOntologyId,
-        relationshipTypes: relationshipTypes.length > 0 ? relationshipTypes : (state.relationshipTypes || current.relationshipTypes)
+        selectedOntologyId: state.selectedOntologyId !== undefined ? state.selectedOntologyId : current.selectedOntologyId
       }
     })
   },

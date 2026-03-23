@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useMemo, useImperativeHandle } from 'react'
+import { useEffect, useState, useRef, useMemo, useImperativeHandle, useCallback } from 'react'
 import {
   ModelBuilder,
   AISettingsProvider,
@@ -61,6 +61,8 @@ export function ModelBuilderAdapter({
   const [pendingWorkflowId, setPendingWorkflowId] = useState<string | null>(null)
   const pendingSaveRef = useRef<(() => Promise<Model | undefined>) | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const persistedWorkflowKey = model?.id ? `model-builder:selected-workflow:${model.id}` : null
+  const hasLoadedPersistedWorkflowRef = useRef(false)
 
   // Default workflow persistence using app's API
   const defaultPersistence = useMemo<WorkflowPersistence>(() => {
@@ -68,7 +70,7 @@ export function ModelBuilderAdapter({
 
     return {
       modelId: model.id,
-      onSaveWorkflow: async (workflow) => {
+      onSaveWorkflow: async (workflow: { name: string; description?: string; config: unknown }) => {
         const response = await fetch('/api/workflows', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -84,7 +86,10 @@ export function ModelBuilderAdapter({
         setRefreshTrigger(prev => prev + 1)
         return { id: data.workflow.id }
       },
-      onUpdateWorkflow: async (id, workflow) => {
+      onUpdateWorkflow: async (
+        id: string,
+        workflow: { name?: string; description?: string; config?: unknown }
+      ) => {
         const response = await fetch(`/api/workflows/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -93,13 +98,13 @@ export function ModelBuilderAdapter({
         if (!response.ok) throw new Error('Failed to update workflow')
         setRefreshTrigger(prev => prev + 1)
       },
-      onLoadWorkflows: async (modelId) => {
+      onLoadWorkflows: async (modelId: string) => {
         const response = await fetch(`/api/workflows?modelId=${modelId}`)
         if (!response.ok) throw new Error('Failed to load workflows')
         const data = await response.json()
         return data.workflows
       },
-      onLoadWorkflow: async (id) => {
+      onLoadWorkflow: async (id: string) => {
         const response = await fetch(`/api/workflows/${id}`)
         if (!response.ok) throw new Error('Failed to load workflow')
         const data = await response.json()
@@ -109,6 +114,79 @@ export function ModelBuilderAdapter({
   }, [model?.id])
 
   const effectivePersistence = workflowPersistence || defaultPersistence
+
+  const loadWorkflow = useCallback(async (workflowId: string | null) => {
+    if (!effectivePersistence || !model?.id) return
+
+    if (!workflowId) {
+      setCurrentWorkflow(null)
+      setSavedWorkflowConfig(null)
+      builderInternalRef.current?.clearWorkflow()
+      if (typeof window !== 'undefined' && persistedWorkflowKey) {
+        try {
+          localStorage.removeItem(persistedWorkflowKey)
+        } catch (error) {
+          console.warn('Failed to clear persisted workflow selection:', error)
+        }
+      }
+      return
+    }
+
+    try {
+      const workflow = await effectivePersistence.onLoadWorkflow?.(workflowId)
+      if (workflow) {
+        setCurrentWorkflow(workflow)
+        // Normalize the saved config when loading to ensure consistent comparison later
+        const normalizedSavedConfig = JSON.parse(JSON.stringify(workflow.config))
+        setSavedWorkflowConfig(normalizedSavedConfig)
+        if (typeof window !== 'undefined' && persistedWorkflowKey) {
+          try {
+            localStorage.setItem(persistedWorkflowKey, workflowId)
+          } catch (error) {
+            console.warn('Failed to persist workflow selection:', error)
+          }
+        }
+
+        // The builder will detect the change in initialWorkflow and load it automatically
+      }
+    } catch (error) {
+      console.error('Error loading workflow:', error)
+      toast.error('Failed to load workflow')
+    }
+  }, [effectivePersistence, model?.id, persistedWorkflowKey])
+
+  useEffect(() => {
+    if (!persistedWorkflowKey) {
+      hasLoadedPersistedWorkflowRef.current = false
+    }
+  }, [persistedWorkflowKey])
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !persistedWorkflowKey ||
+      hasLoadedPersistedWorkflowRef.current ||
+      !existingWorkflows.length
+    ) {
+      return
+    }
+
+    try {
+      const storedWorkflowId = localStorage.getItem(persistedWorkflowKey)
+      if (!storedWorkflowId) return
+
+      const workflowExists = existingWorkflows.some((workflow) => workflow.id === storedWorkflowId)
+      if (!workflowExists) {
+        localStorage.removeItem(persistedWorkflowKey)
+        return
+      }
+
+      hasLoadedPersistedWorkflowRef.current = true
+      loadWorkflow(storedWorkflowId)
+    } catch (error) {
+      console.warn('Failed to restore persisted workflow selection:', error)
+    }
+  }, [existingWorkflows, loadWorkflow, persistedWorkflowKey])
 
   // Load existing workflows for the model
   useEffect(() => {
@@ -524,38 +602,13 @@ export function ModelBuilderAdapter({
     }
   }
 
+
   const handleWorkflowChange = async (workflowId: string) => {
     if (await hasUnsavedWorkflowChanges()) {
       setPendingWorkflowId(workflowId)
       setWorkflowChangeConfirmOpen(true)
     } else {
       loadWorkflow(workflowId)
-    }
-  }
-
-  const loadWorkflow = async (workflowId: string | null) => {
-    if (!effectivePersistence || !model?.id) return
-
-    if (!workflowId) {
-      setCurrentWorkflow(null)
-      setSavedWorkflowConfig(null)
-      builderInternalRef.current?.clearWorkflow()
-      return
-    }
-
-    try {
-      const workflow = await effectivePersistence.onLoadWorkflow?.(workflowId)
-      if (workflow) {
-        setCurrentWorkflow(workflow)
-        // Normalize the saved config when loading to ensure consistent comparison later
-        const normalizedSavedConfig = JSON.parse(JSON.stringify(workflow.config))
-        setSavedWorkflowConfig(normalizedSavedConfig)
-
-        // The builder will detect the change in initialWorkflow and load it automatically
-      }
-    } catch (error) {
-      console.error('Error loading workflow:', error)
-      toast.error('Failed to load workflow')
     }
   }
 
@@ -872,6 +925,7 @@ export function ModelBuilderAdapter({
         currentWorkflowConfig={currentWorkflowConfig}
         existingWorkflows={existingWorkflows}
         isNewModel={!model}
+        selectedWorkflowId={currentWorkflow?.id}
         onSave={handleWorkflowSave}
       />
       {currentWorkflow && pendingWorkflowId && (
