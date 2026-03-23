@@ -4,14 +4,18 @@ import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import type { Condition, ConditionGroup, ConditionType } from '../../components/sidebars/ToolConfigurationSidebar'
 
 export function useToolConditionBuilder(toolNodeId: string | null) {
-  const conditionGroups = useToolConfigurationStore((state) => state.conditionGroups)
-  const setConditionGroups = useToolConfigurationStore((state) => state.setConditionGroups)
-  const selectedConditionType = useToolConfigurationStore((state) => state.selectedConditionType)
-  const setSelectedConditionType = useToolConfigurationStore((state) => state.setSelectedConditionType)
-  const childInputValues = useToolConfigurationStore((state) => state.childInputValues)
-  const setChildInputValues = useToolConfigurationStore((state) => state.setChildInputValues)
-  const ancestorInputValues = useToolConfigurationStore((state) => state.ancestorInputValues)
-  const setAncestorInputValues = useToolConfigurationStore((state) => state.setAncestorInputValues)
+  const config = useToolConfigurationStore((state) => state.config)
+  const updateConfig = useToolConfigurationStore((state) => state.updateConfig)
+  
+  const conditionGroups = (config.conditionGroups as ConditionGroup[]) || []
+  const selectedConditionType = (config.selectedConditionType as ConditionType) || 'HasAttribute'
+  const childInputValues = (config.childInputValues as Record<string, string>) || {}
+  const ancestorInputValues = (config.ancestorInputValues as Record<string, string>) || {}
+  
+  const setSelectedConditionType = (type: ConditionType) => updateConfig({ selectedConditionType: type })
+  const setConditionGroups = (groups: ConditionGroup[]) => updateConfig({ conditionGroups: groups })
+  const setChildInputValues = (values: Record<string, string>) => updateConfig({ childInputValues: values })
+  const setAncestorInputValues = (values: Record<string, string>) => updateConfig({ ancestorInputValues: values })
   const updateToolNode = useToolCanvasStore((state) => state.updateNode)
   const toolNode = useToolCanvasStore((state) => state.nodes.find(n => n.id === toolNodeId))
   const getState = useToolConfigurationStore.getState
@@ -37,12 +41,7 @@ export function useToolConditionBuilder(toolNodeId: string | null) {
     }
     const updated = [...conditionGroups, newGroup]
     setConditionGroups(updated)
-    if (toolNodeId) {
-      updateToolNode(toolNodeId, {
-        config: { ...toolNode?.config, conditionGroups: updated }
-      })
-    }
-  }, [conditionGroups, selectedConditionType, setConditionGroups, toolNodeId, toolNode, updateToolNode])
+  }, [conditionGroups, selectedConditionType, setConditionGroups])
 
   const handleAddConditionToGroup = useCallback((groupId: string, xmlParent?: string, xmlAncestors?: string[]) => {
     const updated = conditionGroups.map((group) => {
@@ -64,12 +63,7 @@ export function useToolConditionBuilder(toolNodeId: string | null) {
       return group
     })
     setConditionGroups(updated)
-    if (toolNodeId) {
-      updateToolNode(toolNodeId, {
-        config: { ...toolNode?.config, conditionGroups: updated }
-      })
-    }
-  }, [conditionGroups, selectedConditionType, setConditionGroups, toolNodeId, toolNode, updateToolNode])
+  }, [conditionGroups, selectedConditionType, setConditionGroups])
 
   const handleUpdateCondition = useCallback((groupId: string, conditionIndex: number, updates: Partial<Condition>) => {
     const updated = conditionGroups.map((group) => {
@@ -82,19 +76,15 @@ export function useToolConditionBuilder(toolNodeId: string | null) {
       return group
     })
     setConditionGroups(updated)
-    if (toolNodeId) {
-      updateToolNode(toolNodeId, {
-        config: { ...toolNode?.config, conditionGroups: updated }
-      })
-    }
-  }, [conditionGroups, setConditionGroups, toolNodeId, toolNode, updateToolNode])
+  }, [conditionGroups, setConditionGroups])
 
   const handleRemoveCondition = useCallback((groupId: string, conditionIndex: number) => {
     const updated = conditionGroups.map((group) => {
       if (group.id === groupId) {
         const newConditions = group.conditions.filter((_, i) => i !== conditionIndex)
         if (newConditions.length === 0) {
-          return null
+          // Handled downstream by handleRemoveGroup if caller uses it, but here we just leave empty
+          // Actually, we should probably auto-remove empty groups later
         }
         return {
           ...group,
@@ -107,46 +97,29 @@ export function useToolConditionBuilder(toolNodeId: string | null) {
     setConditionGroups(updated)
 
     const currentState = getState()
-    const newChildInputValues = { ...currentState.childInputValues }
-    const newAncestorInputValues = { ...currentState.ancestorInputValues }
+    const newChildInputValues = { ...((currentState.config.childInputValues as Record<string, string>) || {}) }
+    const newAncestorInputValues = { ...((currentState.config.ancestorInputValues as Record<string, string>) || {}) }
 
     delete newChildInputValues[`${groupId}-${conditionIndex}`]
     delete newAncestorInputValues[`${groupId}-${conditionIndex}`]
 
     setChildInputValues(newChildInputValues)
     setAncestorInputValues(newAncestorInputValues)
-
-    if (toolNodeId) {
-      updateToolNode(toolNodeId, {
-        config: { ...toolNode?.config, conditionGroups: updated }
-      })
-    }
-  }, [conditionGroups, setConditionGroups, getState, setChildInputValues, setAncestorInputValues, toolNodeId, toolNode, updateToolNode])
+  }, [conditionGroups, setConditionGroups, getState, setChildInputValues, setAncestorInputValues])
 
   const handleRemoveGroup = useCallback((groupId: string) => {
-    const updated = conditionGroups.filter(g => g.id !== groupId)
-    setConditionGroups(updated)
-    if (toolNodeId) {
-      updateToolNode(toolNodeId, {
-        config: { ...toolNode?.config, conditionGroups: updated }
-      })
+    const updated = conditionGroups.filter((g) => g.id !== groupId)
+    // If we removed the first group but have others, fix the operator of the new first group
+    if (updated.length > 0 && updated[0].operator) {
+      updated[0] = { ...updated[0], operator: undefined }
     }
-  }, [conditionGroups, setConditionGroups, toolNodeId, toolNode, updateToolNode])
+    setConditionGroups(updated)
+  }, [conditionGroups, setConditionGroups])
 
   const handleUpdateGroup = useCallback((groupId: string, updates: Partial<ConditionGroup>) => {
-    const updated = conditionGroups.map((group) => {
-      if (group.id === groupId) {
-        return { ...group, ...updates }
-      }
-      return group
-    })
+    const updated = conditionGroups.map((g) => (g.id === groupId ? { ...g, ...updates } : g))
     setConditionGroups(updated)
-    if (toolNodeId) {
-      updateToolNode(toolNodeId, {
-        config: { ...toolNode?.config, conditionGroups: updated }
-      })
-    }
-  }, [conditionGroups, setConditionGroups, toolNodeId, toolNode, updateToolNode])
+  }, [conditionGroups, setConditionGroups])
 
   return {
     conditionGroups,

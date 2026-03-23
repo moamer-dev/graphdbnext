@@ -98,7 +98,7 @@ export function ToolConditionBuilder({
                 value={childInputValues[`${groupId}-${conditionIndex}`] || ''}
                 onChange={(e) => {
                   setChildInputValues({
-                    ...getState().childInputValues,
+                    ...((getState().config.childInputValues as Record<string, string>) || {}),
                     [`${groupId}-${conditionIndex}`]: e.target.value
                   })
                 }}
@@ -112,7 +112,7 @@ export function ToolConditionBuilder({
                         values: [...(condition.values || []), newValue],
                         internalOperator: condition.internalOperator || 'OR'
                       })
-                      const newState = { ...getState().childInputValues }
+                      const newState = { ...((getState().config.childInputValues as Record<string, string>) || {}) }
                       delete newState[`${groupId}-${conditionIndex}`]
                       setChildInputValues(newState)
                     }
@@ -210,7 +210,7 @@ export function ToolConditionBuilder({
                 value={ancestorInputValues[`${groupId}-${conditionIndex}`] || ''}
                 onChange={(e) => {
                   setAncestorInputValues({
-                    ...getState().ancestorInputValues,
+                    ...((getState().config.ancestorInputValues as Record<string, string>) || {}),
                     [`${groupId}-${conditionIndex}`]: e.target.value
                   })
                 }}
@@ -223,7 +223,7 @@ export function ToolConditionBuilder({
                         internalOperator: condition.internalOperator || 'OR',
                         value: undefined
                       })
-                      const newState = { ...getState().ancestorInputValues }
+                      const newState = { ...((getState().config.ancestorInputValues as Record<string, string>) || {}) }
                       delete newState[`${groupId}-${conditionIndex}`]
                       setAncestorInputValues(newState)
                     }
@@ -242,7 +242,7 @@ export function ToolConditionBuilder({
                         internalOperator: condition.internalOperator || 'OR',
                         value: undefined
                       })
-                      const newState = { ...getState().ancestorInputValues }
+                      const newState = { ...((getState().config.ancestorInputValues as Record<string, string>) || {}) }
                       delete newState[`${groupId}-${conditionIndex}`]
                       setAncestorInputValues(newState)
                     }

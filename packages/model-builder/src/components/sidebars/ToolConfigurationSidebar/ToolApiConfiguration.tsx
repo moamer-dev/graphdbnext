@@ -67,6 +67,7 @@ interface ToolApiConfigurationProps {
   onFetchApiConfigChange: (config: FetchApiConfig) => void
   onAuthenticatedApiConfigChange: (config: AuthenticatedApiConfig) => void
   onHttpConfigChange: (config: HttpConfig) => void
+  onUpdateConfig: (updates: Record<string, any>) => void
   onUpdateToolNode: (id: string, updates: Partial<ToolCanvasNode>) => void
   getCredentialsByType: (type: string) => Array<{ id: string; name: string }>
   getCredential: (id: string) => { id: string; name: string } | undefined
@@ -82,6 +83,7 @@ export function ToolApiConfiguration({
   onFetchApiConfigChange,
   onAuthenticatedApiConfigChange,
   onHttpConfigChange,
+  onUpdateConfig,
   onUpdateToolNode,
   getCredentialsByType,
   getCredential
@@ -112,9 +114,7 @@ export function ToolApiConfiguration({
               onValueChange={(value) => {
                 const updated = { ...fetchApiConfig, apiProvider: value }
                 onFetchApiConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, apiProvider: value }
-                })
+                onUpdateConfig({ apiProvider: value })
               }}
             >
               <SelectTrigger className="h-8 text-xs">
@@ -143,9 +143,7 @@ export function ToolApiConfiguration({
               onValueChange={(value) => {
                 const updated = { ...fetchApiConfig, idSource: value as 'attribute' | 'textContent' | 'xpath' }
                 onFetchApiConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, idSource: value }
-                })
+                onUpdateConfig({ idSource: value })
               }}
             >
               <SelectTrigger className="h-8 text-xs">
@@ -169,9 +167,7 @@ export function ToolApiConfiguration({
                 onChange={(e) => {
                   const updated = { ...fetchApiConfig, idAttribute: e.target.value }
                   onFetchApiConfigChange(updated)
-                  onUpdateToolNode(toolNodeId, {
-                    config: { ...toolNode?.config, idAttribute: e.target.value }
-                  })
+                  onUpdateConfig({ idAttribute: e.target.value })
                 }}
               />
               <div className="text-[10px] text-muted-foreground">
@@ -190,9 +186,7 @@ export function ToolApiConfiguration({
                 onChange={(e) => {
                   const updated = { ...fetchApiConfig, idXpath: e.target.value }
                   onFetchApiConfigChange(updated)
-                  onUpdateToolNode(toolNodeId, {
-                    config: { ...toolNode?.config, idXpath: e.target.value }
-                  })
+                  onUpdateConfig({ idXpath: e.target.value })
                 }}
               />
               <div className="text-[10px] text-muted-foreground">
@@ -220,9 +214,7 @@ export function ToolApiConfiguration({
                     ? { ...fetchApiConfig, customEndpoint: e.target.value }
                     : { ...fetchApiConfig, apiKey: e.target.value }
                   onFetchApiConfigChange(updated)
-                  onUpdateToolNode(toolNodeId, {
-                    config: { ...toolNode?.config, [fetchApiConfig.apiProvider === 'custom' ? 'customEndpoint' : 'apiKey']: e.target.value }
-                  })
+                  onUpdateConfig({ [fetchApiConfig.apiProvider === 'custom' ? 'customEndpoint' : 'apiKey']: e.target.value })
                 }}
               />
               <div className="text-[10px] text-muted-foreground">
@@ -244,9 +236,7 @@ export function ToolApiConfiguration({
                 const value = parseInt(e.target.value) || 10000
                 const updated = { ...fetchApiConfig, timeout: value }
                 onFetchApiConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, timeout: value }
-                })
+                onUpdateConfig({ timeout: value })
               }}
             />
           </div>
@@ -260,9 +250,7 @@ export function ToolApiConfiguration({
               onChange={(e) => {
                 const updated = { ...fetchApiConfig, storeInContext: e.target.value }
                 onFetchApiConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, storeInContext: e.target.value }
-                })
+                onUpdateConfig({ storeInContext: e.target.value })
               }}
             />
             <div className="text-[10px] text-muted-foreground">
@@ -285,9 +273,7 @@ export function ToolApiConfiguration({
             onValueChange={(value) => {
               const updated = { ...authenticatedApiConfig, credentialId: value }
               onAuthenticatedApiConfigChange(updated)
-              onUpdateToolNode(toolNodeId, {
-                config: { ...toolNode?.config, credentialId: value }
-              })
+              onUpdateConfig({ credentialId: value })
             }}
           >
             <SelectTrigger className="h-8 text-xs">
@@ -315,9 +301,7 @@ export function ToolApiConfiguration({
             onValueChange={(value) => {
               const updated = { ...authenticatedApiConfig, idSource: value as 'attribute' | 'textContent' | 'xpath' }
               onAuthenticatedApiConfigChange(updated)
-              onUpdateToolNode(toolNodeId, {
-                config: { ...toolNode?.config, idSource: value }
-              })
+              onUpdateConfig({ idSource: value })
             }}
           >
             <SelectTrigger className="h-8 text-xs">
@@ -346,9 +330,7 @@ export function ToolApiConfiguration({
               onChange={(e) => {
                 const updated = { ...authenticatedApiConfig, idAttribute: e.target.value }
                 onAuthenticatedApiConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, idAttribute: e.target.value }
-                })
+                onUpdateConfig({ idAttribute: e.target.value })
               }}
             />
           </div>
@@ -364,9 +346,7 @@ export function ToolApiConfiguration({
               onChange={(e) => {
                 const updated = { ...authenticatedApiConfig, idXpath: e.target.value }
                 onAuthenticatedApiConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, idXpath: e.target.value }
-                })
+                onUpdateConfig({ idXpath: e.target.value })
               }}
             />
           </div>
@@ -383,9 +363,7 @@ export function ToolApiConfiguration({
               const value = parseInt(e.target.value) || 10000
               const updated = { ...authenticatedApiConfig, timeout: value }
               onAuthenticatedApiConfigChange(updated)
-              onUpdateToolNode(toolNodeId, {
-                config: { ...toolNode?.config, timeout: value }
-              })
+              onUpdateConfig({ timeout: value })
             }}
           />
         </div>
@@ -399,9 +377,7 @@ export function ToolApiConfiguration({
             onChange={(e) => {
               const updated = { ...authenticatedApiConfig, storeInContext: e.target.value }
               onAuthenticatedApiConfigChange(updated)
-              onUpdateToolNode(toolNodeId, {
-                config: { ...toolNode?.config, storeInContext: e.target.value }
-              })
+              onUpdateConfig({ storeInContext: e.target.value })
             }}
           />
         </div>
@@ -422,9 +398,7 @@ export function ToolApiConfiguration({
               onChange={(e) => {
                 const updated = { ...httpConfig, url: e.target.value }
                 onHttpConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, url: e.target.value }
-                })
+                onUpdateConfig({ url: e.target.value })
               }}
             />
           </div>
@@ -435,9 +409,7 @@ export function ToolApiConfiguration({
               onValueChange={(value) => {
                 const updated = { ...httpConfig, method: value as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' }
                 onHttpConfigChange(updated)
-                onUpdateToolNode(toolNodeId, {
-                  config: { ...toolNode?.config, method: value }
-                })
+                onUpdateConfig({ method: value })
               }}
             >
               <SelectTrigger className="h-8 text-xs">
@@ -460,16 +432,12 @@ export function ToolApiConfiguration({
                   const parsed = JSON.parse(e.target.value)
                   const updated = { ...httpConfig, body: e.target.value }
                   onHttpConfigChange(updated)
-                  onUpdateToolNode(toolNodeId, {
-                    config: { ...toolNode?.config, body: parsed }
-                  })
+                  onUpdateConfig({ body: parsed })
                 } catch {
                   // Invalid JSON, store as string
                   const updated = { ...httpConfig, body: e.target.value }
                   onHttpConfigChange(updated)
-                  onUpdateToolNode(toolNodeId, {
-                    config: { ...toolNode?.config, body: e.target.value }
-                  })
+                  onUpdateConfig({ body: e.target.value })
                 }
               }}
             />

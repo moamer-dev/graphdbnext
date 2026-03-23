@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { useToolCanvasStore } from '../../stores/toolCanvasStore'
-import { useActionCanvasStore } from '../../stores/actionCanvasStore'
 import { useFullscreen } from '../../hooks'
 import { Button } from '../ui/button'
 import { ConfirmDialog } from '../dialogs/ConfirmDialog'

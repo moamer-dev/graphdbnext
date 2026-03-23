@@ -36,6 +36,7 @@ import { useWorkflowStore } from '../../stores/workflowStore'
 import { useWorkflowCanvasStore } from '../../stores/workflowCanvasStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../../stores/actionCanvasStore'
+import { workflowRegistry } from '../../registry'
 
 interface WorkflowBlockProps {
   data: {
@@ -90,52 +91,19 @@ const edgeTypes: EdgeTypes = {
 }
 
 const labelFromType = (type: string) => {
-  if (type === 'tool:if') return 'If / Else'
-  if (type === 'tool:switch') return 'Switch'
-  if (type === 'tool:loop') return 'Loop'
-  if (type === 'tool:merge') return 'Merge'
-  if (type === 'tool:filter') return 'Filter'
-  if (type === 'tool:delay') return 'Delay'
-  if (type === 'tool:transform') return 'Transform'
-  if (type === 'tool:lookup') return 'Lookup'
-  if (type === 'tool:traverse') return 'Traverse'
-  if (type === 'tool:aggregate') return 'Aggregate'
-  if (type === 'tool:sort') return 'Sort'
-  if (type === 'tool:limit') return 'Limit'
-  if (type === 'tool:collect') return 'Collect'
-  if (type === 'tool:split') return 'Split'
-  if (type === 'tool:validate') return 'Validate'
-  if (type === 'tool:map') return 'Map'
-  if (type === 'tool:reduce') return 'Reduce'
-  if (type === 'tool:partition') return 'Partition'
-  if (type === 'tool:distinct') return 'Distinct'
-  if (type === 'tool:window') return 'Window'
-  if (type === 'tool:join') return 'Join'
-  if (type === 'tool:union') return 'Union'
-  if (type === 'tool:intersect') return 'Intersect'
-  if (type === 'tool:diff') return 'Diff'
-  if (type === 'tool:exists') return 'Exists'
-  if (type === 'tool:range') return 'Range'
-  if (type === 'tool:batch') return 'Batch'
-  if (type === 'tool:fetch-api') return 'Fetch API'
-  if (type === 'tool:fetch-orcid') return 'Fetch ORCID'
-  if (type === 'tool:fetch-geonames') return 'Fetch GeoNames'
-  if (type === 'tool:fetch-europeana') return 'Fetch Europeana'
-  if (type === 'tool:fetch-getty') return 'Fetch Getty'
-  if (type === 'tool:http') return 'HTTP Request'
+  if (type.startsWith('tool:')) {
+    const tool = workflowRegistry.getTool(type)
+    if (tool) return tool.metadata.label
+  }
+  if (type.startsWith('action:')) {
+    const action = workflowRegistry.getAction(type)
+    if (action) return action.metadata.label
+  }
+  
+  // Hand-coded fallbacks for legacy or internal types
   if (type === 'action:group') return 'Action Group'
-  if (type === 'action:create-relationship') return 'Create Relationship'
-  if (type === 'action:set-property') return 'Set Property'
   if (type === 'action:skip') return 'Skip'
-  if (type === 'action:create-text-node') return 'Create Text Node'
-  if (type === 'action:create-token-nodes') return 'Create Token Nodes'
-  if (type === 'action:create-node-complete') return 'Create Node'
-  if (type === 'action:extract-and-normalize-attributes') return 'Extract & Normalize Attributes'
-  if (type === 'action:create-annotation-nodes') return 'Create Annotation Nodes'
-  if (type === 'action:create-reference-chain') return 'Create Reference Chain'
-  if (type === 'action:merge-children-text') return 'Merge Children Text'
-  if (type === 'action:extract-and-compute-property') return 'Extract & Compute Property'
-  if (type === 'action:normalize-and-deduplicate') return 'Normalize & Deduplicate'
+  
   return type
 }
 
@@ -1373,11 +1341,7 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
       } else if (type === 'tool:switch') {
         // Switch outputs will be configured dynamically based on cases
         outputs = [{ id: 'default', label: 'Default' }]
-      } else if (type === 'tool:fetch-api') {
-        outputs = [{ id: 'output', label: 'Output' }]
-      } else if (type === 'tool:fetch-orcid' || type === 'tool:fetch-geonames' || type === 'tool:fetch-europeana' || type === 'tool:fetch-getty') {
-        outputs = [{ id: 'output', label: 'Output' }]
-      } else if (type === 'tool:http') {
+      } else if (type === 'tool:fetch-api' || type === 'tool:http' || workflowRegistry.getTool(type)?.metadata.isApiTool) {
         outputs = [{ id: 'output', label: 'Output' }]
       }
 

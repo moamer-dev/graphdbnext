@@ -1,27 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
-import { useToolCanvasStore } from '../../stores/toolCanvasStore'
-import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
-import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
-import { useToolConditionBuilder } from '../../hooks'
-import { useToolTestExecution } from '../../hooks'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '../ui/select'
-import { Play, CheckCircle2, XCircle } from 'lucide-react'
-import { fetchFromApi, type ApiProvider } from '../../services/apiClient'
-import { useCredentialsStore } from '../../stores/credentialsStore'
-import { apiResponseCache } from '../../utils/apiResponseCache'
-import { toast } from '../../utils/toast'
+import { useMemo, useCallback } from 'react'
 import { ToolConfigurationHeader } from './ToolConfigurationSidebar/ToolConfigurationHeader'
 import { ToolConditionBuilder } from './ToolConfigurationSidebar/ToolConditionBuilder'
 import { ToolSwitchConfiguration } from './ToolConfigurationSidebar/ToolSwitchConfiguration'
@@ -29,7 +8,12 @@ import { ToolTestExecution } from './ToolConfigurationSidebar/ToolTestExecution'
 import { ToolApiConfiguration } from './ToolConfigurationSidebar/ToolApiConfiguration'
 import { ToolWebhookConfiguration } from './ToolConfigurationSidebar/ToolWebhookConfiguration'
 import { useRealXmlSample } from '../../hooks/useRealXmlSample'
-
+import { SchemaForm } from '../shared/SchemaForm'
+import { CollapsibleSection } from '../shared/CollapsibleSection'
+import { useToolConfiguration } from '../../hooks/configuration/useToolConfiguration'
+import { useToolTestExecution } from '../../hooks/configuration/useToolTestExecution'
+import { useToolConditionBuilder } from '../../hooks/configuration/useToolConditionBuilder'
+import type { ToolNodeType, ToolCanvasNode } from '../../stores/toolCanvasStore'
 
 export type ConditionType =
   | 'HasChildren'
@@ -44,20 +28,21 @@ export type ConditionType =
   | 'ChildCount'
 
 export interface Condition {
+  id?: string
   type: ConditionType
   value?: string
-  values?: string[] // For conditions that need multiple values
-  internalOperator?: 'AND' | 'OR' // For combining multiple values within a condition (e.g., multiple child elements)
-  min?: number // For ChildCount
-  max?: number // For ChildCount
-  attributeName?: string // For HasAttribute, AttributeValueEquals
+  values?: string[]
+  internalOperator?: 'AND' | 'OR'
+  min?: number
+  max?: number
+  attributeName?: string
 }
 
 export interface ConditionGroup {
   id: string
   conditions: Condition[]
-  internalOperator?: 'AND' | 'OR' // For combining conditions within this group
-  operator?: 'AND' | 'OR' // For combining with previous group (external logic)
+  internalOperator?: 'AND' | 'OR'
+  operator?: 'AND' | 'OR'
 }
 
 export interface SwitchCase {
@@ -79,755 +64,97 @@ export function ToolConfigurationSidebar({
   onClose,
   className
 }: ToolConfigurationSidebarProps) {
-  const toolNodes = useToolCanvasStore((state) => state.nodes)
-  const toolNode = toolNodeId ? toolNodes.find((n) => n.id === toolNodeId) : null
-  const updateToolNode = useToolCanvasStore((state) => state.updateNode)
-  const nodes = useModelBuilderStore((state) => state.nodes)
-  const getCredentialsByType = useCredentialsStore((state) => state.getCredentialsByType)
-  const getCredential = useCredentialsStore((state) => state.getCredential)
-
-  // Tool configuration store
-  const toolLabel = useToolConfigurationStore((state) => state.toolLabel)
-  const setToolLabel = useToolConfigurationStore((state) => state.setToolLabel)
-  const loadFromToolNode = useToolConfigurationStore((state) => state.loadFromToolNode)
-
-  // Load all config from toolNode into store
-  useEffect(() => {
-    loadFromToolNode(toolNode || null)
-  }, [toolNode])
-
-  // Condition builder hook
-  const conditionBuilder = useToolConditionBuilder(toolNodeId)
-
-  // Test execution hook
-  const testExecution = useToolTestExecution(toolNodeId)
-
-  // Condition builder state (from hook)
-  const conditionGroups = conditionBuilder.conditionGroups
-
-  // Test/Execution state (from hook)
-  const testResult = testExecution.testResult
-  const setTestResult = testExecution.setTestResult
-  const isExecuting = testExecution.isExecuting
-  const setIsExecuting = testExecution.setIsExecuting
-  const testIdInput = testExecution.testIdInput
-  const setTestIdInput = testExecution.setTestIdInput
-  const executedApiResponse = testExecution.executedApiResponse
-  const setExecutedApiResponse = testExecution.setExecutedApiResponse
-  const apiResponseModalOpen = testExecution.apiResponseModalOpen
-  const setApiResponseModalOpen = testExecution.setApiResponseModalOpen
-  const responseHistory = testExecution.responseHistory
-  const setResponseHistory = testExecution.setResponseHistory
-  const setConnectionStatus = testExecution.setConnectionStatus
-  const setValidationErrors = testExecution.setValidationErrors
-
-  // Switch tool state from store
-  const switchSource = useToolConfigurationStore((state) => state.switchSource)
-  const setSwitchSource = useToolConfigurationStore((state) => state.setSwitchSource)
-  const switchAttributeName = useToolConfigurationStore((state) => state.switchAttributeName)
-  const setSwitchAttributeName = useToolConfigurationStore((state) => state.setSwitchAttributeName)
-  const switchCases = useToolConfigurationStore((state) => state.switchCases)
-  const setSwitchCases = useToolConfigurationStore((state) => state.setSwitchCases)
-  const switchCaseInputs = useToolConfigurationStore((state) => state.switchCaseInputs)
-  const setSwitchCaseInputs = useToolConfigurationStore((state) => state.setSwitchCaseInputs)
-
-  const toolCanvasEdges = useToolCanvasStore((state) => state.edges)
-
-  // Get the main node this tool is attached to by traversing upstream
-  const attachedNode = useMemo(() => {
-    if (!toolNodeId) return null
-
-    let currentId = toolNodeId
-    const visited = new Set<string>()
-
-    // Safety depth limit
-    let depth = 0
-    const MAX_DEPTH = 20
-
-    while (currentId && !visited.has(currentId) && depth < MAX_DEPTH) {
-      visited.add(currentId)
-      depth++
-
-      // 1. Check if current tool has direct reference
-      const currentTool = toolNodes.find(n => n.id === currentId)
-      if (currentTool?.targetNodeId) {
-        const directNode = nodes.find(n => n.id === currentTool.targetNodeId)
-        if (directNode) return directNode
-      }
-
-      // 2. Find incoming edge to this tool
-      const edge = toolCanvasEdges.find(e => e.target === currentId)
-      if (!edge) break
-
-      // 3. Check source of the edge
-      // Is it a tool? Use it for next iteration
-      const sourceTool = toolNodes.find(n => n.id === edge.source)
-      if (sourceTool) {
-        currentId = edge.source
-        continue
-      }
-
-      // Is it a schema node?
-      const sourceNode = nodes.find(n => n.id === edge.source)
-      if (sourceNode) {
-        return sourceNode
-      }
-
-      // If neither, stop
-      break
-    }
-
-    return null
-  }, [toolNodeId, toolNodes, toolCanvasEdges, nodes])
-
-  // Get XML metadata from the attached node
-  // Get XML metadata from the attached node or fallback to store analysis
-  // Get XML metadata from the attached node or fallback to store analysis
-  const analysis = useXmlImportWizardStore((state) => state.analysis)
-  const selectedFile = useXmlImportWizardStore((state) => state.selectedFile)
-
-  // Real XML sampling
-  const attachedElementName = attachedNode?.label || attachedNode?.type || ''
-  const elementToSample = (attachedElementName.startsWith('xml:') ? attachedElementName.slice(4) : attachedElementName) || ''
+  const {
+    toolNode,
+    toolDefinition,
+    config,
+    toolLabel,
+    attachedNode,
+    fetchApiConfig,
+    authenticatedApiConfig,
+    httpConfig,
+    realInstances,
+    selectedInstanceIndex,
+    selectedFile,
+    setToolLabel,
+    handleUpdateConfig,
+    setInstanceIndex,
+    updateToolNode,
+    getCredentialsByType,
+    getCredential
+  } = useToolConfiguration(toolNodeId)
 
   const {
-    instances: realInstances,
-    selectedInstanceIndex,
+    testResult,
+    isExecuting,
+    testIdInput,
+    setTestIdInput,
+    executedApiResponse,
+    apiResponseModalOpen,
+    setApiResponseModalOpen,
+    responseHistory,
+    setResponseHistory,
+    connectionStatus,
+    validationErrors,
+    handleExecuteConditionTest,
+    handleExecuteFetchApiTest: rawHandleExecuteFetchApiTest,
+    handleExecuteAuthenticatedApiTest: rawHandleExecuteAuthenticatedApiTest,
+    handleExecuteHttpTest: rawHandleExecuteHttpTest,
+    createTestElement: rawCreateTestElement
+  } = useToolTestExecution(toolNodeId)
+
+  const conditionBuilder = useToolConditionBuilder(toolNodeId)
+
+  // XML Sampling logic
+  const attachedElementName = attachedNode?.label || attachedNode?.type || ''
+  const elementToSample = attachedElementName.startsWith('xml:') ? attachedElementName.slice(4) : attachedElementName
+
+  const {
+    instances,
     selectedInstanceData,
-    setInstanceIndex,
     loading: loadingRealData
-  } = useRealXmlSample(selectedFile, elementToSample)
+  } = useRealXmlSample(selectedFile as any as File | null, elementToSample, selectedInstanceIndex)
 
-  // Helper to find element type from analysis
-  const findElementType = (label: string | undefined) => {
-    if (!analysis || !label) return undefined
-    return analysis.elementTypes.find(et => et.name.toLowerCase() === label.toLowerCase())
-  }
+  // Use real instance data if available for testing
+  const createTestElement = useCallback(() => {
+    if (selectedInstanceData) return selectedInstanceData
+    return rawCreateTestElement(attachedNode)
+  }, [selectedInstanceData, rawCreateTestElement, attachedNode])
 
-  // Use attached node data if available, otherwise try to reconstruct from analysis
-  let xmlMetadata = attachedNode?.data as Record<string, unknown> | undefined
-
-  if (!xmlMetadata && attachedNode && analysis) {
-    const elementType = findElementType(attachedNode.label) || findElementType(attachedNode.type)
-
-    if (elementType) {
-      // Construct fallback attributes from schema analysis
-      const fallbackAttributes: Record<string, string> = {}
-      if (elementType.attributes && elementType.attributeAnalysis) {
-        elementType.attributes.forEach(attrName => {
-          const analysis = elementType.attributeAnalysis[attrName]
-          // Use sample value if available, otherwise just use the attribute name as value
-          if (analysis && analysis.sampleValues && analysis.sampleValues.length > 0) {
-            fallbackAttributes[attrName] = String(analysis.sampleValues[0])
-          } else {
-            fallbackAttributes[attrName] = `test-${attrName}`
-          }
-        })
-      }
-
-      // Infer parent from relationship patterns
-      // Look for a pattern where this element is the target of a 'contains' relationship
-      const findParent = (childName: string) => {
-        return analysis.relationshipPatterns.find(p =>
-          p.to === childName &&
-          p.relationshipTypes.includes('contains') &&
-          p.from !== childName
-        )
-      }
-
-      const parentPattern = findParent(elementType.name)
-
-      // Recursively find all ancestors
-      const ancestors: string[] = []
-      let currentParent = parentPattern?.from
-      const seen = new Set<string>()
-
-      while (currentParent && !seen.has(currentParent)) {
-        ancestors.push(currentParent)
-        seen.add(currentParent)
-        const nextPattern = findParent(currentParent)
-        currentParent = nextPattern?.from
-      }
-
-      xmlMetadata = {
-        sourceElement: elementType.name,
-        xmlNamespace: elementType.namespace,
-        xmlTypeStatistics: {
-          count: elementType.count,
-          attributesCount: elementType.attributes.length,
-          childrenCount: elementType.children.length,
-          hasTextContent: elementType.hasTextContent
-        },
-        xmlChildren: elementType.children.map(childName => {
-          // Find the relationship to determine frequency
-          const rel = analysis.relationshipPatterns.find(p =>
-            p.from === elementType.name &&
-            p.to === childName &&
-            p.relationshipTypes.includes('contains')
-          )
-
-          // Mock count based on frequency to simulate realistic data
-          let mockCount = 1
-          if (rel?.frequency === 'high') mockCount = 3
-          else if (rel?.frequency === 'medium') mockCount = 2
-
-          return {
-            name: childName,
-            count: mockCount
-          }
-        }),
-        xmlAttributes: fallbackAttributes,
-        // We set a flag to indicate text content should be mocked if schema says so
-        hasTextContent: elementType.hasTextContent,
-        // Mock parent if found
-        xmlParent: parentPattern ? parentPattern.from : undefined,
-        // Include inferred parent in ancestors list
-        xmlAncestors: ancestors
-      }
-
-      // Infer descendants recursively
-      const findChildren = (parentName: string) => {
-        return analysis.relationshipPatterns.filter(p =>
-          p.from === parentName &&
-          p.relationshipTypes.includes('contains') &&
-          p.to !== parentName
-        )
-      }
-
-      const descendants: string[] = []
-      const queue: string[] = [elementType.name]
-      const seenDescendants = new Set<string>()
-
-      while (queue.length > 0) {
-        const currentName = queue.shift()!
-        const childrenPatterns = findChildren(currentName)
-
-        childrenPatterns.forEach(pattern => {
-          if (!seenDescendants.has(pattern.to)) {
-            descendants.push(pattern.to)
-            seenDescendants.add(pattern.to)
-            queue.push(pattern.to)
-          }
-        })
-      }
-
-      // Add descendants to xmlMetadata locally (TS might complain if not typed, but it's any-ish usage downstream)
-      // Since xmlMetadata is defined locally in this effect, we can just extend it.
-      // However, we need to make sure the type definition supports it or we cast it.
-      ; (xmlMetadata as any).xmlDescendants = descendants
+  const handleExecuteTest = useCallback(() => {
+    if (!toolNode) return
+    
+    if (toolNode.type === 'tool:fetch-api') {
+      rawHandleExecuteFetchApiTest(fetchApiConfig, createTestElement)
+    } else if (toolNode.type.startsWith('tool:fetch-')) {
+      rawHandleExecuteAuthenticatedApiTest(authenticatedApiConfig, attachedNode, selectedInstanceData)
+    } else if (toolNode.type === 'tool:http') {
+      rawHandleExecuteHttpTest(httpConfig)
+    } else {
+      handleExecuteConditionTest(createTestElement)
     }
-  }
+  }, [toolNode, fetchApiConfig, authenticatedApiConfig, httpConfig, attachedNode, selectedInstanceData, createTestElement, rawHandleExecuteFetchApiTest, rawHandleExecuteAuthenticatedApiTest, rawHandleExecuteHttpTest, handleExecuteConditionTest])
 
-  // Infer type and descendants for ANY node (manual or standard) if analysis is available
-  const elementName = (xmlMetadata?.sourceElement as string) || attachedNode?.label || attachedNode?.type
-
-  // Memoize descendant inference to avoid recalc
-  const inferredDescendants = useMemo(() => {
-
-    if (!analysis || !elementName) return []
-
-    // Normalize element name to lower case for matching
-    const normalizedElementName = elementName.toLowerCase()
-
-    // Find children relationships recursively (case insensitive)
-    const findChildren = (parentName: string) => {
-      const parentLower = parentName.toLowerCase()
-      return analysis.relationshipPatterns.filter(p =>
-        p.from.toLowerCase() === parentLower &&
-        p.relationshipTypes.includes('contains') &&
-        p.to.toLowerCase() !== parentLower
-      )
-    }
-
-    const results: string[] = []
-    const queue: string[] = [elementName] // Start with original casing, findChildren will normalize
-    // Use set with actual schema names to preserve casing for results
-    // But track seen by key to avoid duplicates
-    const seen = new Set<string>()
-
-    while (queue.length > 0) {
-      const current = queue.shift()!
-      // Note: patterns will contain the actual schema casing in p.to
-      const patterns = findChildren(current)
-
-      patterns.forEach(p => {
-        const toLower = p.to.toLowerCase()
-        if (!seen.has(toLower)) {
-          seen.add(toLower)
-          results.push(p.to) // Push actual schema name
-          queue.push(p.to) // Queue actual schema name for next step (though findChildren handles lower)
-        }
-      })
-    }
-
-
-    return results.sort()
-  }, [analysis, elementName])
-
-  const xmlChildren = xmlMetadata?.xmlChildren as Array<{ name: string; count: number }> | undefined
-  const xmlAncestors = xmlMetadata?.xmlAncestors as string[] | undefined
-  const xmlParent = xmlMetadata?.xmlParent as string | undefined
-  const xmlTypeStats = xmlMetadata?.xmlTypeStatistics as { attributesCount: number } | undefined
-  const xmlAttributes = xmlMetadata?.xmlAttributes as Record<string, string> | undefined
-  // Use existing xmlDescendants or fallback to inferred ones
-  const xmlDescendants = ((xmlMetadata as any)?.xmlDescendants as string[] | undefined) || inferredDescendants
-
-  // API configs from store
-  const authenticatedApiConfig = useToolConfigurationStore((state) => state.authenticatedApiConfig)
-  const setAuthenticatedApiConfig = useToolConfigurationStore((state) => state.setAuthenticatedApiConfig)
-  const httpConfig = useToolConfigurationStore((state) => state.httpConfig)
-  const setHttpConfig = useToolConfigurationStore((state) => state.setHttpConfig)
-  const fetchApiConfig = useToolConfigurationStore((state) => state.fetchApiConfig)
-  const setFetchApiConfig = useToolConfigurationStore((state) => state.setFetchApiConfig)
-
-  // If we have real data selected, override the create test element function to return it directly
-  const createTestElement = () => {
-    if (selectedInstanceData) {
-      return selectedInstanceData
-    }
-    return testExecution.createTestElement(
-      attachedNode,
-      xmlChildren,
-      xmlAncestors,
-      xmlParent,
-      xmlTypeStats,
-      xmlAttributes,
-      ((xmlMetadata as any)?.xmlDescendants as string[] | undefined) || inferredDescendants
+  if (!toolNodeId || !toolNode) {
+    return (
+      <div className="flex items-center justify-center h-full p-8 text-muted-foreground">
+        Select a tool to configure
+      </div>
     )
   }
 
+  const isApiTool = toolNode.type === 'tool:fetch-api' || 
+                   toolNode.type.startsWith('tool:fetch-') || 
+                   toolNode.type === 'tool:http'
+                   
+  const showTestIdInput = toolNode.type === 'tool:fetch-api' || 
+                         toolNode.type.startsWith('tool:fetch-')
 
-  const handleExecuteTest = () => {
-    testExecution.handleExecuteConditionTest(createTestElement)
-  }
-
-  const handleExecuteFetchApiTest = async () => {
-    if (!fetchApiConfig.apiProvider || fetchApiConfig.apiProvider === '') {
-      setTestResult({
-        success: false,
-        output: 'Error',
-        details: 'Please select an API provider first.'
-      })
-      setValidationErrors([{ field: 'apiProvider', message: 'API provider is required' }])
-      return
-    }
-
-    setValidationErrors([])
-    setConnectionStatus('pending')
-    setIsExecuting(true)
-    setTestResult(null)
-
-    try {
-      // Determine the ID to use
-      let testId: string | null = null
-
-      if (testIdInput.trim()) {
-        // Use manually entered ID
-        testId = testIdInput.trim()
-      } else {
-        // Use createTestElement to get data from real sample or mock
-        const testElement = createTestElement()
-
-        if (fetchApiConfig.idSource === 'attribute' && fetchApiConfig.idAttribute) {
-          testId = testElement.attributes[fetchApiConfig.idAttribute] || null
-        } else if (fetchApiConfig.idSource === 'textContent') {
-          testId = testElement.textContent?.trim() || null
-        } else if (fetchApiConfig.idSource === 'xpath') {
-          // XPath not fully supported in simple test mode on mock objects, 
-          // but if we have real data we could try? 
-          // For now, prompt user or rely on element properties if matched.
-          // If the user selected an instance, we really should rely on the attribute extraction or specific property.
-          setTestResult({
-            success: false,
-            output: 'XPath Not Supported',
-            details: 'XPath ID source is not supported in test mode yet. Please enter an ID manually or use Attribute source.'
-          })
-          setConnectionStatus('error')
-          setIsExecuting(false)
-          return
-        }
-      }
-
-      if (!testId) {
-        setTestResult({
-          success: false,
-          output: 'Error',
-          details: `No ID found. Please:\n1. Enter an ID manually in the test field, or\n2. Ensure the attached node has the required attribute "${fetchApiConfig.idAttribute || 'id'}" or text content.`
-        })
-        setValidationErrors([{ field: 'testId', message: 'Test ID is required' }])
-        setConnectionStatus('error')
-        setIsExecuting(false)
-        return
-      }
-
-      // Check cache first
-      const cacheKey = apiResponseCache.generateKey(toolNode?.id || '', {
-        provider: fetchApiConfig.apiProvider,
-        id: testId
-      })
-      const cachedResponse = apiResponseCache.get(cacheKey)
-
-      let response
-      if (cachedResponse) {
-        response = { success: true, data: cachedResponse }
-        toast.info('Using cached response')
-      } else {
-        // Make API call
-        response = await fetchFromApi({
-          provider: fetchApiConfig.apiProvider as ApiProvider,
-          id: testId,
-          apiKey: fetchApiConfig.apiKey || undefined,
-          customEndpoint: fetchApiConfig.customEndpoint || undefined,
-          timeout: fetchApiConfig.timeout || 10000
-        })
-      }
-
-      if (response.success && response.data) {
-        // Cache the response
-        if (!cachedResponse && toolNode) {
-          apiResponseCache.set(cacheKey, response.data, 5 * 60 * 1000) // 5 minutes
-        }
-
-        // Store the response in tool node config and state
-        setExecutedApiResponse(response.data)
-        if (toolNode) {
-          updateToolNode(toolNode.id, {
-            config: {
-              ...toolNode.config,
-              executedResponse: response.data,
-              executedTestId: testId
-            }
-          })
-        }
-
-        // Add to response history
-        const historyEntry = {
-          id: `${Date.now()}-${Math.random()}`,
-          timestamp: Date.now(),
-          toolId: toolNode?.id || '',
-          toolLabel: toolNode?.label || 'Fetch API',
-          response: response.data,
-          params: { provider: fetchApiConfig.apiProvider, id: testId }
-        }
-        setResponseHistory([historyEntry, ...responseHistory.slice(0, 49)]) // Keep last 50
-
-        setConnectionStatus('connected')
-        setValidationErrors([])
-        setTestResult({
-          success: true,
-          output: 'Success',
-          details: `API Provider: ${fetchApiConfig.apiProvider}\nID Used: ${testId}\nStatus: Success${cachedResponse ? ' (cached)' : ''}`
-        })
-        toast.success('API call successful')
-      } else {
-        setConnectionStatus('error')
-        setValidationErrors([{ field: 'api', message: response.error || 'API call failed' }])
-        setTestResult({
-          success: false,
-          output: 'Failed',
-          details: `API Provider: ${fetchApiConfig.apiProvider}\n` +
-            `ID Used: ${testId}\n` +
-            `Error: ${response.error || 'Unknown error'}\n\n` +
-            `Please check:\n` +
-            `- The ID is correct\n` +
-            `- API key is set (if required)\n` +
-            `- Network connection is available\n` +
-            `- API endpoint is accessible`
-        })
-        toast.error('API call failed')
-      }
-    } catch (error) {
-      setConnectionStatus('error')
-      setValidationErrors([{ field: 'api', message: error instanceof Error ? error.message : 'Unknown error' }])
-      setTestResult({
-        success: false,
-        output: 'Error',
-        details: `Exception occurred: ${error instanceof Error ? error.message : 'Unknown error'}`
-      })
-      toast.error('API test failed')
-    } finally {
-      setIsExecuting(false)
-    }
-  }
-
-  const handleExecuteAuthenticatedApiTest = async () => {
-    if (!authenticatedApiConfig.credentialId) {
-      setTestResult({
-        success: false,
-        output: 'Error',
-        details: 'Please select a credential first.'
-      })
-      return
-    }
-
-    // Map tool type to provider
-    const providerMap: Record<string, ApiProvider> = {
-      'tool:fetch-orcid': 'orcid',
-      'tool:fetch-geonames': 'geonames',
-      'tool:fetch-europeana': 'europeana',
-      'tool:fetch-getty': 'getty'
-    }
-
-    const provider = providerMap[toolNode?.type || ''] || 'orcid'
-
-    setIsExecuting(true)
-    setTestResult(null)
-
-    try {
-      // Determine the ID to use
-      let testId: string | null = null
-
-      if (testIdInput.trim()) {
-        // Use manually entered ID
-        testId = testIdInput.trim()
-      } else if (attachedNode && xmlMetadata) {
-        // Try to extract ID from attached node's XML metadata
-        if (authenticatedApiConfig.idSource === 'attribute' && authenticatedApiConfig.idAttribute) {
-          const attrs = xmlMetadata.xmlAttributes as Record<string, string> | undefined
-          testId = attrs?.[authenticatedApiConfig.idAttribute] || null
-        } else if (authenticatedApiConfig.idSource === 'textContent') {
-          testId = (xmlMetadata.xmlTextContent as string | undefined)?.trim() || null
-        }
-        // XPath extraction not supported in test mode
-      }
-
-      if (!testId) {
-        setTestResult({
-          success: false,
-          output: 'Error',
-          details: `No ID found. Please:\n1. Enter an ID manually in the test field, or\n2. Ensure the attached node has the required attribute "${authenticatedApiConfig.idAttribute || 'id'}" or text content.`
-        })
-        setIsExecuting(false)
-        return
-      }
-
-      // Get credential to pass to fetchFromApi
-      const credential = getCredential(authenticatedApiConfig.credentialId)
-      if (!credential) {
-        setTestResult({
-          success: false,
-          output: 'Error',
-          details: 'Credential not found. Please select a valid credential.'
-        })
-        setIsExecuting(false)
-        return
-      }
-
-      // Make API call with credential
-      const response = await fetchFromApi({
-        provider,
-        id: testId,
-        credentialId: authenticatedApiConfig.credentialId,
-        timeout: authenticatedApiConfig.timeout || 10000
-      }, (credId: string) => {
-        // Return credential data for API client
-        const cred = getCredential(credId)
-        return cred ? { data: cred.data } : undefined
-      })
-
-      if (response.success && response.data) {
-        // Format the response data for display
-        const dataStr = JSON.stringify(response.data, null, 2)
-        const preview = dataStr.length > 1000 ? dataStr.substring(0, 1000) + '\n... (truncated)' : dataStr
-
-        setTestResult({
-          success: true,
-          output: 'Success',
-          details: `API Provider: ${provider}\n` +
-            `Credential: ${credential.name}\n` +
-            `ID Used: ${testId}\n` +
-            `Status: Success\n\n` +
-            `Response Data:\n${preview}`
-        })
-      } else {
-        setTestResult({
-          success: false,
-          output: 'Failed',
-          details: `API Provider: ${provider}\n` +
-            `Credential: ${credential.name}\n` +
-            `ID Used: ${testId}\n` +
-            `Error: ${response.error || 'Unknown error'}\n\n` +
-            `Please check:\n` +
-            `- The ID is correct\n` +
-            `- Credential is valid\n` +
-            `- API service is accessible`
-        })
-      }
-    } catch (error) {
-      console.error('[Authenticated API Tool] Error:', error)
-      setTestResult({
-        success: false,
-        output: 'Error',
-        details: `API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      })
-    } finally {
-      setIsExecuting(false)
-    }
-  }
-
-  const handleExecuteHttpTest = async () => {
-    if (!httpConfig.url || httpConfig.url.trim() === '') {
-      setTestResult({
-        success: false,
-        output: 'Error',
-        details: 'Please enter a URL first.'
-      })
-      return
-    }
-
-    setIsExecuting(true)
-    setTestResult(null)
-
-    try {
-      // Build URL with query parameters
-      let url = httpConfig.url.trim()
-      if (httpConfig.queryParams && httpConfig.queryParams.length > 0) {
-        const params = httpConfig.queryParams
-          .filter(p => p.key && p.value)
-          .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
-          .join('&')
-        if (params) {
-          url += (url.includes('?') ? '&' : '?') + params
-        }
-      }
-
-      // Build headers
-      const headers: Record<string, string> = {
-        'Accept': 'application/json'
-      }
-
-      // Add authentication headers
-      if (httpConfig.useCredential) {
-        const credential = httpConfig.credentialId ? getCredential(httpConfig.credentialId) : null
-        if (credential) {
-          // Use credential data - for custom type, use headerName/headerValue or apiKey
-          if (credential.type === 'custom') {
-            if (credential.data.headerName && credential.data.headerValue) {
-              headers[credential.data.headerName] = credential.data.headerValue
-            } else if (credential.data.apiKey) {
-              headers[credential.data.headerName || 'X-API-Key'] = credential.data.apiKey
-            }
-          } else {
-            // For other credential types, use apiKey field
-            if (credential.data.apiKey) {
-              headers['Authorization'] = `Bearer ${credential.data.apiKey}`
-            } else if (credential.data.username) {
-              // Basic auth
-              const basicAuth = btoa(`${credential.data.username}:${credential.data.password || ''}`)
-              headers['Authorization'] = `Basic ${basicAuth}`
-            }
-          }
-        }
-      } else {
-        // Use direct authentication
-        if (httpConfig.authType === 'bearer' && httpConfig.bearerToken) {
-          headers['Authorization'] = `Bearer ${httpConfig.bearerToken}`
-        } else if (httpConfig.authType === 'basic' && httpConfig.basicUsername) {
-          const basicAuth = btoa(`${httpConfig.basicUsername}:${httpConfig.basicPassword || ''}`)
-          headers['Authorization'] = `Basic ${basicAuth}`
-        } else if (httpConfig.authType === 'apiKey' && httpConfig.apiKey) {
-          headers[httpConfig.apiKeyHeader || 'X-API-Key'] = httpConfig.apiKey
-        } else if (httpConfig.authType === 'custom' && httpConfig.customHeaderName) {
-          headers[httpConfig.customHeaderName] = httpConfig.customHeaderValue || ''
-        }
-      }
-
-      // Add custom headers
-      httpConfig.headers?.forEach(header => {
-        if (header.key && header.value) {
-          headers[header.key] = header.value
-        }
-      })
-
-      // Prepare body
-      let body: string | undefined
-      let contentType: string | undefined
-
-      if (['POST', 'PUT', 'PATCH'].includes(httpConfig.method) && httpConfig.body) {
-        if (httpConfig.bodyType === 'json') {
-          body = httpConfig.body
-          contentType = 'application/json'
-        } else if (httpConfig.bodyType === 'text') {
-          body = httpConfig.body
-          contentType = 'text/plain'
-        } else if (httpConfig.bodyType === 'form-data') {
-          // Form data - simplified, would need FormData in real implementation
-          body = httpConfig.body
-          contentType = 'multipart/form-data'
-        } else if (httpConfig.bodyType === 'x-www-form-urlencoded') {
-          body = httpConfig.body
-          contentType = 'application/x-www-form-urlencoded'
-        }
-
-        if (contentType) {
-          headers['Content-Type'] = contentType
-        }
-      }
-
-      // Make HTTP request
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), httpConfig.timeout || 10000)
-
-      const response = await fetch(url, {
-        method: httpConfig.method,
-        headers,
-        body: body || undefined,
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      const responseText = await response.text()
-      let responseData: unknown
-
-      try {
-        responseData = JSON.parse(responseText)
-      } catch {
-        responseData = responseText
-      }
-
-      if (response.ok) {
-        const dataStr = JSON.stringify(responseData, null, 2)
-        const preview = dataStr.length > 1000 ? dataStr.substring(0, 1000) + '\n... (truncated)' : dataStr
-
-        setTestResult({
-          success: true,
-          output: 'Success',
-          details: `Method: ${httpConfig.method}\n` +
-            `URL: ${url}\n` +
-            `Status: ${response.status} ${response.statusText}\n` +
-            `Content-Type: ${response.headers.get('content-type') || 'unknown'}\n\n` +
-            `Response Data:\n${preview}`
-        })
-      } else {
-        setTestResult({
-          success: false,
-          output: 'Failed',
-          details: `Method: ${httpConfig.method}\n` +
-            `URL: ${url}\n` +
-            `Status: ${response.status} ${response.statusText}\n` +
-            `Error: ${responseText.substring(0, 500)}`
-        })
-      }
-    } catch (error) {
-      console.error('[HTTP Tool] Error:', error)
-      setTestResult({
-        success: false,
-        output: 'Error',
-        details: `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      })
-    } finally {
-      setIsExecuting(false)
-    }
-  }
-
-
-  if (!toolNodeId || !toolNode) {
-    return null
-  }
+  const conditionGroupsLength = (config.conditionGroups as any[])?.length || 0
+  const switchCasesLength = (config.switchCases as any[])?.length || 0
 
   return (
-    <div className={`${className} flex flex-col h-full border-l bg-background`}>
+    <div className={`flex flex-col h-full bg-background border-l ${className || ''}`}>
       <ToolConfigurationHeader
         toolLabel={toolLabel}
         toolNode={toolNode}
@@ -837,195 +164,76 @@ export function ToolConfigurationSidebar({
         onClose={onClose}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+        {/* Schema Form for basic tool properties */}
+        {toolDefinition && (
+          <CollapsibleSection title="General Configuration" defaultOpen>
+            <SchemaForm
+              schema={toolDefinition.configSchema}
+              config={config}
+              onChange={(name, value) => handleUpdateConfig({ [name]: value })}
+            />
+          </CollapsibleSection>
+        )}
+
+        {/* Specialized Tool Configurations */}
         {toolNode.type === 'tool:if' && (
-          <ToolConditionBuilder
+          <ToolConditionBuilder 
             conditionBuilder={conditionBuilder}
-            xmlParent={xmlParent}
-            xmlAncestors={xmlAncestors}
-            xmlChildren={xmlChildren}
-            xmlDescendants={xmlDescendants}
+            xmlParent={selectedInstanceData?.parent?.tagName}
+            xmlAncestors={selectedInstanceData?.ancestors}
+            xmlChildren={selectedInstanceData?.children.map(c => ({ name: c.tagName, count: 1 }))}
+            xmlDescendants={selectedInstanceData?.descendants}
           />
         )}
 
         {toolNode.type === 'tool:switch' && (
-          <ToolSwitchConfiguration
-            toolNodeId={toolNodeId!}
+          <ToolSwitchConfiguration 
+            toolNodeId={toolNodeId}
             toolNode={toolNode}
-            attachedNode={attachedNode || null}
-            switchSource={switchSource}
-            switchAttributeName={switchAttributeName}
-            switchCases={switchCases}
-            switchCaseInputs={switchCaseInputs}
-            onSwitchSourceChange={setSwitchSource}
-            onSwitchAttributeNameChange={setSwitchAttributeName}
-            onSwitchCasesChange={setSwitchCases}
-            onSwitchCaseInputsChange={setSwitchCaseInputs}
+            attachedNode={attachedNode}
+            switchSource={(config.switchSource as SwitchSource) || 'attribute'}
+            switchAttributeName={(config.switchAttributeName as string) || ''}
+            switchCases={(config.switchCases as SwitchCase[]) || []}
+            switchCaseInputs={(config.switchCaseInputs as Record<string, string>) || {}}
+            onSwitchSourceChange={(source) => handleUpdateConfig({ switchSource: source })}
+            onSwitchAttributeNameChange={(name) => handleUpdateConfig({ switchAttributeName: name })}
+            onSwitchCasesChange={(cases) => handleUpdateConfig({ switchCases: cases })}
+            onSwitchCaseInputsChange={(inputs) => handleUpdateConfig({ switchCaseInputs: inputs })}
             onUpdateToolNode={updateToolNode}
           />
         )}
 
-    
-
-        {(toolNode.type === 'tool:fetch-api' ||
-          ['tool:fetch-orcid', 'tool:fetch-geonames', 'tool:fetch-europeana', 'tool:fetch-getty'].includes(toolNode.type) ||
-          toolNode.type === 'tool:http') && (
-            <ToolApiConfiguration
-              toolNodeType={toolNode.type}
-              toolNodeId={toolNodeId!}
-              toolNode={toolNode}
-              fetchApiConfig={fetchApiConfig}
-              authenticatedApiConfig={authenticatedApiConfig}
-              httpConfig={httpConfig}
-              onFetchApiConfigChange={setFetchApiConfig}
-              onAuthenticatedApiConfigChange={setAuthenticatedApiConfig}
-              onHttpConfigChange={setHttpConfig}
-              onUpdateToolNode={updateToolNode}
-              getCredentialsByType={(type: string) => getCredentialsByType(type as any)}
-              getCredential={getCredential}
-            />
-          )}
-
-
-        {/* Test Execution Section for Authenticated API Tools */}
-        {['tool:fetch-orcid', 'tool:fetch-geonames', 'tool:fetch-europeana', 'tool:fetch-getty'].includes(toolNode.type) && (
-          <div className="mt-6 pt-4 border-t">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium">Test API Call</Label>
-                <Button
-                  size="sm"
-                  onClick={handleExecuteAuthenticatedApiTest}
-                  disabled={isExecuting || !authenticatedApiConfig.credentialId}
-                  className="h-7 px-3 text-xs"
-                >
-                  <Play className="h-3 w-3 mr-1" />
-                  {isExecuting ? 'Fetching...' : 'Test API'}
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Test ID (Optional)</Label>
-                <Input
-                  placeholder={authenticatedApiConfig.idSource === 'attribute'
-                    ? `e.g., ${toolNode.type === 'tool:fetch-orcid' ? '0000-0002-1825-0097' : toolNode.type === 'tool:fetch-geonames' ? '2925533' : toolNode.type === 'tool:fetch-europeana' ? 'record-id' : '500026662'} (for ${authenticatedApiConfig.idAttribute || 'id'})`
-                    : 'Enter ID to test'}
-                  className="h-8 text-xs"
-                  value={testIdInput}
-                  onChange={(e) => setTestIdInput(e.target.value)}
-                />
-                <div className="text-[10px] text-muted-foreground">
-                  {attachedNode
-                    ? `Leave empty to use ID from attached node "${attachedNode.label}" (if available)`
-                    : 'Enter an ID to test the API call. If a node is attached, the ID will be extracted from it.'}
-                </div>
-              </div>
-
-              {testResult && (
-                <div className={`p-3 rounded border-2 ${testResult.success
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                  : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-                  }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {testResult.success ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    )}
-                    <span className={`text-xs font-semibold ${testResult.success
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-red-700 dark:text-red-300'
-                      }`}>
-                      {testResult.output}
-                    </span>
-                  </div>
-                  {testResult.details && (
-                    <div className="text-[10px] text-muted-foreground font-mono bg-background/50 p-2 rounded mt-2 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                      {testResult.details}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!testResult && !isExecuting && (
-                <div className="text-[10px] text-muted-foreground p-2 bg-muted rounded">
-                  Click &quot;Test API&quot; to fetch data from the configured API. You can enter a test ID manually or use the ID from the attached node.
-                </div>
-              )}
-            </div>
-          </div>
+        {(toolNode.type === 'tool:fetch-api' || toolNode.type.startsWith('tool:fetch-')) && (
+          <ToolApiConfiguration
+            toolNodeType={toolNode.type}
+            toolNodeId={toolNodeId}
+            toolNode={toolNode}
+            fetchApiConfig={fetchApiConfig}
+            authenticatedApiConfig={authenticatedApiConfig}
+            httpConfig={httpConfig}
+            onFetchApiConfigChange={(updates) => handleUpdateConfig({ fetchApiConfig: updates })}
+            onAuthenticatedApiConfigChange={(updates) => handleUpdateConfig({ authenticatedApiConfig: updates })}
+            onHttpConfigChange={(updates) => handleUpdateConfig({ httpConfig: updates })}
+            onUpdateConfig={handleUpdateConfig}
+            onUpdateToolNode={updateToolNode}
+            getCredentialsByType={(type) => getCredentialsByType(type as any)}
+            getCredential={getCredential}
+          />
         )}
 
-
-        {/* Test Execution Section for HTTP Tool */}
-        {toolNode.type === 'tool:http' && (
-          <div className="mt-6 pt-4 border-t">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium">Test HTTP Request</Label>
-                <Button
-                  size="sm"
-                  onClick={handleExecuteHttpTest}
-                  disabled={isExecuting || !httpConfig.url}
-                  className="h-7 px-3 text-xs"
-                >
-                  <Play className="h-3 w-3 mr-1" />
-                  {isExecuting ? 'Sending...' : 'Test Request'}
-                </Button>
-              </div>
-
-              {testResult && (
-                <div className={`p-3 rounded border-2 ${testResult.success
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-                  : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-                  }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {testResult.success ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    )}
-                    <span className={`text-xs font-semibold ${testResult.success
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-red-700 dark:text-red-300'
-                      }`}>
-                      {testResult.output}
-                    </span>
-                  </div>
-                  {testResult.details && (
-                    <div className="text-[10px] text-muted-foreground font-mono bg-background/50 p-2 rounded mt-2 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                      {testResult.details}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!testResult && !isExecuting && (
-                <div className="text-[10px] text-muted-foreground p-2 bg-muted rounded">
-                  Click &quot;Test Request&quot; to send the HTTP request and see the response.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Webhook Tool Configuration */}
         {toolNode.type === 'tool:webhook' && (
           <ToolWebhookConfiguration
-            toolNodeId={toolNodeId!}
+            toolNodeId={toolNodeId}
             toolNode={toolNode}
             onUpdateToolNode={updateToolNode}
           />
         )}
 
-
-        {!['tool:if', 'tool:switch', 'tool:delay', 'tool:fetch-api', 'tool:http','tool:webhook'].includes(toolNode.type) && (
-          <div className="text-xs text-muted-foreground text-center py-4">
-            Configuration for {toolNode.type} will be available soon.
-          </div>
-        )}
-
-        {toolNode.type === 'tool:fetch-api' && (
+        {/* Test Execution Section */}
+        {(toolNode.type === 'tool:if' || 
+          toolNode.type === 'tool:switch' ||
+          isApiTool) && (
           <ToolTestExecution
             toolNode={toolNode}
             toolNodeType={toolNode.type}
@@ -1033,62 +241,25 @@ export function ToolConfigurationSidebar({
             isExecuting={isExecuting}
             testIdInput={testIdInput}
             onTestIdInputChange={setTestIdInput}
+            onExecuteTest={handleExecuteTest}
             executedApiResponse={executedApiResponse}
-            responseHistory={responseHistory}
             apiResponseModalOpen={apiResponseModalOpen}
             onApiResponseModalOpenChange={setApiResponseModalOpen}
+            responseHistory={responseHistory}
             onResponseHistoryChange={setResponseHistory}
-            onExecuteTest={handleExecuteFetchApiTest}
+            showApiResponse={isApiTool}
+            showTestIdInput={showTestIdInput}
+            conditionGroupsLength={conditionGroupsLength}
+            switchCasesLength={switchCasesLength}
+            attachedNode={attachedNode}
+            realInstances={instances}
+            selectedInstanceIndex={selectedInstanceIndex}
+            onInstanceSelect={setInstanceIndex}
+            loadingRealData={loadingRealData}
             onUpdateToolNode={updateToolNode}
-            disabled={!fetchApiConfig.apiProvider}
-            showTestIdInput={true}
-            testIdPlaceholder={fetchApiConfig.idSource === 'attribute'
-              ? `e.g., Q42 (for ${fetchApiConfig.idAttribute || 'wiki:id'})`
-              : 'Enter ID to test'}
-            testIdHelpText={attachedNode
-              ? `Leave empty to use ID from attached node "${attachedNode.label}" (if available)`
-              : 'Enter an ID to test the API call. If a node is attached, the ID will be extracted from it.'}
-            showApiResponse={true}
-          />
-        )}
-
-        {/* Real Data Selector */}
-        {realInstances.length > 0 && (
-          <div className="mt-4 px-1">
-            <div className="text-xs font-medium mb-2 flex items-center justify-between">
-              <span>Test Data Source: {selectedFile?.name}</span>
-              <span className="text-[10px] text-muted-foreground">{realInstances.length} instances found</span>
-            </div>
-            <Select value={String(selectedInstanceIndex)} onValueChange={(v) => setInstanceIndex(Number(v))}>
-              <SelectTrigger className="h-7 text-xs w-full">
-                <SelectValue placeholder="Select instance" />
-              </SelectTrigger>
-              <SelectContent>
-                {realInstances.map((inst) => (
-                  <SelectItem key={inst.index} value={String(inst.index)} className="text-xs">
-                    Instance {inst.index + 1} {inst.id ? `(ID: ${inst.id})` : ''} - {inst.preview.slice(0, 30)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-
-
-        {((toolNode.type === 'tool:if' && conditionGroups.length > 0) || (toolNode.type === 'tool:switch' && switchCases.length > 0)) && (
-          <ToolTestExecution
-            toolNode={toolNode}
-            toolNodeType={toolNode.type}
-            testResult={testResult}
-            isExecuting={isExecuting}
-            onExecuteTest={handleExecuteTest}
-            conditionGroupsLength={toolNode.type === 'tool:if' ? conditionGroups.length : undefined}
-            switchCasesLength={toolNode.type === 'tool:switch' ? switchCases.length : undefined}
           />
         )}
       </div>
     </div>
   )
 }
-

@@ -41,8 +41,9 @@ function buildApiUrl(provider: ApiProvider, id: string, apiKey?: string): string
   
   switch (provider) {
     case 'wikidata':
-      // Wikidata Entity API
-      return `https://www.wikidata.org/wiki/Special:EntityData/${cleanId}.json`
+      // Wikidata Entity API - IDs are case-sensitive and start with Q or P
+      const normalizedId = cleanId.match(/^[qp]\d+$/i) ? cleanId.toUpperCase() : cleanId
+      return `https://www.wikidata.org/wiki/Special:EntityData/${normalizedId}.json`
     
     case 'gnd':
       // GND SRU API (simplified - may need more complex query building)

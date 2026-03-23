@@ -55,28 +55,30 @@ export function ToolSwitchConfiguration({
     }
     const updated = [...switchCases, newCase]
 
-    // Sync to node outputs
-    const outputs = updated.map(c => ({ id: c.id, label: c.label }))
+    // Sync to node outputs (always keep default)
+    const outputs = [
+      ...updated.map(c => ({ id: c.id, label: c.label })),
+      { id: 'default', label: 'Default' }
+    ]
 
     onSwitchCasesChange(updated)
-    onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated },
-      outputs
-    })
+    // We still call onUpdateToolNode here because we need to update 'outputs' specifically
+    onUpdateToolNode(toolNodeId, { outputs })
   }
 
   const handleRemoveCase = (caseId: string) => {
     const updated = switchCases.filter(c => c.id !== caseId)
 
     // Sync to node outputs
-    const outputs = updated.map(c => ({ id: c.id, label: c.label }))
+    const outputs = [
+      ...updated.map(c => ({ id: c.id, label: c.label })),
+      { id: 'default', label: 'Default' }
+    ]
 
     onSwitchCasesChange(updated)
-    onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated },
-      outputs
-    })
-    const newState = { ...getState().switchCaseInputs }
+    onUpdateToolNode(toolNodeId, { outputs })
+
+    const newState = { ...((getState().config.switchCaseInputs as Record<string, string>) || {}) }
     delete newState[caseId]
     onSwitchCaseInputsChange(newState)
   }
@@ -86,10 +88,8 @@ export function ToolSwitchConfiguration({
       c.id === caseId ? { ...c, value } : c
     )
     onSwitchCasesChange(updated)
-    onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated }
-    })
-    const newSwitchState = { ...getState().switchCaseInputs }
+    
+    const newSwitchState = { ...((getState().config.switchCaseInputs as Record<string, string>) || {}) }
     delete newSwitchState[caseId]
     onSwitchCaseInputsChange(newSwitchState)
   }
@@ -100,13 +100,13 @@ export function ToolSwitchConfiguration({
     )
 
     // Sync to node outputs
-    const outputs = updated.map(c => ({ id: c.id, label: c.label }))
+    const outputs = [
+      ...updated.map(c => ({ id: c.id, label: c.label })),
+      { id: 'default', label: 'Default' }
+    ]
 
     onSwitchCasesChange(updated)
-    onUpdateToolNode(toolNodeId, {
-      config: { ...toolNode?.config, switchCases: updated },
-      outputs
-    })
+    onUpdateToolNode(toolNodeId, { outputs })
   }
 
   return (
@@ -227,7 +227,7 @@ export function ToolSwitchConfiguration({
                         value={switchCaseInputs[switchCase.id] ?? switchCase.value ?? ''}
                         onChange={(e) => {
                           onSwitchCaseInputsChange({
-                            ...getState().switchCaseInputs,
+                            ...((getState().config.switchCaseInputs as Record<string, string>) || {}),
                             [switchCase.id]: e.target.value
                           })
                         }}

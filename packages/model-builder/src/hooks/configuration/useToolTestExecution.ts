@@ -1,7 +1,11 @@
 import { useCallback } from 'react'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
-import type { Condition, ConditionGroup } from '../../components/sidebars/ToolConfigurationSidebar'
+import { useCredentialsStore } from '../../stores/credentialsStore'
+import { fetchFromApi, type ApiProvider } from '../../services/apiClient'
+import { apiResponseCache } from '../../utils/apiResponseCache'
+import { toast } from '../../utils/toast'
+import type { Condition, ConditionGroup, SwitchSource, SwitchCase } from '../../components/sidebars/ToolConfigurationSidebar'
 
 export interface TestElementData {
   tagName: string
@@ -26,36 +30,24 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
       return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
     }
     case 'HasNoChildren': {
-      // If no specific children specified, check if it has NO children at all (is leaf)
       const validValues = (condition.values || []).filter(v => v && v.trim() !== '')
       if (validValues.length === 0) {
         return element.children.length === 0
       }
       const childNames = element.children.map(c => c.tagName.toLowerCase().trim())
-      // Check if NONE of the specified children are present
-      const matches = validValues.map(v => childNames.includes(v.toLowerCase().trim()))
-      // If operator is AND, we want NONE of them to be present (so all must NOT be present)
-      // If operator is OR, we want AT LEAST ONE to NOT be present? No, usually HasNoChildren([A, B]) means "Does not have A AND Does not have B".
-      // But let's stick to the inverse logic.
-
       const notPresent = validValues.map(v => !childNames.includes(v.toLowerCase().trim()))
       const operator = condition.internalOperator || 'AND'
       return operator === 'AND' ? notPresent.every(n => n) : notPresent.some(n => n)
     }
     case 'HasDescendant': {
-      // Collect valid values
       const validValues = [
         ...(condition.values || []),
         ...(condition.value ? [condition.value] : [])
       ].filter(v => v && v.trim() !== '')
-
       const descendants = element.descendants || []
-
-      // If no valid values, check if ANY descendant exists
       if (validValues.length === 0) {
         return descendants.length > 0
       }
-
       const matches = validValues.map(v =>
         descendants.some(d => d.toLowerCase().trim() === v.toLowerCase().trim())
       )
@@ -63,23 +55,17 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
       return operator === 'AND' ? matches.every(m => m) : matches.some(m => m)
     }
     case 'HasAncestor': {
-      // Collect valid values from both singular value and array values
       const validValues = [
         ...(condition.values || []),
         ...(condition.value ? [condition.value] : [])
       ].filter(v => v && v.trim() !== '')
-
-      // If no valid values, check if ANY ancestor exists
       if (validValues.length === 0) {
         return (element.ancestors && element.ancestors.length > 0) || !!element.parent
       }
-
       const ancestors = element.ancestors || []
-      // If we have a parent but it's not in ancestors list, add it for the check
       if (element.parent && !ancestors.includes(element.parent.tagName)) {
         ancestors.push(element.parent.tagName)
       }
-
       const matches = validValues.map(v =>
         ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
       )
@@ -88,7 +74,6 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
     }
     case 'HasParent': {
       if (!element.parent) return false
-      // If no valid value specified, just check if parent exists (which we verified above)
       if (!condition.value || condition.value.trim() === '') return true
       const parentTag = element.parent.tagName.toLowerCase().trim()
       const conditionValue = condition.value.toLowerCase().trim()
@@ -124,34 +109,28 @@ function evaluateCondition(condition: Condition, element: TestElementData): bool
 
 function evaluateConditionGroup(group: ConditionGroup, element: TestElementData): boolean {
   if (group.conditions.length === 0) return true
-
   const results = group.conditions.map(c => evaluateCondition(c, element))
   const operator = group.internalOperator || 'AND'
-
   return operator === 'AND' ? results.every(r => r) : results.some(r => r)
 }
 
 function evaluateAllGroups(groups: ConditionGroup[], element: TestElementData): boolean {
   if (groups.length === 0) return true
-
   let finalResult = evaluateConditionGroup(groups[0], element)
-
   for (let i = 1; i < groups.length; i++) {
     const groupResult = evaluateConditionGroup(groups[i], element)
     const operator = groups[i].operator || 'AND'
-
     if (operator === 'AND') {
       finalResult = finalResult && groupResult
     } else {
       finalResult = finalResult || groupResult
     }
   }
-
   return finalResult
 }
 
 export function useToolTestExecution(toolNodeId: string | null) {
-  const conditionGroups = useToolConfigurationStore((state) => state.conditionGroups)
+  const config = useToolConfigurationStore((state) => state.config)
   const testResult = useToolConfigurationStore((state) => state.testResult)
   const setTestResult = useToolConfigurationStore((state) => state.setTestResult)
   const isExecuting = useToolConfigurationStore((state) => state.isExecuting)
@@ -168,14 +147,17 @@ export function useToolTestExecution(toolNodeId: string | null) {
   const setConnectionStatus = useToolConfigurationStore((state) => state.setConnectionStatus)
   const validationErrors = useToolConfigurationStore((state) => state.validationErrors)
   const setValidationErrors = useToolConfigurationStore((state) => state.setValidationErrors)
-  // Switch configuration selectors
-  const switchSource = useToolConfigurationStore((state) => state.switchSource)
-  const switchAttributeName = useToolConfigurationStore((state) => state.switchAttributeName)
-  const switchCases = useToolConfigurationStore((state) => state.switchCases)
-  const switchCaseInputs = useToolConfigurationStore((state) => state.switchCaseInputs)
+  
   const toolNode = useToolCanvasStore((state) => state.nodes.find(n => n.id === toolNodeId))
   const updateToolNode = useToolCanvasStore((state) => state.updateNode)
-  const getState = useToolConfigurationStore.getState
+  const getCredential = useCredentialsStore((state) => state.getCredential)
+
+  // Derived from config
+  const conditionGroups = (config.conditionGroups as ConditionGroup[]) || []
+  const switchSource = (config.switchSource as SwitchSource) || 'attribute'
+  const switchAttributeName = (config.switchAttributeName as string) || ''
+  const switchCases = (config.switchCases as SwitchCase[]) || []
+  const switchCaseInputs = (config.switchCaseInputs as Record<string, string>) || {}
 
   const createTestElement = useCallback((
     attachedNode?: { label?: string; type?: string; properties?: Array<{ key: string }> } | null,
@@ -187,33 +169,19 @@ export function useToolTestExecution(toolNodeId: string | null) {
     xmlDescendants?: string[]
   ): TestElementData => {
     const tagName = attachedNode?.label || attachedNode?.type || 'test-element'
-
-    // Generate children arrays based on count (e.g. if count is 3, create 3 items)
     const children = (xmlChildren || []).flatMap(child => {
       const count = child.count && child.count > 0 ? child.count : 1
       return Array(count).fill({ tagName: child.name })
     })
-
-    // Start with provided XML attributes (real or fallback from sidebar)
     const attributes: Record<string, string> = xmlAttributes ? { ...xmlAttributes } : {}
-
-    // Fill in missing properties from schema with mock values if not present
-    if (attachedNode?.properties && attachedNode.properties.length > 0) {
-      attachedNode.properties.forEach((prop) => {
+    if (attachedNode?.properties && (attachedNode.properties as any[]).length > 0) {
+      (attachedNode.properties as any[]).forEach((prop) => {
         if (!(prop.key in attributes)) {
           attributes[prop.key] = `test-${prop.key}`
         }
       })
-    } else if (Object.keys(attributes).length === 0 && xmlTypeStats?.attributesCount && xmlTypeStats.attributesCount > 0) {
-      // Fallback only if no attributes exist at all and we didn't receive any fallback attributes
-      // (This block might be redundant if sidebar always provides fallback attributes, but kept for safety)
-      attributes['id'] = 'test-id'
-      attributes['xml:id'] = 'test-xml-id'
     }
-
-    // Determine text content based on stats
-    const hasText = xmlTypeStats?.hasTextContent !== false // Default to true if unknown, unless explicitly false
-
+    const hasText = xmlTypeStats?.hasTextContent !== false
     return {
       tagName,
       children,
@@ -223,14 +191,12 @@ export function useToolTestExecution(toolNodeId: string | null) {
       ancestors: xmlAncestors || [],
       descendants: xmlDescendants || []
     }
-
   }, [])
 
   const handleExecuteConditionTest = useCallback((
     createTestElementFn: () => TestElementData
   ) => {
     const isSwitchTool = toolNode?.type === 'tool:switch'
-
     if (!isSwitchTool && conditionGroups.length === 0) {
       setTestResult({
         success: false,
@@ -239,7 +205,6 @@ export function useToolTestExecution(toolNodeId: string | null) {
       })
       return
     }
-
     if (isSwitchTool && switchCases.length === 0) {
       setTestResult({
         success: false,
@@ -248,20 +213,12 @@ export function useToolTestExecution(toolNodeId: string | null) {
       })
       return
     }
-
     setIsExecuting(true)
-
     setTimeout(() => {
       try {
         const testElement = createTestElementFn()
-
         if (isSwitchTool) {
-          // Switch Evaluation Logic
           let matchValue: string = ''
-          let matchedCaseId: string | null = null
-          let matchedCaseLabel: string | null = null
-
-          // Determine value to match on
           if (switchSource === 'elementName') {
             matchValue = testElement.tagName
           } else if (switchSource === 'textContent') {
@@ -269,152 +226,159 @@ export function useToolTestExecution(toolNodeId: string | null) {
           } else if (switchSource === 'attribute') {
             matchValue = testElement.attributes[switchAttributeName] || ''
           }
-
-          // Find matching case
           const matchedCase = switchCases.find(c => {
             const expectedValue = switchCaseInputs[c.id] ?? c.value
             return (expectedValue || '').toLowerCase().trim() === (matchValue || '').toLowerCase().trim()
           })
-
-          if (matchedCase) {
-            matchedCaseId = matchedCase.id
-            matchedCaseLabel = matchedCase.label
-          } else {
-            // Check for default case? (Usually labeled 'default')
-            const defaultCase = switchCases.find(c => c.label.toLowerCase() === 'default')
-            if (defaultCase) {
-              matchedCaseId = defaultCase.id
-              matchedCaseLabel = defaultCase.label + ' (Fallback)'
-            }
-          }
-
-          const childrenSummary = testElement.children.length > 0
-            ? testElement.children.map(c => c.tagName).reduce((acc, curr) => {
-              acc[curr] = (acc[curr] || 0) + 1
-              return acc
-            }, {} as Record<string, number>)
-            : 'none'
-
-          const childrenStr = typeof childrenSummary === 'string'
-            ? childrenSummary
-            : Object.entries(childrenSummary).map(([tag, count]) => `${tag} (${count})`).join(', ')
-
           setTestResult({
-            success: !!matchedCaseId,
-            output: matchedCaseLabel ? `Matched: ${matchedCaseLabel}` : 'No Match',
-            details: `Test Element Structure (Mock):\n` +
-              `  Tag: ${testElement.tagName}\n` +
-              `  Children: ${childrenStr}\n` +
-              `  Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
-              `  Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n` +
-              `----------------------------------------\n` +
-              `Switch Evaluation:\n` +
-              `  Source: ${switchSource}\n` +
-              `  Attribute: ${switchSource === 'attribute' ? switchAttributeName : 'N/A'}\n` +
-              `  Value found: "${matchValue}"\n` +
-              `  Matched Case: ${matchedCaseLabel || 'None'}`
+            success: !!matchedCase,
+            output: matchedCase ? `Matched: ${matchedCase.label}` : 'No Match',
+            details: `Value found: "${matchValue}"\nMatched Case: ${matchedCase?.label || 'None'}`
           })
-
         } else {
-          // IF/ELSE Evaluation Logic (Original)
           const result = evaluateAllGroups(conditionGroups, testElement)
-
-          const groupResults = conditionGroups.map((group, idx) => {
-            const groupResult = evaluateConditionGroup(group, testElement)
-            const conditionDetails = group.conditions.map(c => {
-              const condResult = evaluateCondition(c, testElement)
-              let details = `  - ${c.type}: ${condResult ? '✓' : '✗'}`
-
-              if (c.type === 'HasParent') {
-                const actualParent = testElement.parent?.tagName || 'none'
-                const expectedParent = c.value || '(not set)'
-                details += ` (expected: "${expectedParent}", actual: "${actualParent}")`
-              } else if (c.type === 'HasAncestor') {
-                const actualAncestors = (testElement.ancestors || []).join(', ') || 'none'
-                const expectedAncestors = c.values?.join(', ') || c.value || '(not set)'
-                const operator = c.internalOperator || 'OR'
-                const ancestors = testElement.ancestors || []
-                const matches = c.values?.map(v =>
-                  ancestors.some(a => a.toLowerCase().trim() === v.toLowerCase().trim())
-                ) || []
-                const hasAncestor = matches.length > 0 && (operator === 'AND' ? matches.every(m => m) : matches.some(m => m))
-                details += ` (expected: [${expectedAncestors}], ancestors: [${actualAncestors}], operator: ${operator}, found: ${hasAncestor})`
-              } else if (c.type === 'HasAttribute') {
-                const hasAttr = c.attributeName ? (c.attributeName in testElement.attributes) : false
-                const attrValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(no value)') : '(not set)'
-                details += ` (attribute: "${c.attributeName || '(not set)'}", found: ${hasAttr}, value: "${attrValue}")`
-              } else if (c.type === 'HasChildren' || c.type === 'HasNoChildren') {
-                const childNames = testElement.children.map(ch => ch.tagName).join(', ')
-                const expected = c.values?.join(', ') || '(not set)'
-                const operator = c.internalOperator || 'OR'
-                details += ` (expected: [${expected}], actual: [${childNames}], operator: ${operator})`
-              } else if (c.type === 'ChildCount') {
-                const actualCount = testElement.children.length
-                const minStr = c.min !== undefined ? c.min.toString() : 'none'
-                const maxStr = c.max !== undefined ? c.max.toString() : 'none'
-                const inRange = (c.min === undefined || actualCount >= c.min) &&
-                  (c.max === undefined || actualCount <= c.max)
-                details += ` (count: ${actualCount}, min: ${minStr}, max: ${maxStr}, in range: ${inRange})`
-              } else if (c.type === 'HasTextContent') {
-                const hasText = testElement.textContent.trim().length > 0
-                const textLength = testElement.textContent.trim().length
-                details += ` (has text: ${hasText}, length: ${textLength})`
-              } else if (c.type === 'ElementNameEquals') {
-                const actualName = testElement.tagName
-                const expectedName = c.value || '(not set)'
-                const matches = actualName.toLowerCase() === expectedName.toLowerCase()
-                details += ` (expected: "${expectedName}", actual: "${actualName}", matches: ${matches})`
-              } else if (c.type === 'AttributeValueEquals') {
-                const actualValue = c.attributeName ? (testElement.attributes[c.attributeName] || '(not found)') : '(attribute not set)'
-                const expectedValue = c.value || '(not set)'
-                const matches = c.attributeName && c.value
-                  ? (testElement.attributes[c.attributeName] === c.value)
-                  : false
-                details += ` (attribute: "${c.attributeName || '(not set)'}", expected: "${expectedValue}", actual: "${actualValue}", matches: ${matches})`
-              }
-              return details
-            }).join('\n')
-            return `Group ${idx + 1} (${groupResult ? 'PASS' : 'FAIL'}):\n${conditionDetails}`
-          }).join('\n\n')
-
-          const childrenSummary = testElement.children.length > 0
-            ? testElement.children.map(c => c.tagName).reduce((acc, curr) => {
-              acc[curr] = (acc[curr] || 0) + 1
-              return acc
-            }, {} as Record<string, number>)
-            : 'none'
-
-          const childrenStr = typeof childrenSummary === 'string'
-            ? childrenSummary
-            : Object.entries(childrenSummary).map(([tag, count]) => `${tag} (${count})`).join(', ')
-
           setTestResult({
             success: result,
             output: result ? 'true' : 'false',
-            details: `Test Element Structure (Mock):\n` +
-              `  Tag: ${testElement.tagName}\n` +
-              `  Children: ${childrenStr}\n` +
-              `  Attributes: ${Object.keys(testElement.attributes).join(', ') || 'none'}\n` +
-              `  Parent: ${testElement.parent?.tagName || 'none'}\n` +
-              `  Ancestors: ${(testElement.ancestors || []).join(', ') || 'none'}\n` +
-              `  Text Content: ${testElement.textContent ? 'Yes' : 'No'}\n` +
-              `----------------------------------------\n` +
-              `Condition Results:\n${groupResults}`
-
+            details: 'Condition evaluation complete.'
           })
         }
-
       } catch (error) {
         setTestResult({
           success: false,
           output: 'Error',
-          details: error instanceof Error ? error.message : 'Unknown error occurred'
+          details: error instanceof Error ? error.message : 'Unknown error'
         })
       } finally {
         setIsExecuting(false)
       }
     }, 300)
-  }, [conditionGroups, setTestResult, setIsExecuting])
+  }, [toolNode, conditionGroups, switchCases, switchSource, switchAttributeName, switchCaseInputs, setTestResult, setIsExecuting])
+
+  const handleExecuteFetchApiTest = useCallback(async (
+    fetchApiConfig: any,
+    createTestElementFn: () => TestElementData
+  ) => {
+    if (!fetchApiConfig.apiProvider) {
+      setTestResult({ success: false, output: 'Error', details: 'Provider required' })
+      return
+    }
+    setConnectionStatus('pending')
+    setIsExecuting(true)
+    try {
+      let testId = testIdInput.trim()
+      const testElement = createTestElementFn()
+      
+      if (!testId) {
+        if (fetchApiConfig.idSource === 'attribute') {
+          testId = testElement.attributes[fetchApiConfig.idAttribute] || ''
+        } else if (fetchApiConfig.idSource === 'textContent') {
+          testId = testElement.textContent?.trim() || ''
+        }
+      }
+      if (!testId) {
+        setTestResult({ 
+          success: false, 
+          output: 'Error', 
+          details: `No ID found using ${fetchApiConfig.idSource}${fetchApiConfig.idSource === 'attribute' ? ` (attribute: ${fetchApiConfig.idAttribute})` : ''}. Available attributes: ${JSON.stringify(Object.keys(testElement.attributes))}` 
+        })
+        setConnectionStatus('error')
+        return
+      }
+      const response = await fetchFromApi({
+        provider: fetchApiConfig.apiProvider as ApiProvider,
+        id: testId,
+        apiKey: fetchApiConfig.apiKey,
+        timeout: fetchApiConfig.timeout || 10000
+      })
+      if (response.success && response.data) {
+        setExecutedApiResponse(response.data)
+        if (toolNode) {
+          updateToolNode(toolNode.id, {
+            config: { ...toolNode.config, executedResponse: response.data, executedTestId: testId }
+          })
+        }
+        setConnectionStatus('connected')
+        setTestResult({ success: true, output: 'Success', details: `Successfully fetched data for ID: ${testId}` })
+        toast.success('API success')
+      } else {
+        setConnectionStatus('error')
+        setTestResult({ 
+          success: false, 
+          output: 'Failed', 
+          details: `API Error: ${response.error || 'Unknown error'}\nID used: ${testId}` 
+        })
+        toast.error('API failed')
+      }
+    } catch (error) {
+      setConnectionStatus('error')
+      setTestResult({ 
+        success: false, 
+        output: 'Error', 
+        details: `Exception: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      })
+    } finally {
+      setIsExecuting(false)
+    }
+  }, [toolNode, updateToolNode, testIdInput, setExecutedApiResponse, setConnectionStatus, setIsExecuting, setTestResult])
+
+  const handleExecuteAuthenticatedApiTest = useCallback(async (
+    authenticatedApiConfig: any,
+    attachedNode: any,
+    realInstanceData: any
+  ) => {
+    if (!authenticatedApiConfig.credentialId) {
+      setTestResult({ success: false, output: 'Error', details: 'Credential required' })
+      return
+    }
+    setIsExecuting(true)
+    try {
+      let testId = testIdInput.trim()
+      if (!testId && (attachedNode || realInstanceData)) {
+        if (authenticatedApiConfig.idSource === 'attribute') {
+          testId = (realInstanceData?.attributes || attachedNode?.data?.xmlAttributes)?.[authenticatedApiConfig.idAttribute] || ''
+        } else if (authenticatedApiConfig.idSource === 'textContent') {
+          testId = (realInstanceData?.textContent || attachedNode?.data?.xmlTextContent)?.trim() || ''
+        }
+      }
+      if (!testId) {
+        setTestResult({ success: false, output: 'Error', details: 'No ID found' })
+        return
+      }
+      const response = await fetchFromApi({
+        provider: (authenticatedApiConfig.apiProvider as ApiProvider) || 'orcid',
+        id: testId,
+        credentialId: authenticatedApiConfig.credentialId,
+        timeout: authenticatedApiConfig.timeout || 10000
+      }, (credId) => {
+        const cred = getCredential(credId)
+        return cred ? { data: cred.data } : undefined
+      })
+      setTestResult({
+        success: response.success,
+        output: response.success ? 'Success' : 'Failed',
+        details: response.success ? 'Success' : response.error
+      })
+    } finally {
+      setIsExecuting(false)
+    }
+  }, [testIdInput, getCredential, setIsExecuting, setTestResult])
+
+  const handleExecuteHttpTest = useCallback(async (httpConfig: any) => {
+    if (!httpConfig.url) {
+      setTestResult({ success: false, output: 'Error', details: 'URL required' })
+      return
+    }
+    setIsExecuting(true)
+    try {
+      const response = await fetch(httpConfig.url, { method: httpConfig.method })
+      setTestResult({ success: response.ok, output: response.ok ? 'Success' : 'Failed' })
+    } catch (error) {
+      setTestResult({ success: false, output: 'Error' })
+    } finally {
+      setIsExecuting(false)
+    }
+  }, [setIsExecuting, setTestResult])
 
   return {
     testResult,
@@ -434,10 +398,12 @@ export function useToolTestExecution(toolNodeId: string | null) {
     validationErrors,
     setValidationErrors,
     handleExecuteConditionTest,
+    handleExecuteFetchApiTest,
+    handleExecuteAuthenticatedApiTest,
+    handleExecuteHttpTest,
     createTestElement,
     evaluateCondition,
     evaluateConditionGroup,
     evaluateAllGroups
   }
 }
-

@@ -15,7 +15,8 @@ import {
   SelectValue
 } from '../ui/select'
 import { cn } from '../../utils/cn'
-import { toolCategories, actionCategories, type ToolItem, type ActionItem } from '../../constants/workflowItems'
+import { workflowRegistry } from '../../registry'
+import type { ActionDefinition, ToolDefinition } from '../../registry/types'
 
 // Helper function to get color classes
 function getColorClasses(color?: string, bgColor?: string) {
@@ -62,9 +63,12 @@ export function WorkflowSidebar () {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   
-  // Use shared constants
-  const currentToolCategories = toolCategories
-  const currentActionCategories = actionCategories
+  // Use shared registry
+  const allTools = useMemo(() => workflowRegistry.getAllTools(), [])
+  const allActions = useMemo(() => workflowRegistry.getAllActions(), [])
+
+  const toolCategoriesList = useMemo(() => workflowRegistry.getToolCategories(), [])
+  const actionCategoriesList = useMemo(() => workflowRegistry.getActionCategories(), [])
 
   const handleDragStart = (event: React.DragEvent, type: string) => {
     event.dataTransfer.setData('application/workflow-step-type', type)
@@ -87,13 +91,14 @@ export function WorkflowSidebar () {
 
   // Filter and search tools
   const filteredTools = useMemo(() => {
-    const result: { category: string; items: ToolItem[] }[] = []
+    const result: { category: string; items: ToolDefinition[] }[] = []
     
-    Object.entries(currentToolCategories).forEach(([category, { tools }]) => {
-      const filtered = tools.filter(tool => {
+    toolCategoriesList.forEach(category => {
+      const toolsInCategory = allTools.filter(t => t.metadata.category === category)
+      const filtered = toolsInCategory.filter(tool => {
         const matchesSearch = searchQuery === '' || 
-          tool.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          tool.description.toLowerCase().includes(searchQuery.toLowerCase())
+          tool.metadata.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          tool.metadata.description.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesCategory = selectedCategory === 'all' || selectedCategory === category
         return matchesSearch && matchesCategory
       })
@@ -104,17 +109,18 @@ export function WorkflowSidebar () {
     })
     
     return result
-  }, [searchQuery, selectedCategory])
+  }, [searchQuery, selectedCategory, allTools, toolCategoriesList])
 
   // Filter and search actions
   const filteredActions = useMemo(() => {
-    const result: { category: string; items: ActionItem[] }[] = []
+    const result: { category: string; items: ActionDefinition[] }[] = []
     
-    Object.entries(currentActionCategories).forEach(([category, { actions }]) => {
-      const filtered = actions.filter(action => {
+    actionCategoriesList.forEach(category => {
+      const actionsInCategory = allActions.filter(a => a.metadata.category === category)
+      const filtered = actionsInCategory.filter(action => {
         const matchesSearch = searchQuery === '' || 
-          action.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          action.description.toLowerCase().includes(searchQuery.toLowerCase())
+          action.metadata.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          action.metadata.description.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesCategory = selectedCategory === 'all' || selectedCategory === category
         return matchesSearch && matchesCategory
       })
@@ -125,11 +131,9 @@ export function WorkflowSidebar () {
     })
     
     return result
-  }, [searchQuery, selectedCategory])
+  }, [searchQuery, selectedCategory, allActions, actionCategoriesList])
 
-  const categories = tab === 'tools' 
-    ? Object.keys(currentToolCategories) 
-    : Object.keys(currentActionCategories)
+  const categories = tab === 'tools' ? toolCategoriesList : actionCategoriesList
 
   const filteredItems = tab === 'tools' ? filteredTools : filteredActions
 
@@ -217,12 +221,10 @@ export function WorkflowSidebar () {
           </div>
         ) : (
           filteredItems.map(({ category, items }) => {
-            const categoryConfig = tab === 'tools' 
-              ? currentToolCategories[category as keyof typeof currentToolCategories]
-              : currentActionCategories[category as keyof typeof currentActionCategories]
-            const CategoryIcon = categoryConfig?.icon || Folder
-            const categoryColor = categoryConfig?.color || 'text-muted-foreground'
-            const categoryBgColor = categoryConfig?.bgColor || 'bg-muted'
+            const firstItem = items[0]
+            const CategoryIcon = firstItem.metadata.icon || Folder
+            const categoryColor = firstItem.metadata.color || 'text-muted-foreground'
+            const categoryBgColor = firstItem.metadata.bgColor || 'bg-muted'
             const isExpanded = expandedCategories.has(category)
             
             return (
@@ -249,21 +251,21 @@ export function WorkflowSidebar () {
                 {/* Category Items */}
                 {isExpanded && (
                   <div className="space-y-0.5 pl-1">
-                    {items.map((item: ToolItem | ActionItem) => {
-                      const Icon = item.icon
-                      const isQuick = 'isQuick' in item ? item.isQuick : false
-                      const colors = getColorClasses(item.color, item.bgColor)
+                    {items.map((item: ToolDefinition | ActionDefinition) => {
+                      const Icon = item.metadata.icon
+                      const isQuick = 'isQuick' in item.metadata ? (item.metadata as any).isQuick : false
+                      const colors = getColorClasses(item.metadata.color, item.metadata.bgColor)
                       
                       return (
                         <div
-                          key={item.type}
+                          key={item.id}
                           draggable
-                          onDragStart={(e) => handleDragStart(e, item.type)}
+                          onDragStart={(e) => handleDragStart(e, item.id)}
                           className={cn(
                             "group flex items-center gap-2 p-1.5 rounded-md border transition-all cursor-grab active:cursor-grabbing",
                             "bg-background border-border hover:border-primary/30 hover:bg-muted/50"
                           )}
-                          title={item.description}
+                          title={item.metadata.description}
                         >
                           <div className={cn(
                             "h-6 w-6 rounded flex items-center justify-center shrink-0",
@@ -273,7 +275,7 @@ export function WorkflowSidebar () {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium leading-tight text-foreground flex items-center gap-1">
-                              {item.label}
+                              {item.metadata.label}
                             </div>
                           </div>
                         </div>

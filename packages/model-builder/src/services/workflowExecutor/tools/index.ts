@@ -13,7 +13,12 @@ const toolRegistry: Record<string, ToolExecutor> = {
   'tool:delay': executeDelayTool,
   'tool:fetch-api': executeFetchApiTool,
   'tool:http': executeHttpTool,
-  'tool:webhook': executeWebhookTool
+  'tool:webhook': executeWebhookTool,
+  // Authenticated Research APIs
+  'tool:fetch-orcid': executeFetchApiTool,
+  'tool:fetch-geonames': executeFetchApiTool,
+  'tool:fetch-europeana': executeFetchApiTool,
+  'tool:fetch-getty': executeFetchApiTool
 }
 
 export async function executeTool(

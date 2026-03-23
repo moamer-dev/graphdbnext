@@ -20,7 +20,8 @@ interface UseRealXmlSampleResult {
 
 export function useRealXmlSample(
     file: File | null,
-    tagName: string
+    tagName: string,
+    externalSelectedIndex?: number
 ): UseRealXmlSampleResult {
     const [instances, setInstances] = useState<RealXmlInstance[]>([])
     const [selectedInstanceIndex, setSelectedInstanceIndex] = useState<number>(0)
@@ -139,11 +140,12 @@ export function useRealXmlSample(
 
     // Compute TestElementData for current selection
     const selectedInstanceData = useMemo<TestElementData | null>(() => {
-        if (instances.length === 0 || selectedInstanceIndex >= instances.length) {
+        const effectiveIndex = externalSelectedIndex !== undefined ? externalSelectedIndex : selectedInstanceIndex
+        if (instances.length === 0 || effectiveIndex >= instances.length) {
             return null
         }
 
-        const instance = instances[selectedInstanceIndex]
+        const instance = instances[effectiveIndex]
         const el = instance.element
 
         // Extract attributes
@@ -185,7 +187,7 @@ export function useRealXmlSample(
             ancestors,
             descendants: uniqueDescendants
         }
-    }, [instances, selectedInstanceIndex])
+    }, [instances, selectedInstanceIndex, externalSelectedIndex])
 
     return {
         instances,

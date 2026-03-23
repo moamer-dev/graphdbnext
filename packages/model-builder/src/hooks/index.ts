@@ -16,6 +16,7 @@ export { useCanvasVisibility } from './canvas/useCanvasVisibility'
 export { useToolConditionBuilder } from './configuration/useToolConditionBuilder'
 export { useToolTestExecution, type TestElementData } from './configuration/useToolTestExecution'
 export { useActionTestExecution } from './configuration/useActionTestExecution'
+export { useActionConfiguration } from './configuration/useActionConfiguration'
 
 // Palette hooks
 export { useNodePaletteSearch } from './palette/useNodePaletteSearch'

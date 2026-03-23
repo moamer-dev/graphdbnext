@@ -3,7 +3,14 @@
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import { Play, CheckCircle2, XCircle, Eye } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../../ui/select'
+import { Play, CheckCircle2, XCircle, Eye, Loader2 } from 'lucide-react'
 import { ResponseHistory } from '../../shared/ResponseHistory'
 import { ApiResponseModal } from '../../dialogs/ApiResponseModal'
 import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
@@ -45,6 +52,12 @@ interface ToolTestExecutionProps {
   showApiResponse?: boolean
   conditionGroupsLength?: number
   switchCasesLength?: number
+  // Real data sampling props
+  attachedNode?: any
+  realInstances?: any[]
+  selectedInstanceIndex?: number
+  onInstanceSelect?: (index: number) => void
+  loadingRealData?: boolean
 }
 
 export function ToolTestExecution({
@@ -67,7 +80,12 @@ export function ToolTestExecution({
   testIdHelpText,
   showApiResponse = false,
   conditionGroupsLength,
-  switchCasesLength
+  switchCasesLength,
+  attachedNode,
+  realInstances = [],
+  selectedInstanceIndex = 0,
+  onInstanceSelect,
+  loadingRealData = false
 }: ToolTestExecutionProps) {
   const isConditionTest = toolNodeType === 'tool:if' || toolNodeType === 'tool:switch'
   const isApiTest = showApiResponse
@@ -89,10 +107,47 @@ export function ToolTestExecution({
             disabled={isDisabled}
             className={`${isApiTest ? 'h-8 px-4 bg-primary hover:bg-primary/90' : 'h-7 px-3'} text-xs`}
           >
-            <Play className="h-3 w-3 mr-1" />
+            {isExecuting ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <Play className="h-3 w-3 mr-1" />
+            )}
             {isExecuting ? 'Executing...' : isApiTest ? 'Execute step' : 'Execute Test'}
           </Button>
         </div>
+
+        {/* Instance Selection for Testing Context */}
+        {attachedNode && (
+          <div className="space-y-2 py-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Select context from: {attachedNode.label}
+              </Label>
+              {loadingRealData && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
+            {realInstances.length > 0 ? (
+              <Select
+                value={selectedInstanceIndex.toString()}
+                onValueChange={(val) => onInstanceSelect?.(parseInt(val))}
+              >
+                <SelectTrigger className="h-8 text-xs bg-muted/30">
+                  <SelectValue placeholder="Select instance to test" />
+                </SelectTrigger>
+                <SelectContent>
+                  {realInstances.map((instance, idx) => (
+                    <SelectItem key={idx} value={idx.toString()} className="text-xs">
+                      Instance {idx + 1}: {instance.preview}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-[10px] text-muted-foreground italic bg-muted/20 p-2 rounded border border-dashed">
+                No real instances found for &quot;{attachedNode.label}&quot; in the uploaded file. Synthetic data will be used.
+              </div>
+            )}
+          </div>
+        )}
 
         {showTestIdInput && onTestIdInputChange && (
           <div className="space-y-2">
@@ -215,4 +270,3 @@ export function ToolTestExecution({
     </div>
   )
 }
-
