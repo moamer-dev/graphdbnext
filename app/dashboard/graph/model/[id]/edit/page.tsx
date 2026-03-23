@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
-import { useModelBuilderStore, useToolCanvasStore, useActionCanvasStore } from '@graphdb/model-builder'
 import { resourceHooks } from '@/lib/react-query/hooks'
+import type { ModelBuilderRef } from '@graphdb/model-builder'
 import { ModelResource, type Model } from '@/lib/resources/ModelResource'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -22,18 +22,14 @@ export default function EditModelPage() {
   const { isEnabled, loading: moduleLoading, ModelBuilderAdapter } = useModelBuilder()
   const { data: modelData, isLoading } = resourceHooks.models.useSingle(modelId)
   const updateModelMutation = resourceHooks.models.useUpdate()
-  const clearBuilder = useModelBuilderStore(state => state.clear)
-  const clearTools = useToolCanvasStore(state => state.clear)
-  const clearActions = useActionCanvasStore(state => state.clear)
+  const builderRef = useRef<ModelBuilderRef>(null)
 
   // Clear builder state when unmounting
   useEffect(() => {
     return () => {
-      clearBuilder()
-      clearTools()
-      clearActions()
+      builderRef.current?.clear()
     }
-  }, [clearBuilder, clearTools, clearActions])
+  }, [])
 
   const model = modelData?.data as Model | undefined
   const [saving, setSaving] = useState(false)
@@ -55,7 +51,6 @@ export default function EditModelPage() {
           ...data
         }
       })
-      toast.success('Model updated successfully')
     } catch (error) {
       console.error('Error saving model:', error)
       toast.error('Failed to save model')
@@ -155,49 +150,15 @@ export default function EditModelPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              disabled={saving}
-              className="h-7 text-xs"
-            >
-              <X className="h-3 w-3 mr-1.5" />
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                // Trigger save from adapter
-                // This will be handled by the adapter's onSave callback
-                const event = new CustomEvent('model-builder:save')
-                window.dispatchEvent(event)
-              }}
-              disabled={saving}
-              className="h-7 text-xs"
-            >
-              {(saving || updateModelMutation.isPending) ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-3 w-3 mr-1.5" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {ModelBuilderAdapter && (
           <ModelBuilderAdapter
             model={model}
             onSave={handleSave}
             className="h-full"
+            builderRef={builderRef}
           />
         )}
       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
-import { useModelBuilderStore } from '@graphdb/model-builder'
+import type { ModelBuilderRef } from '@graphdb/model-builder'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
@@ -42,69 +42,20 @@ export function NewModelBuilder({
   cancelDialogOpen,
   onCancelDialogChange,
   onConfirmCancel,
+  hasChanges,
   onHasChangesChange,
   fromXml = false
 }: NewModelBuilderProps) {
   const router = useRouter()
   const { isEnabled, loading: moduleLoading, ModelBuilderAdapter } = useModelBuilder()
+  const builderRef = useRef<ModelBuilderRef>(null)
 
-  // Track builder state to detect changes
-  const nodes = useModelBuilderStore(state => state.nodes)
-  const relationships = useModelBuilderStore(state => state.relationships)
-  const metadata = useModelBuilderStore(state => state.metadata)
-  const initialStateRef = useRef<{ nodes: typeof nodes; relationships: typeof relationships; metadata: typeof metadata } | null>(null)
-  const isInitializedRef = useRef(false)
-
-  // Initialize initial state once when builder is ready
+  // Clear builder state when unmounting
   useEffect(() => {
-    // Wait a bit for model to load (if coming from XML import)
-    if (!isInitializedRef.current && ModelBuilderAdapter) {
-      // Use setTimeout to allow model to load first
-      const timer = setTimeout(() => {
-        if (!initialStateRef.current) {
-          initialStateRef.current = {
-            nodes: [...nodes],
-            relationships: [...relationships],
-            metadata: { ...metadata }
-          }
-          isInitializedRef.current = true
-        }
-      }, 500) // Small delay to allow model loading
-
-      return () => clearTimeout(timer)
+    return () => {
+      builderRef.current?.clear()
     }
-  }, [ModelBuilderAdapter, nodes, relationships, metadata])
-
-  // Detect changes in builder state
-  useEffect(() => {
-    if (!initialStateRef.current || !isInitializedRef.current) return
-
-    const hasNodesChanged = nodes.length !== initialStateRef.current.nodes.length ||
-      nodes.some((node, index) => {
-        const initialNode = initialStateRef.current!.nodes[index]
-        return !initialNode ||
-          node.id !== initialNode.id ||
-          node.label !== initialNode.label ||
-          JSON.stringify(node.properties) !== JSON.stringify(initialNode.properties)
-      })
-
-    const hasRelationshipsChanged = relationships.length !== initialStateRef.current.relationships.length ||
-      relationships.some((rel, index) => {
-        const initialRel = initialStateRef.current!.relationships[index]
-        return !initialRel ||
-          rel.id !== initialRel.id ||
-          rel.type !== initialRel.type ||
-          rel.from !== initialRel.from ||
-          rel.to !== initialRel.to
-      })
-
-    const hasMetadataChanged = metadata.name !== initialStateRef.current.metadata.name ||
-      metadata.description !== initialStateRef.current.metadata.description
-
-    if (hasNodesChanged || hasRelationshipsChanged || hasMetadataChanged) {
-      onHasChangesChange(true)
-    }
-  }, [nodes, relationships, metadata, onHasChangesChange])
+  }, [])
 
   if (moduleLoading) {
     return (
@@ -164,7 +115,13 @@ export function NewModelBuilder({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onCancel}
+              onClick={() => {
+                if (fromXml || hasChanges || builderRef.current?.hasChanges()) {
+                  onCancelDialogChange(true)
+                } else {
+                  onConfirmCancel()
+                }
+              }}
               disabled={saving}
               className="h-7 text-xs hover:bg-muted/40"
             >
@@ -199,7 +156,13 @@ export function NewModelBuilder({
             <Button
               variant="outline"
               size="sm"
-              onClick={onCancel}
+              onClick={() => {
+                if (fromXml || hasChanges || builderRef.current?.hasChanges()) {
+                  onCancelDialogChange(true)
+                } else {
+                  onConfirmCancel()
+                }
+              }}
               disabled={saving}
               className="h-7 text-xs"
             >
@@ -212,9 +175,8 @@ export function NewModelBuilder({
                 if (!modelName.trim() || saving || isPending) {
                   return
                 }
-                // Dispatch save event - ModelBuilderAdapter will handle it
-                const event = new CustomEvent('model-builder:save')
-                window.dispatchEvent(event)
+                // Trigger save via ref
+                builderRef.current?.triggerSave()
               }}
               disabled={saving || isPending || !modelName.trim()}
               className="h-7 text-xs"
@@ -234,7 +196,7 @@ export function NewModelBuilder({
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {ModelBuilderAdapter && (
           <ModelBuilderAdapter
             model={!fromXml ? {
@@ -259,6 +221,7 @@ export function NewModelBuilder({
               })
             }}
             className="h-full"
+            builderRef={builderRef}
           />
         )}
       </div>

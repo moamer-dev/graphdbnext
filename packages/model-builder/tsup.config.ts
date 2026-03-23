@@ -3,7 +3,7 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['esm'],
-  dts: false, // Disabled due to worker memory crashes with large codebase
+  dts: true, // Enabled for NPM readiness
   sourcemap: true,
   clean: true,
   treeshake: true,

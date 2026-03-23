@@ -1,27 +1,27 @@
 'use client'
 
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, useImperativeHandle } from 'react'
 import {
   ModelBuilder,
-  useModelBuilderStore,
-  useToolCanvasStore,
-  useActionCanvasStore,
-  AISettingsProvider
+  AISettingsProvider,
+  SaveWorkflowDialog,
+  WorkflowChangeConfirmDialog,
+  DEFAULT_AI_SETTINGS
 } from '@graphdb/model-builder'
 import type {
   AISettings,
   WorkflowPersistence,
+  ModelBuilderRef
 } from '@graphdb/model-builder'
 import type { Model } from '@/lib/resources/ModelResource'
-import { DEFAULT_AI_SETTINGS } from '@/lib/ai/ApiAISettingsStorage'
-import { SaveWorkflowDialog, WorkflowChangeConfirmDialog } from '@graphdb/model-builder'
 import { toast } from 'sonner'
-import { useDatabaseStore } from '@/app/dashboard/stores/databaseStore'
 
 export interface ModelBuilderAdapterProps {
   model: Model | null
   onSave?: (data: { schemaJson: unknown; schemaMd: string; name: string; description?: string }) => Promise<Model | void>
   className?: string
+  builderRef?: React.RefObject<ModelBuilderRef | null>
+  workflowPersistence?: WorkflowPersistence
 }
 
 /**
@@ -31,10 +31,12 @@ export interface ModelBuilderAdapterProps {
 export function ModelBuilderAdapter({
   model = null,
   onSave,
-  className
+  className,
+  builderRef,
+  workflowPersistence
 }: ModelBuilderAdapterProps) {
-  const { loadState, nodes, relationships, metadata, clear } = useModelBuilderStore()
   const onSaveRef = useRef(onSave)
+  const isSavingRef = useRef(false)
   const loadedRef = useRef(false)
   const lastModelIdRef = useRef<string | null>(model?.id || null)
   const [aiSettings, setAiSettings] = useState<AISettings | null>(null)
@@ -58,6 +60,76 @@ export function ModelBuilderAdapter({
   const [workflowChangeConfirmOpen, setWorkflowChangeConfirmOpen] = useState(false)
   const [pendingWorkflowId, setPendingWorkflowId] = useState<string | null>(null)
   const pendingSaveRef = useRef<(() => Promise<Model | undefined>) | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Default workflow persistence using app's API
+  const defaultPersistence = useMemo<WorkflowPersistence>(() => {
+    if (!model?.id || model.id === 'new') return { modelId: model?.id }
+
+    return {
+      modelId: model.id,
+      onSaveWorkflow: async (workflow) => {
+        const response = await fetch('/api/workflows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            modelId: model.id,
+            name: workflow.name,
+            description: workflow.description,
+            config: workflow.config
+          })
+        })
+        if (!response.ok) throw new Error('Failed to save workflow')
+        const data = await response.json()
+        setRefreshTrigger(prev => prev + 1)
+        return { id: data.workflow.id }
+      },
+      onUpdateWorkflow: async (id, workflow) => {
+        const response = await fetch(`/api/workflows/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(workflow)
+        })
+        if (!response.ok) throw new Error('Failed to update workflow')
+        setRefreshTrigger(prev => prev + 1)
+      },
+      onLoadWorkflows: async (modelId) => {
+        const response = await fetch(`/api/workflows?modelId=${modelId}`)
+        if (!response.ok) throw new Error('Failed to load workflows')
+        const data = await response.json()
+        return data.workflows
+      },
+      onLoadWorkflow: async (id) => {
+        const response = await fetch(`/api/workflows/${id}`)
+        if (!response.ok) throw new Error('Failed to load workflow')
+        const data = await response.json()
+        return data.workflow
+      }
+    }
+  }, [model?.id])
+
+  const effectivePersistence = workflowPersistence || defaultPersistence
+
+  // Load existing workflows for the model
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      if (!model?.id || model.id === 'new') {
+        setExistingWorkflows([])
+        return
+      }
+
+      try {
+        if (effectivePersistence.onLoadWorkflows) {
+          const workflows = await effectivePersistence.onLoadWorkflows(model.id)
+          setExistingWorkflows(workflows)
+        }
+      } catch (error) {
+        console.error('Error loading existing workflows:', error)
+      }
+    }
+
+    fetchWorkflows()
+  }, [model?.id, effectivePersistence, refreshTrigger])
 
   // Update ref when onSave changes
   useEffect(() => {
@@ -78,348 +150,172 @@ export function ModelBuilderAdapter({
 
     const loadModelData = async () => {
       try {
-        // Dynamic imports to avoid loading if not needed
-        const { convertSchemaJsonToBuilder, parseMarkdownSchema, convertMarkdownSchemaToBuilder } = await import('@graphdb/model-builder')
-
-        // Try to load from schemaJson first
-        if (model.schemaJson) {
-          const schemaJson = model.schemaJson as {
-            nodes: Record<string, {
-              name: string
-              superclassNames?: string[]
-              properties: Record<string, {
-                name: string
-                datatype: string
-                values: unknown[]
-                required: boolean
-              }>
-              relationsOut?: Record<string, string[]>
-              relationsIn?: Record<string, string[]>
-            }>
-            relations: Record<string, {
-              name: string
-              properties?: Record<string, {
-                name: string
-                datatype: string
-                values: unknown[]
-                required: boolean
-              }>
-              domains: Record<string, string[]>
-            }>
-            version?: string
-            lastUpdated?: string
-            source?: string
-            isSemanticEnabled?: boolean
-            selectedOntologyId?: string | null
-          }
-
-          if (schemaJson.nodes && schemaJson.relations) {
-            const converted = convertSchemaJsonToBuilder(schemaJson as any)
-            loadState({
-              nodes: converted.nodes,
-              relationships: converted.relationships,
-              isSemanticEnabled: converted.isSemanticEnabled,
-              selectedOntologyId: converted.selectedOntologyId,
-              rootNodeId: converted.rootNodeId,
+        // We use the internal ref to load data into the builder
+        if (builderInternalRef.current) {
+          if (model.schemaJson) {
+            builderInternalRef.current.loadData(model.schemaJson)
+          } else if (model.schemaMd) {
+            builderInternalRef.current.loadData(model.schemaMd)
+          } else {
+            // If no schema data, initialize with model metadata only
+            builderInternalRef.current.clear()
+            builderInternalRef.current.loadData({
+              nodes: [],
+              relationships: [],
+              groups: [],
+              relationshipTypes: [],
               metadata: {
                 name: model.name,
                 description: model.description || '',
                 version: model.version || '1.0.0'
               }
             })
-            loadedRef.current = true
-            return
           }
-        }
-
-        // Fallback to schemaMd
-        if (model.schemaMd) {
-          const parsedSchema = parseMarkdownSchema(model.schemaMd)
-          const converted = convertMarkdownSchemaToBuilder(parsedSchema)
-          loadState({
-            nodes: converted.nodes,
-            relationships: converted.relationships,
-            isSemanticEnabled: converted.isSemanticEnabled,
-            selectedOntologyId: converted.selectedOntologyId,
-            rootNodeId: converted.rootNodeId,
-            metadata: {
-              name: model.name,
-              description: model.description || '',
-              version: model.version || '1.0.0'
-            }
-          })
           loadedRef.current = true
-          return
         }
-
-        // If no schema data, initialize with model metadata only
-        clear()
-        useToolCanvasStore.getState().clear()
-        useActionCanvasStore.getState().clear()
-        loadState({
-          nodes: [],
-          relationships: [],
-          groups: [],
-          relationshipTypes: [],
-          metadata: {
-            name: model.name,
-            description: model.description || '',
-            version: model.version || '1.0.0'
-          }
-        })
-        loadedRef.current = true
       } catch (error) {
         console.error('Error loading model into builder:', error)
       }
     }
 
-    loadModelData()
-  }, [model, loadState])
+    // Wait a bit to ensure the ref is attached
+    const timer = setTimeout(loadModelData, 100)
+    return () => clearTimeout(timer)
+  }, [model])
 
   // Listen for save events from parent component
-  // Use refs to avoid re-registering listener on every state change
-  const nodesRef = useRef(nodes)
-  const relationshipsRef = useRef(relationships)
-  const metadataRef = useRef(metadata)
-  const isSavingRef = useRef(false)
+  // Listen for save events from parent component
+  const metadataRef = useRef({
+    name: model?.name || '',
+    description: model?.description || '',
+    version: model?.version || '1.0.0'
+  })
 
-  // Update refs when state changes
+  // Update metadataRef when model changes
   useEffect(() => {
-    nodesRef.current = nodes
-    relationshipsRef.current = relationships
-    metadataRef.current = metadata
-  }, [nodes, relationships, metadata])
-
-  // Create workflow persistence if model exists
-  const workflowPersistence: WorkflowPersistence | undefined = useMemo(() => model ? {
-    modelId: model.id,
-    onSaveWorkflow: async (workflow: { name: string; description?: string; config: unknown }) => {
-      const response = await fetch('/api/workflows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          modelId: model.id,
-          name: workflow.name,
-          description: workflow.description,
-          config: workflow.config
-        })
-      })
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to save workflow' }))
-        const errorMessage = errorData.error || `Failed to save workflow (${response.status})`
-        console.error('Workflow save error:', errorMessage, errorData)
-        throw new Error(errorMessage)
+    if (model) {
+      metadataRef.current = {
+        name: model.name,
+        description: model.description || '',
+        version: model.version || '1.0.0'
       }
-      const data = await response.json()
-      return data.workflow || data
-    },
-    onUpdateWorkflow: async (id: string, workflow: { name?: string; description?: string; config?: unknown }) => {
-      const response = await fetch(`/api/workflows/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(workflow)
-      })
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to update workflow' }))
-        throw new Error(error.error || 'Failed to update workflow')
-      }
-    },
-    onLoadWorkflows: async (modelId: string) => {
-      const response = await fetch(`/api/workflows?modelId=${modelId}`, {
-        credentials: 'include'
-      })
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to load workflows' }))
-        const errorMessage = errorData.error || `Failed to load workflows (${response.status})`
-        console.error('Workflow load error:', errorMessage, errorData)
-        throw new Error(errorMessage)
-      }
-      const data = await response.json()
-      return data.workflows || []
-    },
-    onLoadWorkflow: async (id: string) => {
-      const response = await fetch(`/api/workflows/${id}`, {
-        credentials: 'include'
-      })
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to load workflow' }))
-        const errorMessage = errorData.error || `Failed to load workflow (${response.status})`
-        console.error('Workflow load error:', errorMessage, errorData)
-        throw new Error(errorMessage)
-      }
-      const data = await response.json()
-      return data.workflow
     }
-  } : undefined, [model])
+  }, [model])
 
-  // Load existing workflows when editing a model and load the first one automatically
-  useEffect(() => {
-    const loadWorkflows = async () => {
-      if (!model?.id || !workflowPersistence?.onLoadWorkflows) return
+  // Removed old `model-builder:save` window event listener.
+  // The save flow is now triggered directly via the `builderRef.current.exportData()`
+  // and handled by the parent component passing `onSave`.
+
+  // Let the adapter handle the workflow dialog flow before executing the `onSave` logic.
+  // Expose a custom ref upward that wraps `ModelBuilderRef`'s exportData with the workflow save flow.
+  
+  // Actually, parent component wants `onSave` to be invoked when `Save Changes` is clicked.
+  // We'll manage that flow here entirely so parent just calls `triggerSave()`.
+  const triggerSave = async () => {
+    if (isSavingRef.current) return
+    
+    // Check if there's a workflow to save
+    const currentConfig = await getCurrentWorkflowConfig()
+    const hasWorkflow = currentConfig && (
+      (currentConfig.tools && currentConfig.tools.length > 0) ||
+      (currentConfig.actions && currentConfig.actions.length > 0)
+    )
+
+    pendingSaveRef.current = async (): Promise<Model | undefined> => {
+      if (isSavingRef.current) return undefined
+      isSavingRef.current = true
 
       try {
-        const workflows = await workflowPersistence.onLoadWorkflows(model.id)
-        setExistingWorkflows(workflows)
-
-        // Load the most recent workflow (first in list, sorted by updatedAt)
-        if (workflows.length > 0 && workflowPersistence.onLoadWorkflow) {
-          const mostRecentWorkflow = workflows[0] // Assuming sorted by updatedAt desc
-          try {
-            const workflow = await workflowPersistence.onLoadWorkflow(mostRecentWorkflow.id)
-            setCurrentWorkflow(workflow)
-            // Normalize the saved config when loading to ensure consistent comparison later
-            const normalizedSavedConfig = JSON.parse(JSON.stringify(workflow.config))
-            setSavedWorkflowConfig(normalizedSavedConfig)
-          } catch (error) {
-            console.error('Error loading workflow:', error)
-          }
-        }
-      } catch (error) {
-        console.error('Error loading workflows:', error)
-      }
-    }
-
-    loadWorkflows()
-  }, [model?.id, workflowPersistence])
-
-  // Set up event listener once
-  useEffect(() => {
-    const handleSave = async () => {
-      if (isSavingRef.current) {
-        return
-      }
-
-      // Store the save function to execute after workflow dialog
-      // IMPORTANT: This function is stored but NOT executed yet
-      // It will be executed when:
-      // 1. No workflow exists (executed immediately)
-      // 2. User skips workflow (executed in handleWorkflowSave)
-      // 3. User saves workflow (executed in handleWorkflowSave before workflow save)
-      pendingSaveRef.current = async (): Promise<Model | undefined> => {
-        // Prevent double execution
-        if (isSavingRef.current) {
+        let exportResult
+        if (builderRef?.current) {
+          exportResult = builderRef.current.exportData()
+        } else {
+          // Fallback if ref isn't attached (should not happen)
+          toast.error("Builder reference missing.")
           return undefined
         }
 
-        isSavingRef.current = true
-
-        try {
-          const { convertBuilderToSchemaJson, exportToMarkdown } = await import('@graphdb/model-builder')
-
-          // Get the full store state for export
-          // IMPORTANT: Only use model nodes and relationships, NOT tools/actions
-          // Tools and actions are saved separately as workflows
-          const storeState = useModelBuilderStore.getState()
-
-          // Get fresh nodes and relationships from the store (not refs, to ensure latest state)
-          const currentNodes = storeState.nodes
-          const currentRelationships = storeState.relationships
-
-          // Convert to schema format (this only includes nodes and relationships, no tools/actions)
-          const schemaJson = convertBuilderToSchemaJson(
-            currentNodes,
-            currentRelationships,
-            storeState.isSemanticEnabled,
-            storeState.selectedOntologyId,
-            storeState.rootNodeId
-          )
-          const schemaMd = exportToMarkdown({
-            nodes: currentNodes,
-            relationships: currentRelationships,
-            metadata: metadataRef.current,
-            groups: storeState.groups || [],
-            relationshipTypes: storeState.relationshipTypes || [],
-            selectedNode: storeState.selectedNode || null,
-            selectedRelationship: storeState.selectedRelationship || null,
-            selectedOntologyId: storeState.selectedOntologyId || null,
-            isSemanticEnabled: storeState.isSemanticEnabled || false,
-            hideUnconnectedNodes: storeState.hideUnconnectedNodes || false,
-            rootNodeId: storeState.rootNodeId || null
+        if (onSaveRef.current) {
+          const result = await onSaveRef.current({
+            schemaJson: exportResult.schemaJson,
+            schemaMd: exportResult.schemaMd,
+            name: metadataRef.current.name,
+            description: metadataRef.current.description
           })
+          const savedModel = result as Model | undefined
 
-          if (onSaveRef.current) {
-            const result = await onSaveRef.current({
-              schemaJson,
-              schemaMd,
-              name: metadataRef.current.name,
-              description: metadataRef.current.description
-            })
-            const model = result as Model | undefined
-
-            // Store a flag to indicate model was saved (for navigation control)
-            if (model) {
-              ; (window as any).__modelJustSaved = true
-            }
-
-            return model
+          if (savedModel) {
+            ; (window as any).__modelJustSaved = true
           }
-          return undefined
-        } catch (error) {
-          console.error('Error saving model:', error)
-          throw error
-        } finally {
-          isSavingRef.current = false
-        }
-      }
-
-      // Always check for workflows, regardless of whether model exists
-      // Get current workflow config using fresh state from store (not refs)
-      const { exportWorkflowConfig } = await import('@graphdb/model-builder')
-      const storeState = useModelBuilderStore.getState()
-      const toolNodes = useToolCanvasStore.getState().nodes
-      const toolEdges = useToolCanvasStore.getState().edges
-      const actionNodes = useActionCanvasStore.getState().nodes
-      const actionEdges = useActionCanvasStore.getState().edges
-
-      // Use fresh state from store, not refs, to ensure we have the latest data
-      const workflowConfigJson = exportWorkflowConfig(
-        storeState.nodes,
-        storeState.relationships,
-        toolNodes,
-        toolEdges,
-        actionNodes,
-        actionEdges,
-        storeState.rootNodeId
-      )
-      const workflowConfig = JSON.parse(workflowConfigJson)
-
-      // Check if there's a workflow to save
-      const hasWorkflow = (workflowConfig.tools && workflowConfig.tools.length > 0) ||
-        (workflowConfig.actions && workflowConfig.actions.length > 0)
-
-      if (hasWorkflow) {
-        // Store workflow config and show dialog
-        setCurrentWorkflowConfig(workflowConfig)
-        setSaveWorkflowDialogOpen(true)
-        // Don't execute pendingSaveRef here - it will be executed in handleWorkflowSave
-      } else {
-        // No workflow, proceed directly with model save
-        if (pendingSaveRef.current) {
-          const savedModel = await pendingSaveRef.current()
-          // Clear the ref after use to prevent double execution
-          pendingSaveRef.current = null
           return savedModel
         }
+        return undefined
+      } catch (error) {
+        console.error('Error saving model data:', error)
+        throw error
+      } finally {
+        isSavingRef.current = false
       }
     }
 
-    // Only set up listener once - use refs to avoid re-registering
-    const handleSaveWrapper = () => {
-      // Prevent multiple handlers from executing
-      if (isSavingRef.current) {
+    if (hasWorkflow) {
+      setCurrentWorkflowConfig(currentConfig)
+      setSaveWorkflowDialogOpen(true)
+    } else {
+      if (pendingSaveRef.current) {
+        await pendingSaveRef.current()
+        pendingSaveRef.current = null
+      }
+    }
+  }
+
+  const handlePushToDB = async (graph: Array<Record<string, unknown>>) => {
+    try {
+      if (!model?.id) {
+        toast.error('Model must be saved before pushing to database')
         return
       }
-      handleSave()
-    }
 
-    window.addEventListener('model-builder:save', handleSaveWrapper)
+      const response = await fetch('/api/graph/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          modelId: model.id,
+          graph
+        }),
+      })
 
-    return () => {
-      window.removeEventListener('model-builder:save', handleSaveWrapper)
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: 'Failed' }))
+        throw new Error(result.error || 'Failed to push graph to database')
+      }
+
+      toast.success('Successfully published graph to the database')
+    } catch (error) {
+      console.error('Error pushing data to database:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to push graph to database')
     }
-  }, [workflowPersistence, model])
+  }
+
+  // Use useImperativeHandle to expose the save trigger to the parent
+  useImperativeHandle(builderRef, () => ({
+    exportData: () => {
+      if (builderInternalRef.current) {
+        return builderInternalRef.current.exportData()
+      }
+      return { schemaJson: {}, schemaMd: '' }
+    },
+    triggerSave: triggerSave,
+    loadData: (data: any) => builderInternalRef.current?.loadData(data),
+    clear: () => builderInternalRef.current?.clear(),
+    clearWorkflow: () => builderInternalRef.current?.clearWorkflow(),
+    getWorkflowConfig: () => builderInternalRef.current?.getWorkflowConfig() || null,
+    hasChanges: () => builderInternalRef.current?.hasChanges() || false
+  }))
+
+  const builderInternalRef = useRef<ModelBuilderRef | null>(null)
 
   // Fetch AI settings from parent app's API
   useEffect(() => {
@@ -446,29 +342,7 @@ export function ModelBuilderAdapter({
   }, [])
 
   const getCurrentWorkflowConfig = async () => {
-    try {
-      const { exportWorkflowConfig } = await import('@graphdb/model-builder')
-      const storeState = useModelBuilderStore.getState()
-      const toolNodes = useToolCanvasStore.getState().nodes
-      const toolEdges = useToolCanvasStore.getState().edges
-      const actionNodes = useActionCanvasStore.getState().nodes
-      const actionEdges = useActionCanvasStore.getState().edges
-
-      // Use fresh state from store, not refs, to ensure we have the latest data
-      const workflowConfigJson = exportWorkflowConfig(
-        storeState.nodes,
-        storeState.relationships,
-        toolNodes,
-        toolEdges,
-        actionNodes,
-        actionEdges,
-        storeState.rootNodeId
-      )
-      return JSON.parse(workflowConfigJson)
-    } catch (error) {
-      console.error('Error getting workflow config:', error)
-      return null
-    }
+    return builderInternalRef.current?.getWorkflowConfig() || null
   }
 
   const handleWorkflowSave = async (workflowAction: {
@@ -567,7 +441,7 @@ export function ModelBuilderAdapter({
     }
 
     // For existing models, use workflow persistence
-    if (!workflowPersistence) {
+    if (!effectivePersistence) {
       // No workflow persistence available, just save model
       if (pendingSaveRef.current) {
         await pendingSaveRef.current()
@@ -594,7 +468,7 @@ export function ModelBuilderAdapter({
           toast.error('Workflow name is required')
           return
         }
-        await workflowPersistence.onSaveWorkflow?.({
+        await effectivePersistence.onSaveWorkflow?.({
           name: workflowAction.name,
           description: workflowAction.description,
           config: workflowConfig
@@ -605,7 +479,7 @@ export function ModelBuilderAdapter({
           toast.error('Workflow ID is required for update')
           return
         }
-        await workflowPersistence.onUpdateWorkflow?.(workflowAction.workflowId, {
+        await effectivePersistence.onUpdateWorkflow?.(workflowAction.workflowId, {
           name: workflowAction.name,
           description: workflowAction.description,
           config: workflowConfig
@@ -650,6 +524,54 @@ export function ModelBuilderAdapter({
     }
   }
 
+  const handleWorkflowChange = async (workflowId: string) => {
+    if (await hasUnsavedWorkflowChanges()) {
+      setPendingWorkflowId(workflowId)
+      setWorkflowChangeConfirmOpen(true)
+    } else {
+      loadWorkflow(workflowId)
+    }
+  }
+
+  const loadWorkflow = async (workflowId: string | null) => {
+    if (!effectivePersistence || !model?.id) return
+
+    if (!workflowId) {
+      setCurrentWorkflow(null)
+      setSavedWorkflowConfig(null)
+      builderInternalRef.current?.clearWorkflow()
+      return
+    }
+
+    try {
+      const workflow = await effectivePersistence.onLoadWorkflow?.(workflowId)
+      if (workflow) {
+        setCurrentWorkflow(workflow)
+        // Normalize the saved config when loading to ensure consistent comparison later
+        const normalizedSavedConfig = JSON.parse(JSON.stringify(workflow.config))
+        setSavedWorkflowConfig(normalizedSavedConfig)
+
+        // The builder will detect the change in initialWorkflow and load it automatically
+      }
+    } catch (error) {
+      console.error('Error loading workflow:', error)
+      toast.error('Failed to load workflow')
+    }
+  }
+
+  const confirmWorkflowChange = () => {
+    if (pendingWorkflowId) {
+      loadWorkflow(pendingWorkflowId)
+    }
+    setPendingWorkflowId(null)
+    setWorkflowChangeConfirmOpen(false)
+  }
+
+  const cancelWorkflowChange = () => {
+    setPendingWorkflowId(null)
+    setWorkflowChangeConfirmOpen(false)
+  }
+
   // Check if current workflow has unsaved changes
   // Only considers structural changes (tools, actions, edges, connections)
   // Ignores position changes
@@ -659,33 +581,19 @@ export function ModelBuilderAdapter({
     }
 
     try {
-      const { exportWorkflowConfig } = await import('@graphdb/model-builder')
-      const currentNodes = useModelBuilderStore.getState().nodes
-      const currentRelationships = useModelBuilderStore.getState().relationships
-      const currentToolNodes = useToolCanvasStore.getState().nodes
-      const currentToolEdges = useToolCanvasStore.getState().edges
-      const currentActionNodes = useActionCanvasStore.getState().nodes
-      const currentActionEdges = useActionCanvasStore.getState().edges
+      const currentConfig = await getCurrentWorkflowConfig()
+      if (!currentConfig) return false
 
       // Check if there are any tools or actions on the canvas
-      const hasTools = currentToolNodes.length > 0 || currentToolEdges.length > 0
-      const hasActions = currentActionNodes.length > 0 || currentActionEdges.length > 0
+      const hasTools = currentConfig.tools && currentConfig.tools.length > 0
+      const hasActions = currentConfig.actions && currentConfig.actions.length > 0
 
-      // If no tools or actions, no changes
-      if (!hasTools && !hasActions) {
+      // If no tools or actions, no changes (unless we had some before)
+      if (!hasTools && !hasActions && (!savedWorkflowConfig || (
+        !(savedWorkflowConfig as any).tools?.length && !(savedWorkflowConfig as any).actions?.length
+      ))) {
         return false
       }
-
-      const currentConfigJson = exportWorkflowConfig(
-        currentNodes,
-        currentRelationships,
-        currentToolNodes,
-        currentToolEdges,
-        currentActionNodes,
-        currentActionEdges,
-        useModelBuilderStore.getState().rootNodeId
-      )
-      const currentConfig = JSON.parse(currentConfigJson)
 
       // Normalize configs by removing position fields and other non-structural data
       // Also sort arrays to ensure consistent comparison
@@ -871,36 +779,19 @@ export function ModelBuilderAdapter({
     }
   }
 
-  // Handle workflow change
-  const handleWorkflowChange = async (workflowId: string) => {
-    if (!workflowPersistence?.onLoadWorkflow) return
-
-    // Check if there are unsaved changes
-    const hasChanges = await hasUnsavedWorkflowChanges()
-
-    if (hasChanges && currentWorkflow) {
-      // Show confirmation dialog
-      setPendingWorkflowId(workflowId)
-      setWorkflowChangeConfirmOpen(true)
-    } else {
-      // No changes, switch directly
-      await switchToWorkflow(workflowId)
-    }
-  }
-
   // Switch to a workflow
   const switchToWorkflow = async (workflowId: string) => {
-    if (!workflowPersistence?.onLoadWorkflow) {
+    if (!effectivePersistence?.onLoadWorkflow) {
       toast.error('Workflow persistence not available')
       return
     }
 
     try {
       // Clear existing tools and actions before loading new workflow
-      useToolCanvasStore.getState().clear()
-      useActionCanvasStore.getState().clear()
+      // But keep model nodes and relationships
+      builderInternalRef.current?.clearWorkflow()
 
-      const workflow = await workflowPersistence.onLoadWorkflow(workflowId)
+      const workflow = await effectivePersistence.onLoadWorkflow(workflowId)
       setCurrentWorkflow(workflow)
       // Normalize the saved config when loading to ensure consistent comparison later
       // This ensures the saved config has the same structure as what exportWorkflowConfig produces
@@ -922,31 +813,18 @@ export function ModelBuilderAdapter({
 
   // Handle workflow change confirmation
   const handleWorkflowChangeConfirm = async (updateCurrent: boolean) => {
-    if (!pendingWorkflowId || !currentWorkflow || !workflowPersistence) return
+    if (!pendingWorkflowId || !currentWorkflow || !effectivePersistence) return
 
     try {
       if (updateCurrent) {
         // Update current workflow first
-        const { exportWorkflowConfig } = await import('@graphdb/model-builder')
-        const currentNodes = useModelBuilderStore.getState().nodes
-        const currentRelationships = useModelBuilderStore.getState().relationships
-        const currentToolNodes = useToolCanvasStore.getState().nodes
-        const currentToolEdges = useToolCanvasStore.getState().edges
-        const currentActionNodes = useActionCanvasStore.getState().nodes
-        const currentActionEdges = useActionCanvasStore.getState().edges
+        const workflowConfig = await getCurrentWorkflowConfig()
+        if (!workflowConfig) {
+          toast.error('Could not get current workflow configuration')
+          return
+        }
 
-        const workflowConfigJson = exportWorkflowConfig(
-          currentNodes,
-          currentRelationships,
-          currentToolNodes,
-          currentToolEdges,
-          currentActionNodes,
-          currentActionEdges,
-          useModelBuilderStore.getState().rootNodeId
-        )
-        const workflowConfig = JSON.parse(workflowConfigJson)
-
-        await workflowPersistence.onUpdateWorkflow?.(currentWorkflow.id, {
+        await effectivePersistence.onUpdateWorkflow?.(currentWorkflow.id, {
           config: workflowConfig
         })
 
@@ -962,34 +840,6 @@ export function ModelBuilderAdapter({
       setPendingWorkflowId(null)
     }
   }
-  // Handle pushing graph to database
-  const handlePushToDB = async (graph: Array<Record<string, unknown>>) => {
-    try {
-      const response = await fetch('/api/database/load', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ graph })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        toast.success(`Loaded ${data.nodesCreated} nodes and ${data.relationshipsCreated} relationships into the graph database`)
-
-        // Invalidate caches
-        const dbStore = useDatabaseStore.getState()
-        dbStore.checkStatus()
-        dbStore.invalidateNodeLabels()
-        dbStore.invalidateRelationshipTypes()
-        dbStore.invalidateNodeProperties()
-      } else {
-        toast.error(data.error || 'Failed to load graph')
-      }
-    } catch (error) {
-      console.error('Error pushing to DB:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to push to database')
-    }
-  }
 
   // Wait for AI settings to load before rendering
   if (aiSettings === null) {
@@ -1002,19 +852,23 @@ export function ModelBuilderAdapter({
 
   return (
     <AISettingsProvider settings={aiSettings || undefined}>
-      <ModelBuilder
-        className={className}
-        workflowPersistence={workflowPersistence}
-        initialWorkflow={currentWorkflow || undefined}
-        currentWorkflowName={currentWorkflow?.name}
-        availableWorkflows={existingWorkflows}
-        onWorkflowChange={handleWorkflowChange}
-        onPushToDB={handlePushToDB}
-      />
+      <div className={`flex-1 overflow-hidden flex flex-col ${className || ''}`}>
+        <ModelBuilder
+          ref={builderInternalRef}
+          initialWorkflow={currentWorkflow || undefined}
+          currentWorkflowName={currentWorkflow?.name}
+          availableWorkflows={existingWorkflows}
+          workflowPersistence={effectivePersistence}
+          className="h-full"
+          onWorkflowChange={handleWorkflowChange}
+          onPushToDB={handlePushToDB}
+          onSave={triggerSave}
+        />
+      </div>
       <SaveWorkflowDialog
         open={saveWorkflowDialogOpen}
         onOpenChange={setSaveWorkflowDialogOpen}
-        workflowPersistence={workflowPersistence}
+        workflowPersistence={effectivePersistence}
         currentWorkflowConfig={currentWorkflowConfig}
         existingWorkflows={existingWorkflows}
         isNewModel={!model}

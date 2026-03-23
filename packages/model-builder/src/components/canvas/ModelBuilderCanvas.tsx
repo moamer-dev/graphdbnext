@@ -157,7 +157,7 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
   const [snapToGrid, setSnapToGrid] = useState(false)
 
   const nodeManagement = useCanvasNodeManagement()
-  const edgeManagement = useCanvasEdgeManagement()
+  const edgeManagement = useCanvasEdgeManagement()  
   const { visibleNodeIds } = useCanvasVisibility()
   const {
     nodes: storeNodes,
@@ -218,120 +218,169 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
 
   // Convert store nodes to ReactFlow nodes
   const reactFlowNodes: Node[] = useMemo(() => {
-    const baseNodes = storeNodes
-      .filter((node: BuilderNode) => visibleNodeIds.has(node.id))
-      .map((node: BuilderNode) => ({
-        id: node.id,
-        type: 'custom',
-        position: node.position,
-        selected: node.id === selectedNode,
+    try {
+      const baseNodes = storeNodes
+        .filter((node: BuilderNode) => visibleNodeIds.has(node.id))
+        .map((node: BuilderNode) => ({
+          id: node.id,
+          type: 'custom',
+          position: node.position,
+          selected: node.id === selectedNode,
+          data: {
+            label: node.label,
+            type: node.type,
+            properties: node.properties,
+            workflowCount: (stepsByNodeId[node.id] || []).length,
+            isRoot: node.id === rootNodeId,
+            onSelect: () => {},
+            onDelete: () => handleDeleteNode(node.id)
+          }
+        }))
+
+      const workflowNodes = wfNodes.map((wn) => ({
+        id: wn.id,
+        type: 'workflow',
+        position: wn.position,
+        selected: wn.id === selectedWfNodeId,
         data: {
-          label: node.label,
-          type: node.type,
-          properties: node.properties,
-          workflowCount: (stepsByNodeId[node.id] || []).length,
-          isRoot: node.id === rootNodeId,
+          label: wn.label || labelFromType(wn.type),
+          type: wn.type,
+          targetNodeId: wn.targetNodeId,
           onSelect: () => {
-            // No-op - selection is handled by ReactFlow's onNodeClick
-            // This prevents double-selection calls
+            selectWfNode(wn.id)
+            selectNode(null)
+            selectRelationship(null)
           },
-          onDelete: () => handleDeleteNode(node.id)
+          onDelete: () => {
+            deleteWfNode(wn.id)
+            selectWfNode(null)
+          }
         }
       }))
 
-    const workflowNodes = wfNodes.map((wn) => ({
-      id: wn.id,
-      type: 'workflow',
-      position: wn.position,
-      selected: wn.id === selectedWfNodeId,
-      data: {
-        label: wn.label || labelFromType(wn.type),
-        type: wn.type,
-        targetNodeId: wn.targetNodeId,
-        onSelect: () => {
-          console.log('[wf-node] select', wn.id)
-          selectWfNode(wn.id)
-          selectNode(null)
-          selectRelationship(null)
-        },
-        onDelete: () => {
-          console.log('[wf-node] delete', wn.id)
-          deleteWfNode(wn.id)
-          selectWfNode(null)
+      const toolNodesFlow = toolNodes.map((tn) => ({
+        id: tn.id,
+        type: 'tool',
+        position: tn.position,
+        selected: tn.id === selectedToolNodeId,
+        data: {
+          subtitle: labelFromType(tn.type),
+          label: tn.label,
+          type: tn.type,
+          onSelect: () => {
+            selectToolNode(tn.id)
+            selectNode(null)
+            selectRelationship(null)
+            selectWfNode(null)
+            selectActionNode(null)
+          },
+          onDelete: () => deleteToolNode(tn.id),
+          inputs: tn.inputs,
+          outputs: tn.outputs
         }
-      }
-    }))
+      }))
 
-    const toolNodesFlow = toolNodes.map((tn) => ({
-      id: tn.id,
-      type: 'tool',
-      position: tn.position,
-      selected: tn.id === selectedToolNodeId,
-      data: {
-        subtitle: labelFromType(tn.type),
-        label: tn.label,
-        type: tn.type,
-        onSelect: () => {
-          selectToolNode(tn.id)
-          selectNode(null)
-          selectRelationship(null)
-          selectWfNode(null)
-          selectActionNode(null)
-        },
-        onDelete: () => deleteToolNode(tn.id),
-        inputs: tn.inputs,
-        outputs: tn.outputs
-      }
-    }))
-
-    // Collect all action IDs that are children of groups
-    const actionsInGroups = new Set<string>()
-    actionNodes.forEach(an => {
-      if ((an.type === 'action:group' || an.isGroup === true) && an.children && Array.isArray(an.children)) {
-        an.children.forEach(childId => {
-          if (childId && typeof childId === 'string') {
-            actionsInGroups.add(childId)
-          }
-        })
-      }
-    })
-
-    const actionNodesFlow = actionNodes
-      .filter(an => {
-        // Exclude actions that are children of groups
-        const isInGroup = actionsInGroups.has(an.id)
-        if (isInGroup) {
-          return false
+      // Collect all action IDs that are children of groups
+      const actionsInGroups = new Set<string>()
+      actionNodes.forEach(an => {
+        if ((an.type === 'action:group' || an.isGroup === true) && an.children && Array.isArray(an.children)) {
+          an.children.forEach(childId => {
+            if (childId && typeof childId === 'string') {
+              actionsInGroups.add(childId)
+            }
+          })
         }
-        return true
       })
-      .map((an) => {
-        const isGroup = an.type === 'action:group' || an.isGroup === true
-        // Create a fresh array reference to ensure ReactFlow detects changes
-        const childActions = an.children?.length ? an.children.map(childId => {
-          const child = actionNodes.find(n => n.id === childId)
-          return child ? { id: child.id, label: child.label, type: child.type } : null
-        }).filter(Boolean) as Array<{ id: string; label: string; type: string }> | undefined : undefined
 
-        if (isGroup) {
-          // Create a version key based on label, children IDs, child labels, and config to force ReactFlow to update
-          // Include child labels so updates to child action labels trigger a re-render
-          const childrenIds = an.children?.join(',') || 'empty'
-          const childrenLabels = childActions?.map(c => c.label).join(',') || 'empty'
-          const groupVersion = `${an.label || 'Action Group'}-${childrenIds}-${childrenLabels}-${JSON.stringify(an.config)}`
+      const actionNodesFlow = actionNodes
+        .filter(an => !actionsInGroups.has(an.id))
+        .map((an) => {
+          const isGroup = an.type === 'action:group' || an.isGroup === true
+          const childActions = an.children?.length ? (an.children
+            .map(childId => {
+              const child = actionNodes.find(n => n.id === childId)
+              return child ? { id: child.id, label: child.label, type: child.type } : null
+            })
+            .filter(Boolean) as Array<{ id: string; label: string; type: string }>) : undefined
+
+          if (isGroup) {
+            const childrenIds = an.children?.join(',') || 'empty'
+            const childrenLabels = childActions?.map(c => c.label).join(',') || 'empty'
+            const groupVersion = `${an.label || 'Action Group'}-${childrenIds}-${childrenLabels}-${JSON.stringify(an.config)}`
+            return {
+              id: an.id,
+              type: 'actionGroup',
+              position: an.position || { x: 0, y: 0 },
+              selected: an.id === selectedActionNodeId,
+              draggable: true,
+              data: {
+                label: an.label || 'Action Group',
+                type: an.type,
+                actionCount: an.children?.length ?? 0,
+                isExpanded: an.isExpanded ?? false,
+                children: childActions,
+                _version: groupVersion,
+                onSelect: () => {
+                  selectActionNode(an.id)
+                  selectNode(null)
+                  selectRelationship(null)
+                  selectWfNode(null)
+                  selectToolNode(null)
+                },
+                onDelete: () => deleteActionNode(an.id),
+                onToggleExpand: () => {
+                  updateActionNode(an.id, { isExpanded: !(an.isExpanded ?? false) })
+                },
+                onAddAction: (actionTypes?: import('../../stores/actionCanvasStore').ActionNodeType[]) => {
+                  if (!actionTypes || actionTypes.length === 0) return
+                  const existingChildren = an.children || []
+                  const newActionIds: string[] = []
+                  actionTypes.forEach(actionType => {
+                    const existingAction = actionNodes.find(a =>
+                      existingChildren.includes(a.id) && a.type === actionType
+                    )
+                    if (existingAction) return
+                    const label = labelFromType(actionType)
+                    const newActionId = addActionNode({
+                      type: actionType,
+                      label,
+                      config: {},
+                      position: { x: 0, y: 0 }
+                    })
+                    newActionIds.push(newActionId)
+                  })
+                  if (newActionIds.length > 0) {
+                    updateActionNode(an.id, { children: [...existingChildren, ...newActionIds] })
+                  }
+                },
+                onSelectChildAction: (childActionId: string) => {
+                  selectActionNode(childActionId)
+                  selectNode(null)
+                  selectRelationship(null)
+                  selectWfNode(null)
+                  selectToolNode(null)
+                  onSwitchTab?.('actions')
+                },
+                onRemoveChildAction: (childActionId: string) => {
+                  const currentChildren = an.children || []
+                  const newChildren = currentChildren.filter(id => id !== childActionId)
+                  updateActionNode(an.id, { children: newChildren })
+                }
+              }
+            }
+          }
+
+          const actionVersion = `${an.label}-${JSON.stringify(an.config)}`
           return {
             id: an.id,
-            type: 'actionGroup',
-            position: an.position,
+            type: 'action',
+            position: an.position || { x: 0, y: 0 },
             selected: an.id === selectedActionNodeId,
-            draggable: true, // Allow dragging the group node
             data: {
-              label: an.label || 'Action Group',
+              label: an.label,
               type: an.type,
-              actionCount: an.children?.length ?? 0,
-              isExpanded: an.isExpanded ?? false,
-              children: childActions,
-              _version: groupVersion, // Force ReactFlow to detect changes when label, children, or config changes
+              subtitle: labelFromType(an.type),
+              _version: actionVersion,
               onSelect: () => {
                 selectActionNode(an.id)
                 selectNode(null)
@@ -339,120 +388,18 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
                 selectWfNode(null)
                 selectToolNode(null)
               },
-              onDelete: () => deleteActionNode(an.id),
-              onToggleExpand: () => {
-                updateActionNode(an.id, { isExpanded: !(an.isExpanded ?? false) })
-              },
-              onAddAction: (actionTypes?: import('../../stores/actionCanvasStore').ActionNodeType[]) => {
-                if (!actionTypes || actionTypes.length === 0) return
-
-                console.log('[DEBUG] onAddAction called:', { groupId: an.id, groupLabel: an.label, actionTypes, currentChildren: an.children })
-
-                const existingChildren = an.children || []
-                const newActionIds: string[] = []
-
-                actionTypes.forEach((actionType: import('../../stores/actionCanvasStore').ActionNodeType) => {
-                  // Check if an action of this type already exists in the group
-                  const existingAction = actionNodes.find(a =>
-                    existingChildren.includes(a.id) && a.type === actionType
-                  )
-
-                  if (existingAction) {
-                    return // Skip adding duplicate
-                  }
-
-                  const label = labelFromType(actionType)
-                  const newActionId = addActionNode({
-                    type: actionType,
-                    label,
-                    config: {},
-                    position: { x: 0, y: 0 }
-                  })
-                  newActionIds.push(newActionId)
-                })
-
-                if (newActionIds.length > 0) {
-                  const updatedChildren = [...existingChildren, ...newActionIds]
-                  updateActionNode(an.id, {
-                    children: updatedChildren
-                  })
-                }
-              },
-              onSelectChildAction: (childActionId: string) => {
-                selectActionNode(childActionId)
-                selectNode(null)
-                selectRelationship(null)
-                selectWfNode(null)
-                selectToolNode(null)
-                onSwitchTab?.('actions')
-              },
-              onRemoveChildAction: (childActionId: string) => {
-                const currentChildren = an.children || []
-                const newChildren = currentChildren.filter(id => id !== childActionId)
-                updateActionNode(an.id, {
-                  children: newChildren
-                })
-                // Optionally delete the action node itself if it's not used elsewhere
-                // For now, we'll just remove it from the group
-              },
-              onMoveActionUp: (actionId: string) => {
-                const currentChildren = an.children || []
-                const index = currentChildren.indexOf(actionId)
-                if (index <= 0) return // Already at top or not found
-
-                const newChildren = [...currentChildren]
-                const [removed] = newChildren.splice(index, 1)
-                newChildren.splice(index - 1, 0, removed)
-
-                updateActionNode(an.id, {
-                  children: newChildren
-                })
-              },
-              onMoveActionDown: (actionId: string) => {
-                const currentChildren = an.children || []
-                const index = currentChildren.indexOf(actionId)
-                if (index === -1 || index >= currentChildren.length - 1) return // Already at bottom or not found
-
-                const newChildren = [...currentChildren]
-                const [removed] = newChildren.splice(index, 1)
-                newChildren.splice(index + 1, 0, removed)
-
-                updateActionNode(an.id, {
-                  children: newChildren
-                })
-              }
+              onDelete: () => deleteActionNode(an.id)
             }
           }
-        }
+        })
 
-        // Create a version string based on label and config to force ReactFlow updates
-        const actionVersion = `${an.label}-${JSON.stringify(an.config)}`
-
-        return {
-          id: an.id,
-          type: 'action',
-          position: an.position,
-          selected: an.id === selectedActionNodeId,
-          data: {
-            label: an.label,
-            type: an.type,
-            subtitle: labelFromType(an.type),
-            _version: actionVersion, // Force ReactFlow to detect changes when label or config changes
-            onSelect: () => {
-              selectActionNode(an.id)
-              selectNode(null)
-              selectRelationship(null)
-              selectWfNode(null)
-              selectToolNode(null)
-            },
-            onDelete: () => deleteActionNode(an.id)
-          }
-        }
-      })
-
-    const allNodes = [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow]
-
-    return allNodes
+      const all = [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow];
+      console.log('[DEBUG] reactFlowNodes calculated:', all.length);
+      return all;
+    } catch (e) {
+      console.error('[DEBUG] Error calculating reactFlowNodes:', e);
+      return [];
+    }
   }, [storeNodes, visibleNodeIds, stepsByNodeId, handleDeleteNode, wfNodes, selectNode, selectWfNode, selectRelationship, deleteWfNode, selectedNode, selectedWfNodeId, toolNodes, selectedToolNodeId, selectToolNode, deleteToolNode, actionNodes, selectedActionNodeId, selectActionNode, deleteActionNode, updateActionNode, addActionNode, onSwitchTab, rootNodeId])
 
   // Convert store relationships to ReactFlow edges (only show edges between visible nodes)
@@ -586,6 +533,65 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
   const [nodes, setNodes, onNodesChange] = useNodesState(reactFlowNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(reactFlowEdges)
 
+  // Sync ReactFlow nodes/edges with store (no selection flags on nodes)
+  // Sync ReactFlow nodes/edges from store once per change; avoid loops
+  const sortedReactFlowNodes = useMemo(
+    () => [...reactFlowNodes].sort((a, b) => a.id.localeCompare(b.id)),
+    [reactFlowNodes]
+  )
+
+  const sortedCurrentNodes = useMemo(
+    () => [...nodes].sort((a, b) => a.id.localeCompare(b.id)),
+    [nodes]
+  )
+
+  const reactFlowNodesSig = useMemo(() => sortedReactFlowNodes
+    .map((n) => {
+      const data = (n.data as { label?: string; type?: string; workflowCount?: number; isRoot?: boolean; _version?: string; children?: Array<{ id: string }> }) || {}
+      // Include version and children count in signature for action groups
+      const version = data._version || ''
+      const childrenCount = data.children?.length ?? 0
+      return [
+        n.id,
+        n.position.x,
+        n.position.y,
+        data.label || '',
+        data.type || '',
+        data.workflowCount || 0,
+        n.type || '',
+        n.selected ? '1' : '0',
+        data.isRoot ? '1' : '0',
+        version,
+        childrenCount.toString()
+      ].join(':')
+    })
+    .join('|'), [sortedReactFlowNodes])
+
+  const currentNodesSig = useMemo(() => sortedCurrentNodes
+    .map((n) => {
+      const data = (n.data as { label?: string; type?: string; workflowCount?: number; isRoot?: boolean; _version?: string; children?: Array<{ id: string }> }) || {}
+      const version = data._version || ''
+      const childrenCount = data.children?.length ?? 0
+      return `${n.id}:${n.position.x}:${n.position.y}:${data.label || ''}:${data.type || ''}:${data.workflowCount || 0}:${n.type || ''}:${n.selected ? '1' : '0'}:${data.isRoot ? '1' : '0'}:${version}:${childrenCount}`
+    })
+    .join('|'), [sortedCurrentNodes])
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[DEBUG] ModelBuilderCanvas Render State:', {
+      storeNodesCount: storeNodes.length,
+      visibleNodeIdsCount: visibleNodeIds.size,
+      reactFlowNodesCount: reactFlowNodes.length,
+      actualNodesCount: nodes.length,
+      hideUnconnectedNodes,
+      selectedNode,
+      isDragging: isDraggingRef.current,
+      isUpdatingSelection: isUpdatingSelectionRef.current,
+      reactFlowNodesSig: reactFlowNodesSig.substring(0, 50) + '...',
+      currentNodesSig: currentNodesSig.substring(0, 50) + '...'
+    })
+  }, [storeNodes.length, visibleNodeIds.size, reactFlowNodes.length, nodes.length, hideUnconnectedNodes, selectedNode, reactFlowNodesSig, currentNodesSig])
+
   // Filter edges to prevent multiple connections from if/else tools to action groups
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     onEdgesChange(changes)
@@ -656,11 +662,36 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
     })
   }, [onEdgesChange, setEdges, toolNodes, actionNodes, actionEdges, deleteActionEdge])
 
-  // Sync ReactFlow nodes with store
-  // Crucial: Update local nodes state when store-derived nodes change (e.g. outputs added)
+  // Consolidating node sync logic
   useEffect(() => {
-    setNodes(reactFlowNodes)
-  }, [reactFlowNodes, setNodes])
+    if (isDraggingRef.current) {
+      console.log('[DEBUG] Sync nodes skipped - dragging');
+      return;
+    }
+    
+    if (reactFlowNodesSig === currentNodesSig) {
+      // Signatures match, no need to update
+      return;
+    }
+
+    console.log('[DEBUG] Syncing nodes:', {
+      from: currentNodesSig.substring(0, 30),
+      to: reactFlowNodesSig.substring(0, 30),
+      count: reactFlowNodes.length
+    });
+    console.trace('[DEBUG] setNodes Trace');
+
+    // Avoid triggering onSelectionChange when syncing state from store to ReactFlow
+    isUpdatingSelectionRef.current = true;
+    setNodes(reactFlowNodes);
+    
+    const timer = setTimeout(() => { 
+      isUpdatingSelectionRef.current = false;
+      console.log('[DEBUG] isUpdatingSelection set to false');
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }, [reactFlowNodes, reactFlowNodesSig, currentNodesSig, setNodes]);
 
   // Handle ReactFlow node changes, but filter out removals (we handle those through store)
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
@@ -975,58 +1006,9 @@ function ModelBuilderCanvasInner({ className, sidebarOpen = true, onToggleSideba
 
   // Sync ReactFlow nodes/edges with store (no selection flags on nodes)
   // Sync ReactFlow nodes/edges from store once per change; avoid loops
-  const sortedReactFlowNodes = useMemo(
-    () => [...reactFlowNodes].sort((a, b) => a.id.localeCompare(b.id)),
-    [reactFlowNodes]
-  )
+  // Node signatures moved up
 
-  const sortedCurrentNodes = useMemo(
-    () => [...nodes].sort((a, b) => a.id.localeCompare(b.id)),
-    [nodes]
-  )
-
-  const reactFlowNodesSig = useMemo(() => sortedReactFlowNodes
-    .map((n) => {
-      const data = (n.data as { label?: string; type?: string; workflowCount?: number; isRoot?: boolean; _version?: string; children?: Array<{ id: string }> }) || {}
-      // Include version and children count in signature for action groups
-      const version = data._version || ''
-      const childrenCount = data.children?.length ?? 0
-      return [
-        n.id,
-        n.position.x,
-        n.position.y,
-        data.label || '',
-        data.type || '',
-        data.workflowCount || 0,
-        n.type || '',
-        n.selected ? '1' : '0',
-        data.isRoot ? '1' : '0',
-        version,
-        childrenCount.toString()
-      ].join(':')
-    })
-    .join('|'), [sortedReactFlowNodes])
-
-  const currentNodesSig = useMemo(() => sortedCurrentNodes
-    .map((n) => {
-      const data = (n.data as { label?: string; type?: string; workflowCount?: number; isRoot?: boolean; _version?: string; children?: Array<{ id: string }> }) || {}
-      const version = data._version || ''
-      const childrenCount = data.children?.length ?? 0
-      return `${n.id}:${n.position.x}:${n.position.y}:${data.label || ''}:${data.type || ''}:${data.workflowCount || 0}:${n.type || ''}:${n.selected ? '1' : '0'}:${data.isRoot ? '1' : '0'}:${version}:${childrenCount}`
-    })
-    .join('|'), [sortedCurrentNodes])
-
-  useEffect(() => {
-    if (isDraggingRef.current) return
-    if (reactFlowNodesSig === currentNodesSig) return
-
-    // Avoid triggering onSelectionChange when syncing state from store to ReactFlow
-    // This prevents phantom selection events (e.g. when deselecting a node via store)
-    // from being interpreted as user interactions that switch tabs
-    isUpdatingSelectionRef.current = true
-    setNodes(reactFlowNodes)
-    setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
-  }, [reactFlowNodes, reactFlowNodesSig, currentNodesSig, setNodes, selectedNode])
+  // Combined node sync above handles this now
 
   // Track last processed selectedRelationship to avoid loops
   const lastProcessedSelectionRef = useRef<string | null>(null)

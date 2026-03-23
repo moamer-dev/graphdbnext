@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react'
 import { ModelBuilderCanvas } from './canvas/ModelBuilderCanvas'
 import { NodePalette } from './palette/NodePalette'
 import { NodeEditor } from './editor/NodeEditor'
@@ -11,11 +11,13 @@ import type { ActionCanvasNode } from '../stores/actionCanvasStore'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { useSchemaImport, useSchemaExport } from '../hooks'
 import { generateNodeTemplate, generateRelationshipTemplate } from '../services/parseService'
-import { downloadFile } from '../utils/exportUtils'
+import { downloadFile, exportToJson, exportToMarkdown } from '../utils/exportUtils'
 import { extractXmlElements } from '../utils/xmlElementExtractor'
 import { exportWorkflowConfig, importWorkflowConfig } from '../utils/workflowConfigExport'
 import { WorkflowSelector } from './workflow/WorkflowSelector'
 import { convertBuilderToSchemaJson } from '../utils/schemaJsonConverter'
+import { convertSchemaJsonToBuilder } from '../utils/schemaConverter'
+import { parseMarkdownSchema, convertMarkdownSchemaToBuilder } from '../utils/markdownParser'
 import { executeWorkflow } from '../services/workflowExecutor'
 import {
   Dialog,
@@ -125,37 +127,195 @@ export interface ModelBuilderProps {
   }>
   onWorkflowChange?: (workflowId: string) => void
   onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
+  onSave?: () => void
 }
 
-function ModelBuilderContent({
+export interface ModelBuilderRef {
+  exportData: () => {
+    schemaJson: any
+    schemaMd: string
+  }
+  triggerSave: () => void
+  loadData: (data: any) => void
+  clear: () => void
+  clearWorkflow: () => void
+  getWorkflowConfig: () => WorkflowConfigExport | null
+  hasChanges: () => boolean
+}
+
+const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>(({
   className,
   workflowPersistence,
   initialWorkflow,
   currentWorkflowName,
   availableWorkflows = [],
   onWorkflowChange,
-  onPushToDB
-}: {
-  className?: string
-  workflowPersistence?: WorkflowPersistence
-  initialWorkflow?: {
-    id: string
-    name: string
-    description?: string
-    config: unknown
-  }
-  currentWorkflowName?: string
-  availableWorkflows?: Array<{
-    id: string
-    name: string
-    description?: string
-    version: string
-    createdAt: string
-    updatedAt: string
-  }>
-  onWorkflowChange?: (workflowId: string) => void
-  onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
-}) {
+  onPushToDB,
+  onSave
+}, ref) => {
+  useImperativeHandle(ref, () => ({
+    exportData: () => {
+      const state = useModelBuilderStore.getState()
+      try {
+        return {
+          schemaJson: JSON.parse(exportToJson(state)),
+          schemaMd: exportToMarkdown(state)
+        }
+      } catch (error) {
+        console.error('Error exporting data in ref:', error)
+        return {
+          schemaJson: {},
+          schemaMd: ''
+        }
+      }
+    },
+    triggerSave: () => {
+      onSave?.()
+    },
+    loadData: (data: any) => {
+      if (!data) return
+
+      // Handle raw schemaJson (automatic conversion)
+      if (data.nodes && data.relations && !Array.isArray(data.nodes)) {
+        try {
+          const converted = convertSchemaJsonToBuilder(data)
+          useModelBuilderStore.getState().loadState({
+            nodes: converted.nodes,
+            relationships: converted.relationships,
+            isSemanticEnabled: converted.isSemanticEnabled,
+            selectedOntologyId: converted.selectedOntologyId,
+            rootNodeId: converted.rootNodeId
+          })
+          
+          // Update initial state
+          const state = useModelBuilderStore.getState()
+          const toolState = useToolCanvasStore.getState()
+          const actionState = useActionCanvasStore.getState()
+          initialStateRef.current = {
+            nodes: JSON.parse(JSON.stringify(state.nodes)),
+            relationships: JSON.parse(JSON.stringify(state.relationships)),
+            toolNodes: JSON.parse(JSON.stringify(toolState.nodes)),
+            toolEdges: JSON.parse(JSON.stringify(toolState.edges)),
+            actionNodes: JSON.parse(JSON.stringify(actionState.nodes)),
+            actionEdges: JSON.parse(JSON.stringify(actionState.edges))
+          }
+          return
+        } catch (error) {
+          console.error('Error auto-converting schemaJson in loadData:', error)
+        }
+      }
+
+      // Handle MD schema
+      if (typeof data === 'string' && (data.includes('## NODES') || data.includes('#### '))) {
+        try {
+          const parsedSchema = parseMarkdownSchema(data)
+          const converted = convertMarkdownSchemaToBuilder(parsedSchema)
+          useModelBuilderStore.getState().loadState({
+            nodes: converted.nodes,
+            relationships: converted.relationships,
+            isSemanticEnabled: converted.isSemanticEnabled,
+            selectedOntologyId: converted.selectedOntologyId,
+            rootNodeId: converted.rootNodeId
+          })
+
+          // Update initial state
+          const state = useModelBuilderStore.getState()
+          const toolState = useToolCanvasStore.getState()
+          const actionState = useActionCanvasStore.getState()
+          initialStateRef.current = {
+            nodes: JSON.parse(JSON.stringify(state.nodes)),
+            relationships: JSON.parse(JSON.stringify(state.relationships)),
+            toolNodes: JSON.parse(JSON.stringify(toolState.nodes)),
+            toolEdges: JSON.parse(JSON.stringify(toolState.edges)),
+            actionNodes: JSON.parse(JSON.stringify(actionState.nodes)),
+            actionEdges: JSON.parse(JSON.stringify(actionState.edges))
+          }
+          return
+        } catch (error) {
+          console.error('Error auto-converting schemaMd in loadData:', error)
+        }
+      }
+
+      // Default: assume it's already in builder state format
+      useModelBuilderStore.getState().loadState(data)
+      
+      // Update initial state after loading new data
+      const state = useModelBuilderStore.getState()
+      const toolState = useToolCanvasStore.getState()
+      const actionState = useActionCanvasStore.getState()
+      initialStateRef.current = {
+        nodes: JSON.parse(JSON.stringify(state.nodes)),
+        relationships: JSON.parse(JSON.stringify(state.relationships)),
+        toolNodes: JSON.parse(JSON.stringify(toolState.nodes)),
+        toolEdges: JSON.parse(JSON.stringify(toolState.edges)),
+        actionNodes: JSON.parse(JSON.stringify(actionState.nodes)),
+        actionEdges: JSON.parse(JSON.stringify(actionState.edges))
+      }
+    },
+    clear: () => {
+      useModelBuilderStore.getState().clear()
+      useToolCanvasStore.getState().clear()
+      useActionCanvasStore.getState().clear()
+    },
+    clearWorkflow: () => {
+      useToolCanvasStore.getState().clear()
+      useActionCanvasStore.getState().clear()
+      lastWorkflowIdRef.current = null
+      workflowLoadedRef.current = false
+    },
+    getWorkflowConfig: () => {
+      return getCurrentWorkflowConfig()
+    },
+    hasChanges: () => {
+      const currentState = useModelBuilderStore.getState()
+      if (!initialStateRef.current) return false
+
+      const nodesChanged = currentState.nodes.length !== initialStateRef.current.nodes.length ||
+        JSON.stringify(currentState.nodes) !== JSON.stringify(initialStateRef.current.nodes)
+      
+      const relationshipsChanged = currentState.relationships.length !== initialStateRef.current.relationships.length ||
+        JSON.stringify(currentState.relationships) !== JSON.stringify(initialStateRef.current.relationships)
+
+      const toolNodes = useToolCanvasStore.getState().nodes
+      const toolEdges = useToolCanvasStore.getState().edges
+      const toolsChanged = toolNodes.length !== initialStateRef.current.toolNodes.length ||
+        JSON.stringify(toolNodes) !== JSON.stringify(initialStateRef.current.toolNodes) ||
+        toolEdges.length !== initialStateRef.current.toolEdges.length ||
+        JSON.stringify(toolEdges) !== JSON.stringify(initialStateRef.current.toolEdges)
+
+      const actionNodes = useActionCanvasStore.getState().nodes
+      const actionEdges = useActionCanvasStore.getState().edges
+      const actionsChanged = actionNodes.length !== initialStateRef.current.actionNodes.length ||
+        JSON.stringify(actionNodes) !== JSON.stringify(initialStateRef.current.actionNodes) ||
+        actionEdges.length !== initialStateRef.current.actionEdges.length ||
+        JSON.stringify(actionEdges) !== JSON.stringify(initialStateRef.current.actionEdges)
+
+      return nodesChanged || relationshipsChanged || toolsChanged || actionsChanged
+    }
+  }))
+
+  const initialStateRef = useRef<any>(null)
+
+  useEffect(() => {
+    // Capture initial state for change detection
+    if (!initialStateRef.current) {
+      const state = useModelBuilderStore.getState()
+      const toolState = useToolCanvasStore.getState()
+      const actionState = useActionCanvasStore.getState()
+      initialStateRef.current = {
+        nodes: JSON.parse(JSON.stringify(state.nodes)),
+        relationships: JSON.parse(JSON.stringify(state.relationships)),
+        toolNodes: JSON.parse(JSON.stringify(toolState.nodes)),
+        toolEdges: JSON.parse(JSON.stringify(toolState.edges)),
+        actionNodes: JSON.parse(JSON.stringify(actionState.nodes)),
+        actionEdges: JSON.parse(JSON.stringify(actionState.edges))
+      }
+    }
+  }, [])
+
+  // Update initial state after loadData
+  // (Logic moved inside loadData implementation)
+
   const isSchemaDesignEnabled = useAIFeature('schemaDesignAgent')
   const isWorkflowGenerationEnabled = useAIFeature('workflowGenerationAgent')
   const ui = useModelBuilderUI()
@@ -244,6 +404,17 @@ function ModelBuilderContent({
 
   // Track the last loaded workflow ID to detect changes
   const lastWorkflowIdRef = useRef<string | null>(null)
+
+  // Memoized handlers for ModelBuilderCanvas
+  const handleToggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), [setSidebarOpen])
+  const handleRegisterFocusApi = useCallback((fn: (id: string) => void) => { focusNodeFnRef.current = fn }, [focusNodeFnRef])
+  const handleRegisterFocusRelationshipApi = useCallback((fn: (fromId: string, toId: string) => void) => { focusRelationshipFnRef.current = fn }, [focusRelationshipFnRef])
+  const handleSwitchTab = useCallback((tab: any) => setLeftTab(tab), [setLeftTab])
+
+  const handleSelectNode = useCallback((id: string | null) => useModelBuilderStore.getState().selectNode(id), [])
+  const handleSelectTool = useCallback((id: string | null) => useToolCanvasStore.getState().selectNode(id), [])
+  const handleSelectAction = useCallback((id: string | null) => useActionCanvasStore.getState().selectNode(id), [])
+  const handleSelectRelationship = useCallback((id: string | null) => useModelBuilderStore.getState().selectRelationship(id), [])
 
   // Load initial workflow when provided (after nodes are loaded)
   useEffect(() => {
@@ -334,6 +505,7 @@ function ModelBuilderContent({
   const confirmClearWorkflow = () => {
     useToolCanvasStore.getState().clear()
     useActionCanvasStore.getState().clear()
+    onWorkflowChange?.('')
     setClearWorkflowDialogOpen(false)
     toast.success('Workflow cleared successfully')
   }
@@ -1301,16 +1473,16 @@ function ModelBuilderContent({
   }
 
   const content = (
-    <div className={className}>
+    <div className={cn("flex flex-col h-full bg-background select-none", className)}>
       <QuickSearch
         nodes={nodes.map(n => ({ id: n.id, label: n.label, type: n.type }))}
         tools={toolNodes.map(t => ({ id: t.id, label: t.label, type: t.type }))}
         actions={actionNodes.map(a => ({ id: a.id, label: a.label, type: a.type }))}
         relationships={relationships.map(r => ({ id: r.id, type: r.type || '', from: r.from, to: r.to }))}
-        onSelectNode={(id) => useModelBuilderStore.getState().selectNode(id)}
-        onSelectTool={(id) => useToolCanvasStore.getState().selectNode(id)}
-        onSelectAction={(id) => useActionCanvasStore.getState().selectNode(id)}
-        onSelectRelationship={(id) => useModelBuilderStore.getState().selectRelationship(id)}
+        onSelectNode={handleSelectNode}
+        onSelectTool={handleSelectTool}
+        onSelectAction={handleSelectAction}
+        onSelectRelationship={handleSelectRelationship}
       />
       <div className="flex items-center gap-3 p-3 border-b bg-background">
         <Input
@@ -1337,43 +1509,31 @@ function ModelBuilderContent({
         <div className="flex-1" />
         <div className="flex items-center gap-2">
           {/* Semantic Layer Toggle */}
-          <div className={cn(
-            "flex items-center gap-1.5 border rounded-md px-2 py-1 transition-all duration-200",
-            isSemanticEnabled ? "bg-blue-50/50 border-blue-200" : "bg-muted/20"
-          )}>
-            <div className="flex items-center gap-1">
-              <Switch
-                id="model-builder-semantic"
-                checked={isSemanticEnabled}
-                onCheckedChange={setIsSemanticEnabled}
-                className="scale-75"
-              />
-              <Label htmlFor="model-builder-semantic" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer whitespace-nowrap hidden sm:block">
-                Semantic
-              </Label>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Semantic:</span>
+            <Switch
+              id="model-builder-semantic"
+              checked={isSemanticEnabled}
+              onCheckedChange={setIsSemanticEnabled}
+              className="scale-75"
+            />
             {isSemanticEnabled && (
-              <>
-                <div className="w-px h-4 bg-blue-200 mx-1" />
-                <div className="w-[150px]">
-                  <OntologyCombobox
-                    value={selectedOntologyId || undefined}
-                    onValueChange={(id) => setSelectedOntologyId(id)}
-                  />
-                </div>
-              </>
+              <div className="w-[180px] ml-1">
+                <OntologyCombobox
+                  value={selectedOntologyId || undefined}
+                  onValueChange={(id) => setSelectedOntologyId(id)}
+                  className="h-7 text-xs"
+                />
+              </div>
             )}
           </div>
 
           <div className="w-px h-6 bg-border mx-1" />
 
-
           {/* XML Preview Toggle */}
           {xmlContent && (
-            <div className="flex items-center gap-1.5 border rounded-md px-2 py-1 bg-muted/20">
-              <Label htmlFor="show-xml-preview" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer" title="Show XML Preview">
-                XML
-              </Label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">XML:</span>
               <Switch
                 id="show-xml-preview"
                 checked={xmlPanelOpen}
@@ -1384,10 +1544,8 @@ function ModelBuilderContent({
           )}
 
           {/* Editor Sidebar Toggle */}
-          <div className="flex items-center gap-1.5 border rounded-md px-2 py-1 bg-muted/20">
-            <Label htmlFor="show-property-editor" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer" title="Show Property Editor">
-              Editor
-            </Label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Editor:</span>
             <Switch
               id="show-property-editor"
               checked={sidebarOpen}
@@ -1488,6 +1646,20 @@ function ModelBuilderContent({
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Save Changes Button */}
+          {onSave && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onSave}
+              className="h-7 text-[10px] px-2"
+              title="Save Changes"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">Save</span>
+            </Button>
+          )}
 
 
 
@@ -1614,10 +1786,10 @@ function ModelBuilderContent({
             <ModelBuilderCanvas
               className="h-full"
               sidebarOpen={sidebarOpen}
-              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              onRegisterFocusApi={(fn) => { focusNodeFnRef.current = fn }}
-              onRegisterFocusRelationshipApi={(fn) => { focusRelationshipFnRef.current = fn }}
-              onSwitchTab={(tab) => setLeftTab(tab)}
+              onToggleSidebar={handleToggleSidebar}
+              onRegisterFocusApi={handleRegisterFocusApi}
+              onRegisterFocusRelationshipApi={handleRegisterFocusRelationshipApi}
+              onSwitchTab={handleSwitchTab}
               showToolbar={showToolbar}
             />
           </div>
@@ -1809,9 +1981,9 @@ function ModelBuilderContent({
   )
 
   return content
-}
+})
 
-export function ModelBuilder({ className, workflowPersistence, initialWorkflow, currentWorkflowName, availableWorkflows, onWorkflowChange, onPushToDB }: ModelBuilderProps) {
-  return <ModelBuilderContent className={className} workflowPersistence={workflowPersistence} initialWorkflow={initialWorkflow} currentWorkflowName={currentWorkflowName} availableWorkflows={availableWorkflows} onWorkflowChange={onWorkflowChange} onPushToDB={onPushToDB} />
-}
+export const ModelBuilder = forwardRef<ModelBuilderRef, ModelBuilderProps>((props, ref) => {
+  return <ModelBuilderContent {...props} ref={ref} />
+})
 

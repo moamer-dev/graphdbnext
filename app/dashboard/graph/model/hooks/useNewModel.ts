@@ -50,11 +50,9 @@ export function useNewModel () {
       
       if (!workflowBeingSaved) {
         // No workflow being saved, navigate immediately
-        toast.success('Model created successfully')
         router.push(ModelResource.LIST_PATH)
       } else {
         // Workflow is being saved, adapter will handle navigation
-        toast.success('Model created successfully')
       }
       
       return model
