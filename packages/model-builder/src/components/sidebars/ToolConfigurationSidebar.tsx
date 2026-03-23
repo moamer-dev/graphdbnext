@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
@@ -17,15 +17,9 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select'
-import { X, Plus, Trash2, Play, CheckCircle2, XCircle, Eye } from 'lucide-react'
+import { Play, CheckCircle2, XCircle } from 'lucide-react'
 import { fetchFromApi, type ApiProvider } from '../../services/apiClient'
 import { useCredentialsStore } from '../../stores/credentialsStore'
-import { ApiResponseModal } from '../dialogs/ApiResponseModal'
-import { ConnectionStatusIndicator, type ConnectionStatus } from '../shared/ConnectionStatusIndicator'
-import { ValidationFeedback } from '../shared/ValidationFeedback'
-import { CollapsibleSection } from '../shared/CollapsibleSection'
-import { HelpTooltip } from '../shared/HelpTooltip'
-import { ResponseHistory } from '../shared/ResponseHistory'
 import { apiResponseCache } from '../../utils/apiResponseCache'
 import { toast } from '../../utils/toast'
 import { ToolConfigurationHeader } from './ToolConfigurationSidebar/ToolConfigurationHeader'
@@ -33,40 +27,7 @@ import { ToolConditionBuilder } from './ToolConfigurationSidebar/ToolConditionBu
 import { ToolSwitchConfiguration } from './ToolConfigurationSidebar/ToolSwitchConfiguration'
 import { ToolTestExecution } from './ToolConfigurationSidebar/ToolTestExecution'
 import { ToolApiConfiguration } from './ToolConfigurationSidebar/ToolApiConfiguration'
-import { ToolLoopConfiguration } from './ToolConfigurationSidebar/ToolLoopConfiguration'
-import { ToolFilterConfiguration } from './ToolConfigurationSidebar/ToolFilterConfiguration'
-import { ToolTransformConfiguration } from './ToolConfigurationSidebar/ToolTransformConfiguration'
-import { ToolMergeConfiguration } from './ToolConfigurationSidebar/ToolMergeConfiguration'
-import { ToolLookupConfiguration } from './ToolConfigurationSidebar/ToolLookupConfiguration'
-import { ToolTraverseConfiguration } from './ToolConfigurationSidebar/ToolTraverseConfiguration'
-import { ToolDelayConfiguration } from './ToolConfigurationSidebar/ToolDelayConfiguration'
-import { ToolAggregateConfiguration } from './ToolConfigurationSidebar/ToolAggregateConfiguration'
-import { ToolSortConfiguration } from './ToolConfigurationSidebar/ToolSortConfiguration'
-import { ToolLimitConfiguration } from './ToolConfigurationSidebar/ToolLimitConfiguration'
-import { ToolCollectConfiguration } from './ToolConfigurationSidebar/ToolCollectConfiguration'
-import { ToolSplitConfiguration } from './ToolConfigurationSidebar/ToolSplitConfiguration'
-import { ToolValidateConfiguration } from './ToolConfigurationSidebar/ToolValidateConfiguration'
-import { ToolMapConfiguration } from './ToolConfigurationSidebar/ToolMapConfiguration'
-import { ToolReduceConfiguration } from './ToolConfigurationSidebar/ToolReduceConfiguration'
-import { ToolPartitionConfiguration } from './ToolConfigurationSidebar/ToolPartitionConfiguration'
-import { ToolDistinctConfiguration } from './ToolConfigurationSidebar/ToolDistinctConfiguration'
-import { ToolWindowConfiguration } from './ToolConfigurationSidebar/ToolWindowConfiguration'
-import { ToolJoinConfiguration } from './ToolConfigurationSidebar/ToolJoinConfiguration'
-import { ToolUnionConfiguration } from './ToolConfigurationSidebar/ToolUnionConfiguration'
-import { ToolIntersectConfiguration } from './ToolConfigurationSidebar/ToolIntersectConfiguration'
-import { ToolDiffConfiguration } from './ToolConfigurationSidebar/ToolDiffConfiguration'
-import { ToolExistsConfiguration } from './ToolConfigurationSidebar/ToolExistsConfiguration'
-import { ToolRangeConfiguration } from './ToolConfigurationSidebar/ToolRangeConfiguration'
-import { ToolBatchConfiguration } from './ToolConfigurationSidebar/ToolBatchConfiguration'
-import { ToolSimpleConfigSection } from './ToolConfigurationSidebar/ToolSimpleConfigSection'
-import { ToolEnrichConfiguration } from './ToolConfigurationSidebar/ToolEnrichConfiguration'
-import { ToolDeduplicateConfiguration } from './ToolConfigurationSidebar/ToolDeduplicateConfiguration'
-import { ToolValidateSchemaConfiguration } from './ToolConfigurationSidebar/ToolValidateSchemaConfiguration'
-import { ToolCleanConfiguration } from './ToolConfigurationSidebar/ToolCleanConfiguration'
-import { ToolVerifyConfiguration } from './ToolConfigurationSidebar/ToolVerifyConfiguration'
 import { ToolWebhookConfiguration } from './ToolConfigurationSidebar/ToolWebhookConfiguration'
-import { ToolEmailConfiguration } from './ToolConfigurationSidebar/ToolEmailConfiguration'
-import { ToolLogConfiguration } from './ToolConfigurationSidebar/ToolLogConfiguration'
 import { useRealXmlSample } from '../../hooks/useRealXmlSample'
 
 
@@ -133,7 +94,7 @@ export function ToolConfigurationSidebar({
   // Load all config from toolNode into store
   useEffect(() => {
     loadFromToolNode(toolNode || null)
-  }, [toolNode, loadFromToolNode])
+  }, [toolNode])
 
   // Condition builder hook
   const conditionBuilder = useToolConditionBuilder(toolNodeId)
@@ -143,12 +104,6 @@ export function ToolConfigurationSidebar({
 
   // Condition builder state (from hook)
   const conditionGroups = conditionBuilder.conditionGroups
-  const selectedConditionType = conditionBuilder.selectedConditionType
-  const setSelectedConditionType = conditionBuilder.setSelectedConditionType
-  const childInputValues = conditionBuilder.childInputValues
-  const setChildInputValues = conditionBuilder.setChildInputValues
-  const ancestorInputValues = conditionBuilder.ancestorInputValues
-  const setAncestorInputValues = conditionBuilder.setAncestorInputValues
 
   // Test/Execution state (from hook)
   const testResult = testExecution.testResult
@@ -163,9 +118,7 @@ export function ToolConfigurationSidebar({
   const setApiResponseModalOpen = testExecution.setApiResponseModalOpen
   const responseHistory = testExecution.responseHistory
   const setResponseHistory = testExecution.setResponseHistory
-  const connectionStatus = testExecution.connectionStatus
   const setConnectionStatus = testExecution.setConnectionStatus
-  const validationErrors = testExecution.validationErrors
   const setValidationErrors = testExecution.setValidationErrors
 
   // Switch tool state from store
@@ -177,8 +130,6 @@ export function ToolConfigurationSidebar({
   const setSwitchCases = useToolConfigurationStore((state) => state.setSwitchCases)
   const switchCaseInputs = useToolConfigurationStore((state) => state.switchCaseInputs)
   const setSwitchCaseInputs = useToolConfigurationStore((state) => state.setSwitchCaseInputs)
-
-  const getState = useToolConfigurationStore.getState
 
   const toolCanvasEdges = useToolCanvasStore((state) => state.edges)
 
@@ -246,9 +197,6 @@ export function ToolConfigurationSidebar({
     setInstanceIndex,
     loading: loadingRealData
   } = useRealXmlSample(selectedFile, elementToSample)
-
-  console.log('DEBUG Real Mock:', { selectedFile: selectedFile?.name, elementToSample, realInstancesLen: realInstances.length, attachedElementName })
-
 
   // Helper to find element type from analysis
   const findElementType = (label: string | undefined) => {
@@ -424,17 +372,6 @@ export function ToolConfigurationSidebar({
   // Use existing xmlDescendants or fallback to inferred ones
   const xmlDescendants = ((xmlMetadata as any)?.xmlDescendants as string[] | undefined) || inferredDescendants
 
-  // console.log('Final xmlDescendants passed to builder:', xmlDescendants)
-
-  // ... (rest of the file until createTestElement)
-
-  // Test execution - use hook's createTestElement and handleExecuteConditionTest
-
-
-  // ... (rest of logic)
-
-
-
   // API configs from store
   const authenticatedApiConfig = useToolConfigurationStore((state) => state.authenticatedApiConfig)
   const setAuthenticatedApiConfig = useToolConfigurationStore((state) => state.setAuthenticatedApiConfig)
@@ -442,70 +379,6 @@ export function ToolConfigurationSidebar({
   const setHttpConfig = useToolConfigurationStore((state) => state.setHttpConfig)
   const fetchApiConfig = useToolConfigurationStore((state) => state.fetchApiConfig)
   const setFetchApiConfig = useToolConfigurationStore((state) => state.setFetchApiConfig)
-
-  // Tool-specific configs from store
-  const loopConfig = useToolConfigurationStore((state) => state.loopConfig)
-  const setLoopConfig = useToolConfigurationStore((state) => state.setLoopConfig)
-  const mergeConfig = useToolConfigurationStore((state) => state.mergeConfig)
-  const setMergeConfig = useToolConfigurationStore((state) => state.setMergeConfig)
-  const filterConfig = useToolConfigurationStore((state) => state.filterConfig)
-  const setFilterConfig = useToolConfigurationStore((state) => state.setFilterConfig)
-  const transformConfig = useToolConfigurationStore((state) => state.transformConfig)
-  const setTransformConfig = useToolConfigurationStore((state) => state.setTransformConfig)
-  const lookupConfig = useToolConfigurationStore((state) => state.lookupConfig)
-  const setLookupConfig = useToolConfigurationStore((state) => state.setLookupConfig)
-  const traverseConfig = useToolConfigurationStore((state) => state.traverseConfig)
-  const setTraverseConfig = useToolConfigurationStore((state) => state.setTraverseConfig)
-  const delayConfig = useToolConfigurationStore((state) => state.delayConfig)
-  const setDelayConfig = useToolConfigurationStore((state) => state.setDelayConfig)
-  const aggregateConfig = useToolConfigurationStore((state) => state.aggregateConfig)
-  const setAggregateConfig = useToolConfigurationStore((state) => state.setAggregateConfig)
-  const sortConfig = useToolConfigurationStore((state) => state.sortConfig)
-  const setSortConfig = useToolConfigurationStore((state) => state.setSortConfig)
-  const limitConfig = useToolConfigurationStore((state) => state.limitConfig)
-  const setLimitConfig = useToolConfigurationStore((state) => state.setLimitConfig)
-  const collectConfig = useToolConfigurationStore((state) => state.collectConfig)
-  const setCollectConfig = useToolConfigurationStore((state) => state.setCollectConfig)
-  const splitConfig = useToolConfigurationStore((state) => state.splitConfig)
-  const setSplitConfig = useToolConfigurationStore((state) => state.setSplitConfig)
-  const validateConfig = useToolConfigurationStore((state) => state.validateConfig)
-  const setValidateConfig = useToolConfigurationStore((state) => state.setValidateConfig)
-  const mapConfig = useToolConfigurationStore((state) => state.mapConfig)
-  const setMapConfig = useToolConfigurationStore((state) => state.setMapConfig)
-  const reduceConfig = useToolConfigurationStore((state) => state.reduceConfig)
-  const setReduceConfig = useToolConfigurationStore((state) => state.setReduceConfig)
-  const partitionConfig = useToolConfigurationStore((state) => state.partitionConfig)
-  const setPartitionConfig = useToolConfigurationStore((state) => state.setPartitionConfig)
-  const distinctConfig = useToolConfigurationStore((state) => state.distinctConfig)
-  const setDistinctConfig = useToolConfigurationStore((state) => state.setDistinctConfig)
-  const windowConfig = useToolConfigurationStore((state) => state.windowConfig)
-  const setWindowConfig = useToolConfigurationStore((state) => state.setWindowConfig)
-  const joinConfig = useToolConfigurationStore((state) => state.joinConfig)
-  const setJoinConfig = useToolConfigurationStore((state) => state.setJoinConfig)
-  const unionConfig = useToolConfigurationStore((state) => state.unionConfig)
-  const setUnionConfig = useToolConfigurationStore((state) => state.setUnionConfig)
-  const intersectConfig = useToolConfigurationStore((state) => state.intersectConfig)
-  const setIntersectConfig = useToolConfigurationStore((state) => state.setIntersectConfig)
-  const diffConfig = useToolConfigurationStore((state) => state.diffConfig)
-  const setDiffConfig = useToolConfigurationStore((state) => state.setDiffConfig)
-  const existsConfig = useToolConfigurationStore((state) => state.existsConfig)
-  const setExistsConfig = useToolConfigurationStore((state) => state.setExistsConfig)
-  const rangeConfig = useToolConfigurationStore((state) => state.rangeConfig)
-  const setRangeConfig = useToolConfigurationStore((state) => state.setRangeConfig)
-  const batchConfig = useToolConfigurationStore((state) => state.batchConfig)
-  const setBatchConfig = useToolConfigurationStore((state) => state.setBatchConfig)
-  const loopInputValues = useToolConfigurationStore((state) => state.loopInputValues)
-  const setLoopInputValues = useToolConfigurationStore((state) => state.setLoopInputValues)
-  const filterInputValues = useToolConfigurationStore((state) => state.filterInputValues)
-  const setFilterInputValues = useToolConfigurationStore((state) => state.setFilterInputValues)
-
-  // Condition builder handlers (from hook)
-  const handleAddConditionGroup = () => conditionBuilder.handleAddConditionGroup(xmlParent, xmlAncestors)
-  const handleAddConditionToGroup = (groupId: string) => conditionBuilder.handleAddConditionToGroup(groupId, xmlParent, xmlAncestors)
-  const handleUpdateCondition = conditionBuilder.handleUpdateCondition
-  const handleRemoveCondition = conditionBuilder.handleRemoveCondition
-  const handleRemoveGroup = conditionBuilder.handleRemoveGroup
-  const handleUpdateGroup = conditionBuilder.handleUpdateGroup
 
   // If we have real data selected, override the create test element function to return it directly
   const createTestElement = () => {
@@ -992,264 +865,7 @@ export function ToolConfigurationSidebar({
           />
         )}
 
-        {toolNode.type === 'tool:loop' && (
-          <ToolLoopConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            loopConfig={loopConfig}
-            loopInputValues={loopInputValues}
-            xmlChildren={xmlChildren}
-            onLoopConfigChange={setLoopConfig}
-            onLoopInputValuesChange={setLoopInputValues}
-            onUpdateToolNode={updateToolNode}
-            getState={getState}
-          />
-        )}
-
-        {toolNode.type === 'tool:merge' && (
-          <ToolMergeConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            mergeConfig={mergeConfig}
-            onMergeConfigChange={setMergeConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:filter' && (
-          <ToolFilterConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            filterConfig={filterConfig}
-            filterInputValues={filterInputValues}
-            onFilterConfigChange={setFilterConfig}
-            onFilterInputValuesChange={setFilterInputValues}
-            onUpdateToolNode={updateToolNode}
-            getState={getState}
-          />
-        )}
-
-        {toolNode.type === 'tool:transform' && (
-          <ToolTransformConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            transformConfig={transformConfig}
-            onTransformConfigChange={setTransformConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Lookup Tool Configuration */}
-        {toolNode.type === 'tool:lookup' && (
-          <ToolLookupConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            lookupConfig={lookupConfig}
-            onLookupConfigChange={setLookupConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:traverse' && (
-          <ToolTraverseConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            traverseConfig={traverseConfig}
-            onTraverseConfigChange={setTraverseConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:delay' && (
-          <ToolDelayConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            delayConfig={delayConfig}
-            onDelayConfigChange={setDelayConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-
-        {toolNode.type === 'tool:aggregate' && (
-          <ToolAggregateConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            aggregateConfig={aggregateConfig}
-            onAggregateConfigChange={setAggregateConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:sort' && (
-          <ToolSortConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            sortConfig={sortConfig}
-            onSortConfigChange={setSortConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:limit' && (
-          <ToolLimitConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            limitConfig={limitConfig}
-            onLimitConfigChange={setLimitConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:collect' && (
-          <ToolCollectConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            collectConfig={collectConfig}
-            onCollectConfigChange={setCollectConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:split' && (
-          <ToolSplitConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            splitConfig={splitConfig}
-            onSplitConfigChange={setSplitConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:validate' && (
-          <ToolValidateConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            validateConfig={validateConfig}
-            onValidateConfigChange={setValidateConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:map' && (
-          <ToolMapConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            mapConfig={mapConfig}
-            onMapConfigChange={setMapConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:reduce' && (
-          <ToolReduceConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            reduceConfig={reduceConfig}
-            onReduceConfigChange={setReduceConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:partition' && (
-          <ToolPartitionConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            partitionConfig={partitionConfig}
-            onPartitionConfigChange={setPartitionConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:distinct' && (
-          <ToolDistinctConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            distinctConfig={distinctConfig}
-            onDistinctConfigChange={setDistinctConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:window' && (
-          <ToolWindowConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            windowConfig={windowConfig}
-            onWindowConfigChange={setWindowConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:join' && (
-          <ToolJoinConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            joinConfig={joinConfig}
-            onJoinConfigChange={setJoinConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:union' && (
-          <ToolUnionConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            unionConfig={unionConfig}
-            onUnionConfigChange={setUnionConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:intersect' && (
-          <ToolIntersectConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            intersectConfig={intersectConfig}
-            onIntersectConfigChange={setIntersectConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:diff' && (
-          <ToolDiffConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            diffConfig={diffConfig}
-            onDiffConfigChange={setDiffConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:exists' && (
-          <ToolExistsConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            existsConfig={existsConfig}
-            onExistsConfigChange={setExistsConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:range' && (
-          <ToolRangeConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            rangeConfig={rangeConfig}
-            onRangeConfigChange={setRangeConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {toolNode.type === 'tool:batch' && (
-          <ToolBatchConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            batchConfig={batchConfig}
-            onBatchConfigChange={setBatchConfig}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
+    
 
         {(toolNode.type === 'tool:fetch-api' ||
           ['tool:fetch-orcid', 'tool:fetch-geonames', 'tool:fetch-europeana', 'tool:fetch-getty'].includes(toolNode.type) ||
@@ -1393,290 +1009,6 @@ export function ToolConfigurationSidebar({
           </div>
         )}
 
-        {/* Normalize Tool Configuration */}
-        {toolNode.type === 'tool:normalize' && (
-          <ToolSimpleConfigSection
-            title="Normalize Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'format',
-                label: 'Format',
-                type: 'select',
-                helpText: 'Select the data format to normalize',
-                selectOptions: [
-                  { value: 'date', label: 'Date' },
-                  { value: 'number', label: 'Number' },
-                  { value: 'text', label: 'Text' },
-                  { value: 'url', label: 'URL' }
-                ]
-              },
-              {
-                key: 'targetProperty',
-                label: 'Target Property',
-                type: 'text',
-                placeholder: 'normalized'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Enrich Tool Configuration */}
-        {toolNode.type === 'tool:enrich' && (
-          <ToolEnrichConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Deduplicate Tool Configuration */}
-        {toolNode.type === 'tool:deduplicate' && (
-          <ToolDeduplicateConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Validate Schema Tool Configuration */}
-        {toolNode.type === 'tool:validate-schema' && (
-          <ToolValidateSchemaConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Clean Tool Configuration */}
-        {toolNode.type === 'tool:clean' && (
-          <ToolCleanConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Standardize Tool Configuration */}
-        {toolNode.type === 'tool:standardize' && (
-          <ToolSimpleConfigSection
-            title="Standardize Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'format',
-                label: 'Format',
-                type: 'select',
-                helpText: 'Select the format to standardize',
-                selectOptions: [
-                  { value: 'address', label: 'Address' },
-                  { value: 'name', label: 'Name' },
-                  { value: 'phone', label: 'Phone' },
-                  { value: 'email', label: 'Email' },
-                  { value: 'text', label: 'Text' }
-                ]
-              },
-              {
-                key: 'targetProperty',
-                label: 'Target Property',
-                type: 'text',
-                placeholder: 'standardized'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Verify Tool Configuration */}
-        {toolNode.type === 'tool:verify' && (
-          <ToolVerifyConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Try-Catch Tool Configuration */}
-        {toolNode.type === 'tool:try-catch' && (
-          <ToolSimpleConfigSection
-            title="Try-Catch Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'fallbackPath',
-                label: 'Fallback Path',
-                type: 'text',
-                placeholder: 'error',
-                helpText: 'Output path to use when an error occurs'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Retry Tool Configuration */}
-        {toolNode.type === 'tool:retry' && (
-          <ToolSimpleConfigSection
-            title="Retry Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'maxRetries',
-                label: 'Max Retries',
-                type: 'number',
-                placeholder: '3'
-              },
-              {
-                key: 'backoffMs',
-                label: 'Backoff (ms)',
-                type: 'number',
-                placeholder: '1000'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Timeout Tool Configuration */}
-        {toolNode.type === 'tool:timeout' && (
-          <ToolSimpleConfigSection
-            title="Timeout Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'timeoutMs',
-                label: 'Timeout (ms)',
-                type: 'number',
-                placeholder: '5000'
-              },
-              {
-                key: 'timeoutPath',
-                label: 'Timeout Path',
-                type: 'text',
-                placeholder: 'timeout'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Cache Tool Configuration */}
-        {toolNode.type === 'tool:cache' && (
-          <ToolSimpleConfigSection
-            title="Cache Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'cacheKey',
-                label: 'Cache Key',
-                type: 'text',
-                placeholder: 'auto-generated',
-                helpText: 'Leave empty to auto-generate from tool ID and parameters'
-              },
-              {
-                key: 'ttl',
-                label: 'TTL (ms)',
-                type: 'number',
-                placeholder: '300000',
-                helpText: 'Time to live in milliseconds (default: 5 minutes)'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Parallel Tool Configuration */}
-        {toolNode.type === 'tool:parallel' && (
-          <ToolSimpleConfigSection
-            title="Parallel Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'maxConcurrency',
-                label: 'Max Concurrency',
-                type: 'number',
-                placeholder: '5',
-                helpText: 'Maximum number of operations to run in parallel'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {/* Throttle Tool Configuration */}
-        {toolNode.type === 'tool:throttle' && (
-          <ToolSimpleConfigSection
-            title="Throttle Configuration"
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            config={toolNode?.config || {}}
-            fields={[
-              {
-                key: 'requestsPerSecond',
-                label: 'Requests Per Second',
-                type: 'number',
-                placeholder: '10'
-              }
-            ]}
-            onConfigChange={(updates) => {
-              updateToolNode(toolNodeId!, {
-                config: { ...toolNode?.config, ...updates }
-              })
-            }}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
         {/* Webhook Tool Configuration */}
         {toolNode.type === 'tool:webhook' && (
           <ToolWebhookConfiguration
@@ -1686,25 +1018,8 @@ export function ToolConfigurationSidebar({
           />
         )}
 
-        {/* Email Tool Configuration */}
-        {toolNode.type === 'tool:email' && (
-          <ToolEmailConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
 
-        {/* Log Tool Configuration */}
-        {toolNode.type === 'tool:log' && (
-          <ToolLogConfiguration
-            toolNodeId={toolNodeId!}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {!['tool:if', 'tool:switch', 'tool:loop', 'tool:merge', 'tool:filter', 'tool:transform', 'tool:lookup', 'tool:traverse', 'tool:delay', 'tool:aggregate', 'tool:sort', 'tool:limit', 'tool:collect', 'tool:split', 'tool:validate', 'tool:map', 'tool:reduce', 'tool:partition', 'tool:distinct', 'tool:window', 'tool:join', 'tool:union', 'tool:intersect', 'tool:diff', 'tool:exists', 'tool:range', 'tool:batch', 'tool:fetch-api', 'tool:fetch-orcid', 'tool:fetch-geonames', 'tool:fetch-europeana', 'tool:fetch-getty', 'tool:http', 'tool:normalize', 'tool:enrich', 'tool:deduplicate', 'tool:validate-schema', 'tool:clean', 'tool:standardize', 'tool:verify', 'tool:try-catch', 'tool:retry', 'tool:timeout', 'tool:cache', 'tool:parallel', 'tool:throttle', 'tool:webhook', 'tool:email', 'tool:log'].includes(toolNode.type) && (
+        {!['tool:if', 'tool:switch', 'tool:delay', 'tool:fetch-api', 'tool:http','tool:webhook'].includes(toolNode.type) && (
           <div className="text-xs text-muted-foreground text-center py-4">
             Configuration for {toolNode.type} will be available soon.
           </div>

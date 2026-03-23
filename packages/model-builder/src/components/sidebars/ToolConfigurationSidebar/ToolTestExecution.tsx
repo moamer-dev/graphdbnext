@@ -146,46 +146,47 @@ export function ToolTestExecution({
                 {testResult.details}
               </div>
             )}
-          </div>
-        )}
 
-        {showApiResponse && executedApiResponse !== null && testResult?.success && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium">Response Data</Label>
-              <div className="flex gap-2">
-                {responseHistory.length > 0 && onResponseHistoryChange && (
-                  <ResponseHistory
-                    entries={responseHistory}
-                    onSelect={(entry) => {
-                      if (toolNode && onUpdateToolNode) {
-                        onUpdateToolNode(toolNode.id, {
-                          config: {
-                            ...toolNode.config,
-                            executedResponse: entry.response
-                          }
-                        })
-                      }
-                    }}
-                    onClear={() => onResponseHistoryChange([])}
-                  />
-                )}
-                {onApiResponseModalOpenChange && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onApiResponseModalOpenChange(true)}
-                    className="h-7 px-3 text-xs"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    View Response
-                  </Button>
-                )}
+            {/* Response Data section for API tests */}
+            {showApiResponse && (
+              <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                <div className="mb-2">
+                  <Label className="text-xs font-medium">Response Data</Label>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {responseHistory.length > 0 && onResponseHistoryChange && (
+                    <ResponseHistory
+                      entries={responseHistory}
+                      onSelect={(entry) => {
+                        if (toolNode && onUpdateToolNode) {
+                          onUpdateToolNode(toolNode.id, {
+                            config: {
+                              ...toolNode.config,
+                              executedResponse: entry.response
+                            }
+                          })
+                        }
+                      }}
+                      onClear={() => onResponseHistoryChange([])}
+                    />
+                  )}
+                  {onApiResponseModalOpenChange && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onApiResponseModalOpenChange(true)}
+                      className="h-7 px-3 text-xs"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View Response
+                    </Button>
+                  )}
+                </div>
+                <div className="text-[10px] text-muted-foreground p-2 bg-muted rounded">
+                  API response executed successfully. Click &quot;View Response&quot; to see the full data and select fields for use in actions.
+                </div>
               </div>
-            </div>
-            <div className="text-[10px] text-muted-foreground p-2 bg-muted rounded">
-              API response executed successfully. Click &quot;View Response&quot; to see the full data and select fields for use in actions.
-            </div>
+            )}
           </div>
         )}
 

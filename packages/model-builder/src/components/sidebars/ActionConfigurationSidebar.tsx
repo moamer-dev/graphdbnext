@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useActionCanvasStore } from '../../stores/actionCanvasStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
@@ -8,21 +8,10 @@ import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import { useActionConfigurationStore } from '../../stores/actionConfigurationStore'
 import { useActionTestExecution } from '../../hooks'
 import { Button } from '../ui/button'
-import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '../ui/select'
-import { X, Play, CheckCircle2, XCircle } from 'lucide-react'
-import { JsonFieldSelector } from '../viewer/JsonFieldSelector'
+import { Play, CheckCircle2, XCircle } from 'lucide-react'
 import { ApiResponseModal } from '../dialogs/ApiResponseModal'
 import { GraphResultModal } from '../dialogs/GraphResultModal'
-import { CollapsibleSection } from '../shared/CollapsibleSection'
-import { HelpTooltip } from '../shared/HelpTooltip'
 import { executeWorkflow as executeWorkflowExecutor } from '../../services/workflowExecutor'
 import { convertBuilderToSchemaJson } from '../../utils/schemaJsonConverter'
 import { ActionConfigurationHeader } from './ActionConfigurationSidebar/ActionConfigurationHeader'
