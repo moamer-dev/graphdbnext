@@ -194,13 +194,9 @@ export function XmlAnalysisRulesConfigurator({
     updateRules({ [listKey]: [] })
   }
 
-
-
-  /* eslint-disable react-hooks/rules-of-hooks */
   const [showPreview, setShowPreview] = useState(false)
   const [activeTab, setActiveTab] = useState('ignored-elements')
   const [wrapWord, setWrapWord] = useState(false)
-  /* eslint-enable react-hooks/rules-of-hooks */
   const [previewWidth, setPreviewWidth] = useState(600)
 
   return (
