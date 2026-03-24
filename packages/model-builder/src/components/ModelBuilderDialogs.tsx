@@ -8,6 +8,8 @@ import { WorkflowGenerationPanel } from './ai/WorkflowGenerationPanel'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog'
 import { CredentialsManager } from './shared/CredentialsManager'
+import { SaveWorkflowDialog } from './dialogs/SaveWorkflowDialog'
+import { WorkflowChangeConfirmDialog } from './dialogs/WorkflowChangeConfirmDialog'
 
 interface ModelBuilderDialogsProps {
   importDialogOpen: boolean
@@ -52,7 +54,24 @@ interface ModelBuilderDialogsProps {
   clearWorkflowDialogOpen: boolean
   setClearWorkflowDialogOpen: (val: boolean) => void
   confirmClearWorkflow: () => void
+
+  // Workflow management dialogs
+  saveWorkflowDialogOpen: boolean
+  setSaveWorkflowDialogOpen: (val: boolean) => void
+  workflowPersistence: any
+  currentWorkflowConfig: any
+  availableWorkflows: any[]
+  isNewModel: boolean
+  selectedWorkflowId?: string | null
+  onSaveWorkflow: (workflowAction: any) => Promise<void>
+  workflowChangeConfirmOpen: boolean
+  setWorkflowChangeConfirmOpen: (val: boolean) => void
+  currentWorkflowName?: string
+  pendingWorkflowName?: string
+  onConfirmWorkflowChange: (updateCurrent: boolean) => void
+  onCancelWorkflowChange: () => void
 }
+
 
 export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
   importDialogOpen,
@@ -90,7 +109,23 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
   setCredentialsDialogOpen,
   clearWorkflowDialogOpen,
   setClearWorkflowDialogOpen,
-  confirmClearWorkflow
+  confirmClearWorkflow,
+
+  // Workflow management dialogs
+  saveWorkflowDialogOpen,
+  setSaveWorkflowDialogOpen,
+  workflowPersistence,
+  currentWorkflowConfig,
+  availableWorkflows,
+  isNewModel,
+  selectedWorkflowId,
+  onSaveWorkflow,
+  workflowChangeConfirmOpen,
+  setWorkflowChangeConfirmOpen,
+  currentWorkflowName,
+  pendingWorkflowName,
+  onConfirmWorkflowChange,
+  onCancelWorkflowChange
 }) => {
   return (
     <>
@@ -170,6 +205,28 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SaveWorkflowDialog
+        open={saveWorkflowDialogOpen}
+        onOpenChange={setSaveWorkflowDialogOpen}
+        workflowPersistence={workflowPersistence}
+        currentWorkflowConfig={currentWorkflowConfig}
+        existingWorkflows={availableWorkflows}
+        isNewModel={isNewModel}
+        selectedWorkflowId={selectedWorkflowId}
+        onSave={onSaveWorkflow}
+      />
+
+      {currentWorkflowName && pendingWorkflowName && (
+        <WorkflowChangeConfirmDialog
+          open={workflowChangeConfirmOpen}
+          onOpenChange={setWorkflowChangeConfirmOpen}
+          currentWorkflowName={currentWorkflowName}
+          newWorkflowName={pendingWorkflowName}
+          onConfirm={onConfirmWorkflowChange}
+          onCancel={onCancelWorkflowChange}
+        />
+      )}
     </>
   )
 }

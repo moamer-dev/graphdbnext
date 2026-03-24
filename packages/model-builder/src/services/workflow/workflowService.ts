@@ -386,5 +386,106 @@ export const workflowService = {
       actionEdgesAdded,
       originalCounts: config._originalCounts
     }
+  },
+
+  /**
+   * Checks if the current workflow has unsaved changes compared to a saved configuration.
+   * Only considers structural changes (tools, actions, edges, connections) and ignores positions.
+   */
+  hasUnsavedChanges: (savedConfig: WorkflowConfigExport | null): boolean => {
+    if (!savedConfig) {
+      const current = workflowService.getCurrentWorkflowConfig()
+      return !!(current && (current.tools?.length || current.actions?.length))
+    }
+
+    try {
+      const currentConfig = workflowService.getCurrentWorkflowConfig()
+      if (!currentConfig) return false
+
+      // Normalize configs by removing position fields and other non-structural data
+      const normalize = (config: any) => {
+        if (!config) return { tools: [], actions: [], toolEdges: [], actionEdges: [] }
+        
+        const normalized = JSON.parse(JSON.stringify(config))
+        
+        // Ensure arrays exist
+        if (!Array.isArray(normalized.tools)) normalized.tools = []
+        if (!Array.isArray(normalized.actions)) normalized.actions = []
+        if (!Array.isArray(normalized.toolEdges)) normalized.toolEdges = []
+        if (!Array.isArray(normalized.actionEdges)) normalized.actionEdges = []
+
+        // Normalize tools (remove positions, sort)
+        normalized.tools = normalized.tools.map((tool: any) => ({
+          type: tool.type,
+          label: tool.label,
+          targetNodeLabel: tool.targetNodeLabel,
+          config: tool.config || {},
+          inputs: tool.inputs,
+          outputs: tool.outputs || []
+        })).sort((a: any, b: any) => (a.targetNodeLabel || '').localeCompare(b.targetNodeLabel || '') || a.type.localeCompare(b.type))
+
+        // Normalize actions (remove positions, sort)
+        normalized.actions = normalized.actions.map((action: any) => {
+          const { position, ...rest } = action
+          if (Array.isArray(rest.children)) {
+            rest.children = rest.children.map((c: any) => ({
+              type: c.type,
+              label: c.label,
+              config: c.config || {}
+            })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+          }
+          return {
+            type: rest.type,
+            label: rest.label,
+            config: rest.config || {},
+            isGroup: rest.isGroup || false,
+            children: rest.children,
+            enabled: rest.enabled !== undefined ? rest.enabled : true
+          }
+        }).sort((a: any, b: any) => a.label.localeCompare(b.label))
+
+        // Normalize toolEdges
+        normalized.toolEdges = normalized.toolEdges.map((edge: any) => ({
+          sourceNodeLabel: edge.sourceNodeLabel,
+          sourceToolLabel: edge.sourceToolLabel,
+          targetToolLabel: edge.targetToolLabel,
+          targetActionLabel: edge.targetActionLabel,
+          sourceHandle: edge.sourceHandle,
+          targetHandle: edge.targetHandle
+        })).sort((a: any, b: any) => {
+          const aKey = `${a.sourceNodeLabel || a.sourceToolLabel || ''}-${a.targetToolLabel || a.targetActionLabel || ''}`
+          const bKey = `${b.sourceNodeLabel || b.sourceToolLabel || ''}-${b.targetToolLabel || b.targetActionLabel || ''}`
+          return aKey.localeCompare(bKey)
+        })
+
+        // Normalize actionEdges
+        normalized.actionEdges = normalized.actionEdges.map((edge: any) => ({
+          sourceToolLabel: edge.sourceToolLabel,
+          targetActionLabel: edge.targetActionLabel,
+          sourceHandle: edge.sourceHandle,
+          targetHandle: edge.targetHandle
+        })).sort((a: any, b: any) => {
+          const aKey = `${a.sourceToolLabel || ''}-${a.targetActionLabel || ''}`
+          const bKey = `${b.sourceToolLabel || ''}-${b.targetActionLabel || ''}`
+          return aKey.localeCompare(bKey)
+        })
+
+        return {
+          tools: normalized.tools,
+          actions: normalized.actions,
+          toolEdges: normalized.toolEdges,
+          actionEdges: normalized.actionEdges
+        }
+      }
+
+      const currentJson = JSON.stringify(normalize(currentConfig))
+      const savedJson = JSON.stringify(normalize(savedConfig))
+      
+      return currentJson !== savedJson
+    } catch (error) {
+      console.error('Error checking for unsaved workflow changes:', error)
+      return false
+    }
   }
+
 }

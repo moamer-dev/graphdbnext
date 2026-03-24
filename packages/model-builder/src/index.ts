@@ -2,9 +2,6 @@ export { ModelBuilder } from './components/ModelBuilder'
 export { XmlImportWizard } from './components/wizard/XmlImportWizard/XmlImportWizard'
 export type { WorkflowPersistence, ModelBuilderProps, ModelBuilderRef } from './components/ModelBuilder'
 
-export { SaveWorkflowDialog } from './components/dialogs/SaveWorkflowDialog'
-export { WorkflowChangeConfirmDialog } from './components/dialogs/WorkflowChangeConfirmDialog'
-
 // Stores
 export { useXmlImportWizardStore } from './stores/xmlImportWizardStore'
 export type { WizardStep } from './stores/xmlImportWizardStore'
@@ -20,7 +17,7 @@ export { exportToJson, exportToMarkdown } from './utils/exportUtils'
 export { convertBuilderToSchemaJson } from './utils/schemaJsonConverter'
 
 export { AISettingsProvider, useAISettings, useAIFeature } from './ai/config'
-export type { AISettings } from './ai/config/types'
+export type { AISettings, AISettingsStorage } from './ai/config/types'
 export { DEFAULT_AI_SETTINGS } from './ai/config/types'
 
 export type { WorkflowConfigExport } from './utils/workflowConfigExport'
