@@ -3,7 +3,7 @@
 import { Input } from '../../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
 import { Search, Folder } from 'lucide-react'
-import { actionCategories, type ActionItem } from '../../../constants/workflowItems'
+import { workflowRegistry } from '../../../registry'
 import { cn } from '../../../utils/cn'
 import { useNodePaletteSearch } from '../../../hooks'
 
@@ -58,6 +58,8 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
   const expandedActionCategories = searchHook.expandedActionCategories
   const setExpandedActionCategories = searchHook.setExpandedActionCategories
   const filteredActions = searchHook.filteredActions
+  
+  const categories = workflowRegistry.getActionCategories()
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -82,9 +84,9 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {Object.keys(actionCategories).map(category => (
-              <SelectItem key={category} value={category}>
-                {category}
+            {categories.map(category => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -99,11 +101,12 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
             <p className="text-xs mt-1">Try adjusting your search or filter</p>
           </div>
         ) : (
-          filteredActions.map(({ category, items }) => {
-            const categoryConfig = actionCategories[category as keyof typeof actionCategories]
-            const CategoryIcon = categoryConfig?.icon || Folder
-            const categoryColor = categoryConfig?.color || 'text-muted-foreground'
-            const categoryBgColor = categoryConfig?.bgColor || 'bg-muted'
+          filteredActions.map(({ category, config, items }) => {
+            console.log("filteredActions", filteredActions)
+            const CategoryIcon = config?.icon || Folder
+            const categoryColor = config?.color || 'text-muted-foreground'
+            const categoryBgColor = config?.bgColor || 'bg-muted'
+            const categoryLabel = config?.label || 'Unknown'
             const isExpanded = expandedActionCategories.has(category)
 
             return (
@@ -131,7 +134,7 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
                   <div className={cn("h-5 w-5 rounded-md flex items-center justify-center shrink-0", categoryBgColor)}>
                     <CategoryIcon className={cn("h-3.5 w-3.5", categoryColor)} />
                   </div>
-                  <span className="flex-1 text-left">{category}</span>
+                  <span className="flex-1 text-left">{categoryLabel}</span>
                   <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
                     {items.length}
                   </span>
@@ -140,7 +143,7 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
                 {/* Category Items */}
                 {isExpanded && (
                   <div className="space-y-0.5 pl-1">
-                    {items.map((item: ActionItem) => {
+                    {items.map((item: any) => {
                       const Icon = item.icon
                       const colors = getColorClassesHelper(item.color, item.bgColor)
                       const isQuick = (item as any).isQuick || (item as any).quickAction || false

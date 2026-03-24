@@ -126,6 +126,31 @@ export function createModelBuilderTools(executor: ReturnType<typeof import('./to
     }
   )
 
+  const setRootNodeTool = tool(
+    async ({ nodeIdOrLabel }: { nodeIdOrLabel: string }) => {
+      return await executor.setRootNode({ nodeIdOrLabel })
+    },
+    {
+      name: 'set_root_node',
+      description: 'Set a specific node as the root starting point for workflow execution. The workflow will begin its XML DOM traversal from elements matching this node.',
+      schema: z.object({
+        nodeIdOrLabel: z.string().describe('The label, type, or ID of the node to set as root (e.g., "Person", "TEI")'),
+      }),
+    }
+  )
+
+  const getWorkflowRegistryTool = tool(
+    async () => {
+      const registry = executor.getWorkflowRegistry()
+      return JSON.stringify(registry, null, 2)
+    },
+    {
+      name: 'get_workflow_registry',
+      description: 'Get the list of all available workflow tools and actions from the centralized registry. Use this to discover what components (like If, Switch, Create Node, etc.) are available for building workflows.',
+      schema: z.object({}),
+    }
+  )
+
   return [
     createNodeTool,
     createRelationshipTool,
@@ -133,6 +158,8 @@ export function createModelBuilderTools(executor: ReturnType<typeof import('./to
     optimizeSchemaTool,
     listNodesTool,
     updateNodeTool,
+    setRootNodeTool,
+    getWorkflowRegistryTool
   ]
 }
 

@@ -2,7 +2,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { z } from 'zod'
 import type { AISettings } from '../config/types'
-import type { XmlAnalysisRules } from '../../services/xmlAnalyzer'
+import type { XmlAnalysisRules } from '../../services/xml/xmlAnalyzer'
 import type { XmlElementInfo } from '../../utils/xmlElementExtractor'
 
 const XML_RULES_ASSISTANT_SYSTEM_PROMPT = `You are an XML Analysis Rules Assistant. Your ONLY purpose is to help users configure XML analysis rules for importing XML files into a graph database.

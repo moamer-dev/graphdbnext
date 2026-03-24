@@ -296,19 +296,6 @@ export function ToolConditionBuilder({
         )
 
       case 'HasParent':
-        // Determine potential parents to show in dropdown
-        // Current logic: inferred parent (via xmlParent) + potentially ancestors?
-        // But HasParent is strict (immediate parent).
-        // For manual nodes, we only have xmlParent.
-        // For real nodes, we might have multiple candidates if ambiguous? No, usually one.
-        // BUT user might want to choose from a list of *valid schema parents*?
-        // For now, let's use xmlParent + xmlAncestors as candidates (since any ancestor *could* be a parent in a different context, or user confusion).
-        // Actually, strictly speaking, only xmlParent is the *current* parent.
-        // But the condition is "does it have parent X?".
-        // If xmlParent is "Stanza", then selecting "Stanza" checks "Is parent Stanza?".
-        // Selecting "Structure" checks "Is parent Structure?".
-        // So we should list potential parents.
-        // For manual nodes, we only know "Stanza" is the likely parent.
         const parentOptions = xmlAncestors ? [...new Set([xmlParent, ...xmlAncestors].filter(Boolean) as string[])] : (xmlParent ? [xmlParent] : [])
 
         return (

@@ -91,20 +91,20 @@ export function WorkflowSidebar () {
 
   // Filter and search tools
   const filteredTools = useMemo(() => {
-    const result: { category: string; items: ToolDefinition[] }[] = []
+    const result: { category: string; config: any; items: ToolDefinition[] }[] = []
     
     toolCategoriesList.forEach(category => {
-      const toolsInCategory = allTools.filter(t => t.metadata.category === category)
+      const toolsInCategory = allTools.filter(t => t.metadata.category === category.id)
       const filtered = toolsInCategory.filter(tool => {
         const matchesSearch = searchQuery === '' || 
           tool.metadata.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
           tool.metadata.description.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = selectedCategory === 'all' || selectedCategory === category
+        const matchesCategory = selectedCategory === 'all' || selectedCategory === category.id
         return matchesSearch && matchesCategory
       })
       
       if (filtered.length > 0) {
-        result.push({ category, items: filtered })
+        result.push({ category: category.id, config: category, items: filtered })
       }
     })
     
@@ -113,20 +113,20 @@ export function WorkflowSidebar () {
 
   // Filter and search actions
   const filteredActions = useMemo(() => {
-    const result: { category: string; items: ActionDefinition[] }[] = []
+    const result: { category: string; config: any; items: ActionDefinition[] }[] = []
     
     actionCategoriesList.forEach(category => {
-      const actionsInCategory = allActions.filter(a => a.metadata.category === category)
+      const actionsInCategory = allActions.filter(a => a.metadata.category === category.id)
       const filtered = actionsInCategory.filter(action => {
         const matchesSearch = searchQuery === '' || 
           action.metadata.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
           action.metadata.description.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = selectedCategory === 'all' || selectedCategory === category
+        const matchesCategory = selectedCategory === 'all' || selectedCategory === category.id
         return matchesSearch && matchesCategory
       })
       
       if (filtered.length > 0) {
-        result.push({ category, items: filtered })
+        result.push({ category: category.id, config: category, items: filtered })
       }
     })
     
@@ -203,8 +203,8 @@ export function WorkflowSidebar () {
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {categories.map(category => (
-              <SelectItem key={category} value={category}>
-                {category}
+              <SelectItem key={category.id} value={category.id}>
+                {category.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -220,11 +220,10 @@ export function WorkflowSidebar () {
             <p className="text-xs mt-1">Try adjusting your search or filter</p>
           </div>
         ) : (
-          filteredItems.map(({ category, items }) => {
-            const firstItem = items[0]
-            const CategoryIcon = firstItem.metadata.icon || Folder
-            const categoryColor = firstItem.metadata.color || 'text-muted-foreground'
-            const categoryBgColor = firstItem.metadata.bgColor || 'bg-muted'
+          filteredItems.map(({ category, config, items }) => {
+            const CategoryIcon = config.icon || Folder
+            const categoryColor = config.color || 'text-muted-foreground'
+            const categoryBgColor = config.bgColor || 'bg-muted'
             const isExpanded = expandedCategories.has(category)
             
             return (
@@ -242,7 +241,7 @@ export function WorkflowSidebar () {
                   <div className={cn("h-5 w-5 rounded-md flex items-center justify-center shrink-0", categoryBgColor)}>
                     <CategoryIcon className={cn("h-3.5 w-3.5", categoryColor)} />
                   </div>
-                  <span className="flex-1 text-left">{category}</span>
+                  <span className="flex-1 text-left">{config.label}</span>
                   <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
                     {items.length}
                   </span>

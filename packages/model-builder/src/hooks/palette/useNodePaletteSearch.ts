@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useTransition } from 'react'
-import { toolCategories, actionCategories, type ToolItem, type ActionItem } from '../../constants/workflowItems'
+import { workflowRegistry } from '../../registry'
 
 export function useNodePaletteSearch() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -12,19 +12,31 @@ export function useNodePaletteSearch() {
   const [isPending, startTransition] = useTransition()
 
   const filteredTools = useMemo(() => {
-    const result: { category: string; items: ToolItem[] }[] = []
+    const allGrouped = workflowRegistry.getGroupedTools()
+    const result: { category: string; config: any; items: any[] }[] = []
     
-    Object.entries(toolCategories).forEach(([category, { tools }]) => {
+    allGrouped.forEach(({ category, config, tools }) => {
       const filtered = tools.filter(tool => {
         const matchesSearch = toolSearchQuery === '' || 
-          tool.label.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
-          tool.description.toLowerCase().includes(toolSearchQuery.toLowerCase())
+          tool.metadata.label.toLowerCase().includes(toolSearchQuery.toLowerCase()) ||
+          tool.metadata.description.toLowerCase().includes(toolSearchQuery.toLowerCase())
         const matchesCategory = selectedToolCategory === 'all' || selectedToolCategory === category
         return matchesSearch && matchesCategory
       })
       
       if (filtered.length > 0) {
-        result.push({ category, items: filtered })
+        result.push({ 
+          category, 
+          config,
+          items: filtered.map(t => ({
+            type: t.id,
+            label: t.metadata.label,
+            description: t.metadata.description,
+            icon: t.metadata.icon,
+            color: t.metadata.color,
+            bgColor: t.metadata.bgColor
+          }))
+        })
       }
     })
     
@@ -32,19 +44,31 @@ export function useNodePaletteSearch() {
   }, [toolSearchQuery, selectedToolCategory])
 
   const filteredActions = useMemo(() => {
-    const result: { category: string; items: ActionItem[] }[] = []
+    const allGrouped = workflowRegistry.getGroupedActions()
+    const result: { category: string; config: any; items: any[] }[] = []
     
-    Object.entries(actionCategories).forEach(([category, { actions }]) => {
+    allGrouped.forEach(({ category, config, actions }) => {
       const filtered = actions.filter(action => {
         const matchesSearch = actionSearchQuery === '' || 
-          action.label.toLowerCase().includes(actionSearchQuery.toLowerCase()) ||
-          action.description.toLowerCase().includes(actionSearchQuery.toLowerCase())
+          action.metadata.label.toLowerCase().includes(actionSearchQuery.toLowerCase()) ||
+          action.metadata.description.toLowerCase().includes(actionSearchQuery.toLowerCase())
         const matchesCategory = selectedActionCategory === 'all' || selectedActionCategory === category
         return matchesSearch && matchesCategory
       })
       
       if (filtered.length > 0) {
-        result.push({ category, items: filtered })
+        result.push({ 
+          category, 
+          config,
+          items: filtered.map(a => ({
+            type: a.id,
+            label: a.metadata.label,
+            description: a.metadata.description,
+            icon: a.metadata.icon,
+            color: a.metadata.color,
+            bgColor: a.metadata.bgColor
+          }))
+        })
       }
     })
     

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { XmlStructureAnalysis, XmlMappingConfig, XmlAnalysisRules } from '../services/xmlAnalyzer'
+import type { XmlStructureAnalysis, XmlMappingConfig, XmlAnalysisRules } from '../services/xml/xmlAnalyzer'
 import type { XmlElementInfo } from '../utils/xmlElementExtractor'
 
 export type WizardStep = 'upload' | 'configure-rules' | 'analyze' | 'configure' | 'review'

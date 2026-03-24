@@ -9,7 +9,7 @@ import { xmlToJsonTree, type JsonTreeNode } from '../../utils/xmlToJsonTree'
 import { getElementFactSheet, type ElementFactSheet, findElementPosition } from '../../utils/xmlElementFactSheet'
 import { DOMParser } from '@xmldom/xmldom'
 import { Badge } from '../ui/badge'
-import type { XmlAnalysisRules, XmlStructureAnalysis } from '../../services/xmlAnalyzer'
+import type { XmlAnalysisRules, XmlStructureAnalysis } from '../../services/xml/xmlAnalyzer'
 import { Plus, Check, CheckSquare, Square, Loader2 } from 'lucide-react'
 import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
@@ -971,7 +971,7 @@ export function XmlJsonTreeViewer ({
                     {nodesSearchQuery ? 'No nodes found matching your search.' : 'No element types available.'}
                   </p>
                 ) : (
-                  allElementTypes.map((elementType) => {
+                  allElementTypes.map((elementType:any) => {
                     const isSelected = selectedNodes.has(elementType.name)
                     const isIncluded = isElementIncluded(elementType.name)
                     const canAdd = !isIncluded && onAddElements

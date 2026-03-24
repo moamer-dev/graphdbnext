@@ -7,7 +7,7 @@ import { ToolSwitchConfiguration } from './ToolConfigurationSidebar/ToolSwitchCo
 import { ToolTestExecution } from './ToolConfigurationSidebar/ToolTestExecution'
 import { ToolApiConfiguration } from './ToolConfigurationSidebar/ToolApiConfiguration'
 import { ToolWebhookConfiguration } from './ToolConfigurationSidebar/ToolWebhookConfiguration'
-import { useRealXmlSample } from '../../hooks/useRealXmlSample'
+import { useRealXmlSample } from '../../hooks/xml/useRealXmlSample'
 import { SchemaForm } from '../shared/SchemaForm'
 import { CollapsibleSection } from '../shared/CollapsibleSection'
 import { useToolConfiguration } from '../../hooks/configuration/useToolConfiguration'

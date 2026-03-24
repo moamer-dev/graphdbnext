@@ -2,7 +2,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { z } from 'zod'
 import type { AISettings } from '../config/types'
-import type { XmlStructureAnalysis, XmlMappingConfig } from '../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis, XmlMappingConfig } from '../../services/xml/xmlAnalyzer'
 
 const XML_MAPPING_ASSISTANT_SYSTEM_PROMPT = `You are an expert XML to Graph Database mapping assistant for research applications.
 Your role is to analyze XML structures (especially TEI, edXML, and other scholarly formats) and suggest intelligent mappings to graph database schemas.

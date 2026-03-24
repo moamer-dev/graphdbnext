@@ -3,11 +3,11 @@ import type {
   XmlAnalysisRules,
   XmlMappingConfig,
   XmlStructureAnalysis
-} from '../../../../services/xmlAnalyzer'
+} from '../../../../services/xml/xmlAnalyzer'
 import { extractXmlElements, type XmlElementInfo } from '../../../../utils/xmlElementExtractor'
 import { downloadFile } from '../../../../utils/exportUtils'
 import type { WizardStep } from '../../../../stores/xmlImportWizardStore'
-import type { XmlImportResult } from '../../../../hooks/useXmlImport'
+import type { XmlImportResult } from '../../../../hooks/xml/useXmlImport'
 
 interface XmlWizardConfigExport {
   version: 1

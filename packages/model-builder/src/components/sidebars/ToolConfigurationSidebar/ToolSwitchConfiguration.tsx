@@ -62,7 +62,6 @@ export function ToolSwitchConfiguration({
     ]
 
     onSwitchCasesChange(updated)
-    // We still call onUpdateToolNode here because we need to update 'outputs' specifically
     onUpdateToolNode(toolNodeId, { outputs })
   }
 

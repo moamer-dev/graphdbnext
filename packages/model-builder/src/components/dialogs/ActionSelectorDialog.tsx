@@ -82,12 +82,12 @@ export function ActionSelectorDialog ({ open, onClose, onSelect, existingActionT
           </div>
 
           {categories.map(category => {
-            const filteredActions = getActionsByCategory(category, searchQuery)
+            const filteredActions = getActionsByCategory(category.id, searchQuery)
             if (filteredActions.length === 0) return null
 
             return (
-              <div key={category} className="space-y-2">
-                <Label className="text-sm font-semibold">{category}</Label>
+              <div key={category.id} className="space-y-2">
+                <Label className="text-sm font-semibold">{category.label}</Label>
                 <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
                   {filteredActions.map((action) => {
                     const isSelected = selectedActions.has(action.id as ActionNodeType)

@@ -26,6 +26,17 @@ interface SchemaFormProps {
 }
 
 export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaFormProps) {
+  const renderLabel = (field: ConfigField) => {
+    return (
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <Label className="text-xs font-semibold text-foreground/80">{field.label}</Label>
+        {field.details && (
+          <HelpTooltip content={field.details} />
+        )}
+      </div>
+    )
+  }
+
   const renderField = (field: ConfigField) => {
     // Check dependencies
     if (field.dependsOn) {
@@ -43,8 +54,8 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
       case 'text':
       case 'number':
         return (
-          <div key={field.name} className="space-y-2">
-            <Label className="text-xs font-medium">{field.label}</Label>
+          <div key={field.name} className="space-y-1">
+            {renderLabel(field)}
             {apiResponse && field.type === 'text' ? (
               <JsonFieldSelector
                 data={apiResponse}
@@ -57,35 +68,40 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
               <Input
                 type={field.type}
                 placeholder={field.placeholder}
-                className="h-8 text-xs"
+                className="h-8 text-xs bg-muted/20 border-muted-foreground/20 focus:bg-background transition-colors"
                 value={value || ''}
                 onChange={(e) => onChange(field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
               />
             )}
-            {field.description && <p className="text-[10px] text-muted-foreground">{field.description}</p>}
+            {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
           </div>
         )
 
       case 'boolean':
         return (
-          <div key={field.name} className="flex items-center space-x-2 py-1">
+          <div key={field.name} className="flex items-center space-x-2.5 py-1.5 px-1 hover:bg-muted/30 rounded-md transition-colors">
             <Checkbox
               id={field.name}
               checked={!!value}
               onCheckedChange={(checked) => onChange(field.name, checked)}
             />
-            <Label htmlFor={field.name} className="text-xs font-medium cursor-pointer">
-              {field.label}
-            </Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor={field.name} className="text-xs font-medium cursor-pointer">
+                {field.label}
+              </Label>
+              {field.details && (
+                <HelpTooltip content={field.details} />
+              )}
+            </div>
           </div>
         )
 
       case 'select':
         return (
-          <div key={field.name} className="space-y-2">
-            <Label className="text-xs font-medium">{field.label}</Label>
+          <div key={field.name} className="space-y-1">
+            {renderLabel(field)}
             <Select value={value || ''} onValueChange={(val) => onChange(field.name, val)}>
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs bg-muted/20 border-muted-foreground/20 focus:bg-background transition-colors">
                 <SelectValue placeholder={field.placeholder || "Select..."} />
               </SelectTrigger>
               <SelectContent>
@@ -96,20 +112,21 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
                 ))}
               </SelectContent>
             </Select>
+            {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
           </div>
         )
 
       case 'properties':
         const properties = (value || []) as Array<{ key: string; value: string }>
         return (
-          <div key={field.name} className="space-y-2 pt-2 border-t">
+          <div key={field.name} className="space-y-2 pt-2 border-t mt-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium">{field.label}</Label>
+              {renderLabel(field)}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onChange(field.name, [...properties, { key: '', value: '' }])}
-                className="h-6 px-2 text-[10px]"
+                className="h-6 px-2 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary"
               >
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
@@ -155,14 +172,14 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
       case 'mappings':
         const mappings = (value || []) as Array<{ attributeName: string; propertyKey: string; defaultValue?: string; transforms: any[] }>
         return (
-          <div key={field.name} className="space-y-4 pt-2 border-t">
+          <div key={field.name} className="space-y-4 pt-2 border-t mt-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium">{field.label}</Label>
+              {renderLabel(field)}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onChange(field.name, [...mappings, { attributeName: '', propertyKey: '', transforms: [] }])}
-                className="h-6 px-2 text-[10px]"
+                className="h-6 px-2 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
               >
                 <Plus className="h-3 w-3 mr-1" /> Add Mapping
               </Button>
@@ -262,17 +279,14 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
       case 'transforms':
         const transforms = (value || []) as any[]
         return (
-          <div key={field.name} className="space-y-2 pt-2 border-t">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1">
-                <Settings2 className="h-3 w-3 text-muted-foreground" />
-                <Label className="text-xs font-medium">{field.label}</Label>
-              </div>
+          <div key={field.name} className="space-y-2 pt-2 border-t mt-2">
+            <div className="flex items-center justify-between">
+              {renderLabel(field)}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onChange(field.name, [...transforms, { type: 'lowercase' }])}
-                className="h-5 px-1.5 text-[9px]"
+                className="h-5 px-1.5 text-[9px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
               >
                 <Plus className="h-2 w-2 mr-1" /> Add
               </Button>

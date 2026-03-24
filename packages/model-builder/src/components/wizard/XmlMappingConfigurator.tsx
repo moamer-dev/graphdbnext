@@ -18,7 +18,7 @@ import {
 import { cn } from '../../utils/cn'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import type { XmlStructureAnalysis, XmlMappingConfig } from '../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis, XmlMappingConfig } from '../../services/xml/xmlAnalyzer'
 import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import { SortableMappingItem } from './XmlMappingConfigurator/SortableMappingItem'
 

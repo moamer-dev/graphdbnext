@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
-import type { XmlStructureAnalysis } from '../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis } from '../../services/xml/xmlAnalyzer'
 
 export function useXmlTreeNavigation(analysis?: XmlStructureAnalysis) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())

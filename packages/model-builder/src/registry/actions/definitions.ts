@@ -19,8 +19,24 @@ import {
   SkipForward
 } from 'lucide-react'
 
+// Import executors
+import { executeSetPropertyAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction } from '../../services/workflow/workflowExecutor/actions/propertyActions'
+import { executeCreateRelationshipAction, executeDeferRelationshipAction, executeUpdateRelationshipAction, executeDeleteRelationshipAction, executeReverseRelationshipAction } from '../../services/workflow/workflowExecutor/actions/relationshipActions'
+import { executeCreateTextNodeAction, executeCreateTokenNodesAction } from '../../services/workflow/workflowExecutor/actions/advancedNodeActions'
+import { executeCreateAnnotationNodesAction, executeCreateReferenceChainAction } from '../../services/workflow/workflowExecutor/actions/referenceActions'
+import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeExtractAndComputePropertyAction, executeCreateNodeWithLookupAction } from '../../services/workflow/workflowExecutor/actions/complexActions'
+import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction } from '../../services/workflow/workflowExecutor/actions/nodeManipulationActions'
+import { executeSkipAction } from '../../services/workflow/workflowExecutor/actions/specialActions'
+
 // Helper to create common action definitions
 const registerAction = (def: ActionDefinition) => workflowRegistry.registerAction(def)
+
+// Register categories
+workflowRegistry.registerActionCategory({ id: 'node_actions', label: 'Node Actions', icon: Boxes, color: 'text-blue-600', bgColor: 'bg-blue-100', order: 1 })
+workflowRegistry.registerActionCategory({ id: 'property_actions', label: 'Property Actions', icon: FileText, color: 'text-amber-600', bgColor: 'bg-amber-100', order: 2 })
+workflowRegistry.registerActionCategory({ id: 'relationship_actions', label: 'Relationship Actions', icon: Link2, color: 'text-indigo-600', bgColor: 'bg-indigo-100', order: 3 })
+workflowRegistry.registerActionCategory({ id: 'workflow_&_control', label: 'Workflow & Control', icon: Boxes, color: 'text-orange-600', bgColor: 'bg-orange-100', order: 4 })
+workflowRegistry.registerActionCategory({ id: 'advanced_actions', label: 'Advanced Actions', icon: FileText, color: 'text-amber-600', bgColor: 'bg-amber-100', order: 5 })
 
 // 1. Set Property
 registerAction({
@@ -29,10 +45,13 @@ registerAction({
     label: 'Set Property',
     description: 'Set node property value',
     icon: Edit,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-pink-600',
-    bgColor: 'bg-pink-50'
+    bgColor: 'bg-pink-50',
+    order: 1,
+    hidden: false
   },
+  executor: executeSetPropertyAction,
   configSchema: [
     { name: 'propertyKey', label: 'Property Key', type: 'text', placeholder: 'Property name' },
     { name: 'propertyValue', label: 'Property Value', type: 'text', placeholder: 'Property value' },
@@ -57,10 +76,13 @@ registerAction({
     label: 'Create Relationship',
     description: 'Create relationship between nodes',
     icon: Link2,
-    category: 'Relationship Actions',
+    category: 'relationship_actions',
     color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50'
+    bgColor: 'bg-indigo-50',
+    order: 1,
+    hidden: false
   },
+  executor: executeCreateRelationshipAction,
   configSchema: [
     { name: 'relationshipType', label: 'Relationship Type', type: 'text', placeholder: 'e.g., contains, refersTo' },
     { 
@@ -95,11 +117,14 @@ registerAction({
     label: 'Action Group',
     description: 'Group multiple actions together',
     icon: Boxes,
-    category: 'Workflow & Control',
+    category: 'workflow_&_control',
     color: 'text-orange-600',
-    bgColor: 'bg-orange-50'
+    bgColor: 'bg-orange-50',
+    order: 1,
+    hidden: false
   },
-  configSchema: [], // Groups don't have separate config fields besides label/enabled (handled by sidebar)
+  // No executor for group (handled by walker)
+  configSchema: [], 
   defaultConfig: {}
 })
 
@@ -110,10 +135,13 @@ registerAction({
     label: 'Skip Element',
     description: 'Skip processing this element',
     icon: SkipForward,
-    category: 'Workflow & Control',
+    category: 'workflow_&_control',
     color: 'text-red-600',
-    bgColor: 'bg-red-50'
+    bgColor: 'bg-red-50',
+    order: 2,
+    hidden: false
   },
+  executor: executeSkipAction,
   configSchema: [
     { name: 'skipMainNode', label: 'Skip Main Node', type: 'boolean', defaultValue: true },
     { name: 'skipChildren', label: 'Skip Children', type: 'boolean', defaultValue: true },
@@ -139,10 +167,13 @@ registerAction({
     label: 'Bulk Attribute Mapper',
     description: 'Extract and normalize element attributes',
     icon: Settings,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-teal-600',
-    bgColor: 'bg-teal-50'
+    bgColor: 'bg-teal-50',
+    order: 2,
+    hidden: false
   },
+  executor: executeExtractAndNormalizeAttributesAction,
   configSchema: [
     { name: 'removeOriginal', label: 'Remove Original Attributes', type: 'boolean', defaultValue: false },
     { name: 'attributeMappings', label: 'Attribute Mappings', type: 'mappings' }
@@ -157,10 +188,13 @@ registerAction({
     label: 'Update Node',
     description: 'Update existing node properties',
     icon: Edit,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
+    bgColor: 'bg-blue-50',
+    order: 2,
+    hidden: false
   },
+  executor: executeUpdateNodeAction,
   configSchema: [
     { name: 'nodeId', label: 'Node ID (Optional)', type: 'text', description: 'Defaults to current node' },
     { name: 'properties', label: 'Properties to Update', type: 'properties' }
@@ -175,10 +209,13 @@ registerAction({
     label: 'Delete Node',
     description: 'Delete nodes conditionally',
     icon: Trash2,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-red-600',
-    bgColor: 'bg-red-50'
+    bgColor: 'bg-red-50',
+    order: 2,
+    hidden: false
   },
+  executor: executeDeleteNodeAction,
   configSchema: [
     { name: 'nodeId', label: 'Node ID (Optional)', type: 'text' },
     { name: 'condition', label: 'Condition', type: 'text', placeholder: 'e.g. {{ $json.type == "test" }}' }
@@ -193,10 +230,11 @@ registerAction({
     label: 'Create Reference Chain',
     description: 'Create chain of reference relationships',
     icon: Link2,
-    category: 'Relationship Actions',
+    category: 'relationship_actions',
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-50'
   },
+  executor: executeCreateReferenceChainAction,
   configSchema: [
     { name: 'relationshipType', label: 'Relationship Type', type: 'text', defaultValue: 'refersTo' },
     { name: 'referenceProperty', label: 'Reference Property', type: 'text', defaultValue: 'ref' },
@@ -212,10 +250,11 @@ registerAction({
     label: 'Format Property',
     description: 'Format property value (date, number, etc.)',
     icon: Wand2,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-50'
   },
+  executor: executeFormatPropertyAction,
   configSchema: [
     { name: 'propertyKey', label: 'Property to Format', type: 'text' },
     { 
@@ -241,10 +280,11 @@ registerAction({
     label: 'Create Token Nodes',
     description: 'Create nodes from text tokens',
     icon: Type,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50'
   },
+  executor: executeCreateTokenNodesAction,
   configSchema: [
     { name: 'parentNodeLabel', label: 'Parent Node Label', type: 'text', placeholder: 'e.g., Word, W' },
     { name: 'tokenNodeLabel', label: 'Token Node Label', type: 'text', placeholder: 'e.g., Character' },
@@ -285,10 +325,11 @@ registerAction({
     label: 'Merge Children Text',
     description: 'Merge text from child elements',
     icon: Merge,
-    category: 'Workflow & Control',
+    category: 'workflow_&_control',
     color: 'text-rose-600',
     bgColor: 'bg-rose-50'
   },
+  executor: executeMergeChildrenTextAction,
   configSchema: [
     { name: 'propertyKey', label: 'Target Property Key', type: 'text', defaultValue: 'text' },
     { name: 'separator', label: 'Separator', type: 'text', defaultValue: '' },
@@ -304,10 +345,11 @@ registerAction({
     label: 'Create Text Node',
     description: 'Create node with text content',
     icon: FileText,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50'
   },
+  executor: executeCreateTextNodeAction,
   configSchema: [
     { name: 'nodeLabel', label: 'Node Label', type: 'text' },
     { 
@@ -333,10 +375,11 @@ registerAction({
     label: 'Copy Property',
     description: 'Copy property from one node to another',
     icon: Copy,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-violet-600',
     bgColor: 'bg-violet-50'
   },
+  executor: executeCopyPropertyAction,
   configSchema: [
     { name: 'sourceProperty', label: 'Source Property', type: 'text' },
     { name: 'targetProperty', label: 'Target Property', type: 'text' },
@@ -352,10 +395,11 @@ registerAction({
     label: 'Update Relationship',
     description: 'Update existing relationship properties',
     icon: Edit,
-    category: 'Relationship Actions',
+    category: 'relationship_actions',
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-50'
   },
+  executor: executeUpdateRelationshipAction,
   configSchema: [
     { name: 'relationshipType', label: 'Relationship Type', type: 'text' },
     { name: 'newRelationshipType', label: 'New Relationship Type (Optional)', type: 'text' },
@@ -371,10 +415,11 @@ registerAction({
     label: 'Extract & Compute Property',
     description: 'Extract and compute property value',
     icon: Calculator,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50'
   },
+  executor: executeExtractAndComputePropertyAction,
   configSchema: [
     { name: 'propertyKey', label: 'Target Property Key', type: 'text' },
     { name: 'expression', label: 'Expression', type: 'text', placeholder: 'e.g. {{ $json.val * 2 }}' }
@@ -389,10 +434,11 @@ registerAction({
     label: 'Create Node with Lookup',
     description: 'Create node and link by property lookup',
     icon: Search,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-50'
   },
+  executor: executeCreateNodeWithLookupAction,
   configSchema: [
     { name: 'nodeLabel', label: 'Node Label', type: 'text' },
     { name: 'lookupProperty', label: 'Lookup Property', type: 'text' },
@@ -409,10 +455,11 @@ registerAction({
     label: 'Merge Properties',
     description: 'Merge properties from multiple sources',
     icon: Merge,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50'
   },
+  executor: executeMergePropertiesAction,
   configSchema: [
     { name: 'targetProperty', label: 'Target Property', type: 'text' },
     { name: 'sourceProperties', label: 'Source Properties (Comma separated)', type: 'text' },
@@ -428,10 +475,11 @@ registerAction({
     label: 'Split Property',
     description: 'Split property into multiple properties',
     icon: Split,
-    category: 'Property Actions',
+    category: 'property_actions',
     color: 'text-pink-600',
     bgColor: 'bg-pink-50'
   },
+  executor: executeSplitPropertyAction,
   configSchema: [
     { name: 'sourceProperty', label: 'Source Property', type: 'text' },
     { name: 'separator', label: 'Separator/Pattern', type: 'text', defaultValue: ',' },
@@ -447,10 +495,11 @@ registerAction({
     label: 'Clone Node',
     description: 'Clone node with modifications',
     icon: Copy,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-green-600',
     bgColor: 'bg-green-50'
   },
+  executor: executeCloneNodeAction,
   configSchema: [
     { name: 'nodeId', label: 'Source Node ID (Optional)', type: 'text' },
     { name: 'newLabel', label: 'New Label (Optional)', type: 'text' },
@@ -466,10 +515,11 @@ registerAction({
     label: 'Merge Nodes',
     description: 'Merge duplicate nodes',
     icon: Merge,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50'
   },
+  executor: executeMergeNodesAction,
   configSchema: [
     { name: 'nodeLabel', label: 'Node Label', type: 'text' },
     { name: 'mergeCriteria', label: 'Merge Criteria Property', type: 'text', defaultValue: 'id' }
@@ -481,13 +531,16 @@ registerAction({
 registerAction({
   id: 'action:create-node-complete',
   metadata: {
-    label: 'Create Node Complete',
+    label: 'Create Node',
     description: 'Create a fully specified node with relationships',
     icon: Boxes,
-    category: 'Node Actions',
+    category: 'node_actions',
     color: 'text-blue-700',
-    bgColor: 'bg-blue-50'
+    bgColor: 'bg-blue-50',
+    order: 1,
+    hidden: false
   },
+  executor: executeCreateNodeCompleteAction,
   configSchema: [
     { name: 'nodeLabel', label: 'Node Label', type: 'text' },
     { name: 'properties', label: 'Properties Mapping', type: 'mappings' },
@@ -503,10 +556,11 @@ registerAction({
     label: 'Create Annotation Nodes',
     description: 'Create individual nodes for specific annotations',
     icon: FileText,
-    category: 'Advanced Actions',
+    category: 'advanced_actions',
     color: 'text-amber-600',
     bgColor: 'bg-amber-50'
   },
+  executor: executeCreateAnnotationNodesAction,
   configSchema: [
     { name: 'annotationPath', label: 'Annotation Path', type: 'text' },
     { name: 'nodeLabel', label: 'Node Label', type: 'text' },
@@ -522,10 +576,11 @@ registerAction({
     label: 'Delete Relationship',
     description: 'Remove an existing relationship',
     icon: Trash2,
-    category: 'Relationship Actions',
+    category: 'relationship_actions',
     color: 'text-red-600',
     bgColor: 'bg-red-50'
   },
+  executor: executeDeleteRelationshipAction,
   configSchema: [
     { name: 'relationshipType', label: 'Relationship Type', type: 'text' }
   ],
@@ -539,12 +594,45 @@ registerAction({
     label: 'Reverse Relationship',
     description: 'Reverse the direction of a relationship',
     icon: RotateCcw,
-    category: 'Relationship Actions',
+    category: 'relationship_actions',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50'
   },
+  executor: executeReverseRelationshipAction,
   configSchema: [
     { name: 'relationshipType', label: 'Relationship Type', type: 'text' }
   ],
   defaultConfig: { relationshipType: '' }
+})
+
+// 26. Defer Relationship
+registerAction({
+  id: 'action:defer-relationship',
+  metadata: {
+    label: 'Defer Relationship',
+    description: 'Create relationship to an element processed later',
+    icon: Link2,
+    category: 'relationship_actions',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50'
+  },
+  executor: executeDeferRelationshipAction,
+  configSchema: [
+    { name: 'relationshipType', label: 'Relationship Type', type: 'text' },
+    { name: 'targetTag', label: 'Target Tag', type: 'text' },
+    { name: 'targetAttributeName', label: 'Target Attribute Name', type: 'text' },
+    { name: 'targetAttributeValue', label: 'Target Attribute Value', type: 'text' },
+    { 
+      name: 'searchScope', 
+      label: 'Search Scope', 
+      type: 'select',
+      options: [
+        { label: 'Children', value: 'children' },
+        { label: 'Descendants', value: 'descendants' },
+        { label: 'Global', value: 'global' }
+      ],
+      defaultValue: 'children'
+    }
+  ],
+  defaultConfig: { relationshipType: 'relatedTo', targetTag: '', targetAttributeName: '', targetAttributeValue: '', searchScope: 'children' }
 })

@@ -18,7 +18,7 @@ import {
     PopoverTrigger
 } from '../../../ui/popover'
 import type { TibProperty } from '../../../../types/semanticTypes'
-import { useProperties } from '../../../../hooks/useTibTerminology'
+import { useProperties } from '../../../../hooks/terminology/useTibTerminology'
 
 interface SemanticPropertySelectProps {
     ontologyId: string | null

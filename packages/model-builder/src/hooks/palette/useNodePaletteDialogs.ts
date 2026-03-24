@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { parseBulkNodeInput } from '../../services/parseService'
-import { useBulkNodeParser } from '../useBulkParser'
+import { parseBulkNodeInput } from '../../services/xml/parseService'
+import { useBulkNodeParser } from '../xml/useBulkParser'
 
 export function useNodePaletteDialogs() {
   const nodes = useModelBuilderStore((state) => state.nodes)

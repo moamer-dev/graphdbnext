@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
-import { useXmlImport } from '../useXmlImport'
+import { useXmlImport } from '../xml/useXmlImport'
 
 export function useXmlImportWizardUI() {
   const fileInputRef = useRef<HTMLInputElement>(null)

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { ResizablePanel } from '../ui/resizable-panel'
 import { cn } from '../../utils/cn'
 import { XmlCodePreview } from '../editor/XmlCodePreview'
-import type { XmlAnalysisRules } from '../../services/xmlAnalyzer'
+import type { XmlAnalysisRules } from '../../services/xml/xmlAnalyzer'
 import type { XmlElementInfo } from '../../utils/xmlElementExtractor'
 import { useAIFeature } from '../../ai/config'
 

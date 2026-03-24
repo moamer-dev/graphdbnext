@@ -23,7 +23,7 @@ import {
 } from '../../ui/select'
 import { Plus, FileText, ArrowRight, X, Upload, Download } from 'lucide-react'
 import { useModelBuilderStore } from '../../../stores/modelBuilderStore'
-import { generateRelationshipTemplate } from '../../../services/parseService'
+import { generateRelationshipTemplate } from '../../../services/xml/parseService'
 import { downloadFile } from '../../../utils/exportUtils'
 import { ConfirmDialog } from '../../dialogs/ConfirmDialog'
 import type { Node, Relationship } from '../../../types'

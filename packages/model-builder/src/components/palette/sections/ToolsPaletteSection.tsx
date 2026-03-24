@@ -3,9 +3,10 @@
 import { Input } from '../../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
 import { Search, Folder } from 'lucide-react'
-import { toolCategories, type ToolItem } from '../../../constants/workflowItems'
+import { workflowRegistry } from '../../../registry'
 import { cn } from '../../../utils/cn'
 import { useNodePaletteSearch } from '../../../hooks'
+
 interface ToolsPaletteSectionProps {
   className?: string
 }
@@ -57,6 +58,8 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
   const expandedToolCategories = searchHook.expandedToolCategories
   const setExpandedToolCategories = searchHook.setExpandedToolCategories
   const filteredTools = searchHook.filteredTools
+  
+  const categories = workflowRegistry.getToolCategories()
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -81,9 +84,9 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {Object.keys(toolCategories).map(category => (
-              <SelectItem key={category} value={category}>
-                {category}
+            {categories.map(category => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -98,11 +101,11 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
             <p className="text-xs mt-1">Try adjusting your search or filter</p>
           </div>
         ) : (
-          filteredTools.map(({ category, items }) => {
-            const categoryConfig = toolCategories[category as keyof typeof toolCategories]
-            const CategoryIcon = categoryConfig?.icon || Folder
-            const categoryColor = categoryConfig?.color || 'text-muted-foreground'
-            const categoryBgColor = categoryConfig?.bgColor || 'bg-muted'
+          filteredTools.map(({ category, config, items }) => {
+            const CategoryIcon = config?.icon || Folder
+            const categoryColor = config?.color || 'text-muted-foreground'
+            const categoryBgColor = config?.bgColor || 'bg-muted'
+            const categoryLabel = config?.label || 'Unknown'
             const isExpanded = expandedToolCategories.has(category)
 
             return (
@@ -130,7 +133,7 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
                   <div className={cn("h-5 w-5 rounded-md flex items-center justify-center shrink-0", categoryBgColor)}>
                     <CategoryIcon className={cn("h-3.5 w-3.5", categoryColor)} />
                   </div>
-                  <span className="flex-1 text-left">{category}</span>
+                  <span className="flex-1 text-left">{categoryLabel}</span>
                   <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
                     {items.length}
                   </span>
@@ -139,7 +142,7 @@ export function ToolsPaletteSection({ className }: ToolsPaletteSectionProps) {
                 {/* Category Items */}
                 {isExpanded && (
                   <div className="space-y-0.5 pl-1">
-                    {items.map((item: ToolItem) => {
+                    {items.map((item: any) => {
                       const Icon = item.icon
                       const colors = getColorClassesHelper(item.color, item.bgColor)
 

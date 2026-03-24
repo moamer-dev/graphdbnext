@@ -5,7 +5,7 @@ import { suggestSchema, optimizeSchema, validateSchema, type SchemaSuggestion, t
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import { createToolExecutor } from '../../ai/tools/toolExecutor'
-import { SchemaDesignService } from '../../services/schemaDesignService'
+import { SchemaDesignService } from '../../services/schema/schemaDesignService'
 
 interface AppliedOptimization {
   improvementIndex: number

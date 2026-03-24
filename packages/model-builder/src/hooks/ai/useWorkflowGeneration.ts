@@ -6,7 +6,7 @@ import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../../stores/actionCanvasStore'
 import { toast } from '../../utils/toast'
-import { WorkflowApplicationService } from '../../services/workflowApplicationService'
+import { WorkflowApplicationService } from '../../services/workflow/workflowApplicationService'
 
 export function useWorkflowGeneration() {
   const [description, setDescription] = useState('')

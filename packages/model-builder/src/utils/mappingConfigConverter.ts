@@ -1,4 +1,4 @@
-import type { XmlMappingConfig } from '../services/xmlAnalyzer'
+import type { XmlMappingConfig } from '../services/xml/xmlAnalyzer'
 import type { MappingConfig, ElementMapping, AttributeMapping, RelationshipMapping, TextContentRule } from '../types/mappingConfig'
 
 /**

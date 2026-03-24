@@ -1,6 +1,6 @@
 import { useState, useEffect, startTransition } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { useLiveUpdate, useLiveUpdateComplex } from '../useLiveUpdate'
+import { useLiveUpdate, useLiveUpdateComplex } from '../lifecycle/useLiveUpdate'
 import type { Node, Property } from '../../types'
 
 interface UseNodeEditorProps {

@@ -8,7 +8,6 @@ export type ActionNodeType =
   | 'action:skip'
   | 'action:defer-relationship'
   | 'action:create-node-with-lookup'
-  | 'action:create-node'
   | 'action:create-node-text'
   | 'action:create-node-tokens'
   | 'action:create-text-node'

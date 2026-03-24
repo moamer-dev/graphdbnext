@@ -29,7 +29,7 @@ import {
 import { cn } from '../../../utils/cn'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { XmlStructureAnalysis, XmlMappingConfig } from '../../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis, XmlMappingConfig } from '../../../services/xml/xmlAnalyzer'
 import type { Property } from '../../../types'
 import { Badge } from '../../ui/badge'
 import { AddPropertyPopover } from './AddPropertyPopover'

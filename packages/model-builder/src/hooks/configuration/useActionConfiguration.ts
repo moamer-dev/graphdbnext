@@ -9,7 +9,7 @@ import { useActionConfigurationStore } from '../../stores/actionConfigurationSto
 import { useActionTestExecution } from './useActionTestExecution'
 import { workflowRegistry } from '../../registry'
 import { convertBuilderToSchemaJson } from '../../utils/schemaJsonConverter'
-import { executeWorkflow as executeWorkflowExecutor } from '../../services/workflowExecutor'
+import { executeWorkflow as executeWorkflowExecutor } from '../../services/workflow/workflowExecutor'
 
 export function useActionConfiguration(actionNodeId: string | null) {
   const actionNodes = useActionCanvasStore((state) => state.nodes)

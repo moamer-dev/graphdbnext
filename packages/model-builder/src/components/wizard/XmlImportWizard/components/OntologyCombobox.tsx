@@ -18,7 +18,7 @@ import {
     PopoverTrigger
 } from '../../../ui/popover'
 import type { TibOntology } from '../../../../types/semanticTypes'
-import { useOntologies } from '../../../../hooks/useTibTerminology'
+import { useOntologies } from '../../../../hooks/terminology/useTibTerminology'
 
 interface OntologyComboboxProps {
     value?: string

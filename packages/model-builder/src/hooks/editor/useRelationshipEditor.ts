@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { useLiveUpdate, useLiveUpdateComplex } from '../useLiveUpdate'
+import { useLiveUpdate, useLiveUpdateComplex } from '../lifecycle/useLiveUpdate'
 import type { Relationship, Property } from '../../types'
 
 interface UseRelationshipEditorProps {

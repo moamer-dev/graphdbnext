@@ -10,7 +10,7 @@ import { MarkdownContent } from '../../ai/MarkdownContent'
 import { useAISettings, useAIFeature } from '../../../ai/config'
 import { createChatModel } from '../../../ai/models/factory'
 import { suggestXmlMappings, explainMapping } from '../../../ai/agents/XmlMappingAssistant'
-import type { XmlStructureAnalysis, XmlMappingConfig } from '../../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis, XmlMappingConfig } from '../../../services/xml/xmlAnalyzer'
 import { cn } from '../../../utils/cn'
 
 /**

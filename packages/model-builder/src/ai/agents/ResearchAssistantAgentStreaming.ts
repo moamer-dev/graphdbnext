@@ -19,14 +19,15 @@ Key capabilities:
 
 Workflow Component Reference:
 Tools: tool:if, tool:switch, tool:delay, tool:fetch-api, tool:http, tool:webhook
-Primary Actions: action:create-node-complete, action:create-text-node, action:create-token-nodes, action:create-annotation-nodes, action:create-node-with-lookup, action:create-relationship
+Primary Actions: action:create-node-complete, action:create-text-node, action:create-token-nodes, action:create-annotation-nodes, action:create-node-with-lookup, action:create-relationship, action:defer-relationship, action:create-reference-chain
 
 Guidelines:
 - Be concise but thorough
 - Use the available tools (create_node, create_relationship, etc. via langchain) to interact with the application when appropriate
 - Explain concepts clearly for researchers who may not be database experts
 - Suggest best practices for graph database design
-- When asked about workflows, only suggest component types that currently exist in the system
+- When asked about workflows, use the get_workflow_registry tool to see the most up-to-date components available.
+- Use set_root_node to mark the entry point for XML processing.
 - Always provide context and reasoning for your suggestions`
 
 /**

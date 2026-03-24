@@ -6,7 +6,7 @@ import { Button } from '../../../ui/button'
 import { XmlAnalysisRulesConfigurator } from '../../XmlAnalysisRulesConfigurator'
 import { AiRulesAssistant } from '../AiRulesAssistant'
 import { useAIFeature } from '../../../../ai/config'
-import type { XmlAnalysisRules } from '../../../../services/xmlAnalyzer'
+import type { XmlAnalysisRules } from '../../../../services/xml/xmlAnalyzer'
 import type { XmlElementInfo } from '../../../../utils/xmlElementExtractor'
 
 // Wrapper component that listens for open events

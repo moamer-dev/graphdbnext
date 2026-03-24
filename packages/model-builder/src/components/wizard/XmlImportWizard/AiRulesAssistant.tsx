@@ -10,7 +10,7 @@ import { useAISettings, useAIFeature } from '../../../ai/config'
 import { createChatModel } from '../../../ai/models/factory'
 import { suggestXmlRules, chatWithXmlRulesAssistant } from '../../../ai/agents/XmlRulesAssistant'
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages'
-import type { XmlAnalysisRules } from '../../../services/xmlAnalyzer'
+import type { XmlAnalysisRules } from '../../../services/xml/xmlAnalyzer'
 import type { XmlElementInfo } from '../../../utils/xmlElementExtractor'
 import { cn } from '../../../utils/cn'
 

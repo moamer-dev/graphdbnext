@@ -52,11 +52,10 @@ import {
   SelectValue
 } from '../ui/select'
 import { HelpCircle, Plus, Search, FolderPlus, GripVertical, X, Upload, FileText, Download } from 'lucide-react'
-import { cn } from '../../utils/cn'
 import { SortableNodeItem } from './SortableNodeItem'
 import { NodeGroupComponent } from '../nodes/NodeGroup'
 import { ConfirmDialog } from '../dialogs/ConfirmDialog'
-import { generateNodeTemplate } from '../../services/parseService'
+import { generateNodeTemplate } from '../../services/xml/parseService'
 import { downloadFile } from '../../utils/exportUtils'
 import { useBulkNodeParser, useNodePaletteSearch } from '../../hooks'
 import { useNodePaletteDialogs } from '../../hooks/palette/useNodePaletteDialogs'

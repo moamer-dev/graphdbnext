@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { FileText } from 'lucide-react'
 import { cn } from '../../../utils/cn'
-import type { XmlStructureAnalysis } from '../../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis } from '../../../services/xml/xmlAnalyzer'
 import { XmlJsonTreeViewer } from '../../viewer/XmlJsonTreeViewer'
 
 interface XmlStructureViewerProps {

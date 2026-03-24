@@ -11,6 +11,9 @@ export interface ToolExecutionContext {
   getRelationships: () => Relationship[]
 }
 
+import { workflowRegistry } from '../../registry/workflowRegistry'
+import { ActionDefinition, ToolDefinition } from '../../registry/types'
+
 /**
  * Creates tool execution handlers that can interact with the model builder store
  */
@@ -229,6 +232,37 @@ export function createToolExecutor(context: ToolExecutionContext) {
       }
       return `Available nodes (${nodes.length}):\n${nodes.map(n => `- "${n.label}" (type: ${n.type}, ID: ${n.id})`).join('\n')}`
     },
+    
+    /**
+     * Sets a node as the root starting point for workflow execution
+     */
+    async setRootNode(args: { nodeIdOrLabel: string }): Promise<string> {
+      const store = context.getStore()
+      const nodes = context.getNodes()
+      
+      const node = nodes.find(n => 
+        n.id === args.nodeIdOrLabel || 
+        n.label.toLowerCase() === args.nodeIdOrLabel.toLowerCase() || 
+        n.type.toLowerCase() === args.nodeIdOrLabel.toLowerCase()
+      )
+      
+      if (!node) {
+        throw new Error(`Node "${args.nodeIdOrLabel}" not found. Create the node before setting it as root.`)
+      }
+      
+      store.setRootNodeId(node.id)
+      return `Node "${node.label}" (ID: ${node.id}) has been set as the root starting point for workflow execution.`
+    },
+    
+    /**
+     * Queries the workflow registry for available tools and actions
+     */
+    getWorkflowRegistry(): { actions: ActionDefinition[]; tools: ToolDefinition[] } {
+      return {
+        actions: workflowRegistry.getAllActions(),
+        tools: workflowRegistry.getAllTools()
+      }
+    }
   }
 }
 

@@ -6,6 +6,7 @@ import { useActionCanvasStore } from '../../stores/actionCanvasStore'
 export function useCanvasNodeManagement() {
   const [deleteNodeDialogOpen, setDeleteNodeDialogOpen] = useState(false)
   const [pendingNodeId, setPendingNodeId] = useState<string | null>(null)
+  const [pendingNodeType, setPendingNodeType] = useState<'model' | 'tool' | 'action' | null>(null)
   
   const {
     deleteNode,
@@ -16,17 +17,18 @@ export function useCanvasNodeManagement() {
   const { deleteNode: deleteToolNode } = useToolCanvasStore()
   const { deleteNode: deleteActionNode } = useActionCanvasStore()
 
-  const handleDeleteNode = useCallback((nodeId: string, nodeType?: 'model' | 'tool' | 'action') => {
+  const handleDeleteNode = useCallback((nodeId: string, nodeType: 'model' | 'tool' | 'action' = 'model') => {
     setPendingNodeId(nodeId)
+    setPendingNodeType(nodeType)
     setDeleteNodeDialogOpen(true)
   }, [])
 
-  const handleConfirmDeleteNode = useCallback((nodeType?: 'model' | 'tool' | 'action') => {
+  const handleConfirmDeleteNode = useCallback(() => {
     if (!pendingNodeId) return
     
-    if (nodeType === 'tool') {
+    if (pendingNodeType === 'tool') {
       deleteToolNode(pendingNodeId)
-    } else if (nodeType === 'action') {
+    } else if (pendingNodeType === 'action') {
       deleteActionNode(pendingNodeId)
     } else {
       deleteNode(pendingNodeId)
@@ -36,17 +38,20 @@ export function useCanvasNodeManagement() {
     }
     
     setPendingNodeId(null)
+    setPendingNodeType(null)
     setDeleteNodeDialogOpen(false)
-  }, [pendingNodeId, deleteNode, deleteToolNode, deleteActionNode, selectedNode, selectNode])
+  }, [pendingNodeId, pendingNodeType, deleteNode, deleteToolNode, deleteActionNode, selectedNode, selectNode])
 
   const handleCancelDeleteNode = useCallback(() => {
     setPendingNodeId(null)
+    setPendingNodeType(null)
     setDeleteNodeDialogOpen(false)
   }, [])
 
   return {
     deleteNodeDialogOpen,
     pendingNodeId,
+    pendingNodeType,
     handleDeleteNode,
     handleConfirmDeleteNode,
     handleCancelDeleteNode

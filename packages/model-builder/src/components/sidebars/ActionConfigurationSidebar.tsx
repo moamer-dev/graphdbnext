@@ -122,7 +122,7 @@ export function ActionConfigurationSidebar({
         {/* Fallback for actions not yet in registry but still having config components */}
         {!actionDefinition && (
           <div className="p-4 text-xs text-muted-foreground border rounded bg-muted/20">
-            This action type ({actionNode.type}) is not yet registered in the dynamic system.
+            This action type ({actionNode.type}) is not yet registered in the registry.
           </div>
         )}
 

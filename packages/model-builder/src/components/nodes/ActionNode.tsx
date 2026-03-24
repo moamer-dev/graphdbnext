@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
 import { X } from 'lucide-react'
-import { actionCategories } from '../../constants/workflowItems'
+import { workflowRegistry } from '../../registry'
 
 interface ActionNodeData {
   label: string
@@ -17,11 +17,9 @@ interface ActionNodeData {
 
 // Helper to get icon and color for action type
 function getActionIconAndColor(type: string): { Icon: React.ComponentType<{ className?: string }> | null; color: string } {
-  for (const category of Object.values(actionCategories)) {
-    const action = category.actions.find(a => a.type === type)
-    if (action) {
-      return { Icon: action.icon, color: action.color || 'text-gray-600' }
-    }
+  const action = workflowRegistry.getAction(type)
+  if (action) {
+    return { Icon: action.metadata.icon as any, color: action.metadata.color || 'text-gray-600' }
   }
   return { Icon: null, color: 'text-gray-600' }
 }

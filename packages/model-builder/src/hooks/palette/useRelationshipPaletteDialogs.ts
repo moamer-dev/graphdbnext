@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { parseBulkRelationshipInput } from '../../services/parseService'
-import { useBulkRelationshipParser } from '../useBulkParser'
+import { parseBulkRelationshipInput } from '../../services/xml/parseService'
+import { useBulkRelationshipParser } from '../xml/useBulkParser'
 
 export function useRelationshipPaletteDialogs() {
   const nodes = useModelBuilderStore((state) => state.nodes)

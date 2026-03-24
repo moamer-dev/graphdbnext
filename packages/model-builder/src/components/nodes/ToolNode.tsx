@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
 import { X } from 'lucide-react'
-import { toolCategories } from '../../constants/workflowItems'
+import { workflowRegistry } from '../../registry'
 
 interface ToolNodeData {
   label: string
@@ -19,11 +19,9 @@ interface ToolNodeData {
 
 // Helper to get icon and color for tool type
 function getToolIconAndColor(type: string): { Icon: React.ComponentType<{ className?: string }> | null; color: string } {
-  for (const category of Object.values(toolCategories)) {
-    const tool = category.tools.find(t => t.type === type)
-    if (tool) {
-      return { Icon: tool.icon, color: tool.color || 'text-gray-600' }
-    }
+  const tool = workflowRegistry.getTool(type)
+  if (tool) {
+    return { Icon: tool.metadata.icon as any, color: tool.metadata.color || 'text-gray-600' }
   }
   return { Icon: null, color: 'text-gray-600' }
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import type { XmlStructureAnalysis, XmlMappingConfig } from '../../services/xmlAnalyzer'
-import { XmlAnalyzer } from '../../services/xmlAnalyzer'
+import type { XmlStructureAnalysis, XmlMappingConfig } from '../../services/xml/xmlAnalyzer'
+import { XmlAnalyzer } from '../../services/xml/xmlAnalyzer'
 
 interface UseXmlMappingStateProps {
   analysis: XmlStructureAnalysis

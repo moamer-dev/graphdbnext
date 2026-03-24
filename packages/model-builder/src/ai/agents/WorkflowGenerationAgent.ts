@@ -258,6 +258,10 @@ WORKFLOW & CONTROL:
 - action:skip - Skip processing current element or its children
 - action:merge-children-text - Flatten nested XML text into a single property
 
+ADVANCED ACTIONS:
+- action:create-annotation-nodes - Create annotation nodes from references
+- action:create-reference-chain - Create chain of reference relationships
+
 COMMON PATTERNS:
 
 Pattern 1: Check if element has attribute, then tokenize:
@@ -308,8 +312,7 @@ IMPORTANT RULES:
 2. For conditional checks: Use "tool:if" with appropriate condition groups (e.g. HasAttribute).
 3. Connect tool:if "true" output to actions that should execute when condition is met
 4. Use specialized actions (action:create-token-nodes, action:create-annotation-nodes, etc.) instead of generic actions when they match your use case
-5. Start with XML input (implicit trigger:xml-start)
-6. Use appropriate positions (spread horizontally: 100px apart, vertically: 150px apart)
+5. Use appropriate positions (spread horizontally: 100px apart, vertically: 150px apart)
 7. Use semantic labels for nodes
 
 Generate a workflow as JSON following these patterns. Return ONLY valid JSON. No comments, no trailing commas, no markdown code blocks.`

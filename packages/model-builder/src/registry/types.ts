@@ -22,6 +22,7 @@ export interface ConfigField {
   type: FieldType
   placeholder?: string
   description?: string
+  details?: string
   options?: FieldOption[] // For select/multiselect
   defaultValue?: any
   required?: boolean
@@ -38,6 +39,8 @@ export interface ItemMetadata {
   color?: string
   bgColor?: string
   isApiTool?: boolean
+  order?: number
+  hidden?: boolean
 }
 
 export interface BaseDefinition {
@@ -47,10 +50,19 @@ export interface BaseDefinition {
   defaultConfig: Record<string, any>
 }
 
+export interface CategoryMetadata {
+  id: string
+  label: string
+  icon: LucideIcon
+  color?: string
+  bgColor?: string
+  order?: number
+}
+
 export interface ActionDefinition extends BaseDefinition {
   executor?: (action: any, ctx: any) => void
 }
 
 export interface ToolDefinition extends BaseDefinition {
-  // Tools might need different specific properties later
+  executor?: (tool: any, ctx: any) => Promise<any>
 }
