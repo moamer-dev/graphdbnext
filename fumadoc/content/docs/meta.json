@@ -1,0 +1,13 @@
+{
+  "docs": {
+    "title": "Guide",
+    "items": [
+      "index",
+      "installation",
+      "configuration",
+      "first-project",
+      "querying",
+      "faq"
+    ]
+  }
+}
