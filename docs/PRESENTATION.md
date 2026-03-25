@@ -1,10 +1,10 @@
-# GraphDBNext: AI-Powered Graph Database for Digital Humanities
+# Plexus: AI-Powered Graph Database for Digital Humanities
 
 ---
 
-## What is GraphDBNext?
+## What is Plexus?
 
-**GraphDBNext** is a comprehensive graph database management system designed specifically for **digital humanities researchers**.
+**Plexus** is a comprehensive graph database management system designed specifically for **digital humanities researchers**.
 
 It bridges the gap between unstructured/semi-structured text (like TEI XML) and structured graph databases.
 
@@ -48,7 +48,7 @@ Digital Humanities researchers face specific challenges that standard tools don'
 
 ## Core Workflow: XML to Graph
 
-GraphDBNext features a specialized 4-step wizard to convert documents into data:
+Plexus features a specialized 4-step wizard to convert documents into data:
 
 1.  **Step 1: Upload & Validate**
     *   Drag-and-drop XML/TEI files.
@@ -132,7 +132,7 @@ Proven efficiency gains for research teams:
 
 ## Summary
 
-**GraphDBNext** empowers humanities scholars to:
+**Plexus** empowers humanities scholars to:
 1.  **Visually model** complex data.
 2.  **Automatically convert** text to graphs.
 3.  **Intelligently enrich** data with AI and external APIs.

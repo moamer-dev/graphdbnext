@@ -6,7 +6,7 @@ import { useModelBuilder } from '@/hooks'
 import { resourceHooks } from '@/hooks/react-query'
 import { ModelResource } from '@/resources/ModelResource'
 import { toast } from 'sonner'
-import { useXmlImportWizardStore } from '@graphdb/model-builder'
+import { useXmlImportWizardStore } from '@plexus/builder'
 
 export function useNewModel () {
   const router = useRouter()

@@ -61,7 +61,7 @@ interface Module {
 ```
 
 #### Module IDs:
-- `MODULE_IDS.MODEL_BUILDER = 'model-builder'`
+- `MODULE_IDS.MODEL_BUILDER = 'plexus-builder'`
 
 ### 2. Adapter Pattern (`@lib/adapters/`)
 
@@ -69,7 +69,7 @@ Adapters bridge the gap between standalone packages and the main application.
 
 #### ModelBuilderAdapter (`ModelBuilderAdapter.tsx`)
 
-**Purpose**: Wraps the `@graphdb/model-builder` package and connects it to the Model database entity.
+**Purpose**: Wraps the `@plexus/builder` package and connects it to the Model database entity.
 
 **Responsibilities**:
 - Loads model data from database (JSON/MD format) into builder state
@@ -81,7 +81,7 @@ Adapters bridge the gap between standalone packages and the main application.
 1. Receives a `Model` object from the database
 2. Converts schema data (JSON or MD) to builder format using package utilities
 3. Loads data into the Zustand store via `loadState()`
-4. Listens for save events (`model-builder:save`)
+4. Listens for save events (`plexus-builder:save`)
 5. Exports current builder state to JSON/MD
 6. Calls `onSave` callback to persist to database
 
@@ -232,7 +232,7 @@ return <ModelBuilderAdapter model={model} onSave={handleSave} />
    ↓
 2. User clicks "Save Changes" button
    ↓
-3. Button dispatches 'model-builder:save' custom event
+3. Button dispatches 'plexus-builder:save' custom event
    ↓
 4. ModelBuilderAdapter listens for event
    ↓
@@ -285,7 +285,7 @@ To add a new module to the system:
 ```typescript
 // @lib/modules/types.ts
 export const MODULE_IDS = {
-  MODEL_BUILDER: 'model-builder',
+  MODEL_BUILDER: 'plexus-builder',
   NEW_MODULE: 'new-module'  // Add here
 } as const
 ```
@@ -411,7 +411,7 @@ return <NewModuleAdapter {...props} />
 2. **Config File**: Store in `config/modules.json`
    ```json
    {
-     "model-builder": {
+     "plexus-builder": {
        "enabled": true,
        "version": "1.0.0"
      }
@@ -482,12 +482,12 @@ return <NewModuleAdapter {...props} />
 - **Model Edit**: `@app/dashboard/graph/model/[id]/edit/page.tsx`
 
 ### Package
-- **Model Builder Package**: `@packages/model-builder/`
+- **Model Builder Package**: `@packages/plexus-builder/`
 
 ## File Structure
 
 ```
-graphdbnext/
+plexus/
 ├── lib/
 │   ├── modules/
 │   │   ├── types.ts              # Module interfaces
@@ -513,6 +513,6 @@ graphdbnext/
 │                   └── edit/
 │                       └── page.tsx  # Model edit page with builder
 └── packages/
-    └── model-builder/            # Standalone Model Builder package
+    └── plexus-builder/            # Standalone Model Builder package
 ```
 

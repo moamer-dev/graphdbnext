@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
   },
   
   // Transpile local packages
-  transpilePackages: ['@graphdb/model-builder'],
+  transpilePackages: ['@plexus/builder'],
+  
+  // External packages that shouldn't be bundled
+  serverExternalPackages: ['@prisma/client'],
   
   // Experimental optimizations
   experimental: {

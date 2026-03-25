@@ -1,4 +1,4 @@
-import type { AISettingsStorage, AISettings } from '@graphdb/model-builder'
+import type { AISettingsStorage, AISettings } from '@plexus/builder'
 
 // Export default settings for use in other files
 export const DEFAULT_AI_SETTINGS: AISettings = {

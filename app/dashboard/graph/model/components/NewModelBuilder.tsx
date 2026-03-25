@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useModelBuilder } from '@/hooks'
-import type { ModelBuilderRef } from '@graphdb/model-builder'
+import type { ModelBuilderRef } from '@plexus/builder'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'

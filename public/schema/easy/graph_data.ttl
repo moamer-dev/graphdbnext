@@ -1,6 +1,6 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sord: <https://star.sub.uni-goettingen.de/data/> .
-@prefix gdb: <https://graphdbnext.example.com/schema/> .
+@prefix gdb: <https://plexus.example.com/schema/> .
 @prefix ns1: <http://www.cidoc-crm.org/cidoc-crm/> .
 
 sord:edxml_0 a gdb:Edxml ;

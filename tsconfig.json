@@ -20,7 +20,7 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@graphdb/model-builder": ["./packages/model-builder/src"]
+      "@plexus/builder": ["./packages/plexus-builder/src"]
     }
   },
   "include": [

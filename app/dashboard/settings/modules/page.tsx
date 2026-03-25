@@ -143,9 +143,9 @@ export default function ModulesSettingsPage() {
                   <p className="text-xs text-muted-foreground">
                     {module.description}
                   </p>
-                  {module.id === 'model-builder' && module.enabled && (
+                  {module.id === 'plexus-builder' && module.enabled && (
                     <div className="mt-2 pt-2 border-t border-border/20">
-                      <Link href="/dashboard/settings/model-builder">
+                      <Link href="/dashboard/settings/plexus-builder">
                         <Button variant="ghost" size="sm" className="h-7 text-xs gap-2">
                           <Settings className="h-3 w-3" />
                           Configure AI Settings

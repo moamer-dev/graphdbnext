@@ -3,11 +3,11 @@
 import {
   ModelBuilder,
   AISettingsProvider
-} from '@graphdb/model-builder'
+} from '@plexus/builder'
 import type {
   WorkflowPersistence,
   ModelBuilderRef
-} from '@graphdb/model-builder'
+} from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
 import { useModelBuilderAdapter } from './useModelBuilderAdapter'
 
@@ -20,7 +20,7 @@ export interface ModelBuilderAdapterProps {
 }
 
 /**
- * Adapter component that wraps the model-builder package
+ * Adapter component that wraps the plexus-builder package
  * and connects it to the main app's Model database entity.
  */
 export function ModelBuilderAdapter({
@@ -47,9 +47,11 @@ export function ModelBuilderAdapter({
 
   if (aiSettings === null) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-sm text-muted-foreground">Loading settings...</div>
-      </div>
+      <>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-sm text-muted-foreground">Loading settings...</div>
+        </div>
+      </>
     )
   }
 

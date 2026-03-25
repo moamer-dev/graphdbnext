@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GraphDBNext",
-  description: "Manage XML to Graph conversion and Memgraph database operations",
+  title: "Plexus",
+  description: "Plexus - Graph Research Platform for Digital Humanities",
 };
 
 export default function RootLayout({

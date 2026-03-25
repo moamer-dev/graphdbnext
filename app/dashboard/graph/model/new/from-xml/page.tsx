@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useModelBuilder } from '@/hooks'
-import { XmlImportWizard, AISettingsProvider, useXmlImportWizardStore, DEFAULT_AI_SETTINGS } from '@graphdb/model-builder'
-import type { AISettings } from '@graphdb/model-builder'
+import { XmlImportWizard, AISettingsProvider, useXmlImportWizardStore, DEFAULT_AI_SETTINGS } from '@plexus/builder'
+import type { AISettings } from '@plexus/builder'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ArrowLeft } from 'lucide-react'

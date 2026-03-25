@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import type { AISettings } from '@graphdb/model-builder'
+import type { AISettings } from '@plexus/builder'
 
 // Define default settings locally to avoid import issues
 const DEFAULT_AI_SETTINGS: AISettings = {

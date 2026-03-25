@@ -3,7 +3,7 @@
   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
   xmlns:sord="https://star.sub.uni-goettingen.de/data/"
-  xmlns:gdb="https://graphdbnext.example.com/schema/"
+  xmlns:gdb="https://plexus.example.com/schema/"
   xmlns:ns1="http://www.cidoc-crm.org/cidoc-crm/">
 
   <gdb:Edxml rdf:about="https://star.sub.uni-goettingen.de/data/edxml_0">

@@ -18,8 +18,8 @@ class ModuleRegistryImpl implements ModuleRegistry {
     // In production, this should be loaded from database/config
     this.modules.set(MODULE_IDS.MODEL_BUILDER, {
       id: MODULE_IDS.MODEL_BUILDER,
-      name: 'Model Builder',
-      description: 'Visual model builder for creating and editing graph schemas',
+      name: 'Plexus Builder',
+      description: 'Integrated visual model builder for creating and editing Plexus graph schemas',
       enabled: true, // Default enabled, can be overridden by settings
       version: '1.0.0'
     })

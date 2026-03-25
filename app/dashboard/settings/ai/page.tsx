@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Settings, ArrowLeft, Loader2 } from 'lucide-react'
-import type { AIModelProvider, AIModelName, AISettings } from '@graphdb/model-builder'
+import type { AIModelProvider, AIModelName, AISettings } from '@plexus/builder'
 import { toast } from 'sonner'
 
 // Extend the base type to include our new feature

@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import {
   DEFAULT_AI_SETTINGS
-} from '@graphdb/model-builder'
+} from '@plexus/builder'
 import type {
   AISettings,
   WorkflowPersistence,
   ModelBuilderRef
-} from '@graphdb/model-builder'
+} from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
 import { toast } from 'sonner'
 
@@ -29,7 +29,7 @@ export function useModelBuilderAdapter({
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [existingWorkflows, setExistingWorkflows] = useState<any[]>([])
   const [currentWorkflow, setCurrentWorkflow] = useState<any>(null)
-  const persistedWorkflowKey = model?.id ? `model-builder:selected-workflow:${model.id}` : null
+  const persistedWorkflowKey = model?.id ? `plexus-builder:selected-workflow:${model.id}` : null
   const hasLoadedInitialWorkflowRef = useRef(false)
 
   // Default workflow persistence using app's API

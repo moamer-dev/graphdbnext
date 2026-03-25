@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react'
-import type { AISettings } from '@graphdb/model-builder'
+import type { AISettings } from '@plexus/builder'
 
 // Define the extended type locally for now to match page.tsx
 export interface ExtendedAISettings extends Omit<AISettings, 'features'> {

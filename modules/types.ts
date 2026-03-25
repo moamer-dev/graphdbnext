@@ -26,7 +26,7 @@ export interface ModuleRegistry {
  * Module IDs
  */
 export const MODULE_IDS = {
-  MODEL_BUILDER: 'model-builder'
+  MODEL_BUILDER: 'plexus-builder'
 } as const
 
 export type ModuleId = typeof MODULE_IDS[keyof typeof MODULE_IDS]

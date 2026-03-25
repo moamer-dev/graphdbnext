@@ -8,7 +8,7 @@ import { MemgraphGraph } from '@langchain/community/graphs/memgraph_graph'
 import { ChatMistralAI } from '@langchain/mistralai'
 import { GraphCypherQAChain } from '@langchain/community/chains/graph_qa/cypher'
 import { PromptTemplate } from '@langchain/core/prompts'
-import type { AISettings } from '@graphdb/model-builder'
+import type { AISettings } from '@plexus/builder'
 
 const CYPHSER_GENERATION_TEMPLATE = `Task:Generate Cypher statement to query a graph database.
 Instructions:

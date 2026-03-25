@@ -1,4 +1,4 @@
-import type { AISettingsStorage, AISettings } from '@graphdb/model-builder'
+import type { AISettingsStorage, AISettings } from '@plexus/builder'
 
 /**
  * Read-only storage implementation for AI settings.

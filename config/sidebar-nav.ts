@@ -20,7 +20,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
   },
 
   {
-    title: 'Graph',
+    title: 'Plexus',
     url: '/dashboard/graph',
     icon: Network,
     items: [

@@ -41,17 +41,17 @@ export class SchemaLoaderService {
   }
 
   async load (): Promise<Schema> {
-    // Try new location first (assets/schema relative to graphdbnext)
-    // basePath is parent of graphdbnext, so we need graphdbnext/assets/schema
+    // Try new location first (assets/schema relative to plexus)
+    // basePath is parent of plexus, so we need plexus/assets/schema
     let applicationPath = path.join(
       this.basePath,
-      'graphdbnext',
+      'plexus',
       'assets',
       'schema',
       'application.md'
     )
     
-    // Also try if basePath is already graphdbnext (when called from within graphdbnext)
+    // Also try if basePath is already plexus (when called from within plexus)
     if (!fs.existsSync(applicationPath)) {
       applicationPath = path.join(
         this.basePath,
@@ -74,7 +74,7 @@ export class SchemaLoaderService {
 
     if (!fs.existsSync(applicationPath)) {
       throw new Error(`application.md not found. Tried:
-  - ${path.join(this.basePath, 'graphdbnext', 'assets', 'schema', 'application.md')}
+  - ${path.join(this.basePath, 'plexus', 'assets', 'schema', 'application.md')}
   - ${path.join(this.basePath, 'assets', 'schema', 'application.md')}
   - ${path.join(this.basePath, 'EUPT-LPG', 'EUPT Model', 'Schema', 'application.md')}`)
     }
