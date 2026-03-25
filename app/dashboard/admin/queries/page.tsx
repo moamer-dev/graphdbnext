@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { DataTable } from '@/components/data-table/DataTable'
-import { useResourceTable } from '@/app/dashboard/hooks/view/useResourceTable'
-import { resourceHooks } from '@/lib/react-query/hooks'
-import { SavedQueryResource, type SavedQuery } from '@/lib/resources/SavedQueryResource'
+import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { resourceHooks } from '@/hooks/react-query'
+import { SavedQueryResource, type SavedQuery } from '@/resources/SavedQueryResource'
 import { Database } from 'lucide-react'
 import { QueryViewModal } from './QueryViewModal'
 

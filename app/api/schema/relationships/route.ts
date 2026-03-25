@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { SchemaLoaderService } from '@/lib/services/SchemaLoaderService'
+import { SchemaLoaderService } from '@/services/server'
 
 /**
  * API endpoint to get node-to-relationship mapping from schema

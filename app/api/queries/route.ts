@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { savedQueryCrudService } from '@/lib/services'
+import { savedQueryCrudService } from '@/services/crud'
 
 export async function GET (request: NextRequest) {
   try {

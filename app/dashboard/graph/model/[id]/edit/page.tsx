@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
-import { resourceHooks } from '@/lib/react-query/hooks'
+import { useModelBuilder } from '@/hooks'
+import { resourceHooks } from '@/hooks/react-query'
 import type { ModelBuilderRef } from '@graphdb/model-builder'
-import { ModelResource, type Model } from '@/lib/resources/ModelResource'
+import { ModelResource, type Model } from '@/resources/ModelResource'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ArrowLeft } from 'lucide-react'

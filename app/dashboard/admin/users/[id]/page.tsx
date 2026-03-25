@@ -1,8 +1,8 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { resourceHooks } from '@/lib/react-query/hooks'
-import { UserResource, type User as UserType } from '@/lib/resources/UserResource'
+import { resourceHooks } from '@/hooks/react-query'
+import { UserResource, type User as UserType } from '@/resources/UserResource'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ArrowLeft, User, Save } from 'lucide-react'

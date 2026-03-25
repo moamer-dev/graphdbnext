@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { GraphAnalyticsService } from '@/lib/services/GraphAnalyticsService'
+import { GraphAnalyticsService } from '@/services/server'
 
 export async function GET() {
   try {

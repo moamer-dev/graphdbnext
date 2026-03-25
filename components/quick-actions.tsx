@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { quickActionNavItems } from '@/config/quickAction-nav'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 export function QuickActions({ className }: { className?: string }) {
     const router = useRouter()

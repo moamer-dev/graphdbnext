@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { SchemaNode, Schema } from '@/lib/services/SchemaLoaderService'
+import type { SchemaNode, Schema } from '@/services/graph/SchemaLoaderService'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'

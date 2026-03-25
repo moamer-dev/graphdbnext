@@ -56,8 +56,6 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
     setMapping,
     setSelectedElements,
     setAvailableElements,
-    toggleElement,
-    selectElements,
     setError: setWizardError,
     reset: resetWizard
   } = useXmlImportWizardStore()

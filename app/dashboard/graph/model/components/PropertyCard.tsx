@@ -1,4 +1,4 @@
-import type { SchemaProperty } from '@/lib/services/SchemaLoaderService'
+import type { SchemaProperty } from '@/services/graph/SchemaLoaderService'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'

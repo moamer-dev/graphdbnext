@@ -1,9 +1,9 @@
 'use client'
 
 import { DataTable } from '@/components/data-table/DataTable'
-import { useResourceTable } from '@/app/dashboard/hooks/view/useResourceTable'
-import { resourceHooks } from '@/lib/react-query/hooks'
-import { UserResource } from '@/lib/resources/UserResource'
+import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { resourceHooks } from '@/hooks/react-query'
+import { UserResource } from '@/resources/UserResource'
 import { Users } from 'lucide-react'
 
 export default function UsersPage () {

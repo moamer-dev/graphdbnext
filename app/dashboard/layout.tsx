@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { AppSidebar } from '@/components/app-sidebar'
 import { ClientOnly } from '@/components/client-only'
 import {

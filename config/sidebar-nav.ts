@@ -30,9 +30,9 @@ export const sidebarNavItems: SidebarNavItem[] = [
         section: 'schema'
       },
       {
-        title: 'XML to Graph',
-        url: '/dashboard/graph/convert',
-        section: 'xml2graph'
+        title: 'XML Importer',
+        url: '/dashboard/graph/model/new/from-xml',
+        section: 'xml-importer'
       }
     ]
   },

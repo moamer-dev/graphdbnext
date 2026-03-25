@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { modelCrudService } from '@/lib/services'
+import { modelCrudService } from '@/services/server'
 
 // GET /api/models/[id] - Get a specific model (admins can access any, users only their own)
 export async function GET (

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import type { Schema, SchemaNode, SchemaRelation } from '@/lib/services/SchemaLoaderService'
+import type { Schema, SchemaNode, SchemaRelation } from '@/services/graph/SchemaLoaderService'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'

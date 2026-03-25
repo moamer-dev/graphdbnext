@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { GraphEdge, GraphNode } from '@/lib/services/GraphVisualizationService'
+import { GraphEdge, GraphNode } from '@/services'
 import { PropertyEditor } from './PropertyEditor'
-import { useMutation } from '@/app/dashboard/hooks/database/useMutation'
+import { useMutation } from '@/hooks/database/useMutation'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
 interface RelationshipFactSheetProps {

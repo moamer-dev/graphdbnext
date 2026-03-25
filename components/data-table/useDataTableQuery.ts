@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import type { TableConfig } from '@/lib/resources/TableConfig'
+import type { TableConfig } from '@/resources/TableConfig'
 
 interface UseDataTableQueryParams<T> {
   config: TableConfig<T>

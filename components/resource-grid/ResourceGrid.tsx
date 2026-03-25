@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import type { TableConfig } from '@/lib/resources/TableConfig'
+import type { TableConfig } from '@/resources/TableConfig'
 
 interface ResourceGridProps<T extends { id: string }> {
   data: T[]

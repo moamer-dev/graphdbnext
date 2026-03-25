@@ -40,9 +40,9 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { ChevronDown, ChevronUp, MoreHorizontal, ArrowUpDown } from 'lucide-react'
-import type { TableConfig, BulkAction } from '@/lib/resources/TableConfig'
+import type { TableConfig, BulkAction } from '@/resources/TableConfig'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 interface DataTableProps<T> {
   config: TableConfig<T>

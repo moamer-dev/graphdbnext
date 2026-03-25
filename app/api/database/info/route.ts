@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GraphDatabaseFactory } from '@/lib/services/graph-database'
+import { GraphDatabaseFactory } from '@/services/server'
 
 export async function GET() {
   const dbType = GraphDatabaseFactory.getDatabaseType()

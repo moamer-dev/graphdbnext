@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { moduleService } from '@/lib/services/ModuleService'
-import { MODULE_IDS } from '@/lib/modules/types'
+import { moduleService } from '@/services/server'
+import { MODULE_IDS } from '@/modules/types'
 
 // GET /api/modules - Get all modules
 export async function GET () {

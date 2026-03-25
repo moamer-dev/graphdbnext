@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
+import { useModelBuilder } from '@/hooks'
 import type { ModelBuilderRef } from '@graphdb/model-builder'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, ArrowLeft, Save, X } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { ModelResource } from '@/lib/resources/ModelResource'
+import { ModelResource } from '@/resources/ModelResource'
 import { useRouter } from 'next/navigation'
 
 interface NewModelBuilderProps {
@@ -20,7 +20,7 @@ interface NewModelBuilderProps {
     schemaMd?: string
     name?: string
     description?: string
-  }) => Promise<import('@/lib/resources/ModelResource').Model>
+  }) => Promise<import('@/resources/ModelResource').Model>
   saving: boolean
   isPending: boolean
   cancelDialogOpen: boolean
@@ -213,7 +213,7 @@ export function NewModelBuilder({
               schemaMd?: string
               name?: string
               description?: string
-            }): Promise<import('@/lib/resources/ModelResource').Model> => {
+            }): Promise<import('@/resources/ModelResource').Model> => {
               return await onSave({
                 ...data,
                 name: modelName || data.name

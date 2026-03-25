@@ -4,16 +4,16 @@ import { Suspense } from 'react'
 import { useState, useCallback, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useUrlState } from '@/app/dashboard/hooks/view/useUrlState'
+import { useUrlState } from '@/hooks/view/useUrlState'
 import { DataTable } from '@/components/data-table/DataTable'
 import { ResourceGrid } from '@/components/resource-grid/ResourceGrid'
 import { ModelCard } from '@/components/resource-grid/ModelCard'
-import { useResourceTable } from '@/app/dashboard/hooks/view/useResourceTable'
-import { resourceHooks } from '@/lib/react-query/hooks'
-import { ModelResource, type Model } from '@/lib/resources/ModelResource'
-import { useModelUpload } from '../../hooks/model/useModelUpload'
-import { downloadTemplate } from '@/lib/utils/downloadTemplate'
-import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
+import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { resourceHooks } from '@/hooks/react-query'
+import { ModelResource, type Model } from '@/resources/ModelResource'
+import { useModelUpload } from '@/hooks/model/useModelUpload'
+import { downloadTemplate } from '@/utils'
+import { useModelBuilder } from '@/hooks'
 import { Button } from '@/components/ui/button'
 import { Upload, LayoutGrid, Table2, Plus, FileCode } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -119,7 +119,7 @@ function ModelsPageContent() {
           <div>
             <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2">
               <span className="relative">
-                Models
+                Schema Models
                 <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent"></span>
               </span>
             </h1>
@@ -270,7 +270,7 @@ function ModelsPageContent() {
             {/* Filters - reuse from table config */}
             {config.filters && config.filters.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                {config.filters.map((filter) => (
+                {config.filters.map((filter: any) => (
                   <div key={filter.key} className="flex items-center gap-2">
                     {filter.type === 'text' && (
                       <Input
@@ -291,8 +291,8 @@ function ModelsPageContent() {
                         <SelectContent>
                           <SelectItem value="all">All</SelectItem>
                           {filter.options
-                            .filter((option) => option.value !== '' && option.value !== 'all')
-                            .map((option) => (
+                            .filter((option: any) => option.value !== '' && option.value !== 'all')
+                            .map((option: any) => (
                               <SelectItem key={String(option.value)} value={String(option.value)}>
                                 {option.label}
                               </SelectItem>

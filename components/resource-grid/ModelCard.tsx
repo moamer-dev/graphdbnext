@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal, Eye, Edit, Trash2, Calendar, User } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import type { Model } from '@/lib/resources/ModelResource'
+import type { Model } from '@/resources/ModelResource'
 
 interface ModelCardProps {
   model: Model

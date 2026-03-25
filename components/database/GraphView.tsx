@@ -7,9 +7,9 @@ import { RelationshipFactSheet } from './RelationshipFactSheet'
 import { CreateNodeDialog } from './CreateNodeDialog'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Button } from '@/components/ui/button'
-import { useGraphView } from '@/app/dashboard/hooks/view/useGraphView'
-import { GraphNode } from '@/lib/services/GraphVisualizationService'
-import type { VisualizationConfig } from '@/lib/services/CustomVisualizationService'
+import { useGraphView } from '@/hooks/view/useGraphView'
+import { GraphNode } from '@/services'
+import type { VisualizationConfig } from '@/services'
 
 interface GraphViewProps {
   results: unknown[]

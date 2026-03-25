@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2, RefreshCw, BarChart3, Network, Link2, AlertCircle } from 'lucide-react'
-import { useGraphAnalytics } from '@/app/dashboard/hooks/analytics/useGraphAnalytics'
+import { useGraphAnalytics } from '@/hooks/analytics/useGraphAnalytics'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 export function GraphAnalyticsView() {

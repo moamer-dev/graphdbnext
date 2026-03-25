@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import type { SavedQuery } from '@/lib/resources/SavedQueryResource'
+import type { SavedQuery } from '@/resources/SavedQueryResource'
 import { Calendar, User, Play, Tag, Code } from 'lucide-react'
 
 interface QueryViewModalProps {

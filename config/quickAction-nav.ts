@@ -12,7 +12,7 @@ import {
     FileDown,
     type LucideIcon
 } from 'lucide-react'
-import { downloadTemplate } from '@/lib/utils/downloadTemplate'
+import { downloadTemplate } from '@/utils'
 
 export interface QuickActionItem {
     label: string

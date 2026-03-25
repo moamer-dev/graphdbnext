@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Database as DatabaseIcon, Loader2, RefreshCw, Upload, Activity, Network, Link2 } from 'lucide-react'
-import { useDatabase } from '@/app/dashboard/hooks/database/useDatabase'
+import { useDatabase } from '@/hooks/database/useDatabase'
 
 export function DatabaseView () {
   const {

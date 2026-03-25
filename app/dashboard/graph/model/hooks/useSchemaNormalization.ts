@@ -1,4 +1,4 @@
-import type { Schema, SchemaNode, SchemaRelation, SchemaProperty } from '@/lib/services/SchemaLoaderService'
+import type { Schema, SchemaNode, SchemaRelation, SchemaProperty } from '@/services/graph/SchemaLoaderService'
 
 /**
  * Normalize schema to ensure all required fields are present

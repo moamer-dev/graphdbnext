@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { SchemaExplorerService } from '@/lib/services/SchemaExplorerService'
+import { SchemaExplorerService } from '@/services/server'
 
 export async function GET() {
   try {

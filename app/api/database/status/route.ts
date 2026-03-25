@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getGraphDatabaseService } from '@/lib/services/graph-database';
+import { getGraphDatabaseService } from '@/services/graph/graph-database';
 
 export async function GET() {
   const db = getGraphDatabaseService();

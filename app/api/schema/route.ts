@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SchemaLoaderService } from '@/lib/services/SchemaLoaderService';
+import { SchemaLoaderService } from '@/services/server';
 
 export async function GET() {
   try {

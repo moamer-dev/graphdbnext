@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
+import { useModelBuilder } from '@/hooks'
 import { XmlImportWizard, AISettingsProvider, useXmlImportWizardStore, DEFAULT_AI_SETTINGS } from '@graphdb/model-builder'
 import type { AISettings } from '@graphdb/model-builder'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ArrowLeft } from 'lucide-react'
-import { ModelResource } from '@/lib/resources/ModelResource'
+import { ModelResource } from '@/resources/ModelResource'
 import { useRouter } from 'next/navigation'
 
 export default function NewModelFromXmlPage () {

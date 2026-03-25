@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Play, ChevronDown, Check } from 'lucide-react'
-import { QUERY_TEMPLATES, type QueryTemplate, replaceQueryParameters } from '@/lib/utils/queryTemplates'
-import { cn } from '@/lib/utils'
+import { QUERY_TEMPLATES, type QueryTemplate, replaceQueryParameters } from '@/utils'
+import { cn } from '@/utils'
 
 interface QueryLibraryProps {
   onQuerySelect: (query: string) => void

@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Badge } from '@/components/ui/badge'
-import { useMutation } from '@/app/dashboard/hooks/database/useMutation'
-import { useNodeLabels } from '@/app/dashboard/hooks'
+import { useMutation } from '@/hooks/database/useMutation'
+import { useNodeLabels } from '@/hooks'
 import { Check, ChevronsUpDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 interface CreateNodeDialogProps {
   open: boolean

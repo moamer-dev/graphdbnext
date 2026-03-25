@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { SchemaLoaderService } from '@/lib/services/SchemaLoaderService'
-import { buildUserWhereClauseWithFilters } from '@/lib/utils/rbac'
+import { SchemaLoaderService } from '@/services/server'
+import { buildUserWhereClauseWithFilters } from '@/utils'
 
 // POST /api/models/[id]/convert-md - Convert MD schema to JSON
 export async function POST (

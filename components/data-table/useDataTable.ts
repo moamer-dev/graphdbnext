@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { TableConfig } from '@/lib/resources/TableConfig'
+import type { TableConfig } from '@/resources/TableConfig'
 
 interface UseDataTableParams<T> {
   config: TableConfig<T>

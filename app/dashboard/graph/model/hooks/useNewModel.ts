@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
-import { resourceHooks } from '@/lib/react-query/hooks'
-import { ModelResource } from '@/lib/resources/ModelResource'
+import { useModelBuilder } from '@/hooks'
+import { resourceHooks } from '@/hooks/react-query'
+import { ModelResource } from '@/resources/ModelResource'
 import { toast } from 'sonner'
 import { useXmlImportWizardStore } from '@graphdb/model-builder'
 
@@ -25,7 +25,7 @@ export function useNewModel () {
     schemaMd?: string
     name?: string
     description?: string
-  }): Promise<import('@/lib/resources/ModelResource').Model> => {
+  }): Promise<import('@/resources/ModelResource').Model> => {
     if (!modelName.trim()) {
       toast.error('Model name is required')
       throw new Error('Model name is required')
@@ -39,11 +39,11 @@ export function useNewModel () {
         schemaJson: data.schemaJson,
         schemaMd: data.schemaMd,
         version: '1.0.0'
-      } as Partial<import('@/lib/resources/ModelResource').Model>)
+      } as Partial<import('@/resources/ModelResource').Model>)
       
       // Extract model from response
-      const model = (response as unknown as { data?: import('@/lib/resources/ModelResource').Model }).data || 
-                    (response as unknown as import('@/lib/resources/ModelResource').Model)
+      const model = (response as unknown as { data?: import('@/resources/ModelResource').Model }).data || 
+                    (response as unknown as import('@/resources/ModelResource').Model)
       
       // Check if workflow is being saved (adapter will handle navigation in that case)
       const workflowBeingSaved = (window as any).__workflowSaveInProgress

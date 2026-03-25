@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Schema } from '@/lib/services/SchemaLoaderService'
+import type { Schema } from '@/services'
 import { ViewType } from './useUrlSync'
 
 export function useSchemaItems (schema: Schema | null, selectedType: ViewType, searchTerm: string) {

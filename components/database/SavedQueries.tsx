@@ -9,10 +9,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Play, Edit2, Trash2 } from 'lucide-react'
-import { useSavedQueries } from '@/app/dashboard/hooks/query/useSavedQueries'
-import { cn } from '@/lib/utils'
+import { useSavedQueries } from '@/hooks/query/useSavedQueries'
+import { cn } from '@/utils'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import type { SavedQuery } from '@/lib/resources/SavedQueryResource'
+import type { SavedQuery } from '@/resources/SavedQueryResource'
 
 interface SavedQueriesProps {
   onQuerySelect: (query: string) => void

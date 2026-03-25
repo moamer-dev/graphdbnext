@@ -1,4 +1,4 @@
-import type { SchemaRelation } from '@/lib/services/SchemaLoaderService'
+import type { SchemaRelation } from '@/services/graph/SchemaLoaderService'
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'

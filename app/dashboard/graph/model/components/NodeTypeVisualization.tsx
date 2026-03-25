@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { GraphVisualizationService, GraphData, GraphNode, GraphEdge } from '@/lib/services/GraphVisualizationService'
-import type { SchemaNode, Schema } from '@/lib/services/SchemaLoaderService'
+import { GraphVisualizationService, GraphData, GraphNode, GraphEdge } from '@/services'
+import type { SchemaNode, Schema } from '@/services/graph/SchemaLoaderService'
 import { Loader2, ZoomIn, ZoomOut, Maximize2, Minimize2, Focus, Home, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'

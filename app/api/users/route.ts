@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { userCrudService } from '@/lib/services'
-import { isAdmin } from '@/lib/utils/rbac'
+import { userCrudService } from '@/services/server'
+import { isAdmin } from '@/utils'
 
 // GET /api/users - Get all users (admins only)
 export async function GET (request: NextRequest) {
