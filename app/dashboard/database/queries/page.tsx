@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { QueryView } from '../../(components)/database/QueryView'
+import { QueryView } from '@/components/database/QueryView'
 
 export default function QueriesPage () {
   return (

@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { cn, getNodeLabel } from '@/lib/utils'
-import { useNodeLabels, useRelationshipTypes, useNodeList, useRelationshipMaxPos, useNodeById, useRelationshipForm, useNodeFiltering, type GraphNode as GraphNodeType } from '../../hooks'
+import { useNodeLabels, useRelationshipTypes, useNodeList, useRelationshipMaxPos, useNodeById, useRelationshipForm, useNodeFiltering, type GraphNode as GraphNodeType } from '@/app/dashboard/hooks'
 import { CreateNodeDialog } from './CreateNodeDialog'
 
 

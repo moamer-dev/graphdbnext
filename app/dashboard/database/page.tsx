@@ -1,4 +1,4 @@
-import { DatabaseView } from '../(components)/database/DatabaseView'
+import { DatabaseView } from '@/components/database/DatabaseView'
 
 export default function DatabasePage () {
   return <DatabaseView />

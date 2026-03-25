@@ -1,10 +1,10 @@
 'use client'
 
-import ValidationPanel from '@/app/dashboard/(components)/convert/ValidationPanel'
+import ValidationPanel from '@/components/convert/ValidationPanel'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { FileText, Loader2, Upload, Database, Download, ChevronDown, ChevronRight } from 'lucide-react'
-import { useConvert } from '../../hooks/util/useConvert'
+import { useConvert } from '@/app/dashboard/hooks/util/useConvert'
 
 export function ConvertView () {
   const {

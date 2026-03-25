@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { GraphEdge, GraphNode } from '@/lib/services/GraphVisualizationService'
 import { PropertyEditor } from './PropertyEditor'
-import { useMutation } from '../../hooks/database/useMutation'
+import { useMutation } from '@/app/dashboard/hooks/database/useMutation'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
 interface RelationshipFactSheetProps {

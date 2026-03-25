@@ -10,8 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { GraphNode, GraphEdge } from '@/lib/services/GraphVisualizationService'
 import { PropertyEditor } from './PropertyEditor'
 import { CreateRelationshipDialog } from './CreateRelationshipDialog'
-import { useMutation } from '../../hooks/database/useMutation'
-import { useNodeDeletion } from '../../hooks'
+import { useMutation } from '@/app/dashboard/hooks/database/useMutation'
+import { useNodeDeletion } from '@/app/dashboard/hooks'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
 interface NodeFactSheetProps {

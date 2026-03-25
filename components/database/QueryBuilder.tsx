@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { useQueryBuilder, operators, QueryConditionType } from '../../hooks/query/useQueryBuilder'
+import { useQueryBuilder, operators, QueryConditionType } from '@/app/dashboard/hooks/query/useQueryBuilder'
 import { QueryRelationship, QueryNode } from '@/lib/services/QueryBuilderService'
 
 interface QueryBuilderProps {

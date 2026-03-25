@@ -7,10 +7,7 @@ import { UserResource } from '@/lib/resources/UserResource'
 import { Users } from 'lucide-react'
 
 export default function UsersPage () {
-  // Middleware guarantees admin access, so we can assume isAdmin = true
   const isAdmin = true
-
-  // Use generic hooks directly - no custom hook files needed!
   const { 
     config, 
     data, 

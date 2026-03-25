@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Code, FileCode, BookOpen } from 'lucide-react'
-import { useHtml } from '../hooks/util/useHtml'
+import { useHtml } from '@/app/dashboard/hooks/util/useHtml'
 
 export function HtmlView () {
   const { loading, convertToHTML } = useHtml()
