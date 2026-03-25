@@ -1,7 +1,7 @@
 import { DOMParser } from '@xmldom/xmldom'
 import type { Node as BuilderNode, Relationship } from '../../../types'
 import type { ToolCanvasNode, ToolCanvasEdge } from '../../../stores/toolCanvasStore'
-import type { ActionCanvasNode, ActionCanvasEdge } from '../../../stores/actionCanvasStore'
+import type { ActionCanvasEdge } from '../../../stores/actionCanvasStore'
 import type { GraphJson, GraphJsonNode, GraphJsonRelationship, ExecuteOptions, ExecutionContext } from './types'
 
 import { executeTool } from './tools'
@@ -128,8 +128,7 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
   }
 
   const walk = async (element: Element, parentGraphNode: GraphJsonNode | null, depth: number = 0) => {
-    try {
-      if (depth > 10000) {
+    if (depth > 10000) {
         return
       }
 
@@ -150,7 +149,7 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
 
       let createdForElement: GraphJsonNode | null = null
       let elementSkipped = false
-      let skipChildrenConfig: { skip: boolean; tags: string[] } = { skip: false, tags: [] }
+      const skipChildrenConfig: { skip: boolean; tags: string[] } = { skip: false, tags: [] }
       let skipChildrenElementsConfig: Element[] = []
       let includeChildrenTagsConfig: string[] = []
       let childrenRangeConfig: { start?: number; end?: number; limit?: number; offset?: number } | null = null
@@ -418,9 +417,6 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
         for (const child of childrenToWalk) {
           await walk(child as Element, createdForElement || parentGraphNode, depth + 1)
         }
-      }
-    } catch (error) {
-      throw error
     }
   }
 
@@ -442,7 +438,7 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
 
   // Process deferred relationships
   deferredRelationships.forEach(deferred => {
-    let targetNodes: GraphJsonNode[] = []
+    const targetNodes: GraphJsonNode[] = []
 
     if (deferred.targetElement) {
       const node = elementToGraph.get(deferred.targetElement)

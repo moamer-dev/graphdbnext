@@ -1,6 +1,5 @@
 import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
 import type { ActionExecutionContext } from './types'
-import type { GraphJsonNode } from '../types'
 
 export function executeUpdateNodeAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   ctx.deferredOperations.push({

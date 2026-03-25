@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select'
-import { Plus, Trash2, Key, Globe, User, Lock } from 'lucide-react'
+import { Plus, Trash2, Key, Globe, Lock } from 'lucide-react'
 // Note: Alert component - using a simple div for now
 
 interface CredentialFormData {

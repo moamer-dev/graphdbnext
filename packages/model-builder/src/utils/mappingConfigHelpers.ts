@@ -3,7 +3,7 @@
  * These can be used programmatically or as examples for UI configuration
  */
 
-import type { MappingConfig, TextContentRule } from '../types/mappingConfig'
+import type { MappingConfig } from '../types/mappingConfig'
 
 /**
  * Configure tokenization for seg → Sign with damage inheritance

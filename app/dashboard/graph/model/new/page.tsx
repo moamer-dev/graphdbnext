@@ -1,9 +1,10 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useNewModel } from '../hooks/useNewModel'
 import { NewModelBuilder } from '../components/NewModelBuilder'
 
-export default function NewModelPage () {
+function NewModelPageContent() {
   const {
     modelName,
     setModelName,
@@ -14,7 +15,6 @@ export default function NewModelPage () {
     setHasChanges,
     isPending,
     handleSave,
-    handleCancel,
     confirmCancel,
     fromXml
   } = useNewModel()
@@ -24,7 +24,6 @@ export default function NewModelPage () {
       modelName={modelName}
       onModelNameChange={setModelName}
       onSave={handleSave}
-      onCancel={handleCancel}
       saving={saving}
       isPending={isPending}
       cancelDialogOpen={cancelDialogOpen}
@@ -34,6 +33,14 @@ export default function NewModelPage () {
       onHasChangesChange={setHasChanges}
       fromXml={fromXml}
     />
+  )
+}
+
+export default function NewModelPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewModelPageContent />
+    </Suspense>
   )
 }
 

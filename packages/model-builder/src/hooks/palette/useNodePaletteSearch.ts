@@ -9,7 +9,7 @@ export function useNodePaletteSearch() {
   const [selectedActionCategory, setSelectedActionCategory] = useState<string>('all')
   const [expandedToolCategories, setExpandedToolCategories] = useState<Set<string>>(new Set())
   const [expandedActionCategories, setExpandedActionCategories] = useState<Set<string>>(new Set())
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
 
   const filteredTools = useMemo(() => {
     const allGrouped = workflowRegistry.getGroupedTools()

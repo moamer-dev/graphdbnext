@@ -17,7 +17,7 @@ export { exportToJson, exportToMarkdown } from './utils/exportUtils'
 export { convertBuilderToSchemaJson } from './utils/schemaJsonConverter'
 
 export { AISettingsProvider, useAISettings, useAIFeature } from './ai/config'
-export type { AISettings, AISettingsStorage } from './ai/config/types'
+export type { AISettings, AISettingsStorage, AIModelProvider, AIModelName } from './ai/config/types'
 export { DEFAULT_AI_SETTINGS } from './ai/config/types'
 
 export type { WorkflowConfigExport } from './utils/workflowConfigExport'

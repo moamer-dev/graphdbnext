@@ -1,5 +1,5 @@
 import type { XmlMappingConfig } from '../services/xml/xmlAnalyzer'
-import type { MappingConfig, ElementMapping, AttributeMapping, RelationshipMapping, TextContentRule } from '../types/mappingConfig'
+import type { MappingConfig, AttributeMapping, RelationshipMapping, TextContentRule } from '../types/mappingConfig'
 
 /**
  * Convert XmlMappingConfig (from wizard UI) to generic MappingConfig

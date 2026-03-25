@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
 import { FileText } from 'lucide-react'
 import { cn } from '../../../utils/cn'
 import type { XmlStructureAnalysis } from '../../../services/xml/xmlAnalyzer'
@@ -9,10 +8,6 @@ import { XmlJsonTreeViewer } from '../../viewer/XmlJsonTreeViewer'
 interface XmlStructureViewerProps {
   analysis: XmlStructureAnalysis
   xmlString?: string
-  onElementSelect?: (elementName: string) => void
-  onElementsSelect?: (elementNames: string[], select: boolean) => void
-  selectedElements?: Set<string>
-  includedElements?: Set<string>
   onElementDelete?: (elementNames: string[]) => void
   onAddElements?: (elementNames: string[]) => void
   addingItems?: Set<string>
@@ -23,11 +18,6 @@ interface XmlStructureViewerProps {
 export function XmlStructureViewer ({
   analysis,
   xmlString,
-  onElementSelect,
-  onElementsSelect,
-  selectedElements,
-  includedElements,
-  onElementDelete,
   onAddElements,
   addingItems,
   onAddingItemsChange,
@@ -43,7 +33,7 @@ export function XmlStructureViewer ({
             ignoredElements: analysis.ignoredElements || [],
             ignoredSubtrees: analysis.ignoredSubtrees || []
           }}
-          includedElements={includedElements}
+          includedElements={undefined}
           onAddElements={onAddElements}
           addingItems={addingItems}
           onAddingItemsChange={onAddingItemsChange}

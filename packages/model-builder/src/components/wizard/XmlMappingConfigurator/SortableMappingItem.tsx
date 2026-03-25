@@ -60,7 +60,6 @@ export interface SortableMappingItemProps {
   elementIncludeLookup: Map<string, boolean>
   recentlyDroppedId: string | null
   clearRecentlyDropped: () => void
-  analysis: XmlStructureAnalysis
   selectedOntologyId?: string | null
 }
 
@@ -88,7 +87,6 @@ export function SortableMappingItem({
   elementIncludeLookup,
   recentlyDroppedId,
   clearRecentlyDropped,
-  analysis,
   selectedOntologyId
 }: SortableMappingItemProps) {
   const {
@@ -110,7 +108,6 @@ export function SortableMappingItem({
     key.startsWith(`${elementType.name}->`)
   )
   const hasAttributes = elementType.attributes.length > 0
-  const hasRelationships = elementRelationships.length > 0
   const isExpandable = isIncluded
   const [relPopoverOpen, setRelPopoverOpen] = useState<Record<string, boolean>>({})
 
@@ -287,7 +284,6 @@ export function SortableMappingItem({
               <div className="space-y-2">
                 {elementType.attributes.map((attrName) => {
                   const attrMapping = mapping.attributeMappings[elementType.name]?.[attrName]
-                  const attrAnalysis = elementType.attributeAnalysis[attrName]
 
                   if (!attrMapping) return null
 
@@ -568,7 +564,6 @@ export function SortableMappingItem({
                                 {candidateTargets.map((name: string) => (
                                   <CommandItem
                                     key={name}
-                                    value={name}
                                     onSelect={(value: string) => {
                                       const newKey = `${elementType.name}->${value}`
                                       onReplaceRelationshipKey(relKey, newKey)

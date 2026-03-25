@@ -30,7 +30,7 @@ interface UseResourceTableOptions<T extends { id: string }> {
       onView: (id: string) => void,
       onEdit: (id: string) => void,
       onDelete: (id: string) => Promise<void>,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       ...args: any[]
     ) => TableConfig<T>
     LIST_PATH: string
@@ -112,11 +112,11 @@ export function useResourceTable<T extends { id: string }>(
   // Handlers for DataTable controlled props
   const handlePageChange = useCallback((newPage: number) => {
     tableState.setPage(newPage)
-  }, [tableState.setPage])
+  }, [tableState])
 
   const handlePageSizeChange = useCallback((newPageSize: number) => {
     tableState.setPageSize(newPageSize)
-  }, [tableState.setPageSize])
+  }, [tableState])
 
   const handleSortChange = useCallback((newSortBy?: string, newSortOrder?: 'asc' | 'desc') => {
     if (newSortBy) {
@@ -125,11 +125,11 @@ export function useResourceTable<T extends { id: string }>(
       // Clear sorting
       tableState.updateSorting('', undefined)
     }
-  }, [tableState.updateSorting])
+  }, [tableState])
 
   const handleFiltersChange = useCallback((newFilters: Record<string, unknown>) => {
     tableState.updateFilters(newFilters)
-  }, [tableState.updateFilters])
+  }, [tableState])
 
   // Extract data and total from response
   // useResource.useList returns UseQueryResult<ResourceResponse<T>, Error>

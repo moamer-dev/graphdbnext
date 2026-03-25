@@ -52,7 +52,7 @@ export class CustomVisualizationService {
   getNodeColor(node: GraphNode, config?: VisualizationConfig): string {
     // Priority 1: Property-based color mapping
     if (config?.nodeColorBy) {
-      const { property, colorMap, defaultColor = '#6b7280' } = config.nodeColorBy
+      const { property, colorMap } = config.nodeColorBy
       const value = node.properties[property]
 
       if (value !== null && value !== undefined) {
@@ -123,7 +123,7 @@ export class CustomVisualizationService {
   getEdgeColor(edge: GraphEdge, config?: VisualizationConfig): string {
     // Priority 1: Property-based color mapping
     if (config?.edgeColorBy) {
-      const { property, colorMap, defaultColor = '#999' } = config.edgeColorBy
+      const { property, colorMap } = config.edgeColorBy
       const value = edge.properties[property]
 
       if (value !== null && value !== undefined) {

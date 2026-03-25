@@ -108,7 +108,9 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
         <WorkflowSelector
           workflows={availableWorkflows}
           currentWorkflowId={initialWorkflow?.id || null}
-          onWorkflowChange={onWorkflowChange || (() => { })}
+          onWorkflowChange={onWorkflowChange || (() => {
+            // Default empty handler for workflow changes
+          })}
           workflowPersistence={workflowPersistence}
         />
       )}

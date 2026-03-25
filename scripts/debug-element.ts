@@ -6,7 +6,6 @@ const xmlPath = path.join(__dirname, '../../example/KTU_1.14_full.xml');
 const xmlContent = fs.readFileSync(xmlPath, 'utf-8');
 
 const converter = new XMLToGraphConverter(xmlContent);
-// @ts-ignore
 const elements = converter['context'].allElements as any[];
 const target = elements.find((el) => converter['elementHelper'].getAttrib(el).id === 'zrq_s4x_nyb');
 if (target) {

@@ -177,7 +177,7 @@ export function importQueries(jsonString: string): { success: number, errors: nu
         
         saveQuery(query)
         success++
-      } catch (error) {
+      } catch {
         errors++
       }
     })

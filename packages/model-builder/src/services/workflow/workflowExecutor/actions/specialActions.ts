@@ -1,6 +1,6 @@
 import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
 import type { ActionExecutionContext } from './types'
-import type { GraphJsonNode, GraphJsonRelationship } from '../types'
+import type { GraphJsonNode } from '../types'
 
 export interface SpecialActionExecutionContext extends ActionExecutionContext {
   walk: (element: Element, parentGraphNode: GraphJsonNode | null, depth: number) => void

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
-import { ChevronRight, ChevronDown, Search, X, Info, GripVertical, ChevronLeft, ChevronRight as ChevronRightIcon, MapPin, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
+import { ChevronRight, ChevronDown, Search, X, Info, ChevronLeft, ChevronRight as ChevronRightIcon, MapPin, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { cn } from '../../utils/cn'
@@ -83,12 +83,10 @@ export function XmlJsonTreeViewer ({
       }
     : setInternalAddingItems
   const xmlEditorRef = useRef<XmlCodePreviewRef>(null)
-  const [scrollToPosition, setScrollToPosition] = useState<number | null>(null)
+  const [scrollToPosition] = useState<number | null>(null)
 
   const panelResize = useXmlPanelResize()
   const {
-    leftWidth,
-    xmlWidth,
     isResizing,
     isResizingXml,
     isDetailsPanelOpen,
@@ -329,8 +327,8 @@ export function XmlJsonTreeViewer ({
       const currentPath = path ? `${path}.${node.key}` : node.key
       if (node.children && node.children.length > 0) {
         allKeys.add(currentPath)
-        node.children.forEach((child, index) => {
-          collectKeys(child, node.type === 'array' ? `${currentPath}[${index}]` : currentPath)
+        node.children.forEach((child, _index) => {
+          collectKeys(child, node.type === 'array' ? `${currentPath}[${_index}]` : currentPath)
         })
       }
     }
@@ -410,10 +408,7 @@ export function XmlJsonTreeViewer ({
       
       // Continue searching children
       if (node.children) {
-        node.children.forEach((child, index) => {
-          const childPath = node.type === 'array'
-            ? `${currentPath}[${index}]`
-            : `${currentPath}.${child.key}`
+        node.children.forEach((child) => {
           findMatches(child, currentPath)
         })
       }
@@ -456,7 +451,7 @@ export function XmlJsonTreeViewer ({
       setHighlightedPath(null)
       setVisitedMatches(new Set())
     }
-  }, [searchQuery, tree])
+  }, [searchQuery, tree, highlightedNodeRef, previousSearchQuery, setCurrentMatchIndex, setExpandedKeys, setHighlightedPath, setMatchingPaths, setVisitedMatches])
 
   // Navigate to specific match index
   const navigateToMatch = (index: number) => {
@@ -699,10 +694,7 @@ export function XmlJsonTreeViewer ({
         </div>
         {isExpanded && hasChildren && (
           <div>
-            {node.children!.map((child, index) => {
-              const childPath = node.type === 'array'
-                ? `${currentPath}[${index}]`
-                : `${currentPath}.${child.key}`
+            {node.children!.map((child) => {
               return renderNode(child, depth + 1, currentPath)
             })}
           </div>

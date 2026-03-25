@@ -5,6 +5,7 @@ import { Eye, FileText, Upload, Download, Loader2 } from 'lucide-react'
 import { Switch } from '../../../ui/switch'
 import { Label } from '../../../ui/label'
 import { Button } from '../../../ui/button'
+import { cn } from '../../../../utils/cn'
 import { XmlStructureViewer } from '../XmlStructureViewer'
 import { XmlMappingConfigurator } from '../../XmlMappingConfigurator'
 import { AiMappingAssistant } from '../AiMappingAssistant'
@@ -12,15 +13,12 @@ import { useAIFeature } from '../../../../ai/config'
 import { usePanelResize } from '../hooks/usePanelResize'
 import { OntologyCombobox } from '../components/OntologyCombobox'
 import type { XmlStructureAnalysis, XmlMappingConfig } from '../../../../services/xml/xmlAnalyzer'
-import type { TibOntology } from '../../../../types/semanticTypes'
-import { useState } from 'react'
 import { useXmlImportWizardStore } from '../../../../stores/xmlImportWizardStore'
 
 interface ConfigureStepProps {
   analysis: XmlStructureAnalysis
   mapping: XmlMappingConfig
   xmlPreview: string | null
-  selectedElements: Set<string>
   showStructure: boolean
   showMapping: boolean
   addingItems: Set<string>
@@ -29,21 +27,19 @@ interface ConfigureStepProps {
   onShowStructureChange: (show: boolean) => void
   onShowMappingChange: (show: boolean) => void
   onMappingChange: (mapping: XmlMappingConfig) => void
-  onElementSelect: (elementName: string) => void
-  onElementsSelect: (elementNames: string[], select: boolean) => void
   onElementDelete: (elementNames: string[]) => void
+  onRemoveElements: (elementNames: string[]) => void
   onAddElements: (elementNames: string[]) => void
   onAddingItemsChange: (items: Set<string>) => void
-  onRemoveElements: (elementNames: string[]) => void
   onImportConfig: (file: File) => void
   onExportConfig: () => void
+  className?: string
 }
 
 export function ConfigureStep({
   analysis,
   mapping,
   xmlPreview,
-  selectedElements,
   showStructure,
   showMapping,
   addingItems,
@@ -52,14 +48,13 @@ export function ConfigureStep({
   onShowStructureChange,
   onShowMappingChange,
   onMappingChange,
-  onElementSelect,
-  onElementsSelect,
   onElementDelete,
+  onRemoveElements,
   onAddElements,
   onAddingItemsChange,
-  onRemoveElements,
   onImportConfig,
-  onExportConfig
+  onExportConfig,
+  className
 }: ConfigureStepProps) {
   const { panelWidth, panelsContainerRef, startResizing } = usePanelResize({
     initialWidth: 50,
@@ -75,14 +70,9 @@ export function ConfigureStep({
   const selectedOntologyId = useXmlImportWizardStore(state => state.selectedOntologyId)
   const setSelectedOntologyId = useXmlImportWizardStore(state => state.setSelectedOntologyId)
 
-  const includedElements = new Set(
-    Object.entries(mapping?.elementMappings || {})
-      .filter(([, config]) => config.include)
-      .map(([name]) => name)
-  )
 
   return (
-    <div className="space-y-4">
+    <div className={cn('space-y-4', className)}>
       <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 border rounded-lg">
         <div className="flex items-center gap-2">
           <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -115,7 +105,7 @@ export function ConfigureStep({
             <AiMappingAssistant
               analysis={analysis}
               currentMapping={mapping}
-              onMappingSuggested={(newMapping, explanation) => {
+              onMappingSuggested={(newMapping) => {
                 onMappingChange(newMapping)
               }}
             />
@@ -197,7 +187,7 @@ export function ConfigureStep({
             </Label>
             <OntologyCombobox
               value={selectedOntologyId || undefined}
-              onValueChange={(ontologyId: string, ontology: TibOntology | null) => {
+              onValueChange={(ontologyId: string) => {
                 setSelectedOntologyId(ontologyId || null)
               }}
               showSelectedDescription={true}
@@ -233,10 +223,6 @@ export function ConfigureStep({
               <XmlStructureViewer
                 analysis={analysis}
                 xmlString={xmlPreview || undefined}
-                selectedElements={selectedElements}
-                includedElements={includedElements}
-                onElementSelect={onElementSelect}
-                onElementsSelect={onElementsSelect}
                 onElementDelete={onElementDelete}
                 onAddElements={onAddElements}
                 addingItems={addingItems}

@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
 import { 
   parseBulkNodeInput, 
-  parseBulkRelationshipInput,
-  type ParsedNode,
-  type ParsedRelationship 
+  parseBulkRelationshipInput
 } from '../../services/xml/parseService'
 import type { Node } from '../../types'
 

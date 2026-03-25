@@ -116,7 +116,7 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
           </div>
         )
 
-      case 'properties':
+      case 'properties': {
         const properties = (value || []) as Array<{ key: string; value: string }>
         return (
           <div key={field.name} className="space-y-2 pt-2 border-t mt-2">
@@ -168,8 +168,9 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
             )}
           </div>
         )
+      }
 
-      case 'mappings':
+      case 'mappings': {
         const mappings = (value || []) as Array<{ attributeName: string; propertyKey: string; defaultValue?: string; transforms: any[] }>
         return (
           <div key={field.name} className="space-y-4 pt-2 border-t mt-2">
@@ -275,8 +276,9 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
             )}
           </div>
         )
+      }
 
-      case 'transforms':
+      case 'transforms': {
         const transforms = (value || []) as any[]
         return (
           <div key={field.name} className="space-y-2 pt-2 border-t mt-2">
@@ -300,6 +302,7 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
             )}
           </div>
         )
+      }
 
       case 'separator':
         return <div key={field.name} className="hr border-t my-2" />

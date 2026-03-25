@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, MarkerType, type EdgeProps } from 'reactflow'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from 'reactflow'
 
 interface CustomEdgeData {
   type: string

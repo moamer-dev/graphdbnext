@@ -1,9 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useCredentialsStore } from '../../stores/credentialsStore'
 import { fetchFromApi, type ApiProvider } from '../../services/apiClient'
-import { apiResponseCache } from '../../utils/apiResponseCache'
 import { toast } from '../../utils/toast'
 import type { Condition, ConditionGroup, SwitchSource, SwitchCase } from '../../components/sidebars/ToolConfigurationSidebar'
 
@@ -153,11 +152,11 @@ export function useToolTestExecution(toolNodeId: string | null) {
   const getCredential = useCredentialsStore((state) => state.getCredential)
 
   // Derived from config
-  const conditionGroups = (config.conditionGroups as ConditionGroup[]) || []
-  const switchSource = (config.switchSource as SwitchSource) || 'attribute'
-  const switchAttributeName = (config.switchAttributeName as string) || ''
-  const switchCases = (config.switchCases as SwitchCase[]) || []
-  const switchCaseInputs = (config.switchCaseInputs as Record<string, string>) || {}
+  const conditionGroups = useMemo(() => (config.conditionGroups as ConditionGroup[]) || [], [config.conditionGroups])
+  const switchSource = useMemo(() => (config.switchSource as SwitchSource) || 'attribute', [config.switchSource])
+  const switchAttributeName = useMemo(() => (config.switchAttributeName as string) || '', [config.switchAttributeName])
+  const switchCases = useMemo(() => (config.switchCases as SwitchCase[]) || [], [config.switchCases])
+  const switchCaseInputs = useMemo(() => (config.switchCaseInputs as Record<string, string>) || {}, [config.switchCaseInputs])
 
   const createTestElement = useCallback((
     attachedNode?: { label?: string; type?: string; properties?: Array<{ key: string }> } | null,
@@ -373,7 +372,7 @@ export function useToolTestExecution(toolNodeId: string | null) {
     try {
       const response = await fetch(httpConfig.url, { method: httpConfig.method })
       setTestResult({ success: response.ok, output: response.ok ? 'Success' : 'Failed' })
-    } catch (error) {
+    } catch {
       setTestResult({ success: false, output: 'Error' })
     } finally {
       setIsExecuting(false)

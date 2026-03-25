@@ -40,10 +40,11 @@ function buildApiUrl(provider: ApiProvider, id: string, apiKey?: string): string
   const cleanId = id.trim()
   
   switch (provider) {
-    case 'wikidata':
+    case 'wikidata': {
       // Wikidata Entity API - IDs are case-sensitive and start with Q or P
       const normalizedId = cleanId.match(/^[qp]\d+$/i) ? cleanId.toUpperCase() : cleanId
       return `https://www.wikidata.org/wiki/Special:EntityData/${normalizedId}.json`
+    }
     
     case 'gnd':
       // GND SRU API (simplified - may need more complex query building)
@@ -58,10 +59,11 @@ function buildApiUrl(provider: ApiProvider, id: string, apiKey?: string): string
       // ORCID API
       return `https://pub.orcid.org/v3.0/${cleanId}`
     
-    case 'geonames':
+    case 'geonames': {
       // GeoNames API
       const username = apiKey || 'demo' // GeoNames requires username
       return `https://secure.geonames.org/getJSON?geonameId=${cleanId}&username=${username}`
+    }
     
     case 'dblp':
       // DBLP Search API (note: this is a search, not direct lookup)

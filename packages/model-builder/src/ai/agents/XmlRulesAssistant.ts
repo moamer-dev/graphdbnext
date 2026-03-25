@@ -239,8 +239,7 @@ Return ONLY valid JSON. No comments, no trailing commas, no markdown code blocks
  */
 export async function chatWithXmlRulesAssistant(
   model: BaseChatModel,
-  messages: Array<HumanMessage | AIMessage | SystemMessage>,
-  _availableElements?: XmlElementInfo
+  messages: Array<HumanMessage | AIMessage | SystemMessage>
 ): Promise<string> {
   const response = await model.invoke(messages)
   

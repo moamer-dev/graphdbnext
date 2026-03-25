@@ -1,7 +1,6 @@
 import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
 import type { ActionExecutionContext } from './types'
 import type { GraphJsonNode, GraphJsonRelationship } from '../types'
-import { evaluateExpression } from '../../../../utils/jsonPathExpression'
 
 export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.builderNode) return

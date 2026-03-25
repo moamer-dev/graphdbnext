@@ -74,7 +74,6 @@ export function exportWorkflowConfig(
   actionEdges: ActionCanvasEdge[],
   rootNodeId: string | null
 ): string {
-  const nodeLabelToId = new Map(nodes.map(n => [n.label, n.id]))
   const rootNode = nodes.find(n => n.id === rootNodeId)
   const toolIdToNode = new Map(toolNodes.map(t => [t.id, t]))
   const actionIdToNode = new Map(actionNodes.map(a => [a.id, a]))
@@ -88,9 +87,6 @@ export function exportWorkflowConfig(
       toolLabelMap.set(tool.id, toolLabel)
     }
   })
-
-  // Build action label map
-  const actionLabelMap = new Map(actionNodes.map(a => [a.id, a.label]))
 
   const config: WorkflowConfigExport = {
     version: 1,
@@ -279,17 +275,45 @@ export function importWorkflowConfig(
   jsonString: string,
   nodes: Node[]
 ): ImportedWorkflowConfig {
-  const config: WorkflowConfigExport = JSON.parse(jsonString)
+  let config: any;
+  
+  try {
+    config = JSON.parse(jsonString);
+  } catch (error) {
+    throw new Error(`Failed to parse workflow config file. The file appears to be invalid JSON. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
-  if (config.type !== 'workflow-config') {
-    throw new Error('Invalid workflow config file type')
+  // Basic structure validation
+  if (!config || typeof config !== 'object') {
+    throw new Error('Invalid workflow config file format. Expected a JSON object.');
+  }
+
+  // Check for required type property and handle wrapped format
+  if (!config.type) {
+    const availableKeys = Object.keys(config).join(', ');
+    
+    // Check if this is a wrapped format where the actual config is in a 'config' property
+    if (config.config && typeof config.config === 'object' && config.config.type) {
+      console.log('Detected wrapped workflow config format, extracting inner config');
+      config = config.config;
+    } else if (availableKeys.includes('version') || availableKeys.includes('tools') || availableKeys.includes('actions')) {
+      throw new Error(`This appears to be an older workflow config format (missing 'type' property). Available properties: ${availableKeys}. Please export a new workflow config from the current system to get the correct format.`);
+    } else {
+      throw new Error(`Invalid workflow config file: missing 'type' property. Available properties: ${availableKeys}. This file may be an older format or a different type of configuration file.`);
+    }
+  }
+
+  const workflowConfig: WorkflowConfigExport = config;
+
+  if (workflowConfig.type !== 'workflow-config') {
+    throw new Error(`Invalid workflow config file type. Expected 'workflow-config', but got '${workflowConfig.type}'. Please ensure you're importing a valid workflow configuration file.`);
   }
 
   // Build node label to ID map
   const nodeLabelToId = new Map(nodes.map(n => [n.label, n.id]))
 
   // Import relationships - preserve node labels for error reporting
-  const relationships: Array<Omit<Relationship, 'id'> & { fromNodeLabel?: string; toNodeLabel?: string }> = (config.relationships || [])
+  const relationships: Array<Omit<Relationship, 'id'> & { fromNodeLabel?: string; toNodeLabel?: string }> = (workflowConfig.relationships || [])
     .map(rel => {
       const fromId = nodeLabelToId.get(rel.fromNodeLabel)
       const toId = nodeLabelToId.get(rel.toNodeLabel)
@@ -329,34 +353,33 @@ export function importWorkflowConfig(
 
   // Import tools
   const toolLabelToId = new Map<string, string>()
-  const tools: Array<Omit<ToolCanvasNode, 'id'>> = config.tools
-    .map(tool => {
-      const targetNodeId = tool.targetNodeLabel 
-        ? nodeLabelToId.get(tool.targetNodeLabel)
-        : undefined
+  const tools = (workflowConfig.tools || []).map(tool => {
+    const targetNodeId = tool.targetNodeLabel 
+      ? nodeLabelToId.get(tool.targetNodeLabel)
+      : undefined
       
-      const toolId = `temp_${Math.random().toString(36).slice(2, 9)}`
-      // For tools without target node, use just label or type as key part
-      const toolLabel = targetNodeId && tool.targetNodeLabel
-        ? `${tool.targetNodeLabel}::${tool.type}`
-        : tool.label || tool.type
+    const toolId = `temp_${Math.random().toString(36).slice(2, 9)}`
+    // For tools without target node, use just label or type as key part
+    const toolLabel = targetNodeId && tool.targetNodeLabel
+      ? `${tool.targetNodeLabel}::${tool.type}`
+      : tool.label || tool.type
       
-      toolLabelToId.set(toolLabel, toolId)
-      return {
-        type: tool.type as ToolCanvasNode['type'],
-        label: tool.label,
-        targetNodeId,
-        config: tool.config,
-        position: tool.position,
-        inputs: tool.inputs,
-        outputs: tool.outputs
-      }
-    })
+    toolLabelToId.set(toolLabel, toolId)
+    return {
+      type: tool.type as ToolCanvasNode['type'],
+      label: tool.label,
+      targetNodeId,
+      config: tool.config,
+      position: tool.position,
+      inputs: tool.inputs,
+      outputs: tool.outputs
+    }
+  })
     .filter((tool): tool is NonNullable<typeof tool> => tool !== null)
 
   // Import actions - first pass: create all top-level actions (not children) and build label-to-id map
   const actionLabelToId = new Map<string, string>()
-  const actions: Array<Omit<ActionCanvasNode, 'id' | 'children'> & { children?: any }> = config.actions
+  const actions: Array<Omit<ActionCanvasNode, 'id' | 'children'> & { children?: any }> = workflowConfig.actions
     .map(action => {
       const actionId = `temp_${Math.random().toString(36).slice(2, 9)}`
       actionLabelToId.set(action.label, actionId)
@@ -407,7 +430,7 @@ export function importWorkflowConfig(
   })
 
   // Import tool edges - return with labels for matching during import
-  const toolEdges = config.toolEdges.map(edge => ({
+  const toolEdges = workflowConfig.toolEdges.map(edge => ({
     sourceToolLabel: edge.sourceToolLabel,
     targetToolLabel: edge.targetToolLabel,
     targetActionLabel: edge.targetActionLabel,
@@ -416,7 +439,7 @@ export function importWorkflowConfig(
   }))
 
   // Import action edges - return with labels for matching during import
-  const actionEdges = config.actionEdges.map(edge => ({
+  const actionEdges = workflowConfig.actionEdges.map(edge => ({
     sourceToolLabel: edge.sourceToolLabel,
     sourceActionLabel: edge.sourceActionLabel,
     targetActionLabel: edge.targetActionLabel,
@@ -430,13 +453,13 @@ export function importWorkflowConfig(
     toolEdges,
     actions: actionsWithRemappedChildren,
     actionEdges,
-    rootNodeId: config.rootNodeLabel ? nodeLabelToId.get(config.rootNodeLabel) || null : null,
+    rootNodeId: workflowConfig.rootNodeLabel ? nodeLabelToId.get(workflowConfig.rootNodeLabel) || null : null,
     _originalCounts: {
-      relationships: config.relationships?.length || 0,
-      tools: config.tools.length,
-      actions: config.actions.length,
-      toolEdges: config.toolEdges.length,
-      actionEdges: config.actionEdges.length
+      relationships: workflowConfig.relationships?.length || 0,
+      tools: workflowConfig.tools.length,
+      actions: workflowConfig.actions.length,
+      toolEdges: workflowConfig.toolEdges.length,
+      actionEdges: workflowConfig.actionEdges.length
     }
   }
 }

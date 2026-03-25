@@ -39,13 +39,12 @@ export class ExportService {
     return rows.join('\n')
   }
 
-  exportToJSON(data: unknown[], options: ExportOptions = {}): string {
+  exportToJSON(data: unknown[]): string {
     return JSON.stringify(data, null, 2)
   }
 
   exportToGraphML(nodes: GraphNode[], edges: GraphEdge[]): string {
     const nodeIds = new Set(nodes.map(n => n.id))
-    const edgeIds = new Set(edges.map(e => e.id))
 
     let graphml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     graphml += '<graphml xmlns="http://graphml.graphdrawing.org/xmlns"\n'

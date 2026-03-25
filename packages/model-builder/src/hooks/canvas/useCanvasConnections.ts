@@ -43,7 +43,6 @@ export function useCanvasConnections({
     const targetIsMain = isMainNodeId(connection.target)
     const sourceIsTool = isToolNodeId(connection.source)
     const targetIsTool = isToolNodeId(connection.target)
-    const sourceIsAction = isActionNodeId(connection.source)
     const targetIsAction = isActionNodeId(connection.target)
     const targetIsActionGroup = isActionGroupNodeId(connection.target, actionNodes)
 

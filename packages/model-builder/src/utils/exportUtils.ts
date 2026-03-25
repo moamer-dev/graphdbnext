@@ -1,4 +1,4 @@
-import type { Node, Relationship, Property, ModelBuilderState } from '../types'
+import type { Node, Property, ModelBuilderState } from '../types'
 
 /**
  * Export builder state to JSON schema format

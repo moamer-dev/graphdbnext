@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useImperativeHandle, useCallback } from 'react'
+import { useState, useEffect, useRef, useImperativeHandle, useMemo } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../../stores/actionCanvasStore'
@@ -20,26 +20,19 @@ export function useModelBuilderInternal(props: any, ref: any) {
     initialWorkflow,
     onWorkflowChange,
     onSave,
-    onSaveModel,
-    isNewModel = false
+    onSaveModel
   } = props
 
   const ui = useModelBuilderUI()
   const {
-    setImportDialogOpen,
     setWorkflowConfigDialogOpen,
-    workflowConfigFile,
-    setWorkflowConfigFile,
-    setRunDialogOpen,
-    setCredentialsDialogOpen,
-    setRunning,
-    setExecutionProgress,
-    setGraphPreview,
-    focusNodeFnRef
+    workflowConfigFile
   } = ui
 
-  const nodes = Array.isArray(useModelBuilderStore((state) => state.nodes)) ? useModelBuilderStore((state) => state.nodes) : []
-  const relationships = Array.isArray(useModelBuilderStore((state) => state.relationships)) ? useModelBuilderStore((state) => state.relationships) : []
+  const nodesFromStore = useModelBuilderStore((state) => state.nodes)
+  const nodes = useMemo(() => Array.isArray(nodesFromStore) ? nodesFromStore : [], [nodesFromStore])
+  const relationshipsFromStore = useModelBuilderStore((state) => state.relationships)
+  const relationships = useMemo(() => Array.isArray(relationshipsFromStore) ? relationshipsFromStore : [], [relationshipsFromStore])
   const metadata = useModelBuilderStore((state) => state.metadata)
   const updateMetadata = useModelBuilderStore((state) => state.updateMetadata)
   const rootNodeId = useModelBuilderStore((state) => state.rootNodeId)
@@ -58,7 +51,7 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const selectedActionNodeId = useActionCanvasStore((state) => state.selectedNodeId)
 
   const { xmlContent, handleRunWorkflow, handleUploadXml } = useWorkflowLifecycle({
-    initialWorkflow, nodes, relationships, onWorkflowChange, ui
+    initialWorkflow, nodes, relationships, ui
   })
 
   const [leftTab, setLeftTab] = useTabPersistence<'nodes' | 'relationships' | 'tools' | 'actions'>(
@@ -75,7 +68,7 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const [importingWorkflowConfig, setImportingWorkflowConfig] = useState(false)
   const [workflowConfigImportError, setWorkflowConfigImportError] = useState<string | null>(null)
   const [schemaDesignDialogOpen, setSchemaDesignDialogOpen] = useState(false)
-  const [schemaDesignMode, setSchemaDesignMode] = useState<'suggest' | 'optimize' | 'validate'>('suggest')
+  const [schemaDesignMode] = useState<'suggest' | 'optimize' | 'validate'>('suggest')
   const [workflowGenerationDialogOpen, setWorkflowGenerationDialogOpen] = useState(false)
 
   const isSchemaDesignEnabled = useAIFeature('schemaDesignAgent')
@@ -125,6 +118,18 @@ export function useModelBuilderInternal(props: any, ref: any) {
 
     try {
       const text = await workflowConfigFile.text()
+      
+      // Basic file validation - check if it looks like JSON and has expected structure
+      if (!text.trim().startsWith('{')) {
+        throw new Error('The selected file does not appear to be a JSON file. Please select a valid workflow configuration file.')
+      }
+      
+      // Quick check for workflow config type without full parsing
+      const quickCheck = text.toLowerCase();
+      if (!quickCheck.includes('workflow-config') && !quickCheck.includes('"type"')) {
+        throw new Error('The selected file does not appear to be a workflow configuration file. Please ensure you\'re importing a file that was exported from the workflow system.');
+      }
+      
       const config = importWorkflowConfig(text, nodes)
       const result = workflowService.applyWorkflowConfig(config, nodes)
       
@@ -486,6 +491,8 @@ export function useModelBuilderInternal(props: any, ref: any) {
     handleWorkflowChange,
     confirmWorkflowChange,
     cancelWorkflowChange,
-    triggerSaveInternal
+    triggerSaveInternal,
+    setFocusNodeFn: ui.setFocusNodeFn,
+    setFocusRelationshipFn: ui.setFocusRelationshipFn
   }
 }

@@ -86,7 +86,7 @@ export function ConfigureRulesStep({
               <AiRulesAssistantWrapper
                 availableElements={availableElements}
                 currentRules={analysisRules}
-                onRulesSuggested={(newRules, explanation) => {
+                onRulesSuggested={(newRules) => {
                   onRulesChange(newRules)
                 }}
               />

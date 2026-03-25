@@ -4,7 +4,7 @@ import {
     fetchClasses,
     fetchProperties
 } from '../../services/tibTerminologyService'
-import type { TibOntology, TibClass, TibProperty, TibApiResponse } from '../../types/semanticTypes'
+import type { TibOntology, TibClass, TibProperty } from '../../types/semanticTypes'
 
 interface UseOntologiesResult {
     ontologies: TibOntology[]

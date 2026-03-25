@@ -16,6 +16,7 @@ export class ReadOnlyAISettingsStorage implements AISettingsStorage {
     return this.settings
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async saveSettings(_settings: AISettings): Promise<void> {
     throw new Error(
       'AI settings cannot be modified from the model builder. Please update settings in the parent application.'
@@ -35,4 +36,3 @@ export class ReadOnlyAISettingsStorage implements AISettingsStorage {
     this.settings = newSettings
   }
 }
-

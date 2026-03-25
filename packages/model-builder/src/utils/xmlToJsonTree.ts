@@ -1,5 +1,5 @@
 import { DOMParser } from '@xmldom/xmldom'
-import { XmlAnalyzer, type XmlElementType, type XmlAnalysisRules } from '../services/xml/xmlAnalyzer'
+import { type XmlAnalysisRules } from '../services/xml/xmlAnalyzer'
 
 export interface JsonTreeNode {
   key: string

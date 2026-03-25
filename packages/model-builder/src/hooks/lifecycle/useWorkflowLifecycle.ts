@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createHash } from 'crypto'
 import { toast } from '../../utils/toast'
 import { workflowService } from '../../services/workflow/workflowService'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
@@ -12,10 +13,9 @@ import { WorkflowConfigExport, importWorkflowConfig } from '../../utils/workflow
 import { Node, Relationship } from '../../types'
 
 interface UseWorkflowLifecycleProps {
-  initialWorkflow?: { id: string; config: unknown }
+  initialWorkflow?: WorkflowConfigExport | null
   nodes: Node[]
   relationships: Relationship[]
-  onWorkflowChange?: (id: string) => void
   ui: any // From useModelBuilderUI
 }
 
@@ -23,7 +23,6 @@ export const useWorkflowLifecycle = ({
   initialWorkflow,
   nodes,
   relationships,
-  onWorkflowChange,
   ui
 }: UseWorkflowLifecycleProps) => {
   const workflowLoadedRef = useRef(false)
@@ -87,19 +86,21 @@ export const useWorkflowLifecycle = ({
   // Initial workflow loading
   useEffect(() => {
     if (initialWorkflow && nodes.length > 0) {
-      const isDifferentWorkflow = lastWorkflowIdRef.current !== initialWorkflow.id
+      // Create a stable workflow ID using hash of key properties
+      const workflowData = `${initialWorkflow.version}_${initialWorkflow.rootNodeLabel || 'null'}_${initialWorkflow.createdAt}_${initialWorkflow.type || 'workflow-config'}`
+      const workflowId = createHash('md5').update(workflowData).digest('hex')
+      const isDifferentWorkflow = lastWorkflowIdRef.current !== workflowId
 
       if (isDifferentWorkflow) {
         workflowLoadedRef.current = false
-        lastWorkflowIdRef.current = initialWorkflow.id
+        lastWorkflowIdRef.current = workflowId
         useToolCanvasStore.getState().clear()
         useActionCanvasStore.getState().clear()
         workflowLoadedRef.current = true
 
         setTimeout(() => {
           try {
-            const config = initialWorkflow.config as WorkflowConfigExport
-            handleLoadWorkflowFromConfig(config)
+            handleLoadWorkflowFromConfig(initialWorkflow)
           } catch (error) {
             console.error('Error loading initial workflow:', error)
           }

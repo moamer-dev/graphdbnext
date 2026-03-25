@@ -20,6 +20,14 @@ export function useModelBuilderUI() {
   const focusNodeFnRef = useRef<((id: string) => void) | null>(null)
   const focusRelationshipFnRef = useRef<((fromId: string, toId: string) => void) | null>(null)
 
+  const setFocusNodeFn = (fn: ((id: string) => void) | null) => {
+    focusNodeFnRef.current = fn
+  }
+
+  const setFocusRelationshipFn = (fn: ((fromId: string, toId: string) => void) | null) => {
+    focusRelationshipFnRef.current = fn
+  }
+
   return {
     importDialogOpen,
     setImportDialogOpen,
@@ -47,7 +55,9 @@ export function useModelBuilderUI() {
     setGraphPreview,
     fileInputRef,
     focusNodeFnRef,
-    focusRelationshipFnRef
+    focusRelationshipFnRef,
+    setFocusNodeFn,
+    setFocusRelationshipFn
   }
 }
 

@@ -146,7 +146,6 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
                     {items.map((item: any) => {
                       const Icon = item.icon
                       const colors = getColorClassesHelper(item.color, item.bgColor)
-                      const isQuick = (item as any).isQuick || (item as any).quickAction || false
 
                       return (
                         <div

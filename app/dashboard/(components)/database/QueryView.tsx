@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 type QueryMode = 'library' | 'builder' | 'cypher' | 'agent'
 
 export function QueryView() {
-  const { settings: aiSettings, loading: aiSettingsLoading } = useAISettings()
+  const { settings: aiSettings } = useAISettings()
   const {
     mounted,
     activeMode,

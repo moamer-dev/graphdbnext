@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useCallback, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -15,7 +16,6 @@ import { downloadTemplate } from '@/lib/utils/downloadTemplate'
 import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
 import { Button } from '@/components/ui/button'
 import { Upload, LayoutGrid, Table2, Plus, FileCode } from 'lucide-react'
-import Link from 'next/link'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,7 +25,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type ViewMode = 'table' | 'grid'
 
-export default function ModelsPage() {
+function ModelsPageContent() {
   const searchParams = useSearchParams()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
 
@@ -310,8 +310,6 @@ export default function ModelsPage() {
               data={data}
               loading={loading}
               config={config}
-              onView={handleView}
-              onEdit={handleEdit}
               onDelete={handleDelete}
               renderCard={renderModelCard}
             />
@@ -373,5 +371,13 @@ export default function ModelsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ModelsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ModelsPageContent />
+    </Suspense>
   )
 }

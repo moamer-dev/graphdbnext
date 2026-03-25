@@ -31,11 +31,11 @@ export function MarkdownContent({ content, className = '' }: MarkdownContentProp
       if (!paragraph.trim()) return null
       
       // Check for list
-      if (/^[\d\-\*\+]\.?\s/.test(paragraph.trim())) {
+      if (/^[\d\-*+]\.?\s/.test(paragraph.trim())) {
         const lines = paragraph.split('\n')
         const items = lines
-          .filter(line => /^[\d\-\*\+]\.?\s/.test(line.trim()))
-          .map(line => line.replace(/^[\d\-\*\+]\.?\s+/, '').trim())
+          .filter(line => /^[\d\-*+]\.?\s/.test(line.trim()))
+          .map(line => line.replace(/^[\d\-*+]\.?\s+/, '').trim())
         
         if (items.length > 0) {
           return (

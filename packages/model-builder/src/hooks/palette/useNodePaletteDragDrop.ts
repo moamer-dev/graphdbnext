@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import type { Node } from '../../types'
 
 export function useNodePaletteDragDrop() {
   const [activeId, setActiveId] = useState<string | null>(null)

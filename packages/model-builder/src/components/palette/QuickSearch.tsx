@@ -10,7 +10,7 @@ import {
 } from '../ui/dialog'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
-import { Search, FileText, Settings, Link2, Globe, Boxes } from 'lucide-react'
+import { Search, FileText, Settings, Link2, Boxes } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
 interface SearchResult {

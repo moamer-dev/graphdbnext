@@ -38,7 +38,10 @@ export function useXmlMappingState({
   useEffect(() => {
     if (initialMapping && initialMapping !== prevMappingRef.current) {
       prevMappingRef.current = initialMapping
-      setMapping(initialMapping)
+      const timeoutId = setTimeout(() => {
+        setMapping(initialMapping)
+      }, 0)
+      return () => clearTimeout(timeoutId)
     }
   }, [initialMapping])
 
@@ -50,14 +53,17 @@ export function useXmlMappingState({
     // Only update if element types actually changed
     if (currentNames.size !== prevNames.size || 
         ![...currentNames].every(name => prevNames.has(name))) {
-      setOrderedElements(prev => {
-        const filtered = prev.filter(name => currentNames.has(name))
-        const newElements = analysis.elementTypes
-          .map(et => et.name)
-          .filter(name => !prev.includes(name))
-        return [...filtered, ...newElements]
-      })
+      const timeoutId = setTimeout(() => {
+        setOrderedElements(prev => {
+          const filtered = prev.filter(name => currentNames.has(name))
+          const newElements = analysis.elementTypes
+            .map(et => et.name)
+            .filter(name => !prev.includes(name))
+          return [...filtered, ...newElements]
+        })
+      }, 0)
       prevAnalysisElementTypesRef.current = analysis.elementTypes
+      return () => clearTimeout(timeoutId)
     }
   }, [analysis.elementTypes])
 
@@ -65,9 +71,12 @@ export function useXmlMappingState({
   useEffect(() => {
     if (!hasInitializedDefaultMapping.current && !initialMapping && analysis) {
       const defaultMapping = XmlAnalyzer.generateDefaultMapping(analysis)
-      setMapping(defaultMapping)
-      onMappingChange(defaultMapping)
+      const timeoutId = setTimeout(() => {
+        setMapping(defaultMapping)
+        onMappingChange(defaultMapping)
+      }, 0)
       hasInitializedDefaultMapping.current = true
+      return () => clearTimeout(timeoutId)
     }
   }, [analysis, initialMapping, onMappingChange])
 

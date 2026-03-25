@@ -94,7 +94,7 @@ export class MappingValidator {
 
         // Validate relationship properties
         if (relMapping.properties) {
-          for (const [propKey, propMapping] of Object.entries(relMapping.properties)) {
+          for (const [propKey] of Object.entries(relMapping.properties)) {
             const schemaProp = schemaRelation.properties?.[propKey]
             if (!schemaProp) {
               errors.push({

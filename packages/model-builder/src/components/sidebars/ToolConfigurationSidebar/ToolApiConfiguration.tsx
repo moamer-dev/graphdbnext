@@ -11,10 +11,6 @@ import {
 } from '../../ui/select'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
 import { HelpTooltip } from '../../shared/HelpTooltip'
-import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
-import { useToolConfigurationStore } from '../../../stores/toolConfigurationStore'
-
-type StoreState = ReturnType<typeof useToolConfigurationStore>
 
 interface FetchApiConfig {
   apiProvider: string
@@ -59,8 +55,6 @@ interface HttpConfig {
 
 interface ToolApiConfigurationProps {
   toolNodeType: string
-  toolNodeId: string
-  toolNode: ToolCanvasNode | null
   fetchApiConfig: FetchApiConfig
   authenticatedApiConfig: AuthenticatedApiConfig
   httpConfig: HttpConfig
@@ -68,15 +62,12 @@ interface ToolApiConfigurationProps {
   onAuthenticatedApiConfigChange: (config: AuthenticatedApiConfig) => void
   onHttpConfigChange: (config: HttpConfig) => void
   onUpdateConfig: (updates: Record<string, any>) => void
-  onUpdateToolNode: (id: string, updates: Partial<ToolCanvasNode>) => void
   getCredentialsByType: (type: string) => Array<{ id: string; name: string }>
   getCredential: (id: string) => { id: string; name: string } | undefined
 }
 
 export function ToolApiConfiguration({
   toolNodeType,
-  toolNodeId,
-  toolNode,
   fetchApiConfig,
   authenticatedApiConfig,
   httpConfig,
@@ -84,7 +75,6 @@ export function ToolApiConfiguration({
   onAuthenticatedApiConfigChange,
   onHttpConfigChange,
   onUpdateConfig,
-  onUpdateToolNode,
   getCredentialsByType,
   getCredential
 }: ToolApiConfigurationProps) {

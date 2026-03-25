@@ -215,7 +215,7 @@ export class GraphVisualizationService {
     const edgesGroup = this.g!.append('g').attr('class', 'edges')
 
     // Create invisible hit areas for edges (thicker, invisible lines for easier clicking)
-    const edgeHits = edgesGroup
+    edgesGroup
       .selectAll('line.edge-hit')
       .data(data.edges)
       .enter().append('line')
@@ -229,7 +229,7 @@ export class GraphVisualizationService {
       })
 
     // Create visible edges
-    const edges = edgesGroup
+    edgesGroup
       .selectAll('line.edge-line')
       .data(data.edges)
       .enter().append('line')

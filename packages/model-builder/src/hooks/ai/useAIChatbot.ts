@@ -86,7 +86,6 @@ export function useAIChatbot() {
     setInput('')
     setIsLoading(true)
 
-    const assistantMessageId = Date.now().toString()
     const assistantMessage: Message = {
       role: 'assistant',
       content: '',

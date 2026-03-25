@@ -1,8 +1,7 @@
 import type { ToolCanvasNode } from '../../../../stores/toolCanvasStore'
-import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 
-export const executeWebhookTool: ToolExecutor = async (tool: ToolCanvasNode, _ctx: ExecutionContext) => {
+export const executeWebhookTool: ToolExecutor = async (tool: ToolCanvasNode) => {
   const url = (tool.config.url as string) || ''
 
   if (!url) {

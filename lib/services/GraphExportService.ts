@@ -1,5 +1,3 @@
-import type { GraphNode, GraphEdge } from './GraphVisualizationService'
-
 export interface GraphExportOptions {
   format: 'png' | 'svg'
   width?: number

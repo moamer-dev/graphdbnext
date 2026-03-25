@@ -22,15 +22,12 @@ export function calculateHierarchicalLayout(
   options: LayoutOptions = {}
 ): Map<string, Position> {
   const {
-    nodeWidth = 200,
-    nodeHeight = 100,
     horizontalSpacing = 300,
     verticalSpacing = 200,
     padding = 50
   } = options
 
   const positions = new Map<string, Position>()
-  const nodeMap = new Map(nodes.map(n => [n.id, n]))
   
   // Build adjacency lists
   const outgoing = new Map<string, string[]>()
@@ -122,8 +119,6 @@ export function calculateGridLayout(
   options: LayoutOptions = {}
 ): Map<string, Position> {
   const {
-    nodeWidth = 200,
-    nodeHeight = 100,
     horizontalSpacing = 250,
     verticalSpacing = 150,
     padding = 50

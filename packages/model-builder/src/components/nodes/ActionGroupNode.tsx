@@ -43,7 +43,9 @@ const ActionGroupNodeComponent = ({ data, selected }: NodeProps<ActionGroupNodeD
         selected ? 'border-purple-500' : ''
       }`}
       style={{ minWidth: 100 }}
-      onClick={() => {}}
+      onClick={() => {
+        // Action group node click handler - no default action
+      }}
     >
       {/* Input handle - rectangular purple port on left */}
       <Handle

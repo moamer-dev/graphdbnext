@@ -97,7 +97,7 @@ export function ChatAgent({ onVisualize }: ChatAgentProps) {
                         <div className="text-center py-10 px-4 text-muted-foreground/50 text-xs">
                             <Bot className="h-8 w-8 mx-auto mb-3 opacity-20" />
                             <p>No messages yet.</p>
-                            <p className="mt-1">Try asking: "How many nodes are there?"</p>
+                            <p className="mt-1">Try asking: &quot;How many nodes are there?&quot;</p>
                         </div>
                     )}
 

@@ -10,7 +10,7 @@ import {
 } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { ScrollArea } from '../ui/scroll-area'
-import { History, X, Copy, Check } from 'lucide-react'
+import { History, Copy, Check } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
 interface ResponseHistoryEntry {

@@ -146,7 +146,7 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
       }
     }
     loadPreview()
-  }, [step, selectedFile, xmlPreview])
+  }, [step, selectedFile, xmlPreview, setXmlPreview])
 
 
   const wizardContent = (
@@ -286,7 +286,6 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
             analysis={analysis}
             mapping={mapping}
             xmlPreview={xmlPreview}
-            selectedElements={selectedElements}
             showStructure={showStructure}
             showMapping={showMapping}
             addingItems={addingItems}
@@ -295,14 +294,13 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
             onShowStructureChange={setShowStructure}
             onShowMappingChange={setShowMapping}
             onMappingChange={handleMappingChange}
-            onElementSelect={toggleElement}
-            onElementsSelect={selectElements}
             onElementDelete={handleElementDelete}
+            onRemoveElements={handleRemoveElementsFromMapping}
             onAddElements={handleAddElementsToMapping}
             onAddingItemsChange={setAddingItems}
-            onRemoveElements={handleRemoveElementsFromMapping}
             onImportConfig={handleImportConfig}
             onExportConfig={handleExportConfig}
+            className="flex-1 min-h-0"
           />
         )}
 

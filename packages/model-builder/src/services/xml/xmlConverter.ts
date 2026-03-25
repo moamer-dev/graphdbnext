@@ -459,7 +459,7 @@ export class XmlConverter {
 
     // Map token properties
     if (tokenizeConfig.properties) {
-      for (const [key, propMapping] of Object.entries(tokenizeConfig.properties)) {
+      for (const [, propMapping] of Object.entries(tokenizeConfig.properties)) {
         let value: unknown
 
         switch (propMapping.source) {

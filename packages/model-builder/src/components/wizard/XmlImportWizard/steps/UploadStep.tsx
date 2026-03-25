@@ -2,7 +2,6 @@
 
 import { useRef } from 'react'
 import { Upload, FileText, Info } from 'lucide-react'
-import { Button } from '../../../ui/button'
 
 interface UploadStepProps {
   selectedFile: File | null

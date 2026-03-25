@@ -68,7 +68,6 @@ export function parseCypherToBuilder (cypherQuery: string): ParsedQuery | null {
     // Pattern: (alias:Label)-[relAlias:Type]->(alias2:Label2)
     const patternRegex = /\(([^:)]+)(?::([^)]+))?\)|\[([^:)]+)?(?::([^:)]+))?\]|(->|<-|<->)/g
     let lastNodeAlias: string | null = null
-    let lastNodeLabel: string | undefined
     let currentRel: Partial<ParsedRelationship> | null = null
 
     let patternMatch
@@ -98,7 +97,6 @@ export function parseCypherToBuilder (cypherQuery: string): ParsedQuery | null {
         }
 
         lastNodeAlias = alias
-        lastNodeLabel = label
       } else if (patternMatch[3] || patternMatch[4]) {
         // Relationship pattern: [alias:Type]
         currentRel = {

@@ -21,7 +21,6 @@ interface NewModelBuilderProps {
     name?: string
     description?: string
   }) => Promise<import('@/lib/resources/ModelResource').Model>
-  onCancel: () => void
   saving: boolean
   isPending: boolean
   cancelDialogOpen: boolean
@@ -36,7 +35,6 @@ export function NewModelBuilder({
   modelName,
   onModelNameChange,
   onSave,
-  onCancel,
   saving,
   isPending,
   cancelDialogOpen,
@@ -52,8 +50,9 @@ export function NewModelBuilder({
 
   // Clear builder state when unmounting
   useEffect(() => {
+    const currentRef = builderRef.current
     return () => {
-      builderRef.current?.clear()
+      currentRef?.clear()
     }
   }, [])
 

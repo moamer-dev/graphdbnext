@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { GraphVisualizationService, GraphData, GraphNode, GraphEdge } from '@/lib/services/GraphVisualizationService'
 import { CustomVisualizationService, type VisualizationConfig } from '@/lib/services/CustomVisualizationService'
 import * as d3 from 'd3'
@@ -36,9 +36,18 @@ export function useCustomGraphView({ results, containerRef, config }: UseCustomG
     }
   }, [])
 
+  const [prevResults, setPrevResults] = useState(results)
+  const [prevConfig, setPrevConfig] = useState(config)
+
+  if (results !== prevResults || config !== prevConfig) {
+    setPrevResults(results)
+    setPrevConfig(config)
+    setGraphData(null)
+    setError(null)
+  }
+
   useEffect(() => {
     if (!results || results.length === 0) {
-      setGraphData(null)
       return
     }
 

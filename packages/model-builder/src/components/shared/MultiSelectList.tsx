@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Label } from '../ui/label'
 import {
   Popover,
   PopoverContent,

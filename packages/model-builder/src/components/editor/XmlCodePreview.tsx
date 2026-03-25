@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react'
+import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react'
 import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { xml as xmlLang } from '@codemirror/lang-xml'
 import { EditorView, Decoration } from '@codemirror/view'
@@ -77,7 +77,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
     }
 
     // Function to get the editor view
-    const getEditorView = (): EditorView | null => {
+    const getEditorView = useCallback((): EditorView | null => {
       if (codeMirrorRef.current?.view) {
         return codeMirrorRef.current.view
       }
@@ -91,10 +91,10 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
         }
       }
       return null
-    }
+    }, [])
 
     // Function to scroll to position
-    const scrollToPos = (position: number) => {
+    const scrollToPos = useCallback((position: number) => {
       const view = getEditorView()
       if (view) {
         const doc = view.state.doc
@@ -124,10 +124,10 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
           }
         }
       }
-    }
+    }, [getEditorView])
 
     // Function to scroll to ID (simple and reliable - IDs are unique)
-    const scrollToIdPos = (id: string) => {
+    const scrollToIdPos = useCallback((id: string) => {
       if (!value) return
 
       console.log('Searching for ID:', id)
@@ -226,7 +226,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
       } else {
         console.warn('Could not find ID in XML:', id)
       }
-    }
+    }, [value, getEditorView, scrollToPos])
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -241,7 +241,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
           scrollToPos(scrollToPosition)
         }, 200)
       }
-    }, [scrollToPosition])
+    }, [scrollToPosition, scrollToPos])
 
     // Handle scrollToId prop changes
     useEffect(() => {
@@ -250,7 +250,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
           scrollToIdPos(scrollToId)
         }, 200)
       }
-    }, [scrollToId])
+    }, [scrollToId, scrollToIdPos])
 
     return (
       <>

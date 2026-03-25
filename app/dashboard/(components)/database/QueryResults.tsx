@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Database, FileText, ChevronLeft, ChevronRight, Search, X, Table2, Network, Share2, Check, Save, Edit2, Trash2, Plus, Download, Image, Palette, Settings2 } from 'lucide-react'
+import { Database, FileText, ChevronLeft, ChevronRight, Search, X, Table2, Network, Share2, Check, Save, Edit2, Trash2, Plus, Download, Image, Palette } from 'lucide-react'
 import { GraphView } from './GraphView'
 import type { VisualizationConfig } from '@/lib/services/CustomVisualizationService'
 import { TableCellEditor } from './TableCellEditor'
@@ -103,10 +103,14 @@ export function QueryResults({ results, loading, currentQuery, onRefresh }: Quer
     setActiveGraphData(data)
   }, [])
 
-  // Reset active graph data when results change or view mode changes
-  useEffect(() => {
+  const [lastResults, setLastResults] = useState(results)
+  const [lastViewMode, setLastViewMode] = useState(viewMode)
+
+  if (results !== lastResults || viewMode !== lastViewMode) {
+    setLastResults(results)
+    setLastViewMode(viewMode)
     setActiveGraphData(null)
-  }, [results, viewMode])
+  }
 
   // Helper to check if a value is a node object
   const isNodeObject = (value: unknown): value is { id: number, labels: string[], properties: Record<string, unknown> } => {
@@ -639,7 +643,8 @@ export function QueryResults({ results, loading, currentQuery, onRefresh }: Quer
                       }}
                       disabled={exportingGraph}
                     >
-                      <Image className="h-3 w-3 mr-2" />
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                      <Image className="h-3 w-3 mr-2" aria-hidden="true" />
                       Export to PNG
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -653,7 +658,8 @@ export function QueryResults({ results, loading, currentQuery, onRefresh }: Quer
                       }}
                       disabled={exportingGraph}
                     >
-                      <Image className="h-3 w-3 mr-2" />
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                      <Image className="h-3 w-3 mr-2" aria-hidden="true" />
                       Export to SVG
                     </DropdownMenuItem>
                   </>

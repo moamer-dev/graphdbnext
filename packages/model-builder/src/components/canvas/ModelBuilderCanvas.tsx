@@ -1,11 +1,9 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import ReactFlow, {
   Background,
   BackgroundVariant,
   useReactFlow,
   ReactFlowProvider,
-  Node,
-  Edge,
   NodeTypes,
   EdgeTypes
 } from 'reactflow'
@@ -82,7 +80,6 @@ const ModelBuilderCanvasInner = ({
   const { 
     nodes, 
     edges, 
-    setNodes, 
     setEdges, 
     isDraggingRef, 
     isUpdatingSelectionRef,
@@ -181,8 +178,12 @@ const ModelBuilderCanvasInner = ({
         onEdgeClick={onEdgeClick}
         onNodeDragStop={onNodeDragStop}
         onPaneClick={onPaneClick}
-        onConnectStart={() => {}}
-        onConnectEnd={() => {}}
+        onConnectStart={() => {
+          // Connection start handler - no default action
+        }}
+        onConnectEnd={() => {
+          // Connection end handler - no default action
+        }}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView

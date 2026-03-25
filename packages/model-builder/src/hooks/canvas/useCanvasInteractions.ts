@@ -7,7 +7,6 @@ import {
   useReactFlow 
 } from 'reactflow'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
-import { useWorkflowStore } from '../../stores/workflowStore'
 import { useWorkflowCanvasStore } from '../../stores/workflowCanvasStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../../stores/actionCanvasStore'
@@ -34,7 +33,6 @@ export function useCanvasInteractions({
   const reactFlowInstance = useReactFlow()
   
   const { setNodePosition } = useModelBuilderStore()
-  const { addStep: addWorkflowStep } = useWorkflowStore()
   const { addNode: addWfNode, updateNode: updateWfNode } = useWorkflowCanvasStore()
   const { nodes: toolNodes, addNode: addToolNode, updateNode: updateToolNode } = useToolCanvasStore()
   const { 

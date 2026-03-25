@@ -1,6 +1,6 @@
 import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
 import type { ExecutionContext, GraphJsonNode, GraphJsonRelationship } from '../types'
-import type { Node as BuilderNode, Relationship } from '../../../../types'
+import type { Relationship } from '../../../../types'
 import type { SchemaJson } from '../../../../types/mappingConfig'
 
 export interface ActionExecutionContext extends ExecutionContext {

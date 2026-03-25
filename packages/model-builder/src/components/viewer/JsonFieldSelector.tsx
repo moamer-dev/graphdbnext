@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Check, Copy } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
 import { Button } from '../ui/button'
 import { cn } from '../../utils/cn'
 import { getAvailablePaths, evaluateJsonPath, parseJsonPath } from '../../utils/jsonPathExpression'

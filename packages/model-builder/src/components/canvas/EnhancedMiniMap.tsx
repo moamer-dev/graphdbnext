@@ -8,13 +8,11 @@ import { Filter, X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
 interface EnhancedMiniMapProps {
-  nodeTypes?: string[]
   onFilterChange?: (filter: string) => void
   className?: string
 }
 
 export function EnhancedMiniMap({
-  nodeTypes = [],
   onFilterChange,
   className
 }: EnhancedMiniMapProps) {
@@ -89,4 +87,6 @@ export function EnhancedMiniMap({
     </div>
   )
 }
+
+EnhancedMiniMap.displayName = 'EnhancedMiniMap'
 

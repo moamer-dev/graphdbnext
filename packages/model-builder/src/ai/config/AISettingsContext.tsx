@@ -159,7 +159,9 @@ export function useAISettings(): AISettingsContextValue {
         console.warn('updateSettings called without AISettingsProvider')
       },
       isFeatureEnabled: () => false,
-      reloadSettings: async () => {},
+      reloadSettings: async () => {
+        // Placeholder for reload settings functionality
+      },
       isReady: true
     }
   }

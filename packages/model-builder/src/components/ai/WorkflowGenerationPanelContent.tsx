@@ -18,8 +18,7 @@ export function WorkflowGenerationPanelContent() {
     settings,
     handleGenerateWorkflow,
     handleApplyWorkflow,
-    handleExplainWorkflow,
-    handleClear
+    handleExplainWorkflow
   } = useWorkflowGeneration()
 
   return (

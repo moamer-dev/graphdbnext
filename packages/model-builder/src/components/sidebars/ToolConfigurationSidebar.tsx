@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
+import { useCallback } from 'react'
 import { ToolConfigurationHeader } from './ToolConfigurationSidebar/ToolConfigurationHeader'
 import { ToolConditionBuilder } from './ToolConfigurationSidebar/ToolConditionBuilder'
 import { ToolSwitchConfiguration } from './ToolConfigurationSidebar/ToolSwitchConfiguration'
@@ -13,7 +13,6 @@ import { CollapsibleSection } from '../shared/CollapsibleSection'
 import { useToolConfiguration } from '../../hooks/configuration/useToolConfiguration'
 import { useToolTestExecution } from '../../hooks/configuration/useToolTestExecution'
 import { useToolConditionBuilder } from '../../hooks/configuration/useToolConditionBuilder'
-import type { ToolNodeType, ToolCanvasNode } from '../../stores/toolCanvasStore'
 
 export type ConditionType =
   | 'HasChildren'
@@ -73,7 +72,6 @@ export function ToolConfigurationSidebar({
     fetchApiConfig,
     authenticatedApiConfig,
     httpConfig,
-    realInstances,
     selectedInstanceIndex,
     selectedFile,
     setToolLabel,
@@ -94,8 +92,6 @@ export function ToolConfigurationSidebar({
     setApiResponseModalOpen,
     responseHistory,
     setResponseHistory,
-    connectionStatus,
-    validationErrors,
     handleExecuteConditionTest,
     handleExecuteFetchApiTest: rawHandleExecuteFetchApiTest,
     handleExecuteAuthenticatedApiTest: rawHandleExecuteAuthenticatedApiTest,
@@ -103,7 +99,7 @@ export function ToolConfigurationSidebar({
     createTestElement: rawCreateTestElement
   } = useToolTestExecution(toolNodeId)
 
-  const conditionBuilder = useToolConditionBuilder(toolNodeId)
+  const conditionBuilder = useToolConditionBuilder()
 
   // XML Sampling logic
   const attachedElementName = attachedNode?.label || attachedNode?.type || ''
@@ -207,8 +203,6 @@ export function ToolConfigurationSidebar({
         {(toolNode.type === 'tool:fetch-api' || toolNode.type.startsWith('tool:fetch-')) && (
           <ToolApiConfiguration
             toolNodeType={toolNode.type}
-            toolNodeId={toolNodeId}
-            toolNode={toolNode}
             fetchApiConfig={fetchApiConfig}
             authenticatedApiConfig={authenticatedApiConfig}
             httpConfig={httpConfig}
@@ -216,7 +210,6 @@ export function ToolConfigurationSidebar({
             onAuthenticatedApiConfigChange={(updates) => handleUpdateConfig({ authenticatedApiConfig: updates })}
             onHttpConfigChange={(updates) => handleUpdateConfig({ httpConfig: updates })}
             onUpdateConfig={handleUpdateConfig}
-            onUpdateToolNode={updateToolNode}
             getCredentialsByType={(type) => getCredentialsByType(type as any)}
             getCredential={getCredential}
           />

@@ -65,7 +65,7 @@ export function ToolConditionBuilder({
     switch (condition.type) {
       case 'HasChildren':
       case 'HasNoChildren':
-      case 'HasDescendant':
+      case 'HasDescendant': {
         const isDescendant = condition.type === 'HasDescendant'
         return (
           <div className="space-y-2">
@@ -177,6 +177,8 @@ export function ToolConditionBuilder({
             )}
           </div>
         )
+
+      }
 
       case 'HasAncestor':
         return (
@@ -295,7 +297,7 @@ export function ToolConditionBuilder({
           </div>
         )
 
-      case 'HasParent':
+      case 'HasParent': {
         const parentOptions = xmlAncestors ? [...new Set([xmlParent, ...xmlAncestors].filter(Boolean) as string[])] : (xmlParent ? [xmlParent] : [])
 
         return (
@@ -337,6 +339,7 @@ export function ToolConditionBuilder({
             </div>
           </div>
         )
+      }
 
       case 'HasAttribute':
         return (

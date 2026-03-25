@@ -125,7 +125,7 @@ export function convertMarkdownSchemaToBuilder (parsedSchema: ParsedMarkdownSche
       data: {
         ...(nodeData.semantic ? { semantic: nodeData.semantic } : {}),
         ...(Object.keys(nodeData.properties).some(p => nodeData.properties[p].semantic) 
-          ? { propertySemantics: Object.fromEntries(Object.entries(nodeData.properties).filter(([_, p]) => p.semantic).map(([k, p]) => [k, p.semantic])) } 
+          ? { propertySemantics: Object.fromEntries(Object.entries(nodeData.properties).filter(([, p]) => p.semantic).map(([k, p]) => [k, p.semantic])) } 
           : {})
       }
     }

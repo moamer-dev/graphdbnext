@@ -212,9 +212,8 @@ Please suggest at least 10 relationship types (more if possible) that would be s
     // Fall back to manual parsing if structured output fails
   }
 
-  // Fallback: manual invocation with jsonrepair
+  // Fallback: manual invocation
   try {
-    const { jsonrepair } = await import('jsonrepair')
     const response = await model.invoke(messages)
     
     let responseContent = ''

@@ -1,23 +1,20 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
-import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import type { Condition, ConditionGroup, ConditionType } from '../../components/sidebars/ToolConfigurationSidebar'
 
-export function useToolConditionBuilder(toolNodeId: string | null) {
+export function useToolConditionBuilder() {
   const config = useToolConfigurationStore((state) => state.config)
   const updateConfig = useToolConfigurationStore((state) => state.updateConfig)
   
-  const conditionGroups = (config.conditionGroups as ConditionGroup[]) || []
+  const conditionGroups = useMemo(() => (config.conditionGroups as ConditionGroup[]) || [], [config.conditionGroups])
   const selectedConditionType = (config.selectedConditionType as ConditionType) || 'HasAttribute'
   const childInputValues = (config.childInputValues as Record<string, string>) || {}
   const ancestorInputValues = (config.ancestorInputValues as Record<string, string>) || {}
   
-  const setSelectedConditionType = (type: ConditionType) => updateConfig({ selectedConditionType: type })
-  const setConditionGroups = (groups: ConditionGroup[]) => updateConfig({ conditionGroups: groups })
-  const setChildInputValues = (values: Record<string, string>) => updateConfig({ childInputValues: values })
-  const setAncestorInputValues = (values: Record<string, string>) => updateConfig({ ancestorInputValues: values })
-  const updateToolNode = useToolCanvasStore((state) => state.updateNode)
-  const toolNode = useToolCanvasStore((state) => state.nodes.find(n => n.id === toolNodeId))
+  const setSelectedConditionType = useCallback((type: ConditionType) => updateConfig({ selectedConditionType: type }), [updateConfig])
+  const setConditionGroups = useCallback((groups: ConditionGroup[]) => updateConfig({ conditionGroups: groups }), [updateConfig])
+  const setChildInputValues = useCallback((values: Record<string, string>) => updateConfig({ childInputValues: values }), [updateConfig])
+  const setAncestorInputValues = useCallback((values: Record<string, string>) => updateConfig({ ancestorInputValues: values }), [updateConfig])
   const getState = useToolConfigurationStore.getState
 
   const generateGroupId = () => `group_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`

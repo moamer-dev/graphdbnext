@@ -1,4 +1,4 @@
-import type { Node, Relationship, Property } from './index'
+import type { Node, Relationship } from './index'
 
 /**
  * Mapping configuration that defines how XML elements map to graph schema

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef, startTransition } from 'react'
-import { Plus, X, List, Search, Ban, FolderTree, Sparkles, Trash2, Eye, EyeOff, WrapText } from 'lucide-react'
+import { Plus, List, Search, Ban, FolderTree, Trash2, Eye, EyeOff } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Switch } from '../ui/switch'
@@ -99,7 +99,7 @@ export function XmlAnalysisRulesConfigurator({
         })
       })
     }
-  }, [initialRules, onRulesChange])
+  }, [initialRules, onRulesChange, defaultRules.patternRules])
 
   // Close dropdown when clicking outside - using mousedown to avoid interfering with clicks
   useEffect(() => {
@@ -190,10 +190,6 @@ export function XmlAnalysisRulesConfigurator({
     updateRules({ [listKey]: newList })
   }
 
-  const clearList = (listKey: keyof XmlAnalysisRules) => {
-    updateRules({ [listKey]: [] })
-  }
-
   const [showPreview, setShowPreview] = useState(false)
   const [activeTab, setActiveTab] = useState('ignored-elements')
   const [wrapWord, setWrapWord] = useState(false)
@@ -266,7 +262,7 @@ export function XmlAnalysisRulesConfigurator({
             <TabsContent value="ignored-elements" className="flex-1 flex flex-col m-0 min-h-0 data-[state=inactive]:hidden h-full">
               <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b shrink-0">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Select elements to completely ignore during analysis. They won't appear in the graph.
+                  Select elements to completely ignore during analysis. They won&apos;t appear in the graph.
                 </p>
               </div>
 

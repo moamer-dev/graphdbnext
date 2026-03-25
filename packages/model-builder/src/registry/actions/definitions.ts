@@ -5,7 +5,6 @@ import {
   Link2, 
   Boxes, 
   FileText, 
-  CheckCircle2, 
   Type, 
   Search, 
   Trash2, 

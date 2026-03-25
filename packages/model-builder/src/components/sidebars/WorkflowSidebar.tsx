@@ -252,7 +252,6 @@ export function WorkflowSidebar () {
                   <div className="space-y-0.5 pl-1">
                     {items.map((item: ToolDefinition | ActionDefinition) => {
                       const Icon = item.metadata.icon
-                      const isQuick = 'isQuick' in item.metadata ? (item.metadata as any).isQuick : false
                       const colors = getColorClasses(item.metadata.color, item.metadata.bgColor)
                       
                       return (

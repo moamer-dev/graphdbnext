@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react'
+import { MoreHorizontal } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import type { TableConfig } from '@/lib/resources/TableConfig'
 
@@ -20,8 +19,6 @@ interface ResourceGridProps<T extends { id: string }> {
   data: T[]
   loading?: boolean
   config: TableConfig<T>
-  onView?: (id: string) => void
-  onEdit?: (id: string) => void
   onDelete?: (id: string) => Promise<void>
   renderCard?: (item: T) => React.ReactNode
 }
@@ -30,8 +27,6 @@ export function ResourceGrid<T extends { id: string }>({
   data,
   loading = false,
   config,
-  onView,
-  onEdit,
   onDelete,
   renderCard
 }: ResourceGridProps<T>) {

@@ -39,7 +39,7 @@ export const workflowService = {
   applyWorkflowConfig: (config: ImportedWorkflowConfig, nodes: Node[]) => {
     const { addRelationship } = useModelBuilderStore.getState()
     const { addNode: addToolNode, addEdge: addToolEdge, nodes: existingToolNodes } = useToolCanvasStore.getState()
-    const { addNode: addActionNode, addEdge: addActionEdge, updateNode: updateActionNode, nodes: actionNodesStore } = useActionCanvasStore.getState()
+    const { addNode: addActionNode, addEdge: addActionEdge, updateNode: updateActionNode } = useActionCanvasStore.getState()
     const { setRootNodeId } = useModelBuilderStore.getState()
 
     // 1. Add relationships
@@ -245,16 +245,16 @@ export const workflowService = {
             )
             if (matchingEdge) {
               // Find the action index in the original actions array by matching config/position
-              const actionIndex = config.actions.findIndex(a =>
-                a.label === edge.targetActionLabel &&
-                JSON.stringify(a.config) === JSON.stringify(config.actions.find(a2 =>
-                  config.actionEdges.findIndex(ae2 =>
-                    (ae2.sourceToolLabel === edge.sourceToolLabel ||
-                      (edge.sourceNodeLabel && !ae2.sourceToolLabel)) &&
-                    ae2.targetActionLabel === a2.label
-                  ) !== -1
-                )?.config)
-              )
+              // const actionIndex = config.actions.findIndex(a =>
+              //   a.label === edge.targetActionLabel &&
+              //   JSON.stringify(a.config) === JSON.stringify(config.actions.find(a2 =>
+              //     config.actionEdges.findIndex(ae2 =>
+              //       (ae2.sourceToolLabel === edge.sourceToolLabel ||
+              //         (edge.sourceNodeLabel && !ae2.sourceToolLabel)) &&
+              //       ae2.targetActionLabel === a2.label
+              //     ) !== -1
+              //   )?.config)
+              // )
               // Use the action at the same index in actionEdges as this edge
               const edgeIndex = config.actionEdges.findIndex(ae =>
                 (ae.sourceToolLabel === edge.sourceToolLabel ||
@@ -426,7 +426,7 @@ export const workflowService = {
 
         // Normalize actions (remove positions, sort)
         normalized.actions = normalized.actions.map((action: any) => {
-          const { position, ...rest } = action
+          const { ...rest } = action
           if (Array.isArray(rest.children)) {
             rest.children = rest.children.map((c: any) => ({
               type: c.type,

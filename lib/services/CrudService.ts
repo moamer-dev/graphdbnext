@@ -82,7 +82,7 @@ export class CrudService<T extends { id: string } = { id: string }> {
     const userIsAdmin = isAdmin(session)
 
     // Get total count
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const model = this.prisma[this.options.modelName] as any
     const total = await model.count({
       where: whereClause
@@ -188,7 +188,7 @@ export class CrudService<T extends { id: string } = { id: string }> {
       finalSelect = select
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const findModel = this.prisma[this.options.modelName] as any
 
     const record = await findModel.findFirst({
@@ -225,7 +225,7 @@ export class CrudService<T extends { id: string } = { id: string }> {
       [this.options.userIdField]: session.user.id
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const createModel = this.prisma[this.options.modelName] as any
 
     const record = await createModel.create({
@@ -250,7 +250,7 @@ export class CrudService<T extends { id: string } = { id: string }> {
       this.options.userIdField
     )
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const updateModel = this.prisma[this.options.modelName] as any
 
     const existing = await updateModel.findFirst({
@@ -283,7 +283,7 @@ export class CrudService<T extends { id: string } = { id: string }> {
       this.options.userIdField
     )
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const deleteModel = this.prisma[this.options.modelName] as any
 
     const existing = await deleteModel.findFirst({

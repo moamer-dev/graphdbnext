@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Sparkles, Loader2, Send } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
@@ -35,10 +35,10 @@ export function AiRulesAssistant({
   const isXmlMappingEnabled = useAIFeature('xmlMappingAssistant')
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open)
     onOpenChange?.(open)
-  }
+  }, [onOpenChange])
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
   const [input, setInput] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -300,7 +300,7 @@ Would you like me to apply these rules, or would you like to discuss or modify t
       conversationMessages.push(new HumanMessage(userMessage))
       
       // Regular chat with XML context
-      const response = await chatWithXmlRulesAssistant(model, conversationMessages, availableElements || undefined)
+      const response = await chatWithXmlRulesAssistant(model, conversationMessages)
       
       setMessages(prev => [...prev, { role: 'assistant', content: response }])
     } catch (error) {
@@ -330,7 +330,7 @@ Would you like me to apply these rules, or would you like to discuss or modify t
     if (defaultOpen && !isOpen) {
       handleOpenChange(true)
     }
-  }, [defaultOpen])
+  }, [defaultOpen, handleOpenChange, isOpen])
 
   if (!isOpen) {
     return (

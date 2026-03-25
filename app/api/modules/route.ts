@@ -5,7 +5,7 @@ import { moduleService } from '@/lib/services/ModuleService'
 import { MODULE_IDS } from '@/lib/modules/types'
 
 // GET /api/modules - Get all modules
-export async function GET (request: NextRequest) {
+export async function GET () {
   try {
     const session = await getServerSession(authOptions)
 

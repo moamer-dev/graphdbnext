@@ -287,10 +287,11 @@ export function executeExtractAndComputePropertyAction(action: ActionCanvasNode,
     case 'join':
       computed = values.join(separator)
       break
-    case 'sum':
+    case 'sum': {
       const nums = values.map(v => parseFloat(v)).filter(n => !isNaN(n))
       computed = nums.reduce((sum, n) => sum + n, 0)
       break
+    }
   }
 
   ctx.currentGraphNode.properties[propertyKey] = computed

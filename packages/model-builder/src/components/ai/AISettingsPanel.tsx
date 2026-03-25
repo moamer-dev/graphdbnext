@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '../ui/dialog'
-import { Settings, Sparkles } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { useAISettingsPanel } from '../../hooks'
 
 interface AISettingsPanelProps {

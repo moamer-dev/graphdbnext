@@ -2,21 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 import { useModelBuilder } from '@/lib/hooks/useModelBuilder'
 import { resourceHooks } from '@/lib/react-query/hooks'
 import type { ModelBuilderRef } from '@graphdb/model-builder'
 import { ModelResource, type Model } from '@/lib/resources/ModelResource'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, ArrowLeft, Save, X } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
 export default function EditModelPage() {
   const params = useParams()
   const router = useRouter()
-  const { data: session } = useSession()
   const modelId = params.id as string
 
   const { isEnabled, loading: moduleLoading, ModelBuilderAdapter } = useModelBuilder()
@@ -26,8 +24,9 @@ export default function EditModelPage() {
 
   // Clear builder state when unmounting
   useEffect(() => {
+    const currentRef = builderRef.current
     return () => {
-      builderRef.current?.clear()
+      currentRef?.clear()
     }
   }, [])
 

@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   Node,
   Edge,
@@ -15,6 +15,36 @@ import { useCanvasVisibility } from './useCanvasVisibility'
 import { labelFromType } from '../../utils/canvasUtils'
 import type { Node as BuilderNode, Relationship } from '../../types'
 
+function calculateStoreNodesSig(nodes: BuilderNode[], visibleNodeIds: Set<string>, wfNodes: any[], toolNodes: any[], actionNodes: any[]) {
+  const storePart = nodes
+    .filter(n => visibleNodeIds.has(n.id))
+    .map(n => `${n.id}:${n.position.x}:${n.position.y}:${n.label}:${n.type}`)
+    .sort()
+    .join('|')
+  
+  const extraPart = [...wfNodes, ...toolNodes, ...actionNodes]
+    .map(n => n.id)
+    .sort()
+    .join('|')
+
+  return `${storePart}#${extraPart}`
+}
+
+function calculateStoreRelationshipsSig(rels: Relationship[], visibleNodeIds: Set<string>, selectedRelId: string | null, wfEdges: any[], toolEdges: any[], actionEdges: any[]) {
+  const storePart = rels
+    .filter(r => visibleNodeIds.has(r.from) && visibleNodeIds.has(r.to))
+    .map(r => `${r.id}:${r.from}:${r.to}:${r.type}:${r.id === selectedRelId ? '1' : '0'}`)
+    .sort()
+    .join('|')
+
+  const extraPart = [...wfEdges, ...toolEdges, ...actionEdges]
+    .map(e => e.id)
+    .sort()
+    .join('|')
+
+  return `${storePart}#${extraPart}`
+}
+
 interface UseCanvasStateSyncProps {
   handleDeleteNode: (id: string, type?: 'model' | 'tool' | 'action') => void
   handleDeleteRelationship: (id: string) => void
@@ -30,6 +60,8 @@ export function useCanvasStateSync({
 }: UseCanvasStateSyncProps) {
   const isUpdatingSelectionRef = useRef(false)
   const isDraggingRef = useRef(false)
+  const lastProcessedNodesSigRef = useRef<string | null>(null)
+  const lastProcessedEdgesSigRef = useRef<string | null>(null)
   const lastProcessedSelectionRef = useRef<string | null>(null)
 
   const {
@@ -54,46 +86,36 @@ export function useCanvasStateSync({
     deleteNode: deleteWfNode
   } = useWorkflowCanvasStore()
 
+  const toolStore = useToolCanvasStore()
   const {
     nodes: toolNodes,
     edges: toolEdges,
-    selectToolNode,
-    selectedToolNodeId,
-    deleteToolNode
-  } = (function() {
-    const store = useToolCanvasStore()
-    return {
-      nodes: store.nodes,
-      edges: store.edges,
-      selectToolNode: store.selectNode,
-      selectedToolNodeId: store.selectedNodeId,
-      deleteToolNode: store.deleteNode
-    }
-  })()
+    selectNode: selectToolNode,
+    selectedNodeId: selectedToolNodeId,
+    deleteNode: deleteToolNode
+  } = toolStore
 
+  const actionStore = useActionCanvasStore()
   const {
     nodes: actionNodes,
     edges: actionEdges,
-    selectActionNode,
-    selectedActionNodeId,
-    deleteActionNode,
-    updateActionNode,
-    addActionNode
-  } = (function() {
-    const store = useActionCanvasStore()
-    return {
-      nodes: store.nodes,
-      edges: store.edges,
-      selectActionNode: store.selectNode,
-      selectedActionNodeId: store.selectedNodeId,
-      deleteActionNode: store.deleteNode,
-      updateActionNode: store.updateNode,
-      addActionNode: store.addNode
-    }
-  })()
+    selectNode: selectActionNode,
+    selectedNodeId: selectedActionNodeId,
+    deleteNode: deleteActionNode,
+    updateNode: updateActionNode,
+    addNode: addActionNode
+  } = actionStore
+
+  const handleSelectRelationshipRef = useCallback((id: string) => {
+    if (id === selectedRelationship) return
+    isUpdatingSelectionRef.current = true
+    selectRelationship(id)
+    selectWfNode(null)
+    setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
+  }, [selectedRelationship, selectRelationship, selectWfNode, isUpdatingSelectionRef])
 
   // Convert store nodes to ReactFlow nodes
-  const reactFlowNodes: Node[] = useMemo(() => {
+  const dataNodes = useMemo(() => {
     try {
       const baseNodes = storeNodes
         .filter((node: BuilderNode) => visibleNodeIds.has(node.id))
@@ -108,7 +130,8 @@ export function useCanvasStateSync({
             properties: node.properties,
             workflowCount: (stepsByNodeId[node.id] || []).length,
             isRoot: node.id === rootNodeId,
-            onSelect: () => {},
+            onSelect: () => { // Intentionally empty
+            },
             onDelete: () => handleDeleteNode(node.id)
           }
         }))
@@ -269,15 +292,24 @@ export function useCanvasStateSync({
           }
         })
 
-      return [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow]
+      // 1. Calculate signature from UNTAINTED data (before adding callbacks)
+      const sig = calculateStoreNodesSig(storeNodes, visibleNodeIds, wfNodes, toolNodes, actionNodes)
+
+      // 2. Build the tainted objects with callbacks
+      const finalNodes = [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow] as Node[]
+
+      return { nodes: finalNodes, sig }
     } catch (e) {
-      console.error('[DEBUG] Error calculating reactFlowNodes:', e)
-      return []
+      console.error('[DEBUG] Error calculating rfNodes:', e)
+      return { nodes: [], sig: '' }
     }
   }, [storeNodes, visibleNodeIds, stepsByNodeId, handleDeleteNode, wfNodes, selectNode, selectWfNode, selectRelationship, deleteWfNode, selectedNode, selectedWfNodeId, toolNodes, selectedToolNodeId, selectToolNode, deleteToolNode, actionNodes, selectedActionNodeId, selectActionNode, deleteActionNode, updateActionNode, addActionNode, onSwitchTab, rootNodeId])
 
+  const rfNodes = dataNodes.nodes
+  const reactFlowNodesSig = dataNodes.sig
+
   // Convert store relationships to ReactFlow edges
-  const reactFlowEdges: Edge[] = useMemo(() => {
+  const dataEdges = useMemo(() => {
     const relEdges: Edge[] = (() => {
       if (!storeRelationships || storeRelationships.length === 0) {
         return []
@@ -302,13 +334,7 @@ export function useCanvasStateSync({
             data: {
               type: rel.type,
               cardinality: rel.cardinality,
-              onSelect: () => {
-                if (rel.id === selectedRelationship) return
-                isUpdatingSelectionRef.current = true
-                selectRelationship(rel.id)
-                selectWfNode(null)
-                setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
-              },
+              onSelect: () => handleSelectRelationshipRef(rel.id),
               onDelete: () => handleDeleteRelationship(rel.id)
             }
           }]
@@ -333,13 +359,7 @@ export function useCanvasStateSync({
           data: {
             type: rel.type,
             cardinality: rel.cardinality,
-            onSelect: () => {
-              if (rel.id === selectedRelationship) return
-              isUpdatingSelectionRef.current = true
-              selectRelationship(rel.id)
-              selectWfNode(null)
-              setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
-            },
+            onSelect: () => handleSelectRelationshipRef(rel.id),
             onDelete: () => handleDeleteRelationship(rel.id)
           }
         }))
@@ -397,84 +417,53 @@ export function useCanvasStateSync({
       }
     }))
 
-    return [...relEdges, ...workflowEdges, ...attachEdges, ...toolEdgesFlow, ...actionEdgesFlow]
-  }, [storeRelationships, selectedRelationship, selectRelationship, handleDeleteRelationship, visibleNodeIds, hideUnconnectedNodes, wfEdges, wfNodes, selectWfNode, toolEdges, actionEdges, handleDeleteEdge])
+    // 1. Calculate signature from UNTAINTED data (before adding callbacks)
+    const sig = calculateStoreRelationshipsSig(storeRelationships, visibleNodeIds, selectedRelationship, wfEdges, toolEdges, actionEdges)
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(reactFlowNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(reactFlowEdges)
+    // 2. Build the tainted objects with callbacks
+    const finalEdges = [...relEdges, ...workflowEdges, ...attachEdges, ...toolEdgesFlow, ...actionEdgesFlow] as Edge[]
 
-  // Signatures for sync
-  const reactFlowNodesSig = useMemo(() => {
-    return reactFlowNodes
-      .map((n) => {
-        const data = (n.data as any) || {}
-        return `${n.id}:${n.position.x}:${n.position.y}:${data.label || ''}:${data.type || ''}:${data.workflowCount || 0}:${n.type || ''}:${n.selected ? '1' : '0'}:${data.isRoot ? '1' : '0'}:${data._version || ''}:${data.children?.length ?? 0}`
-      })
-      .sort()
-      .join('|')
-  }, [reactFlowNodes])
+    return { edges: finalEdges, sig }
+  }, [storeRelationships, selectedRelationship, handleSelectRelationshipRef, handleDeleteRelationship, visibleNodeIds, hideUnconnectedNodes, wfEdges, wfNodes, toolEdges, actionEdges, handleDeleteEdge])
 
-  const currentNodesSig = useMemo(() => {
-    return nodes
-      .map((n) => {
-        const data = (n.data as any) || {}
-        return `${n.id}:${n.position.x}:${n.position.y}:${data.label || ''}:${data.type || ''}:${data.workflowCount || 0}:${n.type || ''}:${n.selected ? '1' : '0'}:${data.isRoot ? '1' : '0'}:${data._version || ''}:${data.children?.length ?? 0}`
-      })
-      .sort()
-      .join('|')
-  }, [nodes])
+  const rfEdges = dataEdges.edges
+  const reactFlowEdgesSig = dataEdges.sig
 
-  const reactFlowEdgesSig = useMemo(() => {
-    return reactFlowEdges
-      .map((e) => {
-        const data = (e.data as any) || {}
-        const marker = e.markerEnd as any
-        return `${e.id}:${e.source}:${e.target}:${e.label || ''}:${data.type || ''}:${data.cardinality || ''}:${e.selected ? '1' : '0'}:${marker?.color || ''}`
-      })
-      .sort()
-      .join('|')
-  }, [reactFlowEdges])
-
-  const currentEdgesSig = useMemo(() => {
-    return edges
-      .map((e) => {
-        const data = (e.data as any) || {}
-        const marker = e.markerEnd as any
-        return `${e.id}:${e.source}:${e.target}:${e.label || ''}:${data.type || ''}:${data.cardinality || ''}:${e.selected ? '1' : '0'}:${marker?.color || ''}`
-      })
-      .sort()
-      .join('|')
-  }, [edges])
+  const [nodes, setNodes, onNodesChange] = useNodesState(rfNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(rfEdges)
 
   // Sync effect for nodes
   useEffect(() => {
     if (isDraggingRef.current) return
-    if (reactFlowNodesSig === currentNodesSig) return
+    if (reactFlowNodesSig === lastProcessedNodesSigRef.current) return
 
     isUpdatingSelectionRef.current = true
-    setNodes(reactFlowNodes)
+    setNodes(rfNodes)
+    lastProcessedNodesSigRef.current = reactFlowNodesSig
     const timer = setTimeout(() => { isUpdatingSelectionRef.current = false }, 150)
     return () => clearTimeout(timer)
-  }, [reactFlowNodes, reactFlowNodesSig, currentNodesSig, setNodes])
+  }, [rfNodes, reactFlowNodesSig, setNodes])
 
   // Sync effect for edges
   useEffect(() => {
     if (isDraggingRef.current) return
+    const sigMatches = reactFlowEdgesSig === lastProcessedEdgesSigRef.current
     const selectedRelationshipChanged = lastProcessedSelectionRef.current !== selectedRelationship
 
     if (selectedRelationshipChanged) {
       isUpdatingSelectionRef.current = true
-      setEdges(reactFlowEdges)
+      setEdges(rfEdges)
       lastProcessedSelectionRef.current = selectedRelationship
+      lastProcessedEdgesSigRef.current = reactFlowEdgesSig
       setTimeout(() => { isUpdatingSelectionRef.current = false }, 150)
       return
     }
 
-    if (reactFlowEdgesSig !== currentEdgesSig) {
-      setEdges(reactFlowEdges)
-      lastProcessedSelectionRef.current = selectedRelationship
+    if (!sigMatches) {
+      setEdges(rfEdges)
+      lastProcessedEdgesSigRef.current = reactFlowEdgesSig
     }
-  }, [reactFlowEdges, reactFlowEdgesSig, currentEdgesSig, setEdges, selectedRelationship])
+  }, [rfEdges, reactFlowEdgesSig, setEdges, selectedRelationship])
 
   return {
     nodes,
@@ -485,7 +474,7 @@ export function useCanvasStateSync({
     onEdgesChange,
     isUpdatingSelectionRef,
     isDraggingRef,
-    reactFlowNodes,
-    reactFlowEdges
+    rfNodes,
+    rfEdges
   }
 }

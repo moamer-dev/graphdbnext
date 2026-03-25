@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo } from 'react'
 import { useXmlMappingState } from '../../hooks/wizard/useXmlMappingState'
-import { Check, X, Settings, ArrowRight, ChevronRight, ChevronDown, ChevronsDownUp, ChevronsUpDown, Plus, Trash2, Search, CheckSquare, Square, Loader2 } from 'lucide-react'
+import { X, Settings, ChevronsDownUp, ChevronsUpDown, Trash2, Search, CheckSquare, Square, Loader2 } from 'lucide-react'
 import { Switch } from '../ui/switch'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { Checkbox } from '../ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -137,7 +136,7 @@ export function XmlMappingConfigurator({
   // Visible elements: only those included in mapping
   const visibleElements = useMemo(() => {
     const includedNames = Object.entries(mapping.elementMappings)
-      .filter(([_, config]) => config.include)
+      .filter(([, config]) => config.include)
       .map(([name]) => name)
     const elementMap = new Map(analysis.elementTypes.map(et => [et.name, et]))
     const orderedIncluded = orderedElements.filter(name => includedNames.includes(name))
@@ -185,13 +184,12 @@ export function XmlMappingConfigurator({
 
   const includedElementNames = useMemo(
     () => Object.entries(mapping.elementMappings)
-      .filter(([_, config]) => config.include)
+      .filter(([, config]) => config.include)
       .map(([name]) => name),
     [mapping.elementMappings]
   )
 
   const allSelected = visibleElements.length > 0 && visibleElements.every(et => selectedItems.has(et.name))
-  const someSelected = selectedItems.size > 0 && !allSelected
 
   useEffect(() => {
     setSelectedItems(prev => {
@@ -202,7 +200,7 @@ export function XmlMappingConfigurator({
       })
       return next
     })
-  }, [visibleElements])
+  }, [visibleElements, setSelectedItems])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -422,7 +420,6 @@ export function XmlMappingConfigurator({
                   elementIncludeLookup={elementIncludeLookup}
                   recentlyDroppedId={recentlyDroppedId}
                   clearRecentlyDropped={() => setRecentlyDroppedId(null)}
-                  analysis={analysis}
                   selectedOntologyId={selectedOntologyId}
                 />
               )

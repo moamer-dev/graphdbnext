@@ -24,7 +24,7 @@ export function useExport() {
   const exportToJSON = async (data: unknown[], filename: string, options?: ExportOptions) => {
     setExporting(true)
     try {
-      const json = service.exportToJSON(data, options)
+      const json = service.exportToJSON(data)
       service.downloadFile(json, filename, 'application/json')
     } catch (error) {
       console.error('Error exporting to JSON:', error)

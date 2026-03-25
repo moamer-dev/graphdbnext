@@ -485,7 +485,7 @@ export const formatXml = (input: string): string => {
       } else if (line.match(/^<\/\w/)) {
         pad = Math.max(pad - 1, 0)
         indent = PADDING.repeat(pad)
-      } else if (line.match(/^<\w[^>]*[^\/]>(.*)$/)) {
+      } else if (line.match(/^<\w[^>]*[^/](.*)$/)) {
         indent = PADDING.repeat(pad)
         pad += 1
       } else {

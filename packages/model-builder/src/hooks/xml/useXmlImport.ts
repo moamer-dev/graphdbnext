@@ -30,7 +30,7 @@ export function useXmlImport() {
     if (storeMapping && !mapping) {
       setMapping(storeMapping)
     }
-  }, []) // Only run on mount
+  }, [analysis, mapping, setAnalysis, setMapping]) // Only run on mount
 
   /**
    * Analyze XML file structure

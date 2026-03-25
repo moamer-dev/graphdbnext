@@ -1,4 +1,4 @@
-import { type LucideIcon, Database, Code, Network, Users, Settings, LayoutDashboard } from 'lucide-react'
+import { type LucideIcon, Database, Network, Users, Settings, LayoutDashboard } from 'lucide-react'
 
 export interface SidebarNavItem {
   title: string

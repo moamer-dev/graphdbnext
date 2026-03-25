@@ -114,7 +114,7 @@ export function createCrudService<T extends { id: string }>(
           }
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const findModel = (prisma as any)[this.options.modelName]
         const record = await findModel.findFirst({
           where: whereClause,

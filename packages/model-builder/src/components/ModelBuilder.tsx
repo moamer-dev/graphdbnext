@@ -134,7 +134,9 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     handleWorkflowChange,
     confirmWorkflowChange,
     cancelWorkflowChange,
-    triggerSaveInternal
+    triggerSaveInternal,
+    setFocusNodeFn,
+    setFocusRelationshipFn
   } = useModelBuilderInternal(props, ref)
 
   return (
@@ -208,8 +210,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
               className="h-full"
               sidebarOpen={ui.sidebarOpen}
               onToggleSidebar={() => ui.setSidebarOpen(!ui.sidebarOpen)}
-              onRegisterFocusApi={(fn) => { ui.focusNodeFnRef.current = fn }}
-              onRegisterFocusRelationshipApi={(fn) => { ui.focusRelationshipFnRef.current = fn }}
+              onRegisterFocusApi={setFocusNodeFn}
+              onRegisterFocusRelationshipApi={setFocusRelationshipFn}
               onSwitchTab={setLeftTab}
               showToolbar={showToolbar}
             />
@@ -297,4 +299,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
   )
 })
 
+ModelBuilderContent.displayName = 'ModelBuilderContent'
+
 export const ModelBuilder = forwardRef<ModelBuilderRef, ModelBuilderProps>((props, ref) => <ModelBuilderContent {...props} ref={ref} />)
+
+ModelBuilder.displayName = 'ModelBuilder'

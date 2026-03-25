@@ -1,7 +1,6 @@
 'use client'
 
 import { create } from 'zustand'
-import { arrayMove } from '@dnd-kit/sortable'
 import type { Node, Relationship, ModelBuilderState, NodeGroup, RelationshipType } from '../types'
 
 interface ModelBuilderActions {
@@ -263,6 +262,7 @@ export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
       selectedRelationship: id ? null : state.selectedRelationship
     }))
     setTimeout(() => {
+      // Intentionally empty - used to ensure state update is processed
     }, 0)
   },
 

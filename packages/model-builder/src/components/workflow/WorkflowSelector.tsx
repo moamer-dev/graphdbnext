@@ -41,7 +41,10 @@ export function WorkflowSelector({
   // Sync selectedWorkflowId with currentWorkflowId prop changes
   useEffect(() => {
     if (currentWorkflowId) {
-      setSelectedWorkflowId(currentWorkflowId)
+      const timeoutId = setTimeout(() => {
+        setSelectedWorkflowId(currentWorkflowId)
+      }, 0)
+      return () => clearTimeout(timeoutId)
     }
   }, [currentWorkflowId])
 

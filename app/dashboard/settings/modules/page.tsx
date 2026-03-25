@@ -7,7 +7,7 @@ import type { Module } from '@/lib/modules/types'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Loader2, Settings, ArrowLeft, Sparkles } from 'lucide-react'
+import { Loader2, Settings, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
