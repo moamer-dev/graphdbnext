@@ -4,6 +4,7 @@ import { Eye, Trash2, Edit } from 'lucide-react'
 import type { TableConfig, BulkAction } from './TableConfig'
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export interface User {
   id: string
@@ -44,9 +45,19 @@ export class UserResource {
     const columns: ColumnDef<User>[] = [
       columnHelper.accessor('email', {
         header: 'Email',
-        cell: (info) => (
-          <div className="font-medium">{info.getValue()}</div>
-        )
+        cell: (info) => {
+          const email = info.getValue()
+          const userId = info.row.original.id
+          return (
+            <Button
+              variant="link"
+              className="h-auto p-0 font-medium text-left justify-start hover:cursor-pointer"
+              onClick={() => onView(userId)}
+            >
+              {email}
+            </Button>
+          )
+        }
       }) as ColumnDef<User>,
       columnHelper.accessor('name', {
         header: 'Name',
@@ -110,12 +121,6 @@ export class UserResource {
         variant: 'default' as const
       },
       {
-        label: 'Edit',
-        icon: Edit,
-        action: (row: User) => onEdit(row.id),
-        variant: 'default' as const
-      },
-      {
         label: 'Delete',
         icon: Trash2,
         action: (row: User) => onDelete(row.id),
@@ -131,10 +136,10 @@ export class UserResource {
       columns,
       filters: [
         {
-          key: 'email',
-          label: 'Email',
+          key: 'search',
+          label: 'Search',
           type: 'text',
-          placeholder: 'Search by email...'
+          placeholder: 'Search by email or name...'
         },
         {
           key: 'role',
@@ -146,7 +151,7 @@ export class UserResource {
           ]
         }
       ],
-      sortableColumns: ['email', 'name', 'role', 'createdAt'],
+      sortableColumns: ['role', 'createdAt'],
       bulkActions,
       rowActions,
       enableRowSelection: true,
@@ -166,7 +171,12 @@ export class UserResource {
 
         Object.entries(filterParams || {}).forEach(([key, value]) => {
           if (value) {
-            params.append(key, String(value))
+            if (key === 'search') {
+              // For search, we'll pass it as a general search parameter
+              params.append('search', String(value))
+            } else {
+              params.append(key, String(value))
+            }
           }
         })
 

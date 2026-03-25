@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcryptjs'
+import { config } from 'dotenv'
+
+// Load environment variables from .env file
+config({ path: '.env' })
 
 // Create Prisma client with adapter for seeding
 const dbUrl = process.env.DATABASE_URL

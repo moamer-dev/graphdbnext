@@ -243,8 +243,17 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) => 
         updateItem(id, data),
       onSuccess: (data, variables) => {
-        // Update the specific item in cache
-        queryClient.setQueryData(config.queryKeys.detail(variables.id), data)
+        let responseData = data
+        if ('user' in data) {
+          responseData = { data: (data as { user: T }).user }
+        } else if ('data' in data) {
+          responseData = data
+        } else {
+          responseData = { data: data as T }
+        }
+        
+        // Update the specific item in cache with the correct format
+        queryClient.setQueryData(config.queryKeys.detail(variables.id), responseData)
         
         // Invalidate lists to ensure consistency
         queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })

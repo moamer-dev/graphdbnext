@@ -25,7 +25,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
     icon: Network,
     items: [
       {
-        title: 'Models',
+        title: 'Schema Models',
         url: '/dashboard/graph/model',
         section: 'schema'
       },

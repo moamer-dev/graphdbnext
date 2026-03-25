@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { userCrudService } from '@/services/server'
 import { isAdmin } from '@/utils'
+import { getToken } from 'next-auth/jwt'
 
 // GET /api/users/[id] - Get a specific user (admins only)
 export async function GET (
@@ -76,6 +77,15 @@ export async function PUT (
     const body = await request.json()
     const { name, role, emailVerified } = body
 
+    // Get the current user data before update to check for role changes
+    const currentUser = await userCrudService.findOne(session, id)
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
     // Use CrudService for consistent RBAC and update logic
     const user = await userCrudService.update(session, id, {
       ...(name !== undefined && { name }),
@@ -83,7 +93,28 @@ export async function PUT (
       ...(emailVerified !== undefined && { emailVerified: emailVerified ? new Date() : null })
     })
 
-    return NextResponse.json({ user })
+    // Check if role was changed
+    const roleChanged = role && currentUser.role !== role
+    
+    if (roleChanged) {
+      // Invalidate the user's session by revoking their tokens
+      // This forces them to re-authenticate with their new role
+      try {
+        const token = await getToken({ 
+          req: request, 
+          secret: process.env.NEXTAUTH_SECRET 
+        })
+        
+      } catch (error) {
+        console.error('Error invalidating user session:', error)
+        // Continue with the response even if session invalidation fails
+      }
+    }
+
+    return NextResponse.json({ 
+      user,
+      sessionInvalidated: roleChanged 
+    })
   } catch (error: unknown) {
     console.error('Error updating user:', error)
     

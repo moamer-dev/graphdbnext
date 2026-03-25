@@ -7,7 +7,9 @@
     "build": "NODE_OPTIONS='--max-old-space-size=6144' next build",
     "start": "next start",
     "lint": "eslint",
-    "generate-schema": "npx tsx scripts/validate-and-convert-schema.ts"
+    "generate-schema": "npx tsx scripts/validate-and-convert-schema.ts",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "npx prisma migrate reset --force-seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

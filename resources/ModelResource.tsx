@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Trash2, Edit } from 'lucide-react'
 import type { TableConfig, BulkAction } from './TableConfig'
 import React from 'react'
+import { Button } from '@/components/ui/button'
 
 export interface Model {
   id: string
@@ -53,9 +54,19 @@ export class ModelResource {
     const columns: ColumnDef<Model>[] = [
       columnHelper.accessor('name', {
         header: 'Name',
-        cell: (info) => (
-          <div className="font-medium">{info.getValue()}</div>
-        )
+        cell: (info) => {
+          const name = info.getValue()
+          const modelId = info.row.original.id
+          return (
+            <Button
+              variant="link"
+              className="h-auto p-0 font-medium text-left justify-start hover:cursor-pointer"
+              onClick={() => onView(modelId)}
+            >
+              {name}
+            </Button>
+          )
+        }
       }) as ColumnDef<Model>,
       columnHelper.accessor('description', {
         header: 'Description',
@@ -77,10 +88,18 @@ export class ModelResource {
               header: 'Created By',
               cell: (info) => {
                 const user = info.getValue()
+                const modelId = info.row.original.id
+                if (!user) {
+                  return <div className="text-sm text-muted-foreground">-</div>
+                }
                 return (
-                  <div className="text-sm text-muted-foreground">
-                    {user?.email || '-'}
-                  </div>
+                  <Button
+                    variant="link"
+                    className="h-auto p-0 text-sm text-left justify-start hover:cursor-pointer"
+                    onClick={() => onView(modelId)}
+                  >
+                    {user.name || user.email}
+                  </Button>
                 )
               }
             }) as ColumnDef<Model>
@@ -112,17 +131,21 @@ export class ModelResource {
 
     const filters = [
       {
-        key: 'name',
-        label: 'Name',
+        key: 'search',
+        label: 'Search',
         type: 'text' as const,
-        placeholder: 'Filter by name...'
+        placeholder: 'Search by name, description, or version...'
       },
-      {
-        key: 'version',
-        label: 'Version',
-        type: 'text' as const,
-        placeholder: 'Filter by version...'
-      }
+      ...(isAdmin
+        ? [
+            {
+              key: 'creator',
+              label: 'Creator',
+              type: 'text' as const,
+              placeholder: 'Creator name or Email...'
+            }
+          ]
+        : [])
     ]
 
     const bulkActions: BulkAction<Model>[] = [
@@ -172,7 +195,7 @@ export class ModelResource {
       resourceName: 'Model',
       columns,
       filters,
-      sortableColumns: ['name', 'version', 'createdAt', 'updatedAt'],
+      sortableColumns: ['createdAt', 'updatedAt'],
       bulkActions,
       rowActions,
       enableRowSelection: true,
@@ -192,7 +215,15 @@ export class ModelResource {
 
         Object.entries(filterParams || {}).forEach(([key, value]) => {
           if (value) {
-            params.append(key, String(value))
+            if (key === 'search') {
+              // For search, we'll pass it as a general search parameter
+              params.append('search', String(value))
+            } else if (key === 'creator') {
+              // For creator filter, pass it as a separate parameter
+              params.append('creator', String(value))
+            } else {
+              params.append(key, String(value))
+            }
           }
         })
 

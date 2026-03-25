@@ -264,6 +264,7 @@ function ModelsPageContent() {
             onPageSizeChange={onPageSizeChange}
             onSortChange={onSortChange}
             onFiltersChange={onFiltersChange}
+            initialColumnVisibility={{ description: false }}
           />
         ) : (
           <div className="space-y-4">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { modelCrudService } from '@/services/server'
+import { isAdmin } from '@/utils'
 
 // GET /api/models - Get all models (admins see all, users see only their own)
 export async function GET (request: NextRequest) {
@@ -20,10 +21,12 @@ export async function GET (request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10)
     const sortBy = searchParams.get('sortBy') || 'updatedAt'
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
+    const search = searchParams.get('search') || undefined
+    const creator = searchParams.get('creator') || undefined
     
     // Build filters from query params - extract all params except pagination/sorting
     const filters: Record<string, unknown> = { isActive: true }
-    const excludeParams = ['page', 'pageSize', 'sortBy', 'sortOrder', 'search']
+    const excludeParams = ['page', 'pageSize', 'sortBy', 'sortOrder', 'search', 'creator']
     
     searchParams.forEach((value, key) => {
       if (!excludeParams.includes(key) && value) {
@@ -31,13 +34,19 @@ export async function GET (request: NextRequest) {
       }
     })
 
+    // Add creator filter if provided (for admin users only)
+    if (creator && isAdmin(session)) {
+      filters.creator = creator
+    }
+
     // Use CrudService for consistent RBAC and pagination
     const result = await modelCrudService.findAll(session, {
       page,
       pageSize,
       sortBy,
       sortOrder,
-      filters
+      filters,
+      search // Pass search parameter separately
     })
 
     return NextResponse.json({ 

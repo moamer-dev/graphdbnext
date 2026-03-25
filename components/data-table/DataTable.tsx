@@ -39,7 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, ChevronUp, MoreHorizontal, ArrowUpDown } from 'lucide-react'
+import { ChevronDown, ChevronUp, MoreHorizontal, ArrowUpDown, Eye, EyeOff } from 'lucide-react'
 import type { TableConfig, BulkAction } from '@/resources/TableConfig'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { cn } from '@/utils'
@@ -56,8 +56,9 @@ interface DataTableProps<T> {
   filters?: Record<string, unknown>
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
-  onSortChange?: (sortBy?: string, sortOrder?: 'asc' | 'desc') => void
+  onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void
   onFiltersChange?: (filters: Record<string, unknown>) => void
+  initialColumnVisibility?: VisibilityState
 }
 
 export function DataTable<T extends { id: string }>({
@@ -73,7 +74,8 @@ export function DataTable<T extends { id: string }>({
   onPageChange,
   onPageSizeChange,
   onSortChange,
-  onFiltersChange
+  onFiltersChange,
+  initialColumnVisibility
 }: DataTableProps<T>) {
   // Use external state if provided, otherwise use internal state
   const [internalPage, setInternalPage] = React.useState(1)
@@ -95,7 +97,20 @@ export function DataTable<T extends { id: string }>({
   }, [sortBy, sortOrder])
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
+    // Load initial visibility from localStorage or use provided initial state
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`column-visibility-${config.name}`)
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch (e) {
+          console.error('Failed to parse column visibility from localStorage:', e)
+        }
+      }
+    }
+    return initialColumnVisibility || {}
+  })
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState('')
   const [confirmDialog, setConfirmDialog] = React.useState<{
@@ -105,6 +120,13 @@ export function DataTable<T extends { id: string }>({
     onConfirm: () => void | Promise<void>
     variant?: 'default' | 'destructive'
   } | null>(null)
+
+  // Save column visibility to localStorage whenever it changes
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`column-visibility-${config.name}`, JSON.stringify(columnVisibility))
+    }
+  }, [columnVisibility, config.name])
 
   // Add selection column if enabled
   const columnsWithSelection = React.useMemo<ColumnDef<T>[]>(() => {
@@ -214,7 +236,9 @@ export function DataTable<T extends { id: string }>({
       const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue
       if (newSorting.length === 0) {
         if (onSortChange) {
-          onSortChange(undefined, undefined)
+          // Don't call onSortChange with undefined values - just clear internal state
+          setInternalSortBy(undefined)
+          setInternalSortOrder(undefined)
         } else {
           setInternalSortBy(undefined)
           setInternalSortOrder(undefined)
@@ -327,7 +351,9 @@ export function DataTable<T extends { id: string }>({
     }
 
     if (onSortChange) {
-      onSortChange(newSortBy, newSortOrder)
+      if (newSortBy && newSortOrder) {
+        onSortChange(newSortBy, newSortOrder)
+      }
     } else {
       setInternalSortBy(newSortBy)
       setInternalSortOrder(newSortOrder)
@@ -406,13 +432,6 @@ export function DataTable<T extends { id: string }>({
 
       {/* Global search */}
       <div className="flex items-center justify-between">
-        <Input
-          placeholder="Search all columns..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="h-8 w-[250px]"
-        />
-
         {/* Bulk actions */}
         {config.bulkActions && config.bulkActions.length > 0 && selectedRows.length > 0 && (
           <div className="flex items-center gap-2">
@@ -437,8 +456,48 @@ export function DataTable<T extends { id: string }>({
         )}
       </div>
 
-          {/* Table */}
-          <div className="rounded-md border border-border/50 gradient-table overflow-hidden">
+      {/* Table with column visibility */}
+      <div className="space-y-2">
+        {/* Column visibility dropdown - positioned above table on the right */}
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                <Eye className="mr-2 h-4 w-4" />
+                Columns
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuItem
+                      key={column.id}
+                      className="flex items-center justify-between cursor-pointer"
+                      onClick={() => column.toggleVisibility()}
+                    >
+                      <span className="capitalize">
+                        {column.id === 'actions' ? 'Actions' : column.id.replace(/([A-Z])/g, ' $1').trim()}
+                      </span>
+                      {column.getIsVisible() ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </DropdownMenuItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Table */}
+        <div className="rounded-md border border-border/50 gradient-table overflow-hidden">
             <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -585,6 +644,6 @@ export function DataTable<T extends { id: string }>({
         />
       )}
     </div>
+  </div>
   )
 }
-

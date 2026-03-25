@@ -62,11 +62,44 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt'
   },
   callbacks: {
-    async jwt ({ token, user }) {
+    async jwt ({ token, user, trigger }) {
+      // When user signs in, store their role
       if (user) {
         token.role = user.role
         token.id = user.id
+        // Fetch fresh user data to get updatedAt
+        try {
+          const currentUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { updatedAt: true }
+          })
+          if (currentUser) {
+            token.updatedAt = currentUser.updatedAt.toISOString()
+          }
+        } catch (error) {
+          console.error('Error fetching user updatedAt:', error)
+        }
       }
+      
+      // On every JWT callback, validate the user's current role from database
+      // This ensures that if role changes, the token reflects the current role
+      if (token.id && (trigger === 'update' || !trigger)) {
+        try {
+          const currentUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true, updatedAt: true }
+          })
+          
+          if (currentUser) {
+            // Update token with current role and timestamp
+            token.role = currentUser.role
+            token.updatedAt = currentUser.updatedAt.toISOString()
+          }
+        } catch (error) {
+          console.error('Error validating user role in JWT callback:', error)
+        }
+      }
+      
       return token
     },
     async session ({ session, token }) {

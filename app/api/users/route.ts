@@ -29,6 +29,7 @@ export async function GET (request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10)
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
+    const search = searchParams.get('search') || undefined
     
     // Build filters from query params - extract all params except pagination/sorting
     const filters: Record<string, unknown> = {}
@@ -46,7 +47,8 @@ export async function GET (request: NextRequest) {
       pageSize,
       sortBy,
       sortOrder,
-      filters
+      filters,
+      search // Pass search parameter separately
     })
 
     return NextResponse.json({ 
