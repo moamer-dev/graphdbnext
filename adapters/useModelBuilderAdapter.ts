@@ -9,6 +9,7 @@ import type {
 } from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
 import { toast } from 'sonner'
+import { useDatabaseStore } from '@/stores/databaseStore'
 
 export interface UseModelBuilderAdapterProps {
   model: Model | null
@@ -218,6 +219,14 @@ export function useModelBuilderAdapter({
       }
       
       const data = await response.json()
+      
+      // Invalidate database store caches to ensure Query View reflects new data
+      const dbStore = useDatabaseStore.getState()
+      dbStore.invalidateNodeLabels()
+      dbStore.invalidateRelationshipTypes()
+      dbStore.invalidateNodeProperties()
+      await dbStore.checkStatus()
+      
       toast.success(data.message || 'Graph successfully pushed to database')
     } catch (error) {
       console.error('Error pushing to DB:', error)
