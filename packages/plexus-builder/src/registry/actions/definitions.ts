@@ -563,11 +563,12 @@ registerAction({
   },
   executor: executeCreateAnnotationNodesAction,
   configSchema: [
-    { name: 'annotationPath', label: 'Annotation Path', type: 'text' },
+    { name: 'annotationPath', label: 'Annotation ID Path', type: 'text', description: 'Which attribute has the target annotation id/xml:id' },
     { name: 'nodeLabel', label: 'Node Label', type: 'text' },
+    { name: 'relationshipType', label: 'Relationship Type', type: 'text', defaultValue: 'annotates', placeholder: 'e.g., annotates, refersTo' },
     { name: 'properties', label: 'Properties', type: 'mappings' }
   ],
-  defaultConfig: { annotationPath: '', nodeLabel: '', properties: [] }
+  defaultConfig: { annotationPath: '', nodeLabel: '', relationshipType: 'annotates', properties: [] }
 })
 
 // 23. Delete Relationship

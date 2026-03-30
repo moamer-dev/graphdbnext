@@ -28,16 +28,16 @@ export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx
     }
   }
 
-  const relationshipType = (action.config.relationshipType as string) || 'annotatedBy'
-  const referenceAttribute = (action.config.referenceAttribute as string) || ''
+  const relationshipType = (action.config.relationshipType as string) || 'annotates'
+  const annotationPath = (action.config.annotationPath as string) || ''
 
   const currentNode = ctx.currentGraphNode
 
   // Strictly Handle Reference Linking
   let attrValue: string | null = null
 
-  if (referenceAttribute) {
-    attrValue = ctx.xmlElement.getAttribute(referenceAttribute)
+  if (annotationPath) {
+    attrValue = ctx.xmlElement.getAttribute(annotationPath)
   } else {
     // Auto-detect common reference attributes
     const commonAttributes = ['target', 'corresp', 'ref', 'ana']
@@ -50,14 +50,13 @@ export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx
   if (attrValue) {
     const cleanId = attrValue.replace(/^#/, '').split(' ')[0]
     const targetElement = ctx.findElementById(ctx.doc, cleanId)
-    const relLabel = relationshipType || 'annotates'
 
     // Always defer to handle multiple matches (e.g., inherited IDs on child nodes)
     // and to ensure all nodes are created before linking.
     ctx.deferredRelationships.push({
       from: currentNode,
       to: null,
-      type: relLabel,
+      type: relationshipType,
       properties: {},
       targetId: cleanId,
       targetElement: targetElement || undefined,
