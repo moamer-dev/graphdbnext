@@ -220,14 +220,19 @@ export const workflowService = {
 
         if (edge.targetToolLabel) {
           const targetId = toolKeyToId.get(edge.targetToolLabel)
-          if (targetId) {
-            addToolEdge({
-              source: sourceId,
-              target: targetId,
-              sourceHandle: edge.sourceHandle,
-              targetHandle: edge.targetHandle
-            })
-            toolEdgesAdded++
+          if (targetId && sourceId) {
+            const exists = useToolCanvasStore.getState().edges.some(
+              e => e.source === sourceId && e.target === targetId && e.sourceHandle === edge.sourceHandle && e.targetHandle === edge.targetHandle
+            )
+            if (!exists) {
+              addToolEdge({
+                source: sourceId,
+                target: targetId,
+                sourceHandle: edge.sourceHandle,
+                targetHandle: edge.targetHandle
+              })
+              toolEdgesAdded++
+            }
           }
         } else if (edge.targetActionLabel) {
           // Find action by label - if multiple exist, use the one that matches the source tool
@@ -336,14 +341,19 @@ export const workflowService = {
         const targetId = candidateIds[actionIndex]
 
         if (targetId && !connectedActionIds.has(targetId)) {
-          addActionEdge({
-            source: sourceId,
-            target: targetId,
-            sourceHandle: edge.sourceHandle,
-            targetHandle: edge.targetHandle
-          })
-          connectedActionIds.add(targetId)
-          actionEdgesAdded++
+          const exists = useActionCanvasStore.getState().edges.some(
+            e => e.source === sourceId && e.target === targetId && e.sourceHandle === edge.sourceHandle && e.targetHandle === edge.targetHandle
+          )
+          if (!exists) {
+            addActionEdge({
+              source: sourceId,
+              target: targetId,
+              sourceHandle: edge.sourceHandle,
+              targetHandle: edge.targetHandle
+            })
+            connectedActionIds.add(targetId)
+            actionEdgesAdded++
+          }
         }
       })
     // 7. Connect unconnected actions

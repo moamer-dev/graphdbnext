@@ -1,0 +1,293 @@
+---
+title: Action Editor
+description: Specialized interface for configuring data transformation actions with testing capabilities
+---
+
+# Action Editor
+
+The Action Editor provides a specialized interface for configuring data transformation actions that process and manipulate XML data within workflows. It offers comprehensive property mapping, API integration, group management, and testing capabilities to ensure your actions transform data correctly.
+
+## Overview
+
+The Action Editor enables you to:
+- **Configure Action Types**: Set up node, property, and relationship actions
+- **Map Data Properties**: Define data transformation rules
+- **Integrate with APIs**: Connect actions to upstream tool outputs
+- **Manage Action Groups**: Organize related actions efficiently
+- **Test Transformations**: Validate actions with sample data and preview results
+
+## Visual Interface
+
+<Mermaid chart="
+flowchart TD
+    subgraph ActionEditor[Action Editor Layout]
+        A[Action Header] --> B[Configuration Forms]
+        B --> C[API Integration]
+        C --> D[Group Management]
+        D --> E[Test Execution]
+        E --> F[Result Analysis]
+        F --> G[Graph Preview]
+    end
+    
+    subgraph Configuration[Action Settings]
+        H[Property Mapping] --> I[Data Transformation]
+        I --> J[Validation Rules]
+        J --> K[Default Values]
+    end
+    
+    subgraph API[Tool Connections]
+        L[Upstream Tools] --> M[Response Mapping]
+        M --> N[Data Flow]
+        N --> O[Error Handling]
+    end
+    
+    subgraph Testing[Test Capabilities]
+        P[Sample Data] --> Q[Execution Results]
+        Q --> R[Graph Changes]
+        R --> S[Performance Metrics]
+    end
+    
+    B --> Configuration
+    C --> API
+    E --> Testing
+" />
+
+## Key Features
+
+### Action Configuration
+- **Action Selection**: Choose from available action types
+- **Property Mapping**: Define data transformation rules
+- **Configuration Forms**: Set action-specific parameters
+- **Validation**: Ensure configuration correctness
+
+### API Integration
+- **Tool Connections**: Link actions to API tools
+- **Response Mapping**: Use API data in action configuration
+- **Data Flow**: Configure how data moves between tools and actions
+- **Error Handling**: Manage API integration issues
+
+### Group Management
+- **Action Groups**: Organize related actions
+- **Execution Order**: Define action sequencing
+- **Conditional Execution**: Set group-level conditions
+- **Performance Optimization**: Batch related actions
+
+### Testing Capabilities
+- **Test Execution**: Run actions with sample data
+- **Graph Preview**: See resulting graph structure
+- **Performance Analysis**: Monitor execution metrics
+- **Debug Tools**: Identify and resolve issues
+
+## Action Categories
+
+### Node Actions
+Operations that create and manage graph nodes:
+
+#### Create Node Action
+- **Node Creation**: Generate new graph nodes
+- **Property Assignment**: Set initial node properties
+- **Type Definition**: Define node types
+- **Relationship Creation**: Establish initial connections
+
+#### Update Node Action
+- **Property Modification**: Update existing node properties
+- **Type Changes**: Modify node types
+- **Data Validation**: Ensure data integrity
+- **Conditional Updates**: Update based on conditions
+
+#### Delete Node Action
+- **Node Removal**: Delete nodes from graph
+- **Conditional Deletion**: Remove based on criteria
+- **Cleanup**: Handle orphaned relationships
+- **Validation**: Ensure graph consistency
+
+#### Clone Node Action
+- **Node Duplication**: Create node copies
+- **Property Inheritance**: Copy or modify properties
+- **Relationship Cloning**: Duplicate connections
+- **Customization**: Modify cloned nodes
+
+### Property Actions
+Operations that manipulate node and relationship properties:
+
+#### Set Property Action
+- **Property Assignment**: Set property values
+- **Type Conversion**: Convert data types
+- **Validation**: Ensure value correctness
+- **Default Handling**: Set default values
+
+#### Copy Property Action
+- **Property Transfer**: Copy between nodes
+- **Source Selection**: Choose source properties
+- **Target Mapping**: Define destination properties
+- **Type Handling**: Manage type conversions
+
+#### Format Property Action
+- **Data Formatting**: Format property values
+- **Date Formatting**: Handle date/time formats
+- **Number Formatting**: Format numeric values
+- **String Operations**: Text manipulation
+
+#### Merge Properties Action
+- **Property Combination**: Merge multiple properties
+- **Separator Configuration**: Define merge separators
+- **Priority Rules**: Set property precedence
+- **Conflict Resolution**: Handle value conflicts
+
+### Relationship Actions
+Operations that manage connections between nodes:
+
+#### Create Relationship Action
+- **Connection Creation**: Establish node relationships
+- **Type Definition**: Define relationship types
+- **Property Assignment**: Set relationship attributes
+- **Cardinality Management**: Handle connection constraints
+
+#### Update Relationship Action
+- **Property Modification**: Update relationship properties
+- **Type Changes**: Modify relationship types
+- **Direction Changes**: Reverse relationship direction
+- **Validation**: Ensure relationship integrity
+
+#### Delete Relationship Action
+- **Connection Removal**: Delete relationships
+- **Conditional Deletion**: Remove based on criteria
+- **Cleanup**: Handle orphaned nodes
+- **Validation**: Ensure graph consistency
+
+## Configuration Management
+
+### Property Mapping
+Define how data flows from XML to graph properties:
+
+#### Source Mapping
+- **XML Elements**: Map XML elements to properties
+- **Attribute Mapping**: Connect attributes to properties
+- **Text Content**: Extract text content
+- **Nested Data**: Handle hierarchical data
+
+#### Transformation Rules
+- **Data Conversion**: Convert between data types
+- **Format Changes**: Apply formatting rules
+- **Validation**: Validate transformed data
+- **Default Values**: Set fallback values
+
+#### Conditional Mapping
+- **Conditional Logic**: Apply rules based on conditions
+- **Priority Rules**: Set mapping precedence
+- **Fallback Logic**: Handle mapping failures
+- **Error Handling**: Manage mapping errors
+
+### API Integration
+Connect actions to external data sources:
+
+#### Tool Connections
+- **Upstream Tools**: Connect to preceding tools
+- **Data Flow**: Configure data transfer
+- **Response Parsing**: Extract relevant data
+- **Error Handling**: Manage API failures
+
+#### Response Mapping
+- **JSON Parsing**: Extract data from JSON responses
+- **XML Parsing**: Handle XML response data
+- **Data Transformation**: Convert response formats
+- **Validation**: Ensure data correctness
+
+#### Dynamic Configuration
+- **Template Variables**: Use dynamic data in configuration
+- **Conditional Logic**: Configure based on API responses
+- **Real-Time Updates**: Update configuration dynamically
+- **Caching**: Cache API responses for performance
+
+## Group Management
+
+### Action Groups
+Organize related actions for better management:
+
+#### Group Creation
+- **Logical Grouping**: Group related actions
+- **Naming Conventions**: Use descriptive group names
+- **Documentation**: Document group purposes
+- **Version Control**: Track group changes
+
+#### Execution Control
+- **Sequential Execution**: Run actions in order
+- **Parallel Execution**: Run actions simultaneously
+- **Conditional Execution**: Execute based on conditions
+- **Error Handling**: Handle group-level errors
+
+#### Performance Optimization
+- **Batch Processing**: Group similar operations
+- **Resource Management**: Optimize resource usage
+- **Caching**: Cache group results
+- **Monitoring**: Track group performance
+
+## Testing and Validation
+
+### Test Execution
+Validate action configurations:
+
+#### Sample Data Testing
+- **XML Samples**: Use realistic XML data
+- **Edge Cases**: Test boundary conditions
+- **Error Cases**: Test error handling
+- **Performance Cases**: Test performance scenarios
+
+#### Result Analysis
+- **Graph Preview**: See resulting graph structure
+- **Property Validation**: Verify property correctness
+- **Relationship Checking**: Validate connections
+- **Performance Metrics**: Measure execution time
+
+### Debug Tools
+Identify and resolve issues:
+
+#### Step-by-Step Execution
+- **Break Points**: Pause execution at specific points
+- **Variable Inspection**: Examine data values
+- **Flow Tracking**: Monitor execution flow
+- **Error Logging**: Record execution errors
+
+#### Performance Analysis
+- **Timing Analysis**: Measure execution times
+- **Resource Usage**: Monitor memory and CPU usage
+- **Bottleneck Identification**: Find performance issues
+- **Optimization Suggestions**: Get improvement recommendations
+
+## Best Practices
+
+### Action Design
+- **Single Purpose**: Each action should have one clear purpose
+- **Clear Naming**: Use descriptive action names
+- **Documentation**: Document action purposes and usage
+- **Error Handling**: Implement robust error handling
+
+### Configuration Management
+- **Modular Design**: Create reusable configurations
+- **Version Control**: Track configuration changes
+- **Testing**: Test all configuration scenarios
+- **Documentation**: Document configuration decisions
+
+### Performance Optimization
+- **Efficient Mapping**: Optimize property mapping
+- **Batch Operations**: Group similar operations
+- **Caching**: Cache frequently used data
+- **Monitoring**: Track performance metrics
+
+## Troubleshooting
+
+### Common Issues
+- **Mapping Errors**: Fix property mapping problems
+- **API Issues**: Resolve API connection problems
+- **Performance Issues**: Optimize slow operations
+- **Configuration Errors**: Fix setup mistakes
+
+### Debug Strategies
+- **Incremental Testing**: Test actions incrementally
+- **Log Analysis**: Review execution logs
+- **Data Inspection**: Examine intermediate data
+- **Performance Profiling**: Identify bottlenecks
+
+---
+
+The Action Editor provides a comprehensive, user-friendly environment for configuring data transformation actions with powerful API integration, group management, and testing capabilities, ensuring your actions transform data correctly and efficiently in complex workflows.

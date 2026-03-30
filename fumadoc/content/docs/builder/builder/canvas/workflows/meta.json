@@ -1,0 +1,10 @@
+{
+  "title": "Workflows",
+  "collapsible": true,
+  "defaultOpen": false,
+  "pages": [
+    "workflow-overview",
+    "tools-overview",
+    "actions-overview"
+  ]
+}

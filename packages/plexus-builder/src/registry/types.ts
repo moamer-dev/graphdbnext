@@ -2,9 +2,11 @@ import { LucideIcon } from 'lucide-react'
 
 export type FieldType = 
   | 'text' 
+  | 'textarea' // For multi-line text
   | 'number' 
   | 'boolean' 
   | 'select' 
+  | 'credential' // For selecting stored credentials
   | 'multiselect' 
   | 'properties' // For key-value pairs
   | 'mappings'   // For attribute mappings
@@ -24,11 +26,12 @@ export interface ConfigField {
   description?: string
   details?: string
   options?: FieldOption[] // For select/multiselect
+  credentialType?: string // Optional provider type filter for credential fields
   defaultValue?: any
   required?: boolean
   // Conditional rendering
   dependsOn?: string
-  dependsOnValue?: any
+  dependsOnValue?: any | any[]
 }
 
 export interface ItemMetadata {

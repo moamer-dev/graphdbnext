@@ -1,0 +1,16 @@
+{
+  "title": "AI Agents",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "Bot",
+  "pages": [
+    "node-property-suggestion-agent",
+    "relationship-recommendation-agent",
+    "schema-design-agent",
+    "workflow-generation-agent",
+    "xml-mapping-assistant",
+    "xml-rules-assistant",
+    "research-assistant-agent",
+    "research-assistant-streaming"
+  ]
+}

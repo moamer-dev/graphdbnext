@@ -1,0 +1,629 @@
+---
+title: Workflow System
+description: Understanding the workflow execution engine, registry, and component architecture
+---
+
+# Workflow System
+
+The workflow system is the core engine that transforms XML data into graph structures through visual workflow definitions. It consists of a registry system, execution engine, and a comprehensive set of tools and actions.
+
+## Workflow System Architecture
+
+<Mermaid chart="
+graph TB
+    subgraph Registry Layer
+        A[Workflow Registry]
+        B[Action Definitions]
+        C[Tool Definitions]
+        D[Category Management]
+    end
+    
+    subgraph Execution Layer
+        E[Workflow Executor]
+        F[Tool Executor]
+        G[Action Executor]
+        H[Context Manager]
+    end
+    
+    subgraph UI Layer
+        I[Workflow Canvas]
+        J[Tool Palette]
+        K[Configuration Panel]
+        L[Validation Panel]
+    end
+    
+    subgraph Data Layer
+        M[XML Parser]
+        N[Graph Generator]
+        O[Result Processor]
+    end
+    
+    I --> A
+    J --> A
+    K --> A
+    L --> A
+    
+    A --> E
+    E --> F
+    E --> G
+    E --> H
+    
+    F --> M
+    G --> N
+    H --> O
+" />
+
+## Registry System
+
+### Workflow Registry Core
+
+The central registry manages all workflow components:
+
+```typescript
+import { ActionDefinition, ToolDefinition, CategoryMetadata } from './types'
+import { Boxes } from 'lucide-react'
+
+class WorkflowRegistry {
+  private actions: Map<string, ActionDefinition> = new Map()
+  private tools: Map<string, ToolDefinition> = new Map()
+  private actionCategories: Map<string, CategoryMetadata> = new Map()
+  private toolCategories: Map<string, CategoryMetadata> = new Map()
+
+  registerAction(definition: ActionDefinition) {
+    this.actions.set(definition.id, definition)
+  }
+
+  registerTool(definition: ToolDefinition) {
+    this.tools.set(definition.id, definition)
+  }
+
+  registerActionCategory(category: CategoryMetadata) {
+    this.actionCategories.set(category.id, category)
+  }
+
+  registerToolCategory(category: CategoryMetadata) {
+    this.toolCategories.set(category.id, category)
+  }
+
+  getAction(id: string): ActionDefinition | undefined {
+    return this.actions.get(id)
+  }
+
+  getTool(id: string): ToolDefinition | undefined {
+    return this.tools.get(id)
+  }
+
+  getAllActions(): ActionDefinition[] {
+    return Array.from(this.actions.values())
+  }
+
+  getAllTools(): ToolDefinition[] {
+    return Array.from(this.tools.values())
+  }
+
+  getActionCategories(): CategoryMetadata[] {
+    const registered = Array.from(this.actionCategories.values())
+    const usedIds = new Set(registered.map(c => c.id))
+    
+    // Add any used but unregistered categories
+    this.getAllActions().forEach(action => {
+      if (action.metadata.category && !usedIds.has(action.metadata.category)) {
+        registered.push({
+          id: action.metadata.category,
+          label: action.metadata.category,
+          icon: Boxes as any
+        })
+        usedIds.add(action.metadata.category)
+      }
+    })
+    
+    return registered.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+  }
+
+  getToolCategories(): CategoryMetadata[] {
+    const registered = Array.from(this.toolCategories.values())
+    const usedIds = new Set(registered.map(c => c.id))
+    
+    // Add any used but unregistered categories
+    this.getAllTools().forEach(tool => {
+      if (tool.metadata.category && !usedIds.has(tool.metadata.category)) {
+        registered.push({
+          id: tool.metadata.category,
+          label: tool.metadata.category,
+          icon: Boxes as any
+        })
+        usedIds.add(tool.metadata.category)
+      }
+    })
+    
+    return registered.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+  }
+}
+```
+
+### Action Registration Pattern
+
+Actions are registered with comprehensive metadata and execution logic:
+
+```typescript
+// Example from registry/actions/definitions.ts
+import { workflowRegistry } from '../workflowRegistry'
+import { ActionDefinition } from '../types'
+import { Edit, Boxes, FileText } from 'lucide-react'
+
+// Import executors
+import { executeSetPropertyAction } from '../../services/workflow/workflowExecutor/actions/propertyActions'
+
+// Helper to create common action definitions
+const registerAction = (def: ActionDefinition) => workflowRegistry.registerAction(def)
+
+// Register categories
+workflowRegistry.registerActionCategory({ 
+  id: 'property_actions', 
+  label: 'Property Actions', 
+  icon: FileText, 
+  color: 'text-amber-600', 
+  bgColor: 'bg-amber-100', 
+  order: 2 
+})
+
+// Set Property Action
+registerAction({
+  id: 'action:set-property',
+  metadata: {
+    label: 'Set Property',
+    description: 'Set node property value',
+    icon: Edit,
+    category: 'property_actions',
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-50',
+    order: 1,
+    hidden: false
+  },
+  executor: executeSetPropertyAction,
+  configSchema: [
+    { 
+      name: 'propertyKey', 
+      label: 'Property Key', 
+      type: 'text', 
+      placeholder: 'e.g., name, title' 
+    },
+    { 
+      name: 'propertyValue', 
+      label: 'Property Value', 
+      type: 'text', 
+      placeholder: 'e.g., John Doe, Example Title' 
+    }
+  ],
+  defaultConfig: { 
+    propertyKey: '', 
+    propertyValue: ''
+  }
+})
+```
+
+### Tool Registration Pattern
+
+Tools control workflow logic and flow:
+
+```typescript
+// Example from registry/tools/definitions.ts
+import { workflowRegistry } from '../workflowRegistry'
+import { ToolDefinition } from '../types'
+import { GitBranch, Globe } from 'lucide-react'
+
+// Import executors
+import { executeIfTool, executeSwitchTool } from '../../services/workflow/workflowExecutor/tools/controlFlowTools'
+import { executeFetchApiTool } from '../../services/workflow/workflowExecutor/tools/apiTools'
+
+const registerTool = (def: ToolDefinition) => workflowRegistry.registerTool(def)
+
+// Register categories
+workflowRegistry.registerToolCategory({ 
+  id: 'control_flow', 
+  label: 'Control Flow', 
+  icon: GitBranch, 
+  color: 'text-blue-600', 
+  bgColor: 'bg-blue-100', 
+  order: 1 
+})
+
+workflowRegistry.registerToolCategory({ 
+  id: 'external_services', 
+  label: 'External Services', 
+  icon: Globe, 
+  color: 'text-teal-600', 
+  bgColor: 'bg-teal-100', 
+  order: 2 
+})
+
+// If / Else Tool
+registerTool({
+  id: 'tool:if',
+  metadata: {
+    label: 'If / Else',
+    description: 'Conditional branching based on element properties',
+    icon: GitBranch,
+    category: 'control_flow',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    order: 1,
+    hidden: false
+  },
+  executor: executeIfTool,
+  configSchema: [
+    { name: 'conditionGroups', label: 'Condition Groups', type: 'separator' }
+  ],
+  defaultConfig: { conditionGroups: [] }
+})
+
+// Fetch API Tool
+registerTool({
+  id: 'tool:fetch-api',
+  metadata: {
+    label: 'Fetch API',
+    description: 'Fetch data from external APIs',
+    icon: Globe,
+    category: 'external_services',
+    color: 'text-teal-600',
+    bgColor: 'bg-teal-50',
+    order: 1,
+    isApiTool: true,
+    hidden: false
+  },
+  executor: executeFetchApiTool,
+  configSchema: [
+    { 
+      name: 'apiUrl', 
+      label: 'API URL', 
+      type: 'text', 
+      placeholder: 'https://api.example.com/data' 
+    },
+    { 
+      name: 'method', 
+      label: 'HTTP Method', 
+      type: 'select',
+      options: [
+        { label: 'GET', value: 'GET' },
+        { label: 'POST', value: 'POST' }
+      ]
+    }
+  ],
+  defaultConfig: { 
+    apiUrl: '', 
+    method: 'GET'
+  }
+})
+```
+
+## Workflow Execution Engine
+
+### Execution Architecture
+
+The workflow executor processes XML data through a recursive tree walk:
+
+```typescript
+import { DOMParser } from '@xmldom/xmldom'
+import type { Node as BuilderNode, Relationship } from '../../../types'
+import type { ToolCanvasNode, ToolCanvasEdge } from '../../../stores/toolCanvasStore'
+import type { ActionCanvasEdge } from '../../../stores/actionCanvasStore'
+import type { GraphJson, GraphJsonNode, GraphJsonRelationship, ExecuteOptions, ExecutionContext } from './types'
+
+export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJson> {
+  const {
+    xmlContent,
+    schemaJson,
+    nodes,
+    relationships,
+    toolNodes,
+    toolEdges,
+    actionNodes,
+    actionEdges,
+    startNodeId
+  } = options
+
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(xmlContent, 'text/xml')
+  let root: Element | null = doc.documentElement
+
+  if (!root) {
+    return []
+  }
+
+  const graphNodes: GraphJsonNode[] = []
+  const graphRels: GraphJsonRelationship[] = []
+  const elementToGraph = new Map<Element, GraphJsonNode>()
+  const nodeIdCounter = { value: 0 }
+  const relIdCounter = { value: 0 }
+  const deferredRelationships: Array<{
+    from: GraphJsonNode
+    to: GraphJsonNode | null
+    type: string
+    properties: Record<string, unknown>
+    targetId?: string
+    targetElement?: Element
+    targetLookup?: {
+      label?: string
+      propertyKey?: string
+      propertyValue?: string
+    }
+  }> = []
+
+  const deferredOperations: Array<{
+    type: 'create-relationship'
+    data: Record<string, unknown>
+  }> = []
+
+  // Execute workflow with XML tree walk
+  const result = await executeActionWithWalk({
+    xmlElement: root,
+    actionNodes,
+    actionEdges,
+    toolNodes,
+    toolEdges,
+    nodes,
+    relationships,
+    schemaJson,
+    graphNodes,
+    graphRels,
+    elementToGraph,
+    nodeIdCounter,
+    relIdCounter,
+    deferredRelationships,
+    deferredOperations,
+    parentGraphNode: null,
+    currentGraphNode: null,
+    builderNode: startNodeId ? nodes.find(n => n.id === startNodeId) || null : null
+  })
+
+  return result
+}
+
+export interface ExecuteOptions {
+  xmlContent: string
+  schemaJson: SchemaJson
+  nodes: BuilderNode[]
+  relationships: Relationship[]
+  toolNodes: ToolCanvasNode[]
+  toolEdges: ToolCanvasEdge[]
+  actionNodes: ActionCanvasNode[]
+  actionEdges: ActionCanvasEdge[]
+  startNodeId?: string
+}
+```
+
+### Tool Execution
+
+Tools control the workflow flow and logic:
+
+```typescript
+// Real tool execution pattern from workflowExecutor/tools/types.ts
+import type { ToolCanvasNode } from '../../../../stores/toolCanvasStore'
+import type { ExecutionContext } from '../types'
+
+export type ToolExecutionResult =
+  | { result: boolean }
+  | { result: boolean; outputPath: string }
+  | { result: string; outputPath: string }
+
+export type ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => Promise<ToolExecutionResult>
+
+// Example: If Tool Executor from controlFlowTools.ts
+export const executeIfTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
+  const conditionGroups = (tool.config.conditionGroups as Array<{
+    conditions: Array<{
+      type: string
+      value?: string
+      values?: string[]
+      internalOperator?: 'AND' | 'OR'
+    }>
+    internalOperator: 'AND' | 'OR'
+    operator: 'AND' | 'OR'
+  }>) || []
+
+  if (conditionGroups.length === 0) {
+    return { result: true, outputPath: 'true' }
+  }
+
+  const element = ctx.xmlElement
+
+  const evaluateCondition = (condition: any): boolean => {
+    switch (condition.type) {
+      case 'HasChildren': {
+        const values = condition.values || (condition.value ? [condition.value] : [])
+        const childElements = element.childNodes ? Array.from(element.childNodes).filter((n: Node) => n.nodeType === 1) as Element[] : []
+        const childNames = childElements.map(c => {
+          const tagName = c.tagName ? c.tagName.toLowerCase() : ''
+          const localName = tagName.includes(':') ? tagName.split(':').pop() || tagName : tagName
+          return localName
+        })
+        const operator = condition.internalOperator || 'OR'
+        if (operator === 'AND') {
+          return values.every((v: string) => childNames.includes(v.toLowerCase().trim()))
+        } else {
+          return values.some((v: string) => childNames.includes(v.toLowerCase().trim()))
+        }
+      }
+      default:
+        return true
+    }
+  }
+
+  for (const group of conditionGroups) {
+    const conditionsMet = group.conditions.every(evaluateCondition)
+    if (conditionsMet) {
+      return { result: true, outputPath: 'true' }
+    }
+  }
+
+  return { result: false, outputPath: 'false' }
+}
+```
+
+### Action Execution
+
+Actions perform atomic graph operations:
+
+```typescript
+// Real action execution pattern from workflowExecutor/actions/types.ts
+import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
+import type { ExecutionContext, GraphJsonNode, GraphJsonRelationship } from '../types'
+import type { Relationship } from '../../../../types'
+import type { SchemaJson } from '../../../../types/mappingConfig'
+
+export interface ActionExecutionContext extends ExecutionContext {
+  graphNodes: GraphJsonNode[]
+  graphRels: GraphJsonRelationship[]
+  nodeIdCounter: { value: number }
+  relIdCounter: { value: number }
+  relationships: Relationship[]
+  schemaJson: SchemaJson
+  doc: Document
+  createGraphNode: (builderNode: { label: string; properties?: Array<{ key: string; defaultValue?: unknown }> }, element: Element, id: number, options?: { inheritProperties?: boolean }) => GraphJsonNode
+  createRelationship: (from: GraphJsonNode, to: GraphJsonNode, relType: Relationship, properties?: Record<string, unknown>) => GraphJsonRelationship
+  getApiResponseData: (action: ActionCanvasNode) => unknown
+  evaluateTemplate: (value: string, apiResponseData: unknown) => string
+  applyTransforms: (text: string, transforms: Array<{ type: string; [key: string]: unknown }>) => string
+  findElementById: (doc: Document, id: string) => Element | null
+  actionNodes: ActionCanvasNode[]
+  actionEdgesBySource: Map<string, any[]>
+}
+
+export type ActionExecutor = (action: ActionCanvasNode, ctx: ActionExecutionContext) => void
+
+// Example: Set Property Action Executor from propertyActions.ts
+export function executeSetPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
+  const node = ctx.currentGraphNode || ctx.parentGraphNode
+  if (!node) return
+
+  const apiResponseData = ctx.getApiResponseData(action)
+  const key = ctx.evaluateTemplate((action.config.propertyKey as string) || '', apiResponseData)
+  let value = ctx.evaluateTemplate((action.config.propertyValue as string) || '', apiResponseData)
+  
+  if (key) {
+    if (value === '' && node.properties.transformedText !== undefined) {
+      value = String(node.properties.transformedText)
+    } else if (value === '' && node.properties.textContent !== undefined) {
+      value = String(node.properties.textContent)
+    }
+    node.properties[key] = value
+  }
+}
+
+// Example: Copy Property Action Executor from propertyActions.ts
+export function executeCopyPropertyAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
+  const node = ctx.currentGraphNode || ctx.parentGraphNode
+  if (!node) return
+
+  const apiResponseData = ctx.getApiResponseData(action)
+  const sourceProperty = ctx.evaluateTemplate((action.config.sourceProperty as string) || '', apiResponseData)
+  const targetProperty = ctx.evaluateTemplate((action.config.targetProperty as string) || '', apiResponseData)
+  
+  if (!sourceProperty || !targetProperty) return
+
+  const sourceNodeIdRaw = action.config.sourceNodeId
+  let sourceValue: unknown = undefined
+
+  if (sourceNodeIdRaw !== undefined && sourceNodeIdRaw !== '') {
+    const id = typeof sourceNodeIdRaw === 'string' ? parseInt(sourceNodeIdRaw) : (sourceNodeIdRaw as number)
+    if (!isNaN(id)) {
+      const sourceNode = ctx.graphNodes.find(n => n.id === id)
+      if (sourceNode) {
+        sourceValue = sourceNode.properties[sourceProperty]
+      }
+    }
+  } else {
+    // If no ID provided, try current node properties first, then parent node
+    if (ctx.currentGraphNode && ctx.currentGraphNode.properties[sourceProperty] !== undefined) {
+      sourceValue = ctx.currentGraphNode.properties[sourceProperty]
+    } else if (ctx.parentGraphNode && ctx.parentGraphNode.properties[sourceProperty] !== undefined) {
+      sourceValue = ctx.parentGraphNode.properties[sourceProperty]
+    }
+  }
+  
+  if (sourceValue !== undefined) {
+    node.properties[targetProperty] = sourceValue
+  }
+}
+```
+
+## Available Action Executors
+
+The workflow system includes the following real action executors from `workflowExecutor/actions/`:
+
+### Property Actions (`propertyActions.ts`)
+- **executeSetPropertyAction**: Set node property values
+- **executeCopyPropertyAction**: Copy property values between nodes
+- **executeMergePropertiesAction**: Merge multiple properties
+- **executeSplitPropertyAction**: Split property values
+- **executeFormatPropertyAction**: Format property text
+
+### Relationship Actions (`relationshipActions.ts`)
+- **executeCreateRelationshipAction**: Create graph relationships
+- **executeDeferRelationshipAction**: Create deferred relationships
+- **executeUpdateRelationshipAction**: Update existing relationships
+- **executeDeleteRelationshipAction**: Remove relationships
+- **executeReverseRelationshipAction**: Reverse relationship direction
+
+### Advanced Node Actions (`advancedNodeActions.ts`)
+- **executeCreateTextNodeAction**: Create text nodes
+- **executeCreateTokenNodesAction**: Create token nodes from text
+
+### Reference Actions (`referenceActions.ts`)
+- **executeCreateAnnotationNodesAction**: Create annotation nodes
+- **executeCreateReferenceChainAction**: Create reference chains
+
+### Complex Actions (`complexActions.ts`)
+- **executeExtractAndNormalizeAttributesAction**: Extract and normalize attributes
+- **executeCreateNodeCompleteAction**: Create complete nodes
+- **executeMergeChildrenTextAction**: Merge children text content
+- **executeExtractAndComputePropertyAction**: Extract and compute properties
+- **executeCreateNodeWithLookupAction**: Create nodes with lookup
+
+### Node Manipulation Actions (`nodeManipulationActions.ts`)
+- **executeUpdateNodeAction**: Update existing nodes
+- **executeDeleteNodeAction**: Remove nodes
+- **executeCloneNodeAction**: Clone existing nodes
+- **executeMergeNodesAction**: Merge multiple nodes
+
+### Special Actions (`specialActions.ts`)
+- **executeSkipAction**: Skip execution flow
+
+## Available Tool Executors
+
+The workflow system includes the following real tool executors from `workflowExecutor/tools/`:
+
+### Control Flow Tools (`controlFlowTools.ts`)
+- **executeIfTool**: Conditional branching based on XML element properties
+- **executeSwitchTool**: Multi-way branching based on values
+
+### API Tools (`apiTools.ts`)
+- **executeFetchApiTool**: Fetch data from external APIs
+- **executeHttpTool**: Make HTTP requests
+
+### Data Processing Tools (`dataProcessingTools.ts`)
+- **executeDelayTool**: Add delays in execution
+
+### Flow Control Tools (`flowControlTools.ts`)
+- **executeWebhookTool**: Handle webhook calls
+
+## Usage
+
+All executors can be imported from their respective modules:
+
+```typescript
+// Tool executors
+import { executeIfTool, executeSwitchTool } from '../services/workflow/workflowExecutor/tools/controlFlowTools'
+import { executeFetchApiTool } from '../services/workflow/workflowExecutor/tools/apiTools'
+
+// Action executors
+import { executeSetPropertyAction, executeCopyPropertyAction } from '../services/workflow/workflowExecutor/actions/propertyActions'
+import { executeCreateRelationshipAction } from '../services/workflow/workflowExecutor/actions/relationshipActions'
+import { executeCreateNodeCompleteAction } from '../services/workflow/workflowExecutor/actions/complexActions'
+
+// Types
+import type { ToolExecutor, ToolExecutionResult } from '../services/workflow/workflowExecutor/tools/types'
+import type { ActionExecutor, ActionExecutionContext } from '../services/workflow/workflowExecutor/actions/types'
+```
+
+The workflow system provides a powerful, extensible foundation for transforming XML data into graph structures through visual workflow definitions, with comprehensive support for complex data processing scenarios.

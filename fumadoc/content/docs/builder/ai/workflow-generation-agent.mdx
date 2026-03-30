@@ -1,0 +1,316 @@
+---
+title: Workflow Generation Agent
+description: AI agent for generating XML to graph transformation workflows
+---
+
+# Workflow Generation Agent
+
+The Workflow Generation Agent is an advanced AI assistant that generates complete workflows for processing XML data and transforming it into graph database structures. It understands XML parsing patterns, graph database operations, and common scholarly data processing workflows.
+
+## Purpose
+
+The agent automates the creation of data transformation workflows by analyzing XML structures and generating optimized workflow configurations that use appropriate tools and actions to convert XML data into meaningful graph representations.
+
+## Key Capabilities
+
+### XML Structure Understanding
+- **XML Pattern Recognition**: Identifies common XML patterns and structures
+- **Scholarly Data Expertise**: Specialized knowledge of TEI, edXML, and other academic XML formats
+- **Hierarchy Analysis**: Understands XML element hierarchies and relationships
+- **Attribute Processing**: Analyzes XML attributes and their significance
+
+### Workflow Generation
+- **Tool Selection**: Chooses appropriate control flow tools (If/Switch, Delay, HTTP, Webhook)
+- **Action Optimization**: Selects specialized actions over generic ones when available
+- **Logical Structuring**: Creates logically structured and efficient workflows
+- **Error Handling**: Incorporates error handling and edge case management
+
+### Specialized Action Preference
+- **Token Node Creation**: Uses `action:create-token-nodes` for text tokenization
+- **Annotation Processing**: Uses `action:create-annotation-nodes` for scholarly annotations
+- **Reference Handling**: Uses `action:create-reference-chain` for reference processing
+- **Deferred Creation**: Uses `action:create-node-with-lookup` for complex node creation
+
+## Input Requirements
+
+### XML Structure Analysis
+The agent requires:
+- **XML Schema**: Sample XML structure or DTD/XSD definitions
+- **Domain Context**: Research domain and data type information
+- **Target Schema**: Desired graph database schema
+- **Processing Requirements**: Specific transformation and processing needs
+
+### Workflow Requirements
+- **Data Volume**: Expected XML data volume and complexity
+- **Performance Requirements**: Performance constraints and requirements
+- **Integration Needs**: External system integration requirements
+- **Quality Standards**: Data quality and validation requirements
+
+## Output Structure
+
+### Complete Workflow Definition
+```typescript
+interface Position {
+  x: number
+  y: number
+}
+
+interface ToolNode {
+  id: string
+  type: string
+  position: Position
+  config: Record<string, unknown>
+  label?: string
+}
+
+interface ActionNode {
+  id: string
+  type: string
+  position: Position
+  config: Record<string, unknown>
+  label?: string
+}
+
+interface Edge {
+  id: string
+  from: string
+  to: string
+  sourceHandle?: string
+  targetHandle?: string
+  outputPath?: string
+}
+
+interface WorkflowSuggestion {
+  toolNodes: ToolNode[]
+  actionNodes: ActionNode[]
+  edges: Edge[]
+  explanation: string
+}
+```
+
+### Workflow Categories
+- **Simple Transformations**: Straightforward XML to graph mappings
+- **Conditional Processing**: Workflows with conditional logic and branching
+- **External Integration**: Workflows that integrate with external APIs
+- **Complex Processing**: Multi-stage processing with advanced features
+
+## Configuration and Usage
+
+### Agent Initialization
+```typescript
+import { WorkflowGenerationAgent } from '@plexus/builder/ai/agents'
+
+const agent = new WorkflowGenerationAgent({
+  model: chatModel,
+  settings: aiSettings
+})
+```
+
+### Workflow Generation Request
+```typescript
+const workflow = await agent.generateWorkflow({
+  xmlStructure: `
+    <teiCorpus>
+      <TEI>
+        <teiHeader>
+          <fileDesc>
+            <titleStmt>
+              <title>Document Title</title>
+              <author>Author Name</author>
+            </titleStmt>
+          </fileDesc>
+        </teiHeader>
+        <text>
+          <body>
+            <div type="chapter">
+              <p>Some text content</p>
+            </div>
+          </body>
+        </text>
+      </TEI>
+    </teiCorpus>
+  `,
+  targetSchema: {
+    nodes: ["Document", "Author", "Chapter", "Paragraph"],
+    relationships: ["AUTHORED", "CONTAINS", "HAS_CHAPTER"]
+  },
+  domain: "tei_documents"
+})
+```
+
+## Integration Points
+
+### Workflow Builder Integration
+- **Visual Workflow**: Generates visual workflow configurations for the workflow builder
+- **Node Placement**: Optimizes node placement for better visual organization
+- **Connection Logic**: Creates logical connections between workflow nodes
+- **Configuration Setup**: Pre-configures tool and action parameters
+
+### XML Import Wizard Integration
+- **Automatic Generation**: Generates workflows during XML import process
+- **Template Creation**: Creates workflow templates for common XML formats
+- **Optimization Suggestions**: Suggests workflow optimizations based on XML structure
+- **Validation Integration**: Validates generated workflows against requirements
+
+### Model Builder Integration
+- **Schema Alignment**: Aligns workflows with target graph schema
+- **Tool Selection**: Chooses tools that work with specific schema configurations
+- **Action Configuration**: Configures actions to match schema properties
+- **Performance Optimization**: Optimizes workflows for specific schema patterns
+
+## Specialized Action Usage
+
+### Token Processing
+```typescript
+// For text tokenization
+{
+  type: "action:create-token-nodes",
+  config: {
+    parentNodeLabel: "TextContent",
+    tokenNodeLabel: "Token",
+    relationshipType: "CONTAINS_TOKEN",
+    splitBy: " ",  // Character-level for detailed analysis
+    structure: "chained"  // Linked list of tokens
+  }
+}
+```
+
+### Annotation Processing
+```typescript
+// For scholarly annotations
+{
+  type: "action:create-annotation-nodes",
+  config: {
+    referenceAttribute: "target",
+    relationshipLabel: "ANNOTATES"
+  }
+}
+```
+
+### Reference Chain Processing
+```typescript
+// For reference relationships
+{
+  type: "action:create-reference-chain",
+  config: {
+    referenceAttribute: "corresp",
+    relationshipType: "REFERENCES"
+  }
+}
+```
+
+### Deferred Node Creation
+```typescript
+// For complex node creation with lookup
+{
+  type: "action:create-node-with-lookup",
+  config: {
+    newNodeLabel: "Person",
+    lookupTarget: {
+      propertyKey: "name",
+      propertyValue: "{{ $json.authorName }}"
+    }
+  }
+}
+```
+
+## Best Practices
+
+### Workflow Design
+- **Logical Flow**: Create workflows with clear logical progression
+- **Error Handling**: Include appropriate error handling and recovery mechanisms
+- **Performance Optimization**: Choose efficient tools and actions for each task
+- **Maintainability**: Design workflows that are easy to understand and modify
+
+### XML Processing
+- **Hierarchy Respect**: Respect XML hierarchy in workflow design
+- **Attribute Handling**: Process XML attributes appropriately
+- **Content Extraction**: Extract text content efficiently
+- **Namespace Support**: Handle XML namespaces when present
+
+### Graph Database Integration
+- **Node Creation Order**: Create nodes in logical order to support relationships
+- **Relationship Building**: Build relationships after nodes are created
+- **Property Mapping**: Map XML attributes to graph properties correctly
+- **Type Consistency**: Maintain consistent data types throughout the workflow
+
+## Example Use Cases
+
+### TEI Document Processing
+**XML Structure**: TEI documents with headers, text bodies, and annotations
+**Generated Workflow**:
+1. **Root Tool**: Start with `teiCorpus` element
+2. **Create Document Nodes**: Use `action:create-node-complete` for TEI documents
+3. **Process Headers**: Extract metadata using `action:set-property`
+4. **Process Text Content**: Use `action:create-token-nodes` for text analysis
+5. **Handle Annotations**: Use `action:create-annotation-nodes` for scholarly annotations
+
+### Bibliographic Data Processing
+**XML Structure**: Bibliographic records with authors, publications, and citations
+**Generated Workflow**:
+1. **Conditional Processing**: Use `tool:if` to handle different record types
+2. **Author Processing**: Create author nodes with `action:create-node-with-lookup`
+3. **Publication Creation**: Use `action:create-node-complete` for publications
+4. **Citation Relationships**: Use `action:create-reference-chain` for citations
+5. **External Enrichment**: Use `tool:fetch-api` to enrich with external data
+
+### Social Network Data
+**XML Structure**: Social network data with people, relationships, and interactions
+**Generated Workflow**:
+1. **Person Node Creation**: Create person nodes with properties
+2. **Relationship Detection**: Use `tool:switch` for different relationship types
+3. **Interaction Processing**: Handle different interaction types
+4. **Network Analysis**: Create network structure relationships
+5. **Temporal Processing**: Handle temporal aspects of relationships
+
+## Advanced Features
+
+### Conditional Logic
+- **Complex Conditions**: Generate complex conditional logic using `tool:if`
+- **Multi-way Branching**: Use `tool:switch` for multiple processing paths
+- **Nested Logic**: Create nested conditional structures
+- **Dynamic Routing**: Route processing based on XML content
+
+### External Integration
+- **API Integration**: Include HTTP requests for external data enrichment
+- **Webhook Notifications**: Add webhook notifications for processing events
+- **Data Validation**: Integrate external validation services
+- **Authentication**: Handle authentication for external services
+
+### Performance Optimization
+- **Parallel Processing**: Generate workflows that support parallel processing
+- **Caching Strategies**: Include caching for frequently accessed data
+- **Batch Processing**: Optimize for batch processing of multiple items
+- **Memory Management**: Include memory optimization for large datasets
+
+## Error Handling and Validation
+
+### Workflow Validation
+- **Syntax Validation**: Validate generated workflow syntax and structure
+- **Logic Validation**: Ensure workflow logic is sound and complete
+- **Tool Compatibility**: Verify that tools and actions are compatible
+- **Schema Alignment**: Ensure workflow aligns with target schema
+
+### Error Recovery
+- **Fallback Strategies**: Include fallback processing options
+- **Retry Logic**: Add retry mechanisms for external service calls
+- **Error Logging**: Include comprehensive error logging
+- **Graceful Degradation**: Ensure workflows can handle errors gracefully
+
+## Performance Considerations
+
+### Generation Efficiency
+- **Template Usage**: Use templates for common workflow patterns
+- **Incremental Generation**: Support incremental workflow generation
+- **Caching**: Cache common workflow components and patterns
+- **Optimization**: Optimize generation process for speed and efficiency
+
+### Runtime Performance
+- **Tool Selection**: Choose efficient tools for each processing task
+- **Action Optimization**: Use specialized actions when available
+- **Memory Management**: Design workflows to minimize memory usage
+- **Parallel Processing**: Leverage parallel processing capabilities
+
+---
+
+The Workflow Generation Agent provides intelligent, automated workflow creation that transforms XML data into graph structures efficiently and accurately. By understanding XML patterns, graph database operations, and scholarly data processing requirements, the agent generates optimized workflows that are both technically sound and domain-appropriate.

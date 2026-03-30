@@ -1,0 +1,211 @@
+---
+title: Relationship Recommendation Agent
+description: AI agent for suggesting relationship types and configurations between graph nodes
+---
+
+# Relationship Recommendation Agent
+
+The Relationship Recommendation Agent is an AI-powered assistant that analyzes pairs of nodes and suggests appropriate relationship types, cardinality, and properties based on semantic meaning, domain knowledge, and graph database best practices.
+
+## Purpose
+
+The agent helps users design meaningful relationships between nodes by suggesting semantically appropriate connection types, determining optimal cardinality, and recommending relationship properties that capture the nature of the connections in research-oriented graph databases.
+
+## Key Capabilities
+
+### Semantic Relationship Analysis
+- **Node Pair Analysis**: Examines two nodes to understand their semantic relationship
+- **Domain Expertise**: Applies specialized knowledge for academic, bibliographic, and research domains
+- **Directional Understanding**: Considers the direction and meaning of relationships
+- **Contextual Relevance**: Analyzes how node properties and contexts influence relationships
+
+### Relationship Type Suggestions
+- **Semantic Naming**: Suggests meaningful relationship types (e.g., "AUTHORED", "PUBLISHED_IN", "AFFILIATED_WITH")
+- **Domain-Specific Types**: Provides relationship types relevant to specific research domains
+- **Variety of Perspectives**: Suggests relationships from different viewpoints and use cases
+- **Standard Compliance**: Follows standard relationship naming conventions
+
+### Cardinality and Properties
+- **Cardinality Analysis**: Determines appropriate cardinality (one-to-one, one-to-many, many-to-many)
+- **Property Recommendations**: Suggests relevant relationship properties
+- **Confidence Scoring**: Provides confidence scores for each recommendation
+- **Reasoning Explanations**: Offers clear explanations for relationship suggestions
+
+## Input Requirements
+
+### Node Pair Context
+The agent requires information about:
+- **Source Node**: Label, type, and properties of the source node
+- **Target Node**: Label, type, and properties of the target node
+- **Existing Relationships**: Current relationships between the nodes
+- **Domain Context**: Research domain or application area
+- **Use Case Scenarios**: Intended use cases for the relationship
+
+### Analysis Scenarios
+- **New Relationship Design**: When creating connections between node types
+- **Schema Enhancement**: When improving existing relationship definitions
+- **Domain Adaptation**: When adapting relationships for specific research domains
+
+## Output Structure
+
+### Relationship Suggestions
+```typescript
+interface RelationshipSuggestion {
+  type: string                    // Relationship type name
+  cardinality: 'one-to-one' | 'one-to-many' | 'many-to-many'
+  properties?: Array<{
+    name: string
+    type: 'string' | 'number' | 'boolean' | 'date'
+    description?: string
+  }>
+  confidence: number              // Confidence score (0-1)
+  reasoning: string               // Explanation for the suggestion
+}
+
+interface RelationshipRecommendation {
+  suggestions: RelationshipSuggestion[]     // Multiple relationship options
+  recommended?: RelationshipSuggestion       // Top recommendation
+}
+```
+
+### Response Categories
+- **Multiple Options**: Provides 10+ relationship type suggestions
+- **Top Recommendation**: Highlights the most appropriate relationship type
+- **Confidence Scores**: Indicates confidence level for each suggestion
+- **Detailed Reasoning**: Explains the logic behind each recommendation
+
+## Configuration and Usage
+
+### Agent Initialization
+```typescript
+import { RelationshipRecommendationAgent } from '@plexus/builder/ai/agents'
+
+const agent = new RelationshipRecommendationAgent({
+  model: chatModel,
+  settings: aiSettings
+})
+```
+
+### Relationship Request
+```typescript
+const recommendations = await agent.suggestRelationships({
+  sourceNode: {
+    label: "Person",
+    type: "Author",
+    properties: ["name", "email", "orcid"]
+  },
+  targetNode: {
+    label: "Publication", 
+    type: "AcademicPaper",
+    properties: ["title", "publicationDate", "doi"]
+  },
+  domain: "bibliographic"
+})
+```
+
+## Integration Points
+
+### Relationship Editor Integration
+- **Type Suggestions**: Integrated into relationship type selection interface
+- **Cardinality Guidance**: Provides cardinality recommendations in the editor
+- **Property Templates**: Offers property templates for relationship types
+- **Real-time Analysis**: Updates suggestions as nodes are modified
+
+### Schema Designer Integration
+- **Relationship Validation**: Ensures relationship definitions are complete and consistent
+- **Impact Analysis**: Analyzes how relationships affect overall schema design
+- **Consistency Checking**: Maintains consistency across relationship definitions
+
+### TIB Terminology Integration
+- **Standard Relationships**: Suggests relationships based on TIB terminology standards
+- **Semantic Mapping**: Maps domain concepts to standard relationship types
+- **Cross-Domain Consistency**: Ensures relationship consistency across different domains
+
+## Best Practices
+
+### Relationship Design
+- **Semantic Clarity**: Use relationship names that clearly express the connection meaning
+- **Directional Logic**: Consider the semantic direction of relationships
+- **Cardinality Appropriateness**: Choose cardinality that reflects real-world constraints
+- **Property Relevance**: Include only properties that add meaningful context
+
+### Domain Considerations
+- **Research Standards**: Follow domain-specific relationship standards
+- **Institutional Requirements**: Consider institutional or project relationship requirements
+- **Data Quality**: Design relationships that support data validation and quality
+
+### Performance Optimization
+- **Query Efficiency**: Design relationships to support common query patterns
+- **Traversal Performance**: Consider graph traversal performance in relationship design
+- **Indexing Strategy**: Plan for efficient relationship indexing
+
+## Example Use Cases
+
+### Bibliographic Domain
+**Source Node**: "Person" (Author)
+**Target Node**: "Publication" (Paper)
+**Recommended Relationships**:
+- `AUTHORED` (one-to-many, high confidence) - Author wrote the publication
+- `REVIEWED` (one-to-many, medium confidence) - Author reviewed the publication
+- `CITED` (many-to-many, medium confidence) - Author cited the publication
+
+### Institutional Domain
+**Source Node**: "Person" (Researcher)
+**Target Node**: "Institution" (University)
+**Recommended Relationships**:
+- `AFFILIATED_WITH` (many-to-many, high confidence) - Researcher affiliated with institution
+- `EMPLOYED_BY` (one-to-many, high confidence) - Researcher employed by institution
+- `GRADUATED_FROM` (one-to-many, medium confidence) - Researcher graduated from institution
+
+### Social Network Domain
+**Source Node**: "Person" (Individual)
+**Target Node**: "Person" (Individual)
+**Recommended Relationships**:
+- `COLLABORATES_WITH` (many-to-many, high confidence) - People collaborate
+- `KNOWS` (many-to-many, medium confidence) - People know each other
+- `SUPERVISES` (one-to-many, medium confidence) - Supervision relationships
+
+## Error Handling and Validation
+
+### Input Validation
+- **Node Validation**: Ensures node definitions are valid and complete
+- **Compatibility Checking**: Validates that nodes can have meaningful relationships
+- **Domain Consistency**: Ensures suggestions are consistent with domain context
+
+### Response Validation
+- **Schema Compliance**: Validates responses against expected schema structure
+- **Quality Assurance**: Ensures suggestions are relevant and high-quality
+- **Consistency Checking**: Maintains consistency with existing schema definitions
+
+## Advanced Features
+
+### Contextual Analysis
+- **Property-Based Analysis**: Considers node properties when suggesting relationships
+- **Existing Relationship Impact**: Analyzes how existing relationships affect new suggestions
+- **Use Case Adaptation**: Adapts suggestions based on specific use case requirements
+
+### Learning and Adaptation
+- **Pattern Recognition**: Learns from existing relationship patterns in the schema
+- **User Feedback**: Incorporates user feedback to improve future suggestions
+- **Domain Adaptation**: Adapts to specific domain patterns and conventions
+
+### Multi-Relationship Analysis
+- **Relationship Chains**: Analyzes how relationships form chains and paths
+- **Circular Dependencies**: Identifies and handles potential circular dependencies
+- **Relationship Conflicts**: Detects and resolves potential relationship conflicts
+
+## Performance Considerations
+
+### Response Time
+- **Caching**: Caches common node pair analyses for faster responses
+- **Batch Processing**: Supports batch relationship suggestions for multiple node pairs
+- **Optimization**: Optimizes prompts and processing for faster response times
+
+### Resource Usage
+- **Model Selection**: Uses appropriate AI models for relationship analysis complexity
+- **Context Management**: Efficiently manages context for domain-specific suggestions
+- **Memory Optimization**: Optimizes memory usage for large-scale relationship analysis
+
+---
+
+The Relationship Recommendation Agent provides intelligent, context-aware relationship suggestions that help users create meaningful, well-structured connections between nodes. By combining semantic analysis with domain expertise and graph database best practices, the agent ensures that relationships are semantically appropriate, properly configured, and optimized for research applications.

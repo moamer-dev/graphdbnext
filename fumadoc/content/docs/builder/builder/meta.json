@@ -1,0 +1,10 @@
+{
+  "title": "Builder",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "Hammer",
+  "pages": [
+    "wizard",
+    "canvas"
+  ]
+}

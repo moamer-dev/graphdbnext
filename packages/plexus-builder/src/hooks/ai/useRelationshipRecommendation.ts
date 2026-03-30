@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
 import { useAISettings, useAIFeature } from '../../ai/config'
-import { suggestRelationships, type RelationshipRecommendation } from '../../ai/agents/RelationshipRecommendationAgent'
+import { suggestRelationships } from '../../ai/agents/RelationshipRecommendationAgent'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { toast } from '../../utils/toast'
+import { useAiStore } from '../../stores/aiStore'
 
 interface UseRelationshipRecommendationProps {
   fromNodeId: string | null
@@ -15,9 +15,17 @@ interface UseRelationshipRecommendationProps {
 }
 
 export function useRelationshipRecommendation({ fromNodeId, toNodeId, onApply }: UseRelationshipRecommendationProps) {
-  const [recommendations, setRecommendations] = useState<RelationshipRecommendation | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const relationshipRecommendations = useAiStore((state) => state.relationshipRecommendations)
+  const globalLoading = useAiStore((state) => state.isLoading)
+  const globalError = useAiStore((state) => state.error)
+  const setRelationshipRecommendations = useAiStore((state) => state.setRelationshipRecommendations)
+  const setLoading = useAiStore((state) => state.setLoading)
+  const setError = useAiStore((state) => state.setError)
+  
+  const relId = fromNodeId && toNodeId ? `${fromNodeId}-${toNodeId}` : null
+  const recommendations = relId ? relationshipRecommendations[relId] : null
+  const isLoading = relId ? !!globalLoading[relId] : false
+  const error = relId ? globalError[relId] : null
 
   const { settings, isReady } = useAISettings()
   const isEnabled = useAIFeature('relationshipRecommendation')
@@ -26,28 +34,22 @@ export function useRelationshipRecommendation({ fromNodeId, toNodeId, onApply }:
   const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null
   const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null
 
-  useEffect(() => {
-    setRecommendations(null)
-    setError(null)
-  }, [fromNodeId, toNodeId])
-
   const handleGetRecommendations = async () => {
-    if (!fromNode || !toNode || !isReady || !settings.enabled) return
+    if (!fromNode || !toNode || !isReady || !settings.enabled || !relId) return
 
-    setIsLoading(true)
-    setError(null)
-    setRecommendations(null)
+    setLoading(relId, true)
+    setError(relId, null)
 
     try {
       const existingRels = relationships.filter(
         (r) => r.from === fromNode.id && r.to === toNode.id
       )
       const result = await suggestRelationships(fromNode, toNode, existingRels, undefined, settings)
-      setRecommendations(result)
+      setRelationshipRecommendations(relId, result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get recommendations')
+      setError(relId, err instanceof Error ? err.message : 'Failed to get recommendations')
     } finally {
-      setIsLoading(false)
+      setLoading(relId, false)
     }
   }
 

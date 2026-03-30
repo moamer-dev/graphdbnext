@@ -1,0 +1,263 @@
+---
+title: Research Assistant Streaming
+description: Streaming version of the research assistant agent for real-time interactions
+---
+
+# Research Assistant Streaming
+
+The Research Assistant Streaming is the streaming version of the Research Assistant Agent that provides real-time, incremental responses for enhanced user experience. It maintains all the capabilities of the standard Research Assistant while adding streaming functionality for more interactive and responsive conversations.
+
+## Purpose
+
+The streaming agent provides the same comprehensive assistance as the standard Research Assistant but with the added benefit of real-time response generation. This allows users to see responses being built incrementally, providing immediate feedback and a more natural conversational experience.
+
+## Key Differences from Standard Agent
+
+### Streaming Capabilities
+- **Real-time Generation**: Responses are generated and displayed incrementally
+- **Immediate Feedback**: Users can see responses as they're being created
+- **Natural Conversation Flow**: More natural, conversational interaction experience
+- **Early Interruption**: Users can intervene or redirect conversations mid-response
+
+### Performance Benefits
+- **Reduced Perceived Latency**: Users see content immediately rather than waiting for complete responses
+- **Better User Experience**: More engaging and responsive interaction
+- **Progressive Disclosure**: Information is revealed progressively
+- **Resource Efficiency**: Can be more efficient for long, complex responses
+
+## Core Capabilities
+
+### Schema Design Assistance (Streaming)
+- **Incremental Schema Building**: Watch schema suggestions build in real-time
+- **Progressive Relationship Suggestions**: See relationship recommendations develop
+- **Step-by-Step Guidance**: Receive guidance as it's being formulated
+- **Interactive Design**: Interact with the design process as it unfolds
+
+### Workflow Design Support (Streaming)
+- **Real-time Workflow Construction**: See workflow suggestions build incrementally
+- **Progressive Tool Selection**: Watch tool recommendations develop
+- **Step-by-Step Configuration**: Receive configuration guidance progressively
+- **Interactive Optimization**: Interact with optimization suggestions as they're generated
+
+### Educational Support (Streaming)
+- **Progressive Explanation**: Concepts are explained incrementally
+- **Building Understanding**: See complex ideas built step by step
+- **Interactive Learning**: Interact with explanations as they develop
+- **Adaptive Pacing**: Users can control the pace of information delivery
+
+## Streaming Implementation
+
+### Technical Architecture
+```typescript
+export async function* invokeResearchAssistantStreaming(
+  model: BaseChatModel,
+  settings: AISettings,
+  message: string,
+  conversationHistory: Array<HumanMessage | AIMessage | ToolMessage> = [],
+  toolContext?: ToolExecutionContext,
+  appContext?: ResearchAssistantContext
+): AsyncGenerator<string, void, unknown>
+```
+
+### Usage Example
+```typescript
+import { ResearchAssistantAgentStreaming } from '@plexus/builder/ai/agents'
+
+const streamingAgent = new ResearchAssistantAgentStreaming({
+  model: chatModel,
+  settings: aiSettings
+})
+
+// Stream responses in real-time
+for await (const chunk of streamingAgent.invokeStreaming(
+  "Help me design a schema for bibliographic data",
+  conversationHistory,
+  toolContext,
+  appContext
+)) {
+  // Display each chunk as it arrives
+  console.log(chunk)
+}
+```
+
+## Integration Benefits
+
+### User Interface Integration
+- **Real-time Display**: UI can display responses as they're generated
+- **Typing Indicators**: Show typing indicators during response generation
+- **Progress Bars**: Display progress for complex, multi-part responses
+- **Interactive Controls**: Allow users to pause, resume, or redirect responses
+
+### Application Context Awareness
+- **Live Context Updates**: Context can be updated during response generation
+- **Dynamic Tool Execution**: Tools can be executed based on partial responses
+- **Real-time Validation**: Validate responses as they're being generated
+- **Adaptive Responses**: Adapt responses based on intermediate feedback
+
+### Performance Optimization
+- **Resource Efficiency**: More efficient use of AI model resources
+- **Bandwidth Optimization**: Optimize bandwidth usage for long responses
+- **Memory Management**: Better memory management for large responses
+- **Concurrent Processing**: Support multiple concurrent streaming sessions
+
+## Use Case Scenarios
+
+### Interactive Schema Design
+**User**: "I need to create a schema for research collaboration networks"
+
+**Streaming Response**:
+1. "I'll help you design a schema for research collaboration networks..."
+2. "Based on typical collaboration data, you'll want nodes for..."
+3. "Person nodes to represent researchers with properties like..."
+4. "Institution nodes for affiliations with..."
+5. "Relationships to show collaborations, supervisions, and..."
+
+### Workflow Construction Guidance
+**User**: "How do I build a workflow to process TEI documents?"
+
+**Streaming Response**:
+1. "Let me guide you through building a TEI processing workflow..."
+2. "First, you'll want to start with a root tool for the TEI element..."
+3. "Then add conditional logic using tool:if to handle different sections..."
+4. "For the text content, consider using action:create-token-nodes..."
+5. "Finally, you'll want to handle references with..."
+
+### Real-time Troubleshooting
+**User**: "My workflow is running slowly. What could be wrong?"
+
+**Streaming Response**:
+1. "I'll help you troubleshoot your workflow performance issues..."
+2. "Let me first check your current workflow configuration..."
+3. "I see a few potential issues..."
+4. "First, you have a large number of sequential actions..."
+5. "Consider using parallel processing where possible..."
+
+## Advanced Streaming Features
+
+### Context-Aware Streaming
+- **Dynamic Context Updates**: Update context during response generation
+- **Adaptive Responses**: Adapt responses based on real-time context changes
+- **Interactive Context**: Allow users to modify context during streaming
+- **Multi-Context Support**: Handle multiple contexts simultaneously
+
+### Tool Integration Streaming
+- **Streaming Tool Execution**: Execute tools and stream results
+- **Progressive Tool Results**: Show tool results as they're generated
+- **Interactive Tool Selection**: Allow tool selection during response generation
+- **Real-time Tool Feedback**: Provide immediate feedback on tool execution
+
+### Error Handling Streaming
+- **Progressive Error Detection**: Detect and handle errors during streaming
+- **Graceful Error Recovery**: Recover from errors without stopping the stream
+- **Error Explanation Streaming**: Explain errors progressively
+- **Alternative Suggestion Streaming**: Stream alternative suggestions when errors occur
+
+## Performance Considerations
+
+### Streaming Optimization
+- **Chunk Size Optimization**: Optimize chunk sizes for different response types
+- **Buffer Management**: Efficient buffer management for smooth streaming
+- **Network Optimization**: Optimize for network conditions and latency
+- **Resource Allocation**: Efficient resource allocation for concurrent streams
+
+### Quality Assurance
+- **Response Coherence**: Ensure streaming responses remain coherent
+- **Grammar Consistency**: Maintain grammatical consistency across chunks
+- **Semantic Integrity**: Preserve semantic meaning during streaming
+- **Context Preservation**: Maintain context throughout the streaming process
+
+## Implementation Best Practices
+
+### User Experience Design
+- **Visual Feedback**: Provide clear visual feedback during streaming
+- **Progress Indicators**: Show progress for long-running responses
+- **Interruption Handling**: Handle user interruptions gracefully
+- **Recovery Mechanisms**: Provide recovery from streaming interruptions
+
+### Error Handling
+- **Stream Recovery**: Recover from stream interruptions
+- **Partial Response Handling**: Handle partial responses gracefully
+- **Error Propagation**: Propagate errors appropriately
+- **Fallback Mechanisms**: Provide fallback when streaming fails
+
+### Performance Monitoring
+- **Stream Metrics**: Monitor streaming performance metrics
+- **Latency Tracking**: Track streaming latency and response times
+- **Resource Monitoring**: Monitor resource usage during streaming
+- **Quality Metrics**: Track response quality during streaming
+
+## Integration Examples
+
+### React Integration
+```typescript
+function StreamingAssistant() {
+  const [response, setResponse] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
+
+  const handleUserMessage = async (message: string) => {
+    setIsStreaming(true)
+    setResponse('')
+    
+    for await (const chunk of streamingAgent.invokeStreaming(
+      message,
+      conversationHistory,
+      toolContext,
+      appContext
+    )) {
+      setResponse(prev => prev + chunk)
+    }
+    
+    setIsStreaming(false)
+  }
+
+  return (
+    <div>
+      <div className={isStreaming ? 'streaming' : ''}>
+        {response}
+      </div>
+      {isStreaming && <TypingIndicator />}
+    </div>
+  )
+}
+```
+
+### WebSocket Integration
+```typescript
+// Server-side streaming endpoint
+app.post('/api/assistant/stream', async (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/plain',
+    'Transfer-Encoding': 'chunked'
+  })
+
+  try {
+    for await (const chunk of streamingAgent.invokeStreaming(
+      req.body.message,
+      req.body.history,
+      toolContext,
+      appContext
+    )) {
+      res.write(chunk)
+    }
+  } catch (error) {
+    res.write(`Error: ${error.message}`)
+  } finally {
+    res.end()
+  }
+})
+```
+
+## Comparison with Standard Agent
+
+| Feature | Standard Agent | Streaming Agent |
+|---------|----------------|-----------------|
+| Response Delivery | Complete response at once | Incremental chunks |
+| User Experience | Wait for complete response | Immediate feedback |
+| Interactivity | Limited during generation | Full interactivity |
+| Resource Usage | Higher memory for long responses | More efficient memory usage |
+| Error Handling | All-or-nothing | Graceful degradation |
+| Use Cases | Simple queries, documentation | Complex guidance, interactive design |
+
+---
+
+The Research Assistant Streaming provides an enhanced, interactive experience for researchers working with graph databases and workflows. By maintaining all the capabilities of the standard Research Assistant while adding real-time streaming functionality, it offers a more engaging, responsive, and natural interaction experience that's particularly valuable for complex design tasks and educational scenarios.

@@ -1,0 +1,359 @@
+---
+title: XML Rules Assistant
+description: Specialized AI agent for configuring XML analysis rules for graph database import
+---
+
+# XML Rules Assistant
+
+The XML Rules Assistant is a specialized AI agent focused exclusively on helping users configure XML analysis rules for importing XML files into graph databases. It provides expert guidance on setting up ignored elements, reference attributes, pattern rules, and other analysis configurations.
+
+## Purpose
+
+The assistant serves as a dedicated expert for XML analysis rule configuration, helping users optimize how XML documents are processed during the import process. It has a narrowly focused scope that ensures deep expertise in XML analysis rules while avoiding scope creep into general XML technologies.
+
+## Scope and Limitations
+
+### **What the Assistant CAN Do:**
+1. **Discuss XML Analysis Rules**: Explain what rules mean and how they work
+2. **Set/Suggest Rules**: Propose rules for specific XML structures
+3. **Update/Modify Rules**: Change existing rules based on user feedback
+
+### **Available XML Analysis Rules:**
+- **Ignored Elements**: Elements to completely ignore during analysis
+- **Ignored Subtrees**: Elements whose children should be ignored
+- **Reference Attributes**: Attributes that create cross-references (id, target, corresp, etc.)
+- **Pattern Rules**: Attributes indicating alternatives, annotations, translations, or choices
+- **Relationship Type Mappings**: How parent-child element relationships should be typed
+- **Text Content Rules**: Whether elements should be processed at character-level or sign-level
+
+### **What the Assistant CANNOT Do:**
+- XML validation (DTD, XSD, Schematron, RelaxNG)
+- Explain XPath, XQuery, XSLT, or other XML query/transformation technologies
+- Provide information about XML tools, libraries, or general XML programming
+- Answer questions about XML standards, specifications, or formats
+- Discuss topics unrelated to configuring XML analysis rules for import
+
+## Key Capabilities
+
+### Rule Configuration Expertise
+- **Ignored Elements**: Identifies elements that should be excluded from processing
+- **Reference Detection**: Recognizes attributes that create cross-references between elements
+- **Pattern Recognition**: Identifies patterns for alternatives, annotations, and translations
+- **Hierarchy Analysis**: Analyzes parent-child relationships for optimal processing
+
+### Domain-Specific Knowledge
+- **Scholarly XML**: Expertise in TEI, edXML, and academic XML formats
+- **Research Patterns**: Understanding of common research document patterns
+- **Import Optimization**: Knowledge of graph database import requirements
+- **Performance Considerations**: Awareness of processing performance implications
+
+### Rule Optimization
+- **Processing Efficiency**: Suggests rules that optimize processing performance
+- **Quality Enhancement**: Recommends rules that improve data quality
+- **Error Prevention**: Helps prevent common import errors and issues
+- **Maintenance**: Provides guidance on rule maintenance and updates
+
+## Input Requirements
+
+### XML Structure Information
+The assistant requires:
+- **Element Inventory**: List of XML elements in the document
+- **Attribute Catalog**: Available attributes and their purposes
+- **Hierarchy Information**: Parent-child relationships
+- **Sample Content**: Example content for context
+
+### Processing Requirements
+- **Import Goals**: Desired outcomes for the graph database
+- **Performance Constraints**: Performance requirements and constraints
+- **Quality Standards**: Data quality requirements
+- **Domain Context**: Research domain and document types
+
+## Output Structure
+
+### Rules Configuration
+```typescript
+interface PatternRules {
+  alternativeAttributes?: string[]
+  annotationAttributes?: string[]
+  translationAttributes?: string[]
+  choiceIndicators?: string[]
+}
+
+interface TextContentRules {
+  characterLevelElements?: string[]
+  signLevelElements?: string[]
+}
+
+interface XmlRulesSuggestion {
+  rules: {
+    ignoredElements?: string[]
+    ignoredSubtrees?: string[]
+    referenceAttributes?: string[]
+    patternRules?: PatternRules
+    relationshipTypeMappings?: Record<string, string[]>
+    textContentRules?: TextContentRules
+  }
+  explanation: string
+}
+```
+
+### Rule Categories
+- **Exclusion Rules**: Elements and subtrees to ignore
+- **Reference Rules**: Attributes that create connections
+- **Pattern Rules**: Special pattern recognition rules
+- **Relationship Rules**: How to type relationships
+- **Processing Rules**: Text processing level specifications
+
+## Configuration and Usage
+
+### Assistant Initialization
+```typescript
+import { XmlRulesAssistant } from '@plexus/builder/ai/agents'
+
+const assistant = new XmlRulesAssistant({
+  model: chatModel,
+  settings: aiSettings
+})
+```
+
+### Rules Configuration Request
+```typescript
+const rules = await assistant.configureRules({
+  xmlStructure: {
+    elements: ["TEI", "teiHeader", "fileDesc", "titleStmt", "title", "author", "text", "body", "div", "p", "note"],
+    attributes: ["xml:id", "type", "n", "corresp", "target", "resp"],
+    hierarchy: {
+      "TEI": ["teiHeader", "text"],
+      "teiHeader": ["fileDesc"],
+      "text": ["body"],
+      "body": ["div", "p"],
+      "div": ["p", "note"]
+    }
+  },
+  processingGoals: {
+    targetGraph: "bibliographic_network",
+    performancePriority: "speed",
+    qualityRequirements: "high"
+  }
+})
+```
+
+## Rule Types and Usage
+
+### Ignored Elements
+**Purpose**: Exclude elements from processing to improve performance and focus on relevant content
+**Common Examples**:
+- Metadata elements that don't need graph representation
+- Formatting elements that don't contain semantic content
+- Temporary or processing elements
+
+**Configuration Example**:
+```typescript
+{
+  ignoredElements: ["teiHeader", "revisionDesc"]
+}
+```
+
+### Ignored Subtrees
+**Purpose**: Ignore children of specific elements while processing the parent
+**Common Examples**:
+- Complex metadata structures
+- Formatting containers
+- Processing instructions
+
+**Configuration Example**:
+```typescript
+{
+  ignoredSubtrees: ["teiHeader", "encodingDesc"]
+}
+```
+
+### Reference Attributes
+**Purpose**: Identify attributes that create cross-references between elements
+**Common Examples**:
+- `xml:id` and `target` for element references
+- `corresp` for correspondence relationships
+- `ref` for general references
+- `sameAs` for identity relationships
+
+**Configuration Example**:
+```typescript
+{
+  referenceAttributes: ["xml:id", "target", "corresp", "ref", "sameAs"]
+}
+```
+
+### Pattern Rules
+**Purpose**: Identify special patterns in XML attributes
+**Categories**:
+- **Alternative Attributes**: Elements representing alternatives or choices
+- **Annotation Attributes**: Elements that annotate other elements
+- **Translation Attributes**: Elements that provide translations
+- **Choice Indicators**: Attributes that indicate choices or options
+
+**Configuration Example**:
+```typescript
+{
+  patternRules: {
+    alternativeAttributes: ["alt", "choice"],
+    annotationAttributes: ["resp", "type"],
+    translationAttributes: ["translation", "lang"],
+    choiceIndicators: ["select", "option"]
+  }
+}
+```
+
+### Relationship Type Mappings
+**Purpose**: Define how parent-child relationships should be typed in the graph
+**Common Examples**:
+- Document structure relationships
+- Content containment relationships
+- Semantic relationships
+
+**Configuration Example**:
+```typescript
+{
+  relationshipTypeMappings: {
+    "div": ["CONTAINS", "HAS_SECTION"],
+    "p": ["CONTAINS", "HAS_PARAGRAPH"],
+    "note": ["ANNOTATES", "HAS_NOTE"]
+  }
+}
+```
+
+### Text Content Rules
+**Purpose**: Specify processing level for text content
+**Categories**:
+- **Character-Level Elements**: Elements that need character-by-character processing
+- **Sign-Level Elements**: Elements that can be processed at the sign/word level
+
+**Configuration Example**:
+```typescript
+{
+  textContentRules: {
+    characterLevelElements: ["w", "c"],
+    signLevelElements: ["p", "div"]
+  }
+}
+```
+
+## Integration Points
+
+### XML Import Wizard Integration
+- **Rule Configuration UI**: Provides rule configuration interface in the wizard
+- **Automatic Suggestions**: Suggests rules based on XML structure analysis
+- **Validation Integration**: Validates rule configurations against XML structure
+- **Template Creation**: Creates rule templates for common XML formats
+
+### Analysis Engine Integration
+- **Rule Application**: Applies configured rules during XML analysis
+- **Performance Optimization**: Optimizes analysis based on rule configuration
+- **Quality Control**: Ensures rule configuration supports data quality
+- **Error Prevention**: Prevents common analysis errors through proper rules
+
+## Best Practices
+
+### Rule Design
+- **Specificity**: Be specific about which elements to include or exclude
+- **Performance Impact**: Consider performance implications of rule choices
+- **Quality Balance**: Balance processing speed with data quality requirements
+- **Maintainability**: Design rules that are easy to understand and maintain
+
+### Domain Considerations
+- **Scholarly Standards**: Follow standards for scholarly XML processing
+- **Document Types**: Adapt rules for specific document types
+- **Research Requirements**: Consider specific research analysis requirements
+- **Institutional Standards**: Follow institutional or project standards
+
+### Performance Optimization
+- **Selective Processing**: Use ignored elements to focus processing on relevant content
+- **Efficient References**: Configure reference attributes for efficient relationship creation
+- **Appropriate Granularity**: Choose appropriate text processing levels
+- **Batch Optimization**: Optimize rules for batch processing of multiple documents
+
+## Example Use Cases
+
+### TEI Document Processing
+**Document Type**: TEI academic documents
+**Suggested Rules**:
+```typescript
+{
+  ignoredElements: ["teiHeader", "revisionDesc"],
+  referenceAttributes: ["xml:id", "target", "corresp"],
+  patternRules: {
+    annotationAttributes: ["resp", "type"],
+    alternativeAttributes: ["alt"]
+  },
+  relationshipTypeMappings: {
+    "div": ["CONTAINS"],
+    "p": ["CONTAINS"]
+  }
+}
+```
+
+### Bibliographic Data Processing
+**Document Type**: Bibliographic XML records
+**Suggested Rules**:
+```typescript
+{
+  ignoredElements: ["controlfield", "leader"],
+  referenceAttributes: ["xml:id", "ref", "link"],
+  patternRules: {
+    alternativeAttributes: ["alt"],
+    annotationAttributes: ["note"]
+  },
+  relationshipTypeMappings: {
+    "record": ["CONTAINS"],
+    "datafield": ["HAS_FIELD"]
+  }
+}
+```
+
+### Linguistic Annotation Processing
+**Document Type**: Linguistically annotated texts
+**Suggested Rules**:
+```typescript
+{
+  referenceAttributes: ["xml:id", "target", "corresp"],
+  textContentRules: {
+    characterLevelElements: ["w", "c", "pc"],
+    signLevelElements: ["p", "s"]
+  },
+  patternRules: {
+    annotationAttributes: ["type", "function"],
+    alternativeAttributes: ["alt"]
+  }
+}
+```
+
+## Error Handling and Validation
+
+### Rule Validation
+- **Syntax Validation**: Validates rule syntax and structure
+- **Consistency Checking**: Ensures rules are consistent with each other
+- **Compatibility Validation**: Validates compatibility with XML structure
+- **Performance Impact**: Analyzes performance impact of rule configurations
+
+### Error Recovery
+- **Partial Application**: Applies valid rules even when some rules have errors
+- **Fallback Suggestions**: Provides fallback rule suggestions
+- **Error Explanation**: Explains rule errors and their implications
+- **Recovery Guidance**: Offers guidance for fixing rule configuration errors
+
+## Performance Considerations
+
+### Processing Efficiency
+- **Rule Optimization**: Optimizes rule application for maximum efficiency
+- **Selective Processing**: Uses ignored elements to reduce processing overhead
+- **Caching**: Caches rule application results for repeated processing
+- **Parallel Processing**: Enables parallel processing where rules allow
+
+### Resource Management
+- **Memory Optimization**: Optimizes memory usage for rule application
+- **Context Management**: Efficiently manages processing context
+- **Rule Complexity**: Balances rule complexity with performance requirements
+- **Scalability**: Ensures rules scale to large document processing
+
+---
+
+The XML Rules Assistant provides specialized, focused expertise for configuring XML analysis rules that optimize the import process. By maintaining a narrow scope focused exclusively on analysis rules, the assistant ensures deep expertise and precise guidance for creating efficient, high-quality XML to graph database transformations.

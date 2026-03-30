@@ -1,0 +1,427 @@
+---
+title: Wizard Overview
+description: Complete guide to the XML import wizard from file upload to model generation
+---
+
+# Wizard Overview
+
+The XML Import Wizard guides users through the complete process of transforming XML documents into graph models. It provides a step-by-step interface that analyzes XML structure, creates semantic mappings, and generates ready-to-use graph models in the Plexus Builder.
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Upload, Settings, Eye, FileText, CheckCircle2, Zap, Brain, Database, ArrowRight } from 'lucide-react';
+
+## Wizard Journey
+
+<Cards>
+  <Card
+    icon={<Upload className="text-blue-500" />}
+    title="Upload"
+    description="Select and upload your XML file to begin the transformation process."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#file-upload" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">File Selection</a>
+      <a href="#drag-drop" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Drag & Drop</a>
+      <a href="#file-validation" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Validation</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Settings className="text-purple-500" />}
+    title="Configure Rules"
+    description="Set up analysis rules to guide XML structure interpretation and element extraction."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#analysis-rules" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Analysis Rules</a>
+      <a href="#ai-assistant" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">AI Assistant</a>
+      <a href="#rule-import" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Import/Export</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Eye className="text-green-500" />}
+    title="Analyze Structure"
+    description="Automatic analysis of XML structure to identify elements, attributes, and relationships."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#structure-analysis" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Element Detection</a>
+      <a href="#attribute-extraction" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Attribute Analysis</a>
+      <a href="#relationship-mapping" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Relationship Detection</a>
+    </div>
+  </Card>
+  <Card
+    icon={<FileText className="text-orange-500" />}
+    title="Configure Mapping"
+    description="Map XML elements to graph nodes and properties with semantic enrichment options."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#element-mapping" className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors no-underline">Element Mapping</a>
+      <a href="#property-mapping" className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors no-underline">Property Assignment</a>
+      <a href="#semantic-enrichment" className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors no-underline">Semantic Enrichment</a>
+    </div>
+  </Card>
+  <Card
+    icon={<CheckCircle2 className="text-teal-500" />}
+    title="Review & Complete"
+    description="Final review of the generated model and transition to the Model Builder."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#model-validation" className="text-xs px-2 py-1 bg-teal-50 text-teal-700 rounded hover:bg-teal-100 transition-colors no-underline">Model Validation</a>
+      <a href="#builder-transition" className="text-xs px-2 py-1 bg-teal-50 text-teal-700 rounded hover:bg-teal-100 transition-colors no-underline">Builder Access</a>
+      <a href="#final-review" className="text-xs px-2 py-1 bg-teal-50 text-teal-700 rounded hover:bg-teal-100 transition-colors no-underline">Final Review</a>
+    </div>
+  </Card>
+</Cards>
+
+## Step 1: Upload XML File
+
+### File Selection
+
+**Purpose**: Select and upload your XML file to begin the transformation process.
+
+**When to Use**:
+- Starting the XML import process
+- Loading TEI, edXML, or other XML documents
+- Beginning a new graph model creation
+
+**Key Features**:
+- **Drag & Drop Support**: Simply drag XML files into the upload area
+- **File Browser**: Click to browse and select files
+- **Format Validation**: Automatic validation of XML structure
+- **File Information**: Display file name and size
+
+**Supported Formats**:
+- **TEI (Text Encoding Initiative)**: Scholarly and literary texts
+- **edXML**: Educational data exchange formats
+- **Custom XML**: Any well-formed XML document
+
+**User Interface**:
+- **Upload Area**: Large, intuitive drop zone with visual feedback
+- **File Preview**: Shows selected file details
+- **Progress Indicator**: Visual feedback during file processing
+- **Error Handling**: Clear error messages for invalid files
+
+### File Validation
+
+**Purpose**: Ensure uploaded files are valid XML and ready for processing.
+
+**Validation Checks**:
+- **XML Well-formedness**: Verify proper XML syntax
+- **File Size**: Check for reasonable file limits
+- **Encoding**: Verify character encoding compatibility
+- **Structure**: Basic structure validation
+
+**Error Handling**:
+- **Invalid XML**: Clear error messages with syntax highlighting
+- **Large Files**: Guidance on handling large datasets
+- **Encoding Issues**: Suggestions for character encoding problems
+
+## Step 2: Configure Analysis Rules
+
+### Analysis Rules Configuration
+
+**Purpose**: Set up rules that guide how the wizard analyzes and interprets your XML structure.
+
+**When to Use**:
+- Customizing XML element detection
+- Specifying which elements to include/exclude
+- Setting up attribute extraction rules
+- Configuring relationship detection parameters
+
+**Key Features**:
+- **Element Selection**: Choose which XML elements to process
+- **Attribute Filtering**: Select attributes to extract as properties
+- **Relationship Rules**: Define how to detect element relationships
+- **Hierarchy Settings**: Configure parent-child relationship handling
+
+**Configuration Options**:
+- **Element Patterns**: XPath expressions for element selection
+- **Attribute Mapping**: Map XML attributes to graph properties
+- **Depth Control**: Set maximum analysis depth
+- **Namespace Handling**: Configure XML namespace processing
+
+### AI Rules Assistant
+
+**Purpose**: Use AI to automatically suggest optimal analysis rules based on your XML structure.
+
+**When to Use**:
+- When unsure about optimal rule configuration
+- For complex XML structures
+- To accelerate the setup process
+- When working with unfamiliar XML formats
+
+**AI Capabilities**:
+- **Structure Analysis**: Automatic detection of XML patterns
+- **Rule Suggestion**: AI-recommended analysis rules
+- **Explanation**: Clear explanations for suggested rules
+- **Customization**: Ability to modify AI suggestions
+
+**Integration Features**:
+- **Context Awareness**: Understands your specific XML structure
+- **Learning**: Improves suggestions based on user feedback
+- **TIB Integration**: Incorporates terminology service knowledge
+- **Privacy**: Processes data locally when possible
+
+### Rule Management
+
+**Import/Export Rules**:
+- **Save Rules**: Export analysis rules for reuse
+- **Load Rules**: Import previously saved rule configurations
+- **Share Rules**: Share rule configurations with team members
+- **Version Control**: Track changes to rule configurations
+
+**Rule Templates**:
+- **TEI Templates**: Pre-configured rules for TEI documents
+- **edXML Templates**: Rules for educational data formats
+- **Custom Templates**: Create and save custom rule sets
+
+## Step 3: Analyze XML Structure
+
+### Automatic Structure Analysis
+
+**Purpose**: Automatically analyze your XML document to identify elements, attributes, and structural relationships.
+
+**When to Use**:
+- After configuring analysis rules
+- To understand XML document structure
+- Before creating element mappings
+- To validate rule configuration
+
+**Analysis Process**:
+- **Element Detection**: Identify all XML elements based on rules
+- **Attribute Extraction**: Extract and categorize attributes
+- **Hierarchy Mapping**: Map parent-child relationships
+- **Pattern Recognition**: Identify recurring structural patterns
+
+**Analysis Results**:
+- **Element Inventory**: Complete list of detected elements
+- **Attribute Catalog**: All available attributes by element
+- **Structure Tree**: Visual representation of XML hierarchy
+- **Statistics**: Element counts and frequency analysis
+
+### Structure Visualization
+
+**Purpose**: Provide visual representation of the analyzed XML structure.
+
+**Visualization Features**:
+- **Tree View**: Hierarchical display of XML structure
+- **Element Details**: Expandable element information
+- **Attribute Display**: Show attributes for each element
+- **Relationship Indicators**: Visual cues for element relationships
+
+**Interactive Features**:
+- **Element Selection**: Click to select elements for mapping
+- **Filter Options**: Show/hide specific element types
+- **Search Functionality**: Find specific elements or attributes
+- **Zoom Controls**: Navigate large XML structures
+
+## Step 4: Configure Element Mapping
+
+### Element-to-Node Mapping
+
+**Purpose**: Map XML elements to graph nodes with semantic enrichment and property assignment.
+
+**When to Use**:
+- Creating graph nodes from XML elements
+- Assigning semantic types to elements
+- Setting up property mappings
+- Configuring node relationships
+
+**Key Features**:
+- **Semantic Types**: Assign semantic categories using TIB terminology
+- **Property Mapping**: Map XML attributes to node properties
+- **Relationship Configuration**: Define connections between nodes
+
+**Mapping Interface**:
+- **Dual Panel View**: XML structure on left, mapping configuration on right
+- **Select & Map**: Intuitive element-to-node mapping
+- **Real-time Preview**: See mapping changes immediately
+- **Validation**: Ensure mapping completeness and consistency
+
+### Property Assignment
+
+**Purpose**: Configure how XML attributes and content become graph node properties.
+
+**Property Types**:
+- **String Properties**: Text content and attributes
+- **Numeric Properties**: Numbers and measurements
+- **Date Properties**: Timestamps and dates
+- **Boolean Properties**: True/false values
+- **Complex Properties**: Nested objects and arrays
+
+**Mapping Options**:
+- **Direct Mapping**: Attribute to property mapping
+- **Content Mapping**: Element text to property
+- **Computed Properties**: Derived values from multiple sources
+- **Default Values**: Fallback values for missing data
+
+### Semantic Enrichment
+
+**Purpose**: Enhance mappings with semantic meaning using the TIB terminology service.
+
+**Semantic Features**:
+- **TIB Integration**: Access to terminology service
+- **Concept Mapping**: Map elements to semantic concepts
+- **Property Standardization**: Use standard property definitions
+- **Relationship Types**: Define semantic relationship categories
+
+**Enrichment Options**:
+- **Automatic Suggestions**: AI-powered semantic suggestions
+- **Manual Selection**: Browse and select semantic concepts
+- **Custom Concepts**: Create custom semantic mappings
+- **Validation**: Ensure semantic consistency
+
+### AI Mapping Assistant
+
+**Purpose**: Use AI to automatically suggest optimal element mappings and semantic enrichments.
+
+**AI Capabilities**:
+- **Pattern Recognition**: Identify mapping patterns
+- **Semantic Suggestions**: Recommend semantic concepts
+- **Property Recommendations**: Suggest property assignments
+- **Relationship Detection**: Identify potential relationships
+
+**Assistant Features**:
+- **Context Awareness**: Understand your specific XML structure
+- **Learning**: Improve suggestions based on user choices
+- **Explanations**: Provide reasoning for suggestions
+- **Customization**: Allow modification of AI suggestions
+
+## Step 5: Review and Complete
+
+### Model Validation
+
+**Purpose**: Validate the generated graph model before transitioning to the Model Builder.
+
+**Validation Checks**:
+- **Completeness**: Ensure all mapped elements are included
+- **Consistency**: Verify semantic and structural consistency
+- **Relationships**: Validate relationship definitions
+- **Properties**: Check property assignments and types
+
+**Validation Results**:
+- **Success Indicators**: Clear visual feedback for successful validation
+- **Warning Messages**: Alerts for potential issues
+- **Error Reports**: Detailed information about validation failures
+- **Suggestions**: Recommendations for fixing issues
+
+### Model Generation
+
+**Purpose**: Generate the final graph model from your mapping configuration.
+
+**Generation Process**:
+- **Model Compilation**: Compile mapping configuration into graph model
+- **Node Creation**: Create graph nodes from mapped elements
+- **Relationship Building**: Establish connections between nodes
+- **Property Assignment**: Assign properties to nodes and relationships
+
+**Generation Features**:
+- **Progress Tracking**: Real-time progress updates
+- **Error Handling**: Graceful handling of generation errors
+- **Rollback**: Ability to undo and retry generation
+- **Optimization**: Automatic optimization of graph structure
+
+### Builder Transition
+
+**Purpose**: Seamlessly transition from the wizard to the Model Builder with your generated model.
+
+**Transition Features**:
+- **Automatic Loading**: Model automatically loads in the builder
+- **State Preservation**: Preserve wizard context and settings
+- **Navigation**: Clear navigation to the builder interface
+- **Welcome Guide**: Brief introduction to builder features
+
+**Builder Integration**:
+- **Model Import**: Generated model imported into builder
+- **Workspace Setup**: Builder workspace configured for your model
+- **Tool Configuration**: Builder tools configured for your data type
+- **Workflow Suggestions**: Recommended workflows for your model
+
+## Advanced Features
+
+### Configuration Management
+
+**Save and Load Configurations**:
+- **Export Mapping**: Save mapping configurations for reuse
+- **Import Mapping**: Load previously saved configurations
+- **Template Library**: Access pre-built mapping templates
+- **Version Control**: Track configuration changes
+
+**Configuration Sharing**:
+- **Team Sharing**: Share configurations with team members
+- **Public Templates**: Contribute to public template library
+- **Documentation**: Automatic documentation of configurations
+- **Best Practices**: Built-in best practice guidelines
+
+### Performance Optimization
+
+**Large File Handling**:
+- **Streaming Processing**: Handle large XML files efficiently
+- **Memory Management**: Optimize memory usage for large datasets
+- **Progress Tracking**: Real-time progress for long operations
+- **Chunked Processing**: Process files in manageable chunks
+
+**Caching and Optimization**:
+- **Analysis Caching**: Cache analysis results for faster reprocessing
+- **Mapping Optimization**: Optimize mapping configurations
+- **Parallel Processing**: Use multiple threads for analysis
+- **Resource Management**: Efficient use of system resources
+
+### Error Handling and Recovery
+
+**Comprehensive Error Handling**:
+- **Validation Errors**: Clear error messages for validation failures
+- **Processing Errors**: Graceful handling of processing issues
+- **Recovery Options**: Automatic recovery from transient errors
+- **User Guidance**: Step-by-step guidance for error resolution
+
+**Debugging Features**:
+- **Detailed Logs**: Comprehensive logging for troubleshooting
+- **Debug Mode**: Advanced debugging options for developers
+- **Error Reports**: Detailed error reports with context
+- **Support Integration**: Built-in support request system
+
+## Best Practices
+
+### File Preparation
+
+**Before Upload**:
+- **Validate XML**: Ensure XML is well-formed and valid
+- **Check Encoding**: Use consistent character encoding
+- **Remove Unnecessary Data**: Clean up irrelevant content
+- **Document Structure**: Understand your XML structure
+
+**File Organization**:
+- **Logical Grouping**: Group related XML files
+- **Naming Conventions**: Use consistent file naming
+- **Version Control**: Track file versions and changes
+- **Backup Strategy**: Maintain backups of original files
+
+### Rule Configuration
+
+**Rule Design**:
+- **Start Simple**: Begin with basic rules and refine gradually
+- **Test Iteratively**: Test rules on sample data
+- **Document Rules**: Document rule purposes and logic
+- **Version Control**: Track rule changes over time
+
+**Optimization**:
+- **Performance**: Consider performance implications of rules
+- **Maintainability**: Keep rules simple and maintainable
+- **Reusability**: Design rules for reuse across projects
+- **Scalability**: Ensure rules scale with larger datasets
+
+### Mapping Strategy
+
+**Semantic Consistency**:
+- **Standard Terminology**: Use consistent semantic concepts
+- **Property Standards**: Follow property naming conventions
+- **Relationship Types**: Use standard relationship categories
+- **Documentation**: Document mapping decisions and rationale
+
+**Quality Assurance**:
+- **Validation**: Validate mappings thoroughly
+- **Testing**: Test mappings with sample data
+- **Review**: Review mappings with domain experts
+- **Iteration**: Refine mappings based on feedback
+
+---
+
+The XML Import Wizard provides a comprehensive, user-friendly pathway from XML documents to graph models, with powerful AI assistance, semantic enrichment, and seamless integration with the Model Builder. Follow these best practices to ensure successful transformations and high-quality graph models.

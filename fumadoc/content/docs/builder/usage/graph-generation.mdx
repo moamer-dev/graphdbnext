@@ -1,0 +1,385 @@
+---
+title: Graph Generation
+description: Transform XML data into graph structures using workflows and the XML import wizard
+---
+
+# Graph Generation
+
+Graph Generation in Plexus Builder enables you to transform XML data into meaningful graph structures through visual workflow design and automated processing. This powerful feature combines the XML Import Wizard with the Workflow Builder to create end-to-end data transformation pipelines.
+
+## Overview
+
+The Graph Generation process allows you to:
+- **Import XML Data**: Upload and analyze XML documents using the import wizard
+- **Design Workflows**: Create visual workflows to process XML elements
+- **Transform Data**: Convert XML structures into graph nodes and relationships
+- **Generate Graphs**: Produce complete graph databases from XML sources
+- **Optimize Processing**: Fine-tune workflows for performance and quality
+
+## The Graph Generation Pipeline
+
+### Step 1: XML Import and Analysis
+
+#### XML Upload
+1. **Upload Files**: Drag and drop or browse to select XML files
+2. **Format Validation**: Automatic validation of XML structure and format
+3. **File Information**: Display file details, size, and element count
+4. **Supported Formats**: TEI, edXML, and custom XML formats
+
+#### Analysis Rules Configuration
+1. **Rule Setup**: Configure analysis rules for XML processing
+2. **Element Selection**: Choose which XML elements to process
+3. **Attribute Mapping**: Define how XML attributes map to properties
+4. **AI Assistance**: Use AI to suggest optimal analysis rules
+
+#### Structure Analysis
+1. **Automatic Analysis**: System analyzes XML structure and relationships
+2. **Element Detection**: Identify all XML elements and their properties
+3. **Hierarchy Mapping**: Map parent-child relationships in XML
+4. **Pattern Recognition**: Identify recurring patterns and structures
+
+### Step 2: Element Mapping Configuration
+
+#### Visual Mapping Interface
+1. **Dual Panel View**: XML structure on left, mapping configuration on right
+2. **Element Selection**: Click to select XML elements for mapping
+3. **Node Assignment**: Assign XML elements to graph node types
+4. **Property Mapping**: Map XML attributes to node properties
+
+#### Semantic Enrichment
+1. **TIB Integration**: Connect to terminology service for standard concepts
+2. **AI Mapping Assistant**: Get AI suggestions for optimal mappings
+3. **Semantic Types**: Assign semantic categories to nodes
+4. **Property Standardization**: Use standard property definitions
+
+#### Relationship Configuration
+1. **Relationship Detection**: Automatically infer relationships from XML hierarchy
+2. **Manual Definition**: Manually define specific relationships
+3. **Cardinality Setup**: Configure relationship cardinality
+4. **Property Assignment**: Add properties to relationships
+
+### Step 3: Workflow Design
+
+#### Visual Workflow Builder
+1. **Tool Palette**: Drag control flow tools onto the canvas
+2. **Action Library**: Add data transformation actions
+3. **Connection Logic**: Connect tools and actions to create processing flow
+4. **Configuration Panels**: Configure parameters for each component
+
+#### Essential Workflow Components
+
+##### Control Flow Tools
+- **If Tool**: Conditional branching based on element properties
+- **Switch Tool**: Multi-way branching based on values
+- **Delay Tool**: Rate limiting and timing control
+- **Fetch API**: Retrieve data from external services
+- **HTTP Request**: Generic HTTP/HTTPS requests
+- **Webhook**: Send notifications to external systems
+
+##### Data Actions
+- **Create Node**: Create graph nodes from XML elements
+- **Create Text Node**: Extract text into dedicated nodes
+- **Create Token Nodes**: Break text into individual tokens
+- **Create Annotation Nodes**: Process scholarly annotations
+- **Create Deferred Node**: Find or create nodes with lookup
+- **Set Property**: Assign values to node properties
+- **Create Relationship**: Establish connections between nodes
+
+#### Workflow Examples
+
+##### Simple TEI Document Processing
+```
+Root Tool (teiCorpus) 
+  → If Tool (has teiHeader)
+    → Create Node (Document)
+    → Set Property (title from titleStmt)
+  → Create Node (TextContent) from text/body
+  → Create Token Nodes from paragraphs
+  → Create Relationships (CONTAINS)
+```
+
+##### Bibliographic Data Processing
+```
+Root Tool (records)
+  → Switch Tool (record type)
+    → Case "article"
+      → Create Node (Article)
+      → Create Node (Author) with lookup
+      → Create Relationship (AUTHORED)
+    → Case "book"
+      → Create Node (Book)
+      → Create Node (Publisher)
+      → Create Relationship (PUBLISHED_BY)
+```
+
+### Step 4: Graph Generation and Validation
+
+#### Model Generation
+1. **Workflow Execution**: Run the workflow on your XML data
+2. **Node Creation**: Create graph nodes according to mapping rules
+3. **Relationship Building**: Establish connections between nodes
+4. **Property Assignment**: Assign properties from XML data
+
+#### Validation and Quality Control
+1. **Schema Validation**: Ensure generated graph matches target schema
+2. **Data Quality**: Check for data completeness and consistency
+3. **Relationship Integrity**: Verify relationship validity
+4. **Performance Metrics**: Monitor generation performance
+
+#### Result Review
+1. **Graph Visualization**: View the generated graph structure
+2. **Statistics Review**: Review node and relationship counts
+3. **Quality Reports**: Check data quality metrics
+4. **Export Options**: Export graph in various formats
+
+## Advanced Workflow Features
+
+### Conditional Processing
+
+#### Complex Logic with If Tool
+```typescript
+// Example: Process different element types
+{
+  type: "tool:if",
+  config: {
+    conditionGroups: [{
+      conditions: [{
+        field: "elementName",
+        operator: "equals",
+        value: "persName"
+      }]
+    }]
+  }
+}
+```
+
+#### Multi-way Branching with Switch Tool
+```typescript
+// Example: Handle different document types
+{
+  type: "tool:switch",
+  config: {
+    switchSource: "attribute",
+    switchAttributeName: "type",
+    switchCases: [
+      { matchValue: "article", caseLabel: "ProcessArticle" },
+      { matchValue: "book", caseLabel: "ProcessBook" }
+    ]
+  }
+}
+```
+
+### External Data Integration
+
+#### API Enrichment
+1. **Fetch API Tool**: Retrieve data from external APIs
+2. **HTTP Request Tool**: Generic HTTP requests to any endpoint
+3. **Data Integration**: Combine external data with XML data
+4. **Caching**: Cache external data for performance
+
+#### Example API Integration
+```
+Create Node (Publication)
+  → Fetch API (crossref.org for DOI)
+  → Set Property (enriched metadata)
+  → Create Relationship (CITES)
+```
+
+### Specialized Processing
+
+#### Text Tokenization
+- **Character-level**: Process text character by character
+- **Word-level**: Process text word by word
+- **Linguistic Analysis**: Support for linguistic annotations
+- **Token Relationships**: Create relationships between tokens
+
+#### Annotation Processing
+- **Scholarly Annotations**: Process TEI annotations and notes
+- **Reference Resolution**: Resolve cross-references and citations
+- **Semantic Enrichment**: Add semantic meaning to annotations
+- **Relationship Creation**: Create annotation relationships
+
+## Performance Optimization
+
+### Workflow Optimization Strategies
+
+#### Efficient Processing
+1. **Conditional Filtering**: Use If tools to skip unnecessary processing
+2. **Batch Processing**: Process multiple elements in batches
+3. **Parallel Execution**: Enable parallel processing where possible
+4. **Memory Management**: Optimize memory usage for large files
+
+#### Tool Selection
+- **Specialized Actions**: Use specialized actions over generic ones
+- **Efficient Tools**: Choose tools optimized for specific tasks
+- **Caching Strategies**: Cache frequently accessed data
+- **Resource Management**: Manage system resources effectively
+
+### Large File Handling
+
+#### Streaming Processing
+1. **Chunked Processing**: Process large XML files in chunks
+2. **Memory Optimization**: Minimize memory footprint
+3. **Progress Tracking**: Monitor processing progress
+4. **Error Recovery**: Handle errors gracefully during processing
+
+#### Performance Monitoring
+- **Processing Speed**: Monitor elements processed per second
+- **Memory Usage**: Track memory consumption during processing
+- **Error Rates**: Monitor error rates and types
+- **Quality Metrics**: Track data quality metrics
+
+## Quality Assurance
+
+### Data Validation
+
+#### Schema Compliance
+1. **Type Validation**: Ensure data types match schema definitions
+2. **Required Fields**: Verify all required fields are present
+3. **Relationship Validity**: Check relationship validity and consistency
+4. **Constraint Validation**: Validate data constraints and rules
+
+#### Data Quality Checks
+- **Completeness**: Ensure all necessary data is captured
+- **Accuracy**: Verify data accuracy and consistency
+- **Consistency**: Check for consistent data formatting
+- **Integrity**: Maintain referential integrity
+
+### Error Handling
+
+#### Error Detection
+1. **XML Parsing Errors**: Handle malformed XML gracefully
+2. **Mapping Errors**: Detect and report mapping configuration errors
+3. **Workflow Errors**: Identify and handle workflow execution errors
+4. **Data Errors**: Detect data quality and consistency issues
+
+#### Error Recovery
+- **Graceful Degradation**: Continue processing when possible
+- **Partial Results**: Provide partial results when complete processing fails
+- **Error Reporting**: Generate detailed error reports
+- **Recovery Suggestions**: Provide suggestions for error resolution
+
+## Best Practices
+
+### Workflow Design
+
+#### Modular Design
+1. **Single Responsibility**: Each component should have a single purpose
+2. **Reusability**: Design components for reuse across different workflows
+3. **Maintainability**: Create workflows that are easy to understand and modify
+4. **Documentation**: Document workflow logic and decisions
+
+#### Performance Considerations
+- **Efficient Filtering**: Filter data early in the workflow
+- **Optimal Tool Usage**: Use the right tool for each task
+- **Resource Management**: Manage system resources effectively
+- **Scalability Design**: Design for expected data volumes
+
+### Data Processing
+
+#### Quality First
+1. **Validation**: Validate data at each processing step
+2. **Error Handling**: Handle errors gracefully and informatively
+3. **Logging**: Maintain comprehensive processing logs
+4. **Testing**: Test workflows with sample data
+
+#### Consistency Standards
+- **Naming Conventions**: Use consistent naming throughout
+- **Data Standards**: Follow domain-specific data standards
+- **Format Consistency**: Maintain consistent data formatting
+- **Quality Metrics**: Track and monitor quality metrics
+
+## Integration with Other Features
+
+### Schema Designer Integration
+- **Schema Validation**: Validate generated data against schema definitions
+- **Type Mapping**: Map XML data to schema types automatically
+- **Relationship Creation**: Create relationships based on schema definitions
+- **Property Assignment**: Assign properties according to schema specifications
+
+### AI Integration
+- **Workflow Generation**: Use AI to generate complete workflows
+- **Optimization Suggestions**: Get AI recommendations for workflow optimization
+- **Error Diagnosis**: Use AI to diagnose and resolve processing issues
+- **Quality Improvement**: Receive AI suggestions for data quality improvement
+
+### TIB Integration
+- **Semantic Mapping**: Map XML data to semantic concepts
+- **Standard Compliance**: Ensure compliance with terminology standards
+- **Cross-Domain Integration**: Maintain compatibility across domains
+- **Quality Assurance**: Validate semantic consistency
+
+## Use Case Examples
+
+### Academic Bibliography Processing
+**Source**: TEI-encoded academic papers
+**Workflow**: Extract authors, publications, citations, and institutions
+**Output**: Complete bibliographic graph with citation networks
+
+#### Workflow Steps:
+1. Upload TEI documents
+2. Configure analysis rules for TEI elements
+3. Map `<persName>` to Person nodes
+4. Map `<title>` to Publication nodes
+5. Create citation relationships from `<ref>` elements
+6. Enrich with external API data (Crossref, ORCID)
+
+### Historical Document Analysis
+**Source**: Historical archives and documents
+**Workflow**: Extract people, places, events, and relationships
+**Output**: Historical knowledge graph with temporal relationships
+
+#### Workflow Steps:
+1. Upload historical XML documents
+2. Configure rules for historical elements
+3. Map entities to appropriate node types
+4. Create temporal relationships
+5. Add geographical context
+6. Validate historical accuracy
+
+### Social Network Analysis
+**Source**: Social media or organizational data
+**Workflow**: Extract people, organizations, and connections
+**Output**: Social network graph with relationship metrics
+
+#### Workflow Steps:
+1. Upload social network XML data
+2. Configure rules for network elements
+3. Create person and organization nodes
+4. Build relationship networks
+5. Calculate network metrics
+6. Visualize network structure
+
+## Troubleshooting
+
+### Common Issues
+
+#### Processing Errors
+- **XML Parsing Failures**: Check XML validity and encoding
+- **Mapping Configuration**: Verify mapping rules are correct
+- **Workflow Logic**: Ensure workflow logic is sound
+- **Resource Limitations**: Check system resources and limits
+
+#### Performance Issues
+- **Slow Processing**: Optimize workflow and tool usage
+- **Memory Issues**: Reduce memory usage with streaming
+- **Large Files**: Use chunked processing for large files
+- **Network Issues**: Handle external service failures gracefully
+
+### Debugging Tools
+
+#### Workflow Debugger
+- **Step-by-Step Execution**: Execute workflows step by step
+- **Variable Inspection**: Examine variables at each step
+- **Error Tracking**: Track errors and their origins
+- **Performance Profiling**: Profile workflow performance
+
+#### Data Inspector
+- **Node Inspection**: Examine created nodes and properties
+- **Relationship Verification**: Verify relationship creation
+- **Data Quality**: Check data quality metrics
+- **Export Analysis**: Analyze exported data for issues
+
+---
+
+Graph Generation in Plexus Builder provides a comprehensive, powerful solution for transforming XML data into graph structures. By combining the XML Import Wizard with visual workflow design, AI assistance, and semantic integration, researchers can create sophisticated data transformation pipelines that produce high-quality, meaningful graph databases from complex XML sources.

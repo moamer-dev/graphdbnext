@@ -1,0 +1,268 @@
+---
+title: XML Import Wizard
+description: Complete guide to importing XML files and creating graph models using the XML Import Wizard
+---
+
+# XML Import Wizard
+
+The **Plexus XML Import Wizard** is a step-by-step tool that guides you through importing XML files and creating graph models from their structure. This wizard is designed for Digital Humanities research where data is often trapped in deeply nested XML or TEI files.
+
+## Access the XML Import Wizard
+
+### Starting the Wizard
+
+1. **Navigate**: Dashboard → Model Schema → Create Model from XML
+2. **URL**: `/dashboard/graph/model/new/from-xml`
+3. **Requirements**: Model Builder module must be enabled in Settings
+
+> [!NOTE]
+> If you see "Model Builder module is not enabled," contact your administrator to enable it in Settings → Modules.
+
+### Initial Setup
+
+When you open the XML Import Wizard, you'll see:
+
+- **Header**: "Create Model from XML" with navigation
+- **Description**: Brief explanation of the wizard's purpose
+- **Wizard Interface**: Step-by-step guided process
+
+## Wizard Steps Overview
+
+The XML Import Wizard guides you through five main steps:
+
+1. **Upload**: Upload and analyze your XML file
+2. **Analyze**: Automatic XML structure analysis
+3. **Configure**: Map XML elements to graph nodes and relationships
+4. **Configure Rules**: Set up transformation rules and AI assistance
+5. **Review**: Review and generate your model
+
+## Step 1: Upload XML
+
+### File Upload
+
+#### Supported Files
+- **XML Files**: Any valid XML format
+- **TEI Documents**: Text Encoding Initiative files
+- **Custom Schemas**: Your own XML structures
+- **File Size**: Up to specified size limit
+
+#### Upload Process
+1. **Choose File**: Click to browse or drag-and-drop XML file
+2. **Validation**: System validates XML structure
+3. **Analysis Prep**: File is prepared for structural analysis
+4. **Continue**: Proceed to analysis step
+
+#### Upload Features
+- **Drag and Drop**: Intuitive file upload
+- **File Validation**: Checks for valid XML format
+- **Error Handling**: Clear error messages for invalid files
+- **Progress Indicators**: Visual feedback during upload
+
+## Step 2: Analyze XML
+
+### Automatic Analysis
+
+#### Structure Detection
+- **Element Hierarchy**: Maps XML nesting structure
+- **Attribute Discovery**: Identifies all XML attributes
+- **Content Patterns**: Analyzes text content patterns
+- **Relationship Inference**: Suggests potential relationships
+
+#### Analysis Results
+- **Tree View**: Visual representation of XML structure
+- **Element List**: All XML elements with frequencies
+- **Attribute Summary**: Available attributes per element
+- **Content Types**: Text, numeric, date content detection
+
+#### Analysis Features
+- **Automatic Processing**: No manual configuration needed
+- **Visual Feedback**: See analysis progress and results
+- **Statistics**: Element counts and usage patterns
+- **Structure Insights**: Understanding of XML complexity
+
+## Step 3: Configure Mapping
+
+### Element to Node Mapping
+
+#### Mapping Interface
+- **XML Elements**: Left panel shows analyzed XML structure
+- **Graph Nodes**: Right panel shows your graph model
+- **Mapping Controls**: Connect XML elements to graph nodes
+- **Visual Connections**: See current mappings
+
+#### Mapping Process
+1. **Select XML Element**: Choose element from structure tree
+2. **Select Graph Node**: Choose target node type
+3. **Create Mapping**: Link element to node
+4. **Configure Properties**: Map attributes to node properties
+
+#### Property Mapping
+- **Attribute Mapping**: Map XML attributes to node properties
+- **Content Mapping**: Map element content to properties
+- **Data Types**: Define property data types
+- **Required Fields**: Mark required properties
+
+#### Configuration Features
+- **Visual Mapping**: Drag-and-drop interface
+- **Auto-Suggestions**: AI-powered mapping suggestions
+- **Validation**: Real-time mapping validation
+- **Bulk Operations**: Map multiple elements at once
+
+#### Semantic Mode Integration
+- **Semantic Toggle**: Enable semantic mode for ontology-based mapping
+- **TIB Terminology**: Access to TIB terminology service at https://terminology.tib.eu/ts
+- **Ontology Classes**: Map XML elements to standardized ontology classes
+- **Property Mapping**: Use ontology-defined properties for consistency
+- **Validation**: Ensure compliance with semantic standards
+
+#### Import/Export Configuration
+- **Export Mapping**: Save current element mappings to file
+- **Import Mapping**: Load previously saved mappings
+- **Export Rules**: Download transformation rules for backup
+- **Import Rules**: Load rule configurations from file
+- **Configuration Sharing**: Share mappings and rules with team members
+
+## Step 4: Configure Rules
+
+### Transformation Rules
+
+#### Rule Types
+- **Creation Rules**: When to create nodes
+- **Relationship Rules**: How to connect nodes
+- **Data Rules**: How to transform data
+- **Validation Rules**: Data quality checks
+
+#### AI Assistance
+- **AI Mapping Assistant**: Get AI-powered mapping suggestions
+- **AI Rules Assistant**: Automatic rule generation
+- **Pattern Recognition**: AI identifies data patterns
+- **Optimization**: AI suggests improvements
+
+#### Rule Configuration
+1. **Select Element**: Choose XML element for rule
+2. **Choose Action**: Define what to do with element
+3. **Set Conditions**: Configure when rule applies
+4. **Test Rule**: Preview rule effects
+
+#### Rule Features
+- **Conditional Logic**: Complex rule conditions
+- **Data Transformation**: Format and clean data
+- **Error Handling**: Handle unexpected data
+- **Performance**: Efficient rule execution
+
+#### Import/Export Rules
+- **Export Rules**: Save all transformation rules to configuration file
+- **Import Rules**: Load rule sets from previous projects or templates
+- **Rule Templates**: Save rule configurations as reusable templates
+- **Backup & Restore**: Create backups of rule configurations
+- **Version Control**: Track changes to rule configurations over time
+
+## Step 5: Review and Generate
+
+### Model Review
+
+#### Review Interface
+- **Mapping Summary**: Overview of all element mappings
+- **Rule Summary**: List of all transformation rules
+- **Model Preview**: Preview of generated graph model
+- **Validation Results**: Check for mapping issues
+
+#### Validation Checks
+- **Complete Mappings**: Ensure all important elements are mapped
+- **Rule Consistency**: Check for conflicting rules
+- **Data Flow**: Verify data transformation paths
+- **Model Integrity**: Validate generated model structure
+
+#### Generation Process
+1. **Final Review**: Check all mappings and rules
+2. **Generate Model**: Create graph model from XML
+3. **Validation**: Verify model generation success
+4. **Continue to Builder**: Open model in Plexus Builder
+
+#### Review Features
+- **Summary Views**: Comprehensive overview
+- **Issue Detection**: Identify potential problems
+- **Preview Mode**: See results before generation
+- **Export Options**: Save configuration for later use
+
+## After the Wizard
+
+### Transition to Plexus Builder
+
+#### Automatic Redirect
+- **Model Creation**: Wizard generates initial model
+- **Builder Access**: Redirect to Plexus Builder for refinement
+- **Context Preservation**: XML context maintained in builder
+- **Continue Work**: Further customize your model
+
+#### Builder Integration
+- **Pre-populated Schema**: Model filled with XML-based structure
+- **Mapping Preserved**: XML mappings available in builder
+- **Rules Imported**: Transformation rules available for editing
+- **AI Context**: AI assistance continues in builder
+
+### Next Steps
+
+#### Model Refinement
+- **Visual Editing**: Use builder canvas for visual changes
+- **Add Relationships**: Create additional relationships
+- **Configure Properties**: Fine-tune node and relationship properties
+- **Test Workflow**: Validate with sample data
+
+#### Workflow Building
+- **Add Tools**: Include data processing tools
+- **Add Actions**: Create workflow actions
+- **Test Execution**: Run workflow with XML data
+- **Export Results**: Generate final graph
+
+## Best Practices
+
+### XML Preparation
+- **Valid XML**: Ensure well-formed XML structure
+- **Consistent Naming**: Use consistent element and attribute names
+- **Clear Structure**: Organize XML logically
+- **Documentation**: Include meaningful descriptions
+
+### Mapping Strategy
+- **Start Simple**: Begin with basic element-to-node mappings
+- **Iterative Refinement**: Add complexity gradually
+- **Test Frequently**: Validate mappings as you go
+- **Use AI**: Leverage AI assistance for complex mappings
+
+### Rule Design
+- **Clear Logic**: Make rules easy to understand
+- **Error Handling**: Plan for unexpected data
+- **Performance**: Consider execution efficiency
+- **Maintenance**: Design rules for future updates
+
+## Troubleshooting
+
+### Common Issues
+
+#### Upload Problems
+- **Invalid XML**: Check XML file format
+- **File Size**: Verify file size limits
+- **Encoding**: Ensure proper XML encoding
+- **Network**: Check internet connection
+
+#### Analysis Issues
+- **Complex Structure**: Large XML may take time to analyze
+- **Memory Usage**: Very large files may cause issues
+- **Encoding Problems**: Check character encoding
+- **Validation Errors**: Fix XML syntax errors
+
+#### Mapping Problems
+- **Missing Elements**: Ensure all elements are analyzed
+- **Conflicting Mappings**: Check for duplicate mappings
+- **Property Types**: Verify data type compatibility
+- **Required Fields**: Mark essential properties
+
+#### Rule Issues
+- **Logic Errors**: Check rule conditions
+- **Performance**: Optimize slow rules
+- **Conflicts**: Resolve conflicting rules
+- **Validation**: Ensure rule completeness
+
+---
+
+*Related: [Create Model Schema](./create-model-schema), [Model Schema Import](./model-schema-import), [Dashboard Guide](./dashboard)*

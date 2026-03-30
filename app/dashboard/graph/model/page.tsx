@@ -104,6 +104,7 @@ function ModelsPageContent() {
   const renderModelCard = useCallback((model: Model) => {
     return (
       <ModelCard
+        key={model.id}
         model={model}
         onView={handleView}
         onEdit={handleEdit}

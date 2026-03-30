@@ -15,6 +15,8 @@ export interface Model {
   userId?: string
   schemaJson?: unknown
   schemaMd?: string | null
+  noteCount?: number
+  relationCount?: number
   user?: {
     id: string
     email: string

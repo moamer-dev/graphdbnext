@@ -1,0 +1,293 @@
+---
+title: Plexus Builder
+description: Getting started with the visual workflow and schema design platform
+---
+
+# Introduction to Plexus Builder
+
+Plexus Builder is a sophisticated visual platform for transforming XML data into graph structures through intuitive workflow design and schema modeling. It combines powerful data processing capabilities with an easy-to-use visual interface.
+
+## What is Plexus Builder?
+
+Plexus Builder is a comprehensive tool that enables users to:
+
+- **Design Graph Schemas Visually**: Create node types, relationships, and properties through an intuitive drag-and-drop interface
+- **Build Data Transformation Workflows**: Construct visual workflows that process XML data and generate graph structures
+- **Automate Graph Generation**: Transform complex XML structures into meaningful graph representations automatically
+- **Integrate with External Services**: Connect to APIs, databases, and other external systems
+- **Leverage TIB Terminology Service**: Connect to standardized terminology services for consistent data modeling
+
+## Key Concepts
+
+### Visual Workflow Design
+
+<Mermaid chart="
+flowchart LR
+    A[XML Input] --> B[Visual Workflow]
+    B --> C[Graph Output]
+    
+    subgraph Workflow[Workflow Components]
+        D[Control Flow Tools] --> E[Data Actions]
+        E --> F[External Integrations]
+    end
+    
+    B --> Workflow
+" />
+
+### Core Components
+
+1. **Model Builder Canvas**: The main visual workspace for designing schemas and workflows
+2. **Tools**: Control flow components (If/Switch, HTTP requests, Webhooks)
+3. **Actions**: Data transformation operations (Create nodes, Set properties, Build relationships)
+4. **XML Integration**: Import, preview, and process XML data
+5. **AI Assistance**: Semantic suggestions and workflow optimization
+
+## Builder Usage
+
+Plexus Builder supports two primary usage patterns that cater to different research needs:
+
+### Model Schema Creation
+
+[Design and create graph database schemas from scratch using the visual Model Builder interface](builder/usage/model-schema-creation):
+
+- **Visual Schema Design**: Create node types, relationships, and properties through drag-and-drop interface
+- **AI-Assisted Design**: Get intelligent suggestions for node properties and relationships
+- **Semantic Integration**: Use TIB terminology service for standardized naming conventions
+- **Template Library**: Start with pre-built templates for common research domains (bibliographic, social networks, historical research)
+- **Schema Validation**: Ensure schema completeness and consistency with automated validation
+
+### Graph Generation
+
+[Transform existing XML data into graph structures through automated workflows](builder/usage/graph-generation):
+
+- **XML Import Wizard**: Step-by-step guidance for uploading and analyzing XML documents
+- **Visual Workflow Builder**: Create data transformation workflows using tools and actions
+- **Element Mapping**: Map XML elements and attributes to graph nodes and properties
+- **Automated Processing**: Generate complete graph databases from XML sources
+- **Quality Assurance**: Validate generated graphs and ensure data integrity
+
+Both usage patterns can be combined: start with XML data to generate an initial graph, then refine and extend the schema using the visual schema design tools.
+
+## Use Cases
+
+### 1. Data Migration
+Transform legacy XML data into modern graph databases:
+- Import historical XML archives
+- Map to graph schema
+- Generate migration workflows
+- Validate data integrity
+
+### 2. API Integration
+Connect external APIs to graph structures:
+- Fetch data from REST APIs
+- Transform API responses
+- Update graph nodes
+- Maintain synchronization
+
+### 3. Content Management
+Process content management XML exports:
+- Extract content structure
+- Create semantic relationships
+- Generate navigation graphs
+- Enable content discovery
+
+### 4. Business Intelligence
+Transform business data into analytical graphs:
+- Process transaction logs
+- Build relationship networks
+- Enable graph analytics
+- Support decision making
+
+## Architecture Overview
+
+### Component Architecture
+
+<Mermaid chart="
+flowchart TD
+    subgraph PlexusBuilder[Plexus Builder Architecture]
+        A[Model Builder Component] --> B[Workflow Engine]
+        A --> C[Schema Designer]
+        A --> D[XML Processor]
+        
+        B --> E[Tool Executor]
+        B --> F[Action Executor]
+        
+        C --> G[Node Editor]
+        C --> H[Relationship Editor]
+        
+        D --> I[XML Parser]
+        D --> J[Template Generator]
+        
+        subgraph Integrations[External Integrations]
+            K[HTTP Client] --> L[API Services]
+            M[TIB Terminology Service] --> N[Semantic Engine]
+        end
+        
+        E --> Integrations
+        F --> Integrations
+    end
+" />
+
+### Technology Stack
+
+- **Frontend**: React with TypeScript
+- **State Management**: Zustand stores
+- **Visual Canvas**: Custom drag-and-drop interface
+- **XML Processing**: Fast XML parser with streaming support
+- **Workflow Engine**: Custom walker with tool/action execution
+- **TIB Terminology Integration**: LangChain for semantic processing with standardized terminology
+
+## Getting Started
+
+### 1. Create Your First Model
+
+1. **Open Model Builder**: Navigate to the Model Builder interface
+2. **Import XML Data**: Upload or paste XML content
+3. **Design Schema**: Create node types and relationships visually
+4. **Build Workflow**: Add tools and actions to process data
+5. **Test Execution**: Run workflow with sample data
+6. **Export Results**: Generate graph output in desired format
+
+### 2. Basic Workflow Example
+
+```xml
+<!-- Sample XML input -->
+<catalog>
+  <product id="p1" category="electronics">
+    <name>Smartphone</name>
+    <price currency="USD">699</price>
+    <specs>
+      <screen>6.1"</screen>
+      <storage>128GB</storage>
+    </specs>
+  </product>
+</catalog>
+```
+
+**Workflow Steps:**
+1. **Root Tool**: Start with `<catalog>` element
+2. **Create Node Action**: Create `Product` nodes for `<product>` elements
+3. **Set Properties**: Map `id`, `category` to node properties
+4. **Create Relationships**: Link products to catalog
+5. **Process Children**: Handle nested `<specs>` elements
+
+### 3. Visual Interface Tour
+
+#### Header Controls
+- **Model Name**: Edit model metadata
+- **Workflow Selector**: Switch between workflows
+- **Feature Toggles**: Enable semantic mode, XML preview
+- **File Operations**: Import/export, templates
+- **Execution Controls**: Run, save, clear workflows
+
+#### Main Canvas
+- **Node Palette**: Drag tools and actions
+- **Workspace**: Design workflows visually
+- **Configuration Panels**: Edit node and tool settings
+- **Status Indicators**: Monitor execution progress
+
+#### Side Panels
+- **Node Editor**: Configure graph nodes
+- **Relationship Editor**: Define connections
+- **TIB Terminology Panel**: Get standardized terminology suggestions
+- **XML Preview**: View source XML
+
+## Advanced Features
+
+### 1. Semantic Mapping with TIB Terminology
+
+Enable semantic mode to leverage standardized terminology from TIB service:
+
+```typescript
+// Semantic class mapping
+{
+  elementName: 'product',
+  semanticClass: 'Product',
+  properties: {
+    name: 'productName',
+    price: 'price',
+    category: 'category'
+  }
+}
+```
+
+### 2. External API Integration
+
+Connect to external services:
+
+```typescript
+// HTTP tool configuration
+{
+  method: 'GET',
+  url: 'https://api.example.com/products/{{ $json.id }}',
+  headers: {
+    'Authorization': 'Bearer {{ $variables.apiToken }}'
+  }
+}
+```
+
+### 3. Conditional Processing
+
+Use control flow tools for complex logic:
+
+```typescript
+// Switch tool for category-based processing
+{
+  switchSource: 'attribute',
+  switchAttributeName: 'category',
+  switchCases: [
+    {
+      value: 'electronics',
+      actions: [
+        { type: 'create-node', config: { label: 'ElectronicProduct' } }
+      ]
+    },
+    {
+      value: 'books',
+      actions: [
+        { type: 'create-node', config: { label: 'Book' } }
+      ]
+    }
+  ]
+}
+```
+
+## Performance Considerations
+
+### Large XML Files
+- **Streaming Processing**: Process files in chunks
+- **Memory Management**: Optimize memory usage
+- **Parallel Execution**: Enable concurrent processing
+- **Progress Tracking**: Monitor processing status
+
+### Complex Workflows
+- **Modular Design**: Break into smaller workflows
+- **Error Handling**: Implement robust error recovery
+- **Caching**: Cache intermediate results
+- **Optimization**: Profile and optimize bottlenecks
+
+## Best Practices
+
+### Workflow Design
+- **Start Simple**: Begin with basic transformations
+- **Iterative Development**: Add complexity gradually
+- **Test Often**: Validate with sample data
+- **Document Logic**: Add comments and descriptions
+
+### Schema Design
+- **Consistent Naming**: Use clear, consistent names
+- **Semantic Meaning**: Choose meaningful relationships
+- **Validation**: Include data validation rules
+- **Extensibility**: Design for future changes
+
+---
+
+Plexus Builder provides a powerful, intuitive platform for transforming XML data into graph structures, with comprehensive features for visual workflow design, semantic mapping through TIB terminology service integration, and external integrations. Whether you're migrating legacy data or building modern graph applications, Plexus Builder offers the tools and flexibility you need.
+
+## Quick Installation
+
+If you are using the Plexus Platform, the builder is already integrated. For standalone use:
+
+```bash
+npm install @plexus/builder
+```

@@ -13,7 +13,7 @@ export function useNewModel () {
   const searchParams = useSearchParams()
   const fromXml = searchParams.get('from') === 'xml'
   const { isEnabled, loading: moduleLoading, ModelBuilderAdapter } = useModelBuilder()
-  const createModelMutation = resourceHooks.models.useCreate()
+  const createModelMutation = resourceHooks.models.useCreate({ redirect: false, showToast: false })
 
   const [modelName, setModelName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -49,10 +49,12 @@ export function useNewModel () {
       const workflowBeingSaved = (window as any).__workflowSaveInProgress
       
       if (!workflowBeingSaved) {
-        // No workflow being saved, navigate immediately
-        router.push(ModelResource.LIST_PATH)
+        // Redirection to the edit page of the newly created model
+        if (model?.id) {
+          router.push(ModelResource.EDIT_PATH(model.id))
+        }
       } else {
-        // Workflow is being saved, adapter will handle navigation
+        // Workflow is being saved, adapter will handle its own logic
       }
       
       return model

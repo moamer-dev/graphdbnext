@@ -1,0 +1,291 @@
+---
+title: Generate Graph from XML
+description: Complete guide to generating graphs from XML data using your model schema and executable workflows
+---
+
+# Generate Graph from XML
+
+This guide covers how to generate actual graph data from XML files using your model schema, tools, and actions. Unlike schema creation, graph generation requires XML data, executable workflows, and transformation rules.
+
+## Understanding Graph Generation
+
+### Schema vs Graph Generation
+
+**Schema Creation** (separate process):
+- Define nodes and relationships
+- Configure properties and constraints
+- No XML or execution required
+- Static structure definition
+
+**Graph Generation** (this guide):
+- Requires XML data source
+- Uses executable tools and actions
+- Creates actual graph instances
+- Dynamic data processing
+
+### Generation Requirements
+
+To generate graphs from XML, you need:
+
+1. **Model Schema**: Nodes and relationships structure
+2. **XML Data**: Source XML file to process
+3. **Tools**: Data processing and transformation tools
+4. **Actions**: Workflow control and execution actions
+5. **Root Node**: Starting point for XML traversal
+
+## Access Graph Generation
+
+### From XML Import Wizard
+
+After completing the XML Import Wizard:
+
+1. **Complete Wizard**: Finish all 5 wizard steps
+2. **Generate Model**: Create initial schema from XML
+3. **Redirect to Builder**: Automatically redirected to Plexus Builder
+4. **Continue Workflow**: Build executable workflow for graph generation
+
+### From Model Header
+
+For existing models:
+
+1. **Open Model**: Navigate to your model in Plexus Builder
+2. **Upload XML**: Use XML upload in model header
+3. **Generate Workflow**: Build tools and actions workflow
+4. **Execute Generation**: Run workflow to generate graph
+
+## Building Generation Workflows
+
+### Workflow Components
+
+#### Tools (Data Processing)
+- **XML Parsing Tools**: Extract data from XML elements
+- **Node Creation Tools**: Create graph nodes from XML data
+- **Relationship Tools**: Establish connections between nodes
+- **Data Transformation Tools**: Format and clean data
+- **Validation Tools**: Check data quality and consistency
+
+#### Actions (Control Flow)
+- **Start Actions**: Begin XML traversal from root nodes
+- **Conditional Actions**: Make decisions based on data
+- **Loop Actions**: Process multiple XML elements
+- **Export Actions**: Output generated graph data
+- **Error Handling Actions**: Manage processing errors
+
+### Workflow Design
+
+#### Planning Your Workflow
+1. **Identify Root Elements**: Determine XML starting points
+2. **Map Data Flow**: Plan how data moves through tools
+3. **Define Transformations**: Specify data processing steps
+4. **Add Error Handling**: Plan for unexpected data
+5. **Test Incrementally**: Build and test workflow step by step
+
+#### Workflow Structure
+- **Input**: XML file and model schema
+- **Processing**: Tools transform XML data
+- **Control**: Actions manage execution flow
+- **Output**: Generated graph data
+
+## XML Processing Workflow
+
+### Step 1: XML Input and Analysis
+
+#### XML Upload
+- **File Selection**: Choose XML file for processing
+- **Validation**: Verify XML structure and format
+- **Analysis**: Understand XML hierarchy and content
+- **Preparation**: Make XML ready for processing
+
+#### Root Node Selection
+- **Identify Roots**: Select starting XML elements
+- **Mark in Schema**: Designate root nodes in your model
+- **Traversal Start**: XML processing begins from roots
+- **Multiple Roots**: Support for multiple starting points
+
+### Step 2: Data Processing Pipeline
+
+#### XML Parsing
+- **Element Extraction**: Extract XML elements and attributes
+- **Content Analysis**: Analyze text content and structure
+- **Hierarchy Navigation**: Traverse XML tree structure
+- **Data Collection**: Gather relevant data points
+
+#### Node Creation
+- **Element to Node**: Map XML elements to graph nodes
+- **Property Mapping**: Transfer XML attributes to node properties
+- **Content Mapping**: Map element content to node properties
+- **Data Validation**: Ensure data quality and completeness
+
+#### Relationship Building
+- **Hierarchy Relationships**: Create parent-child connections
+- **Cross-References**: Handle XML references and links
+- **Conditional Relationships**: Create relationships based on conditions
+- **Relationship Properties**: Set relationship attributes
+
+### Step 3: Workflow Execution
+
+#### Execution Flow
+- **Start from Roots**: Begin processing at designated root nodes
+- **Sequential Processing**: Execute tools and actions in order
+- **Data Flow**: Pass data between connected workflow nodes
+- **Error Handling**: Manage and recover from errors
+
+#### Execution Control
+- **Conditional Logic**: Execute based on data conditions
+- **Loop Processing**: Handle multiple similar elements
+- **Branching**: Create different processing paths
+- **Synchronization**: Coordinate parallel processing
+
+### Step 4: Graph Output
+
+#### Graph Generation
+- **Node Creation**: Generate actual graph nodes
+- **Relationship Creation**: Establish graph relationships
+- **Property Population**: Fill node and relationship properties
+- **Graph Validation**: Verify generated graph structure
+
+#### Output Formats
+- **Graph Database**: Direct import to graph database
+- **Export Files**: Generate graph data files
+- **Visualization**: Create graph visualizations
+- **Reports**: Generate processing reports
+
+## Tools and Actions Configuration
+
+### Tool Configuration
+
+#### XML Processing Tools
+- **XPath Selectors**: Specify XML element paths
+- **Attribute Extraction**: Extract XML attributes
+- **Content Parsing**: Parse element content
+- **Data Type Conversion**: Convert data types
+
+#### Node Creation Tools
+- **Node Templates**: Define node creation patterns
+- **Property Mapping**: Map XML data to properties
+- **Conditional Creation**: Create nodes based on conditions
+- **Unique Constraints**: Ensure node uniqueness
+
+#### Relationship Tools
+- **Relationship Templates**: Define relationship patterns
+- **Source/Target Mapping**: Map XML relationships
+- **Conditional Relationships**: Create based on conditions
+- **Cardinality Rules**: Handle relationship cardinality
+
+### Action Configuration
+
+#### Control Actions
+- **Start Actions**: Define workflow starting points
+- **Conditional Actions**: Add decision logic
+- **Loop Actions**: Handle repetitive processing
+- **End Actions**: Define workflow completion
+
+#### Data Actions
+- **Filter Actions**: Filter XML data
+- **Transform Actions**: Transform data formats
+- **Validate Actions**: Check data quality
+- **Aggregate Actions**: Aggregate data values
+
+## Execution and Testing
+
+### Running Workflows
+
+#### Test Execution
+- **Step-by-Step**: Execute workflow step by step
+- **Debug Mode**: Monitor execution and variables
+- **Break Points**: Pause execution at specific points
+- **Variable Inspection**: Examine data during execution
+
+#### Full Execution
+- **Complete Run**: Execute entire workflow
+- **Performance Monitoring**: Track execution performance
+- **Error Logging**: Record and analyze errors
+- **Result Validation**: Verify output quality
+
+### Testing Strategies
+
+#### Sample Data Testing
+- **Small XML Files**: Test with small XML samples
+- **Edge Cases**: Test unusual XML structures
+- **Error Scenarios**: Test error handling
+- **Performance Tests**: Test with large files
+
+#### Incremental Testing
+- **Component Testing**: Test individual tools and actions
+- **Integration Testing**: Test tool and action combinations
+- **Workflow Testing**: Test complete workflows
+- **System Testing**: Test end-to-end process
+
+## Troubleshooting Generation Issues
+
+### Common Problems
+
+#### XML Processing Issues
+- **Invalid XML**: Check XML file format
+- **Encoding Problems**: Verify character encoding
+- **Large Files**: Handle memory and performance issues
+- **Complex Structures**: Manage deeply nested XML
+
+#### Workflow Issues
+- **Tool Failures**: Check tool configuration
+- **Action Errors**: Verify action logic
+- **Data Flow Problems**: Check connections between nodes
+- **Performance Issues**: Optimize slow operations
+
+#### Output Issues
+- **Incomplete Graph**: Check for missing mappings
+- **Incorrect Relationships**: Verify relationship logic
+- **Data Quality**: Check data transformation
+- **Format Problems**: Verify output format
+
+### Debugging Techniques
+
+#### Workflow Debugging
+- **Step Execution**: Run workflow step by step
+- **Variable Inspection**: Check data at each step
+- **Log Analysis**: Review execution logs
+- **Error Tracing**: Track error sources
+
+#### Data Debugging
+- **Sample Inspection**: Examine sample XML data
+- **Mapping Verification**: Check element mappings
+- **Transformation Testing**: Test data transformations
+- **Output Validation**: Verify generated data
+
+## Best Practices
+
+### Workflow Design
+- **Modular Design**: Break complex workflows into modules
+- **Clear Logic**: Make workflow logic easy to understand
+- **Error Handling**: Plan for unexpected situations
+- **Performance Consideration**: Optimize for speed and memory
+
+### Data Processing
+- **Validation**: Validate input data early
+- **Transformation**: Clean and standardize data
+- **Consistency**: Maintain consistent data formats
+- **Documentation**: Document transformation rules
+
+### Testing and Quality
+- **Test Early**: Test workflows during development
+- **Test Often**: Regular testing during changes
+- **Test Thoroughly**: Cover edge cases and errors
+- **Monitor Performance**: Track execution performance
+
+## Advanced Features
+
+### AI-Assisted Generation
+- **Auto-Mapping**: AI suggests element mappings
+- **Rule Generation**: AI creates transformation rules
+- **Optimization**: AI optimizes workflow performance
+- **Error Detection**: AI identifies potential issues
+
+### Semantic Processing
+- **Ontology Integration**: Use semantic ontologies
+- **Standard Compliance**: Follow industry standards
+- **Interoperability**: Ensure compatibility with other systems
+- **Quality Assurance**: Semantic validation of results
+
+---
+
+*Related: [Create Model Schema](./create-model-schema), [XML Import Wizard](./xml-import), [Dashboard Guide](./dashboard)*

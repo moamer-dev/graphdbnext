@@ -102,7 +102,6 @@ export function ActionsPaletteSection({ className }: ActionsPaletteSectionProps)
           </div>
         ) : (
           filteredActions.map(({ category, config, items }) => {
-            console.log("filteredActions", filteredActions)
             const CategoryIcon = config?.icon || Folder
             const categoryColor = config?.color || 'text-muted-foreground'
             const categoryBgColor = config?.bgColor || 'bg-muted'

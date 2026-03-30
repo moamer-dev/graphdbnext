@@ -294,7 +294,6 @@ export function importWorkflowConfig(
     
     // Check if this is a wrapped format where the actual config is in a 'config' property
     if (config.config && typeof config.config === 'object' && config.config.type) {
-      console.log('Detected wrapped workflow config format, extracting inner config');
       config = config.config;
     } else if (availableKeys.includes('version') || availableKeys.includes('tools') || availableKeys.includes('actions')) {
       throw new Error(`This appears to be an older workflow config format (missing 'type' property). Available properties: ${availableKeys}. Please export a new workflow config from the current system to get the correct format.`);
@@ -431,6 +430,7 @@ export function importWorkflowConfig(
 
   // Import tool edges - return with labels for matching during import
   const toolEdges = workflowConfig.toolEdges.map(edge => ({
+    sourceNodeLabel: edge.sourceNodeLabel,
     sourceToolLabel: edge.sourceToolLabel,
     targetToolLabel: edge.targetToolLabel,
     targetActionLabel: edge.targetActionLabel,

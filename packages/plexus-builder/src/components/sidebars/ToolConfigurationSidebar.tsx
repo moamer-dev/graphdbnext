@@ -5,7 +5,6 @@ import { ToolConfigurationHeader } from './ToolConfigurationSidebar/ToolConfigur
 import { ToolConditionBuilder } from './ToolConfigurationSidebar/ToolConditionBuilder'
 import { ToolSwitchConfiguration } from './ToolConfigurationSidebar/ToolSwitchConfiguration'
 import { ToolTestExecution } from './ToolConfigurationSidebar/ToolTestExecution'
-import { ToolApiConfiguration } from './ToolConfigurationSidebar/ToolApiConfiguration'
 import { ToolWebhookConfiguration } from './ToolConfigurationSidebar/ToolWebhookConfiguration'
 import { useRealXmlSample } from '../../hooks/xml/useRealXmlSample'
 import { SchemaForm } from '../shared/SchemaForm'
@@ -168,6 +167,8 @@ export function ToolConfigurationSidebar({
               schema={toolDefinition.configSchema}
               config={config}
               onChange={(name, value) => handleUpdateConfig({ [name]: value })}
+              getCredentialsByType={getCredentialsByType as any}
+              getCredential={getCredential as any}
             />
           </CollapsibleSection>
         )}
@@ -197,21 +198,6 @@ export function ToolConfigurationSidebar({
             onSwitchCasesChange={(cases) => handleUpdateConfig({ switchCases: cases })}
             onSwitchCaseInputsChange={(inputs) => handleUpdateConfig({ switchCaseInputs: inputs })}
             onUpdateToolNode={updateToolNode}
-          />
-        )}
-
-        {(toolNode.type === 'tool:fetch-api' || toolNode.type.startsWith('tool:fetch-')) && (
-          <ToolApiConfiguration
-            toolNodeType={toolNode.type}
-            fetchApiConfig={fetchApiConfig}
-            authenticatedApiConfig={authenticatedApiConfig}
-            httpConfig={httpConfig}
-            onFetchApiConfigChange={(updates) => handleUpdateConfig({ fetchApiConfig: updates })}
-            onAuthenticatedApiConfigChange={(updates) => handleUpdateConfig({ authenticatedApiConfig: updates })}
-            onHttpConfigChange={(updates) => handleUpdateConfig({ httpConfig: updates })}
-            onUpdateConfig={handleUpdateConfig}
-            getCredentialsByType={(type) => getCredentialsByType(type as any)}
-            getCredential={getCredential}
           />
         )}
 

@@ -1,0 +1,11 @@
+{
+  "title": "User Guides",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "BookOpen",
+  "pages": [
+    "getting-started",
+    "dashboard",
+    "roles-and-permissions"
+  ]
+}

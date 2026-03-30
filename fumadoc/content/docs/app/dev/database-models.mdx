@@ -1,0 +1,487 @@
+---
+title: Database Models
+description: Complete database schema and data models for Plexus Platform
+---
+
+# Database Models
+
+Plexus Platform uses a dual-database architecture: PostgreSQL for application metadata and user data, and graph databases (Neo4j/Memgraph) for graph data storage.
+
+## Database Architecture
+
+<Mermaid chart="
+graph TB
+    subgraph &quot;Application Layer&quot;
+        A[Next.js App] --> B[Prisma Client]
+        B --> C[PostgreSQL]
+    end
+    
+    subgraph &quot;Graph Layer&quot;
+        D[Graph Services] --> E[Neo4j/Memgraph]
+    end
+    
+    subgraph &quot;Data Flow&quot;
+        F[User Data] --> C
+        G[Graph Data] --> E
+        H[Metadata] --> C
+        I[Workflows] --> C
+        J[Queries] --> C
+    end
+    
+    A --> D
+" />
+
+## PostgreSQL Schema
+
+### Core Entities
+
+#### User Management
+```prisma
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  password      String
+  name          String?
+  role          UserRole      @default(USER)
+  emailVerified DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  models        Model[]
+  savedQueries  SavedQuery[]
+  workflows     Workflow[]
+  accounts      Account[]
+  sessions      Session[]
+  userSettings  UserSettings?
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+```
+
+#### Authentication
+```prisma
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+```
+
+### Graph Schema Models
+
+#### Model Schema Management
+```prisma
+model Model {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  schema      Json     // Graph schema definition
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflows   Workflow[]
+  
+  @@index([userId])
+  @@index([isPublic])
+}
+```
+
+#### Workflow Management
+```prisma
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  definition  Json     // Workflow definition (tools, actions, connections)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modelId     String
+  model       Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([modelId])
+}
+```
+
+#### Query Management
+```prisma
+model SavedQuery {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  query       String   // Cypher query
+  category    String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([category])
+  @@index([isPublic])
+}
+```
+
+#### User Settings
+```prisma
+model UserSettings {
+  id             String @id @default(cuid())
+  userId         String @unique
+  theme          String @default("light")
+  language       String @default("en")
+  
+  // AI Settings
+  aiEnabled      Boolean @default(false)
+  aiProvider     String?
+  aiApiKey       String?
+  aiModel        String?
+  
+  // Database Settings
+  defaultDbType  String @default("neo4j")
+  dbConnection   Json?  // Database connection details
+  
+  // Visualization Settings
+  defaultLayout  String @default("force-directed")
+  colorScheme    Json?  // Custom color schemes
+  
+  // Relations
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+```
+
+## Graph Database Schema
+
+### Graph Data Model
+
+#### Node Structure
+```cypher
+// Generic node structure
+CREATE (n:Label {
+  id: "unique_identifier",
+  properties: {
+    // Dynamic properties based on schema
+    name: "String",
+    type: "String",
+    created_at: datetime(),
+    updated_at: datetime()
+  }
+})
+```
+
+#### Relationship Structure
+```cypher
+// Generic relationship structure
+CREATE (a)-[r:RELATIONSHIP_TYPE {
+  id: "unique_identifier",
+  properties: {
+    weight: 1.0,
+    created_at: datetime(),
+    updated_at: datetime()
+  }
+}]->(b)
+```
+
+### Schema-Driven Graph Structure
+
+#### Dynamic Schema Application
+The graph database follows a schema-driven approach where:
+1. **Model Schema** defines node types and relationships
+2. **XML Data** is processed according to the schema
+3. **Tools and Actions** transform XML into graph elements
+4. **Root Nodes** determine traversal starting points
+
+#### Example Graph Structure
+<Mermaid chart="
+graph LR
+    subgraph &quot;XML Source&quot;
+        A[XML Document] --> B[Root Element]
+        B --> C[Child Elements]
+        C --> D[Attributes]
+    end
+    
+    subgraph &quot;Graph Representation&quot;
+        E[Root Node] --> F[Child Nodes]
+        F --> G[Property Nodes]
+        E -.-> H[Relationship Edges]
+        F -.-> H
+        G -.-> H
+    end
+    
+    A --> E
+" />
+
+## Data Relationships
+
+### Entity Relationship Diagram
+<Mermaid chart="
+erDiagram
+    User ||--o{ Model : creates
+    User ||--o{ SavedQuery : saves
+    User ||--o{ Workflow : creates
+    User ||--|| UserSettings : has
+    User ||--o{ Account : has
+    User ||--o{ Session : has
+    
+    Model ||--o{ Workflow : contains
+    
+    User {
+        string id PK
+        string email UK
+        string password
+        string name
+        enum role
+        datetime emailVerified
+        datetime createdAt
+        datetime updatedAt
+    }
+    
+    Model {
+        string id PK
+        string name
+        string description
+        json schema
+        boolean isPublic
+        datetime createdAt
+        datetime updatedAt
+        string userId FK
+    }
+    
+    Workflow {
+        string id PK
+        string name
+        string description
+        json definition
+        boolean isActive
+        datetime createdAt
+        datetime updatedAt
+        string userId FK
+        string modelId FK
+    }
+    
+    SavedQuery {
+        string id PK
+        string name
+        string description
+        string query
+        string category
+        boolean isPublic
+        datetime createdAt
+        datetime updatedAt
+        string userId FK
+    }
+" />
+
+## Data Flow Patterns
+
+### Schema Creation Flow
+<Mermaid chart="
+sequenceDiagram
+    participant U as User
+    participant A as App
+    participant P as Prisma
+    participant G as Graph DB
+    
+    U->>A: Create Schema
+    A->>P: Save Model Schema
+    P-->>A: Schema ID
+    A->>G: Prepare Graph Structure
+    A-->>U: Schema Created
+" />
+
+### Graph Generation Flow
+<Mermaid chart="
+sequenceDiagram
+    participant U as User
+    participant A as App
+    participant W as Workflow Engine
+    participant P as Prisma
+    participant G as Graph DB
+    
+    U->>A: Upload XML
+    A->>P: Get Schema Definition
+    P-->>A: Schema Data
+    A->>W: Execute Workflow
+    W->>G: Create Graph Elements
+    G-->>W: Graph Created
+    W-->>A: Generation Complete
+    A-->>U: Graph Generated
+" />
+
+### Query Execution Flow
+<Mermaid chart="
+sequenceDiagram
+    participant U as User
+    participant A as App
+    participant Q as Query Service
+    participant G as Graph DB
+    participant P as Prisma
+    
+    U->>A: Execute Query
+    A->>Q: Process Query
+    Q->>G: Execute Cypher
+    G-->>Q: Query Results
+    Q->>P: Save Query History
+    Q-->>A: Formatted Results
+    A-->>U: Display Results
+" />
+
+## Database Optimization
+
+### Indexing Strategy
+
+#### PostgreSQL Indexes
+```sql
+-- User performance indexes
+CREATE INDEX idx_user_email ON users(email);
+CREATE INDEX idx_user_role ON users(role);
+CREATE INDEX idx_user_created_at ON users(created_at);
+
+-- Model performance indexes
+CREATE INDEX idx_model_user_id ON models(user_id);
+CREATE INDEX idx_model_is_public ON models(is_public);
+CREATE INDEX idx_model_created_at ON models(created_at);
+
+-- Query performance indexes
+CREATE INDEX idx_saved_query_user_id ON saved_queries(user_id);
+CREATE INDEX idx_saved_query_category ON saved_queries(category);
+CREATE INDEX idx_saved_query_is_public ON saved_queries(is_public);
+
+-- Workflow performance indexes
+CREATE INDEX idx_workflow_user_id ON workflows(user_id);
+CREATE INDEX idx_workflow_model_id ON workflows(model_id);
+CREATE INDEX idx_workflow_is_active ON workflows(is_active);
+```
+
+#### Graph Database Indexes
+```cypher
+-- Node indexes for performance
+CREATE INDEX node_id_index FOR (n:Node) ON (n.id);
+CREATE INDEX node_label_index FOR (n) ON (n.label);
+CREATE INDEX node_type_index FOR (n) ON (n.type);
+
+-- Relationship indexes
+CREATE INDEX rel_id_index FOR ()-[r]-() ON (r.id);
+CREATE INDEX rel_type_index FOR ()-[r]-() ON (r.type);
+
+-- Composite indexes for common queries
+CREATE INDEX node_label_type_index FOR (n:Node) ON (n.label, n.type);
+```
+
+### Query Optimization
+
+#### Prisma Query Optimization
+```typescript
+// Efficient query with includes and selects
+const models = await prisma.model.findMany({
+  where: {
+    userId: userId,
+    isPublic: false
+  },
+  include: {
+    workflows: {
+      where: {
+        isActive: true
+      },
+      select: {
+        id: true,
+        name: true,
+        updatedAt: true
+      }
+    }
+  },
+  orderBy: {
+    updatedAt: 'desc'
+  }
+});
+```
+
+#### Graph Query Optimization
+```cypher
+// Optimized query with proper indexing
+MATCH (n:Node {type: $nodeType})
+WHERE n.property = $value
+WITH n
+MATCH (n)-[r:RELATIONSHIP_TYPE]->(m:Node)
+WHERE m.type = $targetType
+RETURN n, r, m
+LIMIT 100;
+```
+
+## Data Migration Strategy
+
+### Schema Versioning
+```typescript
+// Migration example
+export async function up(prisma: PrismaClient) {
+  // Add new fields
+  await prisma.user.updateMany({
+    data: {
+      // Default values for new fields
+    }
+  });
+  
+  // Create new indexes
+  await prisma.$executeRaw`
+    CREATE INDEX CONCURRENTLY idx_new_index ON table_name(column_name);
+  `;
+}
+```
+
+### Data Consistency
+- **Transactional Integrity**: All operations within transactions
+- **Cascade Operations**: Proper foreign key constraints
+- **Data Validation**: Schema validation at application level
+- **Backup Strategy**: Regular database backups
+
+## Security Considerations
+
+### Data Protection
+- **Encryption**: Sensitive data encrypted at rest
+- **Access Control**: Role-based data access
+- **Audit Trail**: Data modification logging
+- **Privacy Compliance**: GDPR and privacy regulations
+
+### Query Security
+- **Parameterized Queries**: SQL injection prevention
+- **Query Limits**: Resource usage controls
+- **Input Validation**: Comprehensive input sanitization
+- **Rate Limiting**: Query rate limiting
+
+This database architecture provides a robust foundation for the Plexus Platform, ensuring data integrity, performance, and scalability while maintaining clear separation between application metadata and graph data.

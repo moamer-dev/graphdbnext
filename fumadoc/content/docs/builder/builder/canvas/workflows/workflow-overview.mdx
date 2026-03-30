@@ -1,0 +1,353 @@
+---
+title: Workflow Overview
+description: Understanding workflows in Plexus Builder for XML to graph transformation
+---
+
+Workflows in Plexus Builder are the core mechanism for transforming XML data into graph structures. They combine tools and actions in a visual flow to process XML elements systematically and generate meaningful graph representations.
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { GitBranch, Globe, Settings, Zap, FileCode, Database } from 'lucide-react';
+
+## Workflow Types
+
+<Cards>
+  <Card
+    icon={<FileCode className="text-purple-500" />}
+    title="Schema Design"
+    description="Create graph schema definitions from XML structure with semantic mappings."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#schema-analysis" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">XML Analysis</a>
+      <a href="#node-types" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Node Types</a>
+      <a href="#relationships" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Relationships</a>
+      <a href="#semantic-mapping" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Semantic Mapping</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Database className="text-blue-500" />}
+    title="Data Processing"
+    description="Transform XML data into graph instances with business logic and validation."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#data-transformation" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Data Transformation</a>
+      <a href="#content-processing" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Content Processing</a>
+      <a href="#graph-generation" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Graph Generation</a>
+      <a href="#business-logic" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Business Logic</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Zap className="text-green-500" />}
+    title="Hybrid Workflows"
+    description="Combine schema design and data processing with adaptive transformations."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#dynamic-schema" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Dynamic Schema</a>
+      <a href="#real-time-processing" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Real-time Processing</a>
+      <a href="#adaptive-transformations" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Adaptive Transformations</a>
+      <a href="#complex-rules" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Complex Rules</a>
+    </div>
+  </Card>
+</Cards>
+
+## Workflow Architecture
+
+### Core Components
+
+<Cards>
+  <Card
+    icon={<FileCode className="text-gray-500" />}
+    title="XML Parser"
+    description="Ingests and parses XML source data into element trees for processing."
+  />
+  <Card
+    icon={<GitBranch className="text-blue-500" />}
+    title="Workflow Walker"
+    description="Traverses XML elements systematically using depth-first algorithms."
+  />
+  <Card
+    icon={<Settings className="text-purple-500" />}
+    title="Tool Executor"
+    description="Processes control flow logic and external service integrations."
+  />
+  <Card
+    icon={<Zap className="text-green-500" />}
+    title="Action Executor"
+    description="Performs data transformations and graph construction operations."
+  />
+  <Card
+    icon={<Database className="text-orange-500" />}
+    title="Graph Builder"
+    description="Constructs the final graph structure from processed elements."
+  />
+</Cards>
+
+### Data Flow
+
+The workflow execution follows a systematic process:
+
+```
+XML Document → Element Tree → Walker Processing → Tool/Action Execution → Graph Construction → Output Graph
+```
+
+## Schema Design Workflows
+
+Schema design workflows focus on creating graph schema definitions from XML structure analysis.
+
+### XML Structure Analysis
+
+**Purpose**: Analyze XML structure to understand element hierarchies and relationships.
+
+**When to Use**:
+- Understanding complex XML document structures
+- Identifying patterns and relationships
+- Planning graph schema design
+
+**Key Features**:
+- **Hierarchy Mapping**: Identify parent-child relationships
+- **Element Classification**: Categorize elements by type and purpose
+- **Attribute Analysis**: Extract and classify element attributes
+- **Pattern Recognition**: Identify recurring structural patterns
+
+### Node Type Definition
+
+**Purpose**: Define node types based on XML element analysis.
+
+**When to Use**:
+- Creating standardized node categories
+- Mapping XML elements to graph concepts
+- Establishing type hierarchies
+
+**Key Features**:
+- **Element-to-Node Mapping**: Map XML tags to node types
+- **Type Inheritance**: Create hierarchical type relationships
+- **Property Definition**: Define node properties from attributes
+- **Validation Rules**: Set up type validation constraints
+
+### Relationship Modeling
+
+**Purpose**: Define relationships between nodes based on XML structure.
+
+**When to Use**:
+- Modeling connections between elements
+- Establishing relationship types
+- Defining cardinality constraints
+
+**Key Features**:
+- **Parent-Child Relationships**: Map XML hierarchy to graph relationships
+- **Cross-References**: Handle element references and links
+- **Cardinality Rules**: Define relationship constraints
+- **Relationship Types**: Create meaningful relationship categories
+
+### Semantic Mapping
+
+**Purpose**: Map XML structure to semantic concepts using TIB terminology service.
+
+**When to Use**:
+- Adding semantic meaning to graph elements
+- Integrating with standard ontologies
+- Enhancing data interoperability
+
+**Key Features**:
+- **TIB Integration**: Connect to terminology services
+- **Concept Mapping**: Map elements to semantic concepts
+- **Property Standardization**: Use standard property definitions
+- **Semantic Validation**: Ensure semantic consistency
+
+## Data Processing Workflows
+
+Data processing workflows focus on transforming XML data into graph instances with business logic and validation.
+
+### Data Transformation
+
+**Purpose**: Transform XML data into graph-compatible formats.
+
+**When to Use**:
+- Converting data types and formats
+- Applying business rules and calculations
+- Preparing data for graph storage
+
+**Key Features**:
+- **Type Conversion**: Convert data between formats
+- **Business Rules**: Apply domain-specific transformations
+- **Data Validation**: Ensure data quality and consistency
+- **Format Standardization**: Standardize data representations
+
+### Content Processing
+
+**Purpose**: Process XML content for graph integration.
+
+**When to Use**:
+- Extracting meaningful content from XML
+- Processing text and metadata
+- Handling complex data structures
+
+**Key Features**:
+- **Text Extraction**: Extract and process text content
+- **Metadata Processing**: Handle element attributes and metadata
+- **Content Enrichment**: Enhance content with external data
+- **Quality Control**: Ensure content quality and accuracy
+
+### Graph Generation
+
+**Purpose**: Generate graph structures from processed XML data.
+
+**When to Use**:
+- Creating graph nodes and relationships
+- Building graph hierarchies
+- Establishing graph connections
+
+**Key Features**:
+- **Node Creation**: Create graph nodes from XML elements
+- **Relationship Building**: Establish connections between nodes
+- **Property Assignment**: Set node and relationship properties
+- **Graph Validation**: Ensure graph structure integrity
+
+### Business Logic Implementation
+
+**Purpose**: Implement domain-specific business rules and logic.
+
+**When to Use**:
+- Applying business constraints and rules
+- Implementing domain-specific transformations
+- Handling complex business scenarios
+
+**Key Features**:
+- **Rule Engine**: Apply business rules consistently
+- **Conditional Logic**: Implement complex decision trees
+- **Data Validation**: Ensure business rule compliance
+- **Exception Handling**: Handle business rule exceptions
+
+## Hybrid Workflows
+
+Hybrid workflows combine schema design and data processing with adaptive capabilities.
+
+### Dynamic Schema Creation
+
+**Purpose**: Create and adapt graph schemas dynamically during processing.
+
+**When to Use**:
+- Handling variable XML structures
+- Adapting to changing data patterns
+- Creating flexible data models
+
+**Key Features**:
+- **Schema Evolution**: Adapt schemas during processing
+- **Pattern Recognition**: Identify and handle new patterns
+- **Flexible Mapping**: Dynamic element-to-concept mapping
+- **Schema Validation**: Ensure schema consistency
+
+### Real-time Processing
+
+**Purpose**: Process XML data in real-time with immediate graph updates.
+
+**When to Use**:
+- Streaming data processing
+- Real-time data integration
+- Live graph updates
+
+**Key Features**:
+- **Stream Processing**: Handle continuous data streams
+- **Incremental Updates**: Update graphs as data arrives
+- **Performance Optimization**: Optimize for real-time processing
+- **Resource Management**: Manage system resources efficiently
+
+### Adaptive Transformations
+
+**Purpose**: Adapt transformation logic based on data characteristics.
+
+**When to Use**:
+- Handling diverse data formats
+- Adapting to data quality variations
+- Optimizing for different data patterns
+
+**Key Features**:
+- **Pattern Adaptation**: Adjust logic based on data patterns
+- **Quality Adaptation**: Handle varying data quality
+- **Performance Adaptation**: Optimize based on data characteristics
+- **Error Recovery**: Adapt to errors and exceptions
+
+### Complex Business Rules
+
+**Purpose**: Implement sophisticated business logic with multiple conditions.
+
+**When to Use**:
+- Complex decision-making scenarios
+- Multi-factor business rules
+- Advanced validation requirements
+
+**Key Features**:
+- **Rule Chaining**: Chain multiple business rules
+- **Condition Complexity**: Handle complex condition logic
+- **Decision Trees**: Implement sophisticated decision logic
+- **Exception Handling**: Handle complex exception scenarios
+
+## Workflow Execution
+
+### Execution Modes
+
+#### Interactive Mode
+- **Step-by-step execution**: Process elements one at a time
+- **Real-time feedback**: See progress and results immediately
+- **Pause/resume capabilities**: Control execution flow
+- **Debug information**: Access detailed execution data
+
+#### Batch Mode
+- **Full execution**: Process entire XML without interruption
+- **Progress reporting**: Monitor execution progress
+- **Error logging**: Track and report errors
+- **Performance metrics**: Collect execution statistics
+
+### Element Processing
+
+The workflow walker processes XML elements using depth-first traversal:
+
+1. **Element Matching**: Find tools and actions that match current element
+2. **Tool Execution**: Execute matching tools for control flow and external services
+3. **Action Execution**: Execute matching actions for data transformation
+4. **Child Processing**: Recursively process child elements
+5. **Result Integration**: Integrate results into graph structure
+
+### Configuration Options
+
+#### Workflow Settings
+- **Root Element**: Define starting XML element
+- **Maximum Depth**: Limit processing depth
+- **Parallel Processing**: Enable concurrent processing
+- **Error Handling**: Define error handling strategy
+- **Retry Logic**: Configure retry attempts and delays
+
+#### Node Configuration
+- **Element Matching**: Define which elements trigger nodes
+- **Execution Order**: Control node execution sequence
+- **Conditional Logic**: Set execution conditions
+- **Parameter Passing**: Configure data flow between nodes
+
+## Best Practices
+
+### Workflow Design
+- **Modular Design**: Break complex workflows into smaller, reusable components
+- **Clear Naming**: Use descriptive names for workflows, nodes, and variables
+- **Logical Organization**: Structure workflows for readability and maintainability
+- **Documentation**: Document workflow purpose and logic
+
+### Performance Optimization
+- **Efficient Matching**: Use specific element matchers to reduce processing overhead
+- **Parallel Processing**: Enable parallel execution where possible
+- **Memory Management**: Monitor and optimize memory usage for large XML files
+- **Caching**: Cache frequently accessed data and configurations
+
+### Error Handling
+- **Comprehensive Strategy**: Plan for various error scenarios
+- **Graceful Degradation**: Handle errors without complete failure
+- **Logging**: Maintain detailed execution logs for debugging
+- **Recovery Mechanisms**: Implement error recovery and retry logic
+
+### Testing and Validation
+- **Test Data**: Use representative XML samples for testing
+- **Edge Cases**: Test with unusual or malformed data
+- **Performance Testing**: Validate with large datasets
+- **Integration Testing**: Test with external services and APIs
+
+---
+
+Workflows provide a powerful, flexible system for transforming XML data into graph structures, with comprehensive control flow, error handling, and performance optimization features to support complex data processing scenarios. Choose the appropriate workflow type for your specific requirements and build efficient, maintainable data transformation pipelines.

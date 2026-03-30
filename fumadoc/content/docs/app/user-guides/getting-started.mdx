@@ -1,0 +1,262 @@
+---
+title: Getting Started
+description: Complete setup guide for Plexus Platform using Docker
+---
+
+Welcome to Plexus Platform! This comprehensive guide will walk you through setting up the complete development environment using Docker Compose, including database initialization and your first project creation.
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** installed on your system
+- **Git** for cloning the repository
+- At least **4GB RAM** available for Docker containers
+- Ports **5432**, **7688**, **7444**, **3003**, and **8080** available
+
+## 1. Quick Start with Docker
+
+The fastest way to get Plexus running is using our pre-configured Docker Compose setup.
+
+### 1.1 Clone the Repository
+
+```bash
+git clone https://github.com/your-org/plexus
+cd plexus
+```
+
+### 1.2 Environment Configuration
+
+Create a `.env` file in the root directory:
+
+```bash
+cp .env.example .env
+# Or create the file manually with the configuration below
+```
+
+**Essential Environment Variables:**
+
+```bash
+# PostgreSQL Configuration (Required)
+DATABASE_URL="postgresql://graphdb:graphdb_password@localhost:5432/graphdb"
+
+# NextAuth Configuration (Required)
+NEXTAUTH_SECRET="your-super-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Graph Database Configuration
+GRAPH_DB_TYPE="memgraph"  # Options: "memgraph" or "neo4j"
+GRAPH_DB_HOST="127.0.0.1"
+GRAPH_DB_PORT="7688"       # 7688 for Memgraph, 7687 for Neo4j
+GRAPH_DB_USERNAME=""       # Leave empty for Memgraph, set for Neo4j
+GRAPH_DB_PASSWORD=""       # Leave empty for Memgraph, set for Neo4j
+
+# Legacy Environment Variables (still supported)
+MEMGRAPH_HOST="127.0.0.1"
+MEMGRAPH_PORT="7688"
+NEO4J_HOST="127.0.0.1"
+NEO4J_PORT="7687"
+NEO4J_USERNAME="neo4j"
+NEO4J_PASSWORD="password"
+
+# Application Settings
+NODE_ENV="development"
+PORT="3000"
+```
+
+> [!IMPORTANT]
+> The `DATABASE_URL` must match the PostgreSQL configuration in `docker-compose.yaml`. The default setup uses:
+> - **User**: `graphdb`
+> - **Password**: `graphdb_password`
+> - **Database**: `graphdb`
+> - **Port**: `5432`
+>
+> **Graph Database Choice**: Set `GRAPH_DB_TYPE` to either "memgraph" or "neo4j". The corresponding ports are:
+> - **Memgraph**: Port 7688, UI at http://localhost:3003
+> - **Neo4j**: Port 7687, UI at http://localhost:7474
+
+### 1.3 Choose Your Graph Database
+
+Plexus supports both Memgraph and Neo4j as graph database backends. Choose the one that best fits your needs:
+
+#### Option 1: Memgraph (Default)
+- **Best for**: Development, rapid prototyping, Cypher compatibility
+- **Features**: Built-in visualization, faster setup, memory-optimized
+- **Start**: `docker-compose up -d memgraph memgraph-lab`
+
+#### Option 2: Neo4j
+- **Best for**: Production, enterprise features, large datasets
+- **Features**: Advanced security, clustering, ACID compliance
+- **Setup**: Uncomment Neo4j section in `docker-compose.yaml`, comment Memgraph
+
+```bash
+# For Memgraph (default)
+docker-compose up -d memgraph memgraph-lab
+
+# For Neo4j (uncomment in docker-compose.yaml first)
+docker-compose up -d neo4j
+```
+
+### 1.4 Start All Services
+
+```bash
+docker-compose up -d
+```
+
+This will launch:
+- **PostgreSQL** (port 5432): Metadata storage
+- **Memgraph** (port 7688) **OR** **Neo4j** (port 7687): Graph database engine
+- **Memgraph Lab** (port 3003) **OR** **Neo4j Browser** (port 7474): Graph database UI
+- **Adminer** (port 8080): Database management interface
+
+### 1.4 Verify Services
+
+Check that all containers are running:
+
+```bash
+docker-compose ps
+```
+
+You should see all services marked as "Up" or "healthy".
+
+## 2. Database Setup and Seeding
+
+### 2.1 Install Dependencies
+
+```bash
+npm install
+```
+
+### 2.2 Database Migrations
+
+Run the database schema migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+### 2.3 Create Admin User
+
+The platform includes a seeding script that creates a default admin user:
+
+```bash
+npm run seed
+```
+
+**Default Admin Credentials:**
+- **Email**: `admin@example.com`
+- **Password**: `admin123`
+- **Role**: `ADMIN`
+
+> [!WARNING]
+> Please change the default admin password immediately after first login in a production environment!
+
+### 2.4 Access Database Interfaces
+
+**PostgreSQL (Adminer)**: http://localhost:8080
+- Server: `postgres`
+- Username: `graphdb`
+- Password: `graphdb_password`
+- Database: `graphdb`
+
+**Graph Database Interfaces**:
+
+*For Memgraph (Default):*
+- **Memgraph Lab**: http://localhost:3003
+  - Host: `memgraph`
+  - Port: `7687`
+  - No authentication required
+
+*For Neo4j:*
+- **Neo4j Browser**: http://localhost:7474
+  - Username: `neo4j`
+  - Password: `password` (as set in docker-compose.yaml)
+
+## 3. Start the Application
+
+```bash
+npm run dev
+```
+
+The application will be available at **http://localhost:3000**.
+
+## 4. First Login and Project Setup
+
+### 4.1 Initial Login
+
+1. Navigate to **http://localhost:3000**
+2. Click **Sign In**
+3. Use the admin credentials:
+   - Email: `admin@example.com`
+   - Password: `admin123`
+
+### 4.2 Creating Your First Graph Model
+
+In Plexus, **projects are created through graph models**. Each graph model represents a project with its own schema and data.
+
+1. Navigate to the **Dashboard**
+2. Click **Model Schema** → **Create Model**
+3. Assign a name and description (e.g., "16th-Century Correspondence Network")
+4. Design your graph schema with nodes and relationships
+5. Save the model - this becomes your project
+
+The graph database connection is automatically configured based on your environment variables (`GRAPH_DB_TYPE`).
+
+## 5. Architecture Overview
+
+### Docker Services Breakdown
+
+| Service | Purpose | Port | Access |
+|---------|---------|------|--------|
+| **PostgreSQL** | Metadata storage (users, projects, schemas) | 5432 | localhost:5432 |
+| **Memgraph** | Graph database engine (default) | 7688 | localhost:7688 |
+| **Neo4j** | Graph database engine (alternative) | 7687 | localhost:7687 |
+| **Memgraph Lab** | Graph database visual interface | 3003 | http://localhost:3003 |
+| **Neo4j Browser** | Neo4j web interface | 7474 | http://localhost:7474 |
+| **Adminer** | PostgreSQL web admin | 8080 | http://localhost:8080 |
+
+### Data Flow
+
+1. **PostgreSQL** stores application metadata, user accounts, and project configurations
+2. **Memgraph or Neo4j** stores the actual graph data (nodes and relationships)
+3. **Plexus App** orchestrates between both databases and provides the UI
+
+## 6. Troubleshooting
+
+### Common Issues
+
+**Containers fail to start**
+```bash
+# Check Docker logs
+docker-compose logs
+
+# Restart services
+docker-compose down
+docker-compose up -d
+```
+
+**Database connection errors**
+- Verify `.env` file matches docker-compose.yaml
+- Check if PostgreSQL container is healthy: `docker-compose ps`
+- Try accessing Adminer at http://localhost:8080
+
+**Seeding fails**
+- Ensure PostgreSQL is running and healthy
+- Check `DATABASE_URL` format
+- Run `npx prisma migrate dev` before seeding
+
+**Port conflicts**
+- Stop other services using ports 5432, 7688, 7687, 7474, 3003, 8080
+- Or modify ports in `docker-compose.yaml`
+- Remember: Memgraph uses 7688, Neo4j uses 7687
+
+**Graph database connection issues**
+- Verify `GRAPH_DB_TYPE` matches your running container
+- Check if correct graph database is running: `docker-compose ps`
+- Ensure port configuration matches your choice (7688 for Memgraph, 7687 for Neo4j)
+- Try accessing the appropriate UI (Memgraph Lab or Neo4j Browser)
+
+### Development Tips
+
+- **Hot reload**: The Next.js app auto-restarts on code changes
+- **Database inspection**: Use Memgraph Lab for visual graph exploration
+- **SQL queries**: Use Adminer for direct PostgreSQL access
+- **Logs**: Check `docker-compose logs app-name` for service-specific issues

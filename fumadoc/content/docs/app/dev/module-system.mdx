@@ -1,0 +1,741 @@
+---
+title: Module System
+description: Pluggable module architecture for optional features
+---
+
+# Module System
+
+Plexus uses a modular architecture that allows optional features (modules) to be enabled or disabled dynamically. This system keeps the core application lightweight while allowing extensibility through pluggable modules.
+
+The **Plexus Builder** is the first module implemented using this system, providing researchers with a visual interface for graph schema design.
+
+## Architecture Overview
+
+<Mermaid chart="
+graph TB
+    subgraph &quot;Module Registry&quot;
+        A[Module Types] --> B[Module Registry]
+        B --> C[Module Service]
+    end
+    
+    subgraph &quot;API Layer&quot;
+        D[API Modules Endpoint] --> E[GET All Modules]
+        D --> F[PUT Module State]
+    end
+    
+    subgraph &quot;UI Layer&quot;
+        G[useModelBuilder Hook] --> H[ModelBuilderAdapter]
+        H --> I[Plexus Builder Package]
+    end
+    
+    subgraph &quot;Settings UI&quot;
+        J[Modules Settings Page] --> K[Module Toggle]
+        K --> L[API Updates]
+    end
+    
+    C --> D
+    G --> D
+    J --> D
+" />
+
+## Core Components
+
+### Module Types
+
+```typescript
+// From modules/types.ts - Module interface definitions
+/**
+ * Module interface that all optional modules must implement
+ */
+export interface Module {
+  id: string
+  name: string
+  description: string
+  enabled: boolean
+  version?: string
+}
+
+/**
+ * Module registry interface
+ */
+export interface ModuleRegistry {
+  register(module: Module): void
+  unregister(moduleId: string): void
+  getModule(moduleId: string): Module | undefined
+  getAllModules(): Module[]
+  isEnabled(moduleId: string): boolean
+  enable(moduleId: string): Promise<void>
+  disable(moduleId: string): Promise<void>
+}
+
+/**
+ * Module IDs
+ */
+export const MODULE_IDS = {
+  MODEL_BUILDER: 'plexus-builder'
+} as const
+
+export type ModuleId = typeof MODULE_IDS[keyof typeof MODULE_IDS]
+```
+
+### Module Registry
+
+```typescript
+// From modules/registry.ts - In-memory module registry
+import type { Module, ModuleRegistry } from './types'
+import { MODULE_IDS } from './types'
+
+/**
+ * In-memory module registry
+ * In production, this could be backed by a database or config file
+ */
+class ModuleRegistryImpl implements ModuleRegistry {
+  private modules: Map<string, Module> = new Map()
+
+  constructor () {
+    // Initialize with default modules
+    this.initializeDefaultModules()
+  }
+
+  private initializeDefaultModules (): void {
+    // Model Builder module - default to enabled
+    // In production, this should be loaded from database/config
+    this.modules.set(MODULE_IDS.MODEL_BUILDER, {
+      id: MODULE_IDS.MODEL_BUILDER,
+      name: 'Plexus Builder',
+      description: 'Integrated visual model builder for creating and editing Plexus graph schemas',
+      enabled: true, // Default enabled, can be overridden by settings
+      version: '1.0.0'
+    })
+  }
+
+  register (module: Module): void {
+    this.modules.set(module.id, module)
+  }
+
+  unregister (moduleId: string): void {
+    this.modules.delete(moduleId)
+  }
+
+  getModule (moduleId: string): Module | undefined {
+    return this.modules.get(moduleId)
+  }
+
+  getAllModules (): Module[] {
+    return Array.from(this.modules.values())
+  }
+
+  isEnabled (moduleId: string): boolean {
+    const mod = this.modules.get(moduleId)
+    return mod?.enabled ?? false
+  }
+
+  async enable (moduleId: string): Promise<void> {
+    const mod = this.modules.get(moduleId)
+    if (mod) {
+      mod.enabled = true
+      this.modules.set(moduleId, mod)
+    }
+  }
+
+  async disable (moduleId: string): Promise<void> {
+    const mod = this.modules.get(moduleId)
+    if (mod) {
+      mod.enabled = false
+      this.modules.set(moduleId, mod)
+    }
+  }
+}
+
+// Singleton instance
+let registryInstance: ModuleRegistry | null = null
+
+export function getModuleRegistry (): ModuleRegistry {
+  if (!registryInstance) {
+    registryInstance = new ModuleRegistryImpl()
+  }
+  return registryInstance
+}
+
+// Client-side hook to check if module is enabled
+export function useModuleEnabled (moduleId: string): boolean {
+  // This will be implemented as a React hook that reads from server state
+  // For now, return the default from registry
+  if (typeof window === 'undefined') {
+    return false // SSR: return false, will be hydrated on client
+  }
+  
+  const registry = getModuleRegistry()
+  return registry.isEnabled(moduleId)
+}
+```
+
+### Module Service
+
+```typescript
+// From services/core/ModuleService.ts - Service layer for modules
+import { getModuleRegistry } from '@/modules/registry'
+import type { Module, ModuleId } from '@/modules/types'
+
+/**
+ * Service for managing modules
+ * Handles module activation/deactivation and persistence
+ */
+export class ModuleService {
+  private registry = getModuleRegistry()
+
+  /**
+   * Get all registered modules
+   */
+  getAllModules (): Module[] {
+    return this.registry.getAllModules()
+  }
+
+  /**
+   * Get a specific module
+   */
+  getModule (moduleId: ModuleId): Module | undefined {
+    return this.registry.getModule(moduleId)
+  }
+
+  /**
+   * Check if a module is enabled
+   */
+  isEnabled (moduleId: ModuleId): boolean {
+    return this.registry.isEnabled(moduleId)
+  }
+
+  /**
+   * Enable a module
+   * In production, this should persist to database/config
+   */
+  async enableModule (moduleId: ModuleId): Promise<void> {
+    await this.registry.enable(moduleId)
+    // TODO: Persist to database/config
+    // await this.persistModuleState(moduleId, true)
+  }
+
+  /**
+   * Disable a module
+   * In production, this should persist to database/config
+   */
+  async disableModule (moduleId: ModuleId): Promise<void> {
+    await this.registry.disable(moduleId)
+    // TODO: Persist to database/config
+    // await this.persistModuleState(moduleId, false)
+  }
+
+  /**
+   * Update module state
+   * In production, this should persist to database/config
+   */
+  async updateModuleState (moduleId: ModuleId, enabled: boolean): Promise<void> {
+    if (enabled) {
+      await this.enableModule(moduleId)
+    } else {
+      await this.disableModule(moduleId)
+    }
+  }
+}
+
+// Singleton instance
+export const moduleService = new ModuleService()
+```
+
+## API Layer
+
+### Modules API Endpoint
+
+```typescript
+// From app/api/modules/route.ts - REST API for module management
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { moduleService } from '@/services/server'
+import { MODULE_IDS } from '@/modules/types'
+
+// GET /api/modules - Get all modules
+export async function GET () {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Only admins can view module settings
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    const modules = moduleService.getAllModules()
+
+    return NextResponse.json({ modules })
+  } catch (error: unknown) {
+    console.error('Error fetching modules:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch modules' },
+      { status: 500 }
+    )
+  }
+}
+
+// PUT /api/modules/[moduleId] - Update module state
+export async function PUT (request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Only admins can update module settings
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    const { moduleId, enabled } = body
+
+    if (!moduleId || typeof enabled !== 'boolean') {
+      return NextResponse.json(
+        { error: 'moduleId and enabled are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate moduleId
+    if (!Object.values(MODULE_IDS).includes(moduleId)) {
+      return NextResponse.json(
+        { error: 'Invalid module ID' },
+        { status: 400 }
+      )
+    }
+
+    await moduleService.updateModuleState(moduleId, enabled)
+
+    return NextResponse.json({ success: true })
+  } catch (error: unknown) {
+    console.error('Error updating module:', error)
+    return NextResponse.json(
+      { error: 'Failed to update module' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+## UI Integration
+
+### useModelBuilder Hook
+
+```typescript
+// From hooks/useModelBuilder.ts - Hook for module integration
+'use client'
+
+import { useState, useEffect, type ComponentType } from 'react'
+import { MODULE_IDS } from '@/modules/types'
+import type { ModelBuilderAdapterProps } from '@/adapters/ModelBuilderAdapter'
+
+/**
+ * Hook to check if Model Builder module is enabled
+ * and conditionally load the adapter
+ */
+export function useModelBuilder () {
+  const [isEnabled, setIsEnabled] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [ModelBuilderAdapter, setModelBuilderAdapter] = useState<ComponentType<ModelBuilderAdapterProps> | null>(null)
+  const [adapterLoading, setAdapterLoading] = useState(false)
+
+  // Check module status
+  useEffect(() => {
+    const checkModuleStatus = async () => {
+      try {
+        const response = await fetch('/api/modules')
+        if (response.ok) {
+          const data = await response.json()
+          const mod = data.modules?.find((m: { id: string }) => m.id === MODULE_IDS.MODEL_BUILDER)
+          setIsEnabled(mod?.enabled ?? false)
+        }
+      } catch (error) {
+        console.error('Error checking module status:', error)
+        setIsEnabled(false)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkModuleStatus()
+  }, [])
+
+  // Dynamically load adapter when module is enabled
+  // Use a function that returns a promise to avoid evaluating the module during import
+  useEffect(() => {
+    if (loading || !isEnabled || ModelBuilderAdapter) {
+      return
+    }
+
+    const loadAdapter = async () => {
+      setAdapterLoading(true)
+      try {
+        // Use a function import to delay evaluation
+        const adapterModule = await import('@/adapters/ModelBuilderAdapter')
+        // Store the component, but it won't be evaluated until rendered
+        setModelBuilderAdapter(() => adapterModule.ModelBuilderAdapter)
+      } catch (error) {
+        console.error('Failed to load ModelBuilderAdapter:', error)
+        setModelBuilderAdapter(null)
+      } finally {
+        setAdapterLoading(false)
+      }
+    }
+
+    loadAdapter()
+  }, [isEnabled, loading, ModelBuilderAdapter])
+
+  return {
+    isEnabled,
+    loading: loading || adapterLoading,
+    ModelBuilderAdapter
+  }
+}
+```
+
+### ModelBuilder Adapter
+
+```typescript
+// From adapters/ModelBuilderAdapter.tsx - Adapter for Plexus Builder package
+'use client'
+
+import {
+  ModelBuilder,
+  AISettingsProvider
+} from '@plexus/builder'
+import type {
+  WorkflowPersistence,
+  ModelBuilderRef
+} from '@plexus/builder'
+import type { Model } from '@/resources/ModelResource'
+import { useModelBuilderAdapter } from './useModelBuilderAdapter'
+
+export interface ModelBuilderAdapterProps {
+  model: Model | null
+  onSave?: (data: { schemaJson: unknown; schemaMd: string; name: string; description?: string }) => Promise<Model | void>
+  className?: string
+  builderRef?: React.RefObject<ModelBuilderRef | null>
+  workflowPersistence?: WorkflowPersistence
+}
+
+/**
+ * Adapter component that wraps the plexus-builder package
+ * and connects it to the main app's Model database entity.
+ */
+export function ModelBuilderAdapter({
+  model = null,
+  onSave,
+  className,
+  builderRef,
+  workflowPersistence
+}: ModelBuilderAdapterProps) {
+  const {
+    aiSettings,
+    existingWorkflows,
+    currentWorkflow,
+    effectivePersistence,
+    handleWorkflowChange,
+    handleSaveModel,
+    isNewModel
+  } = useModelBuilderAdapter({
+    model,
+    onSave,
+    builderRef,
+    workflowPersistence
+  })
+
+  if (aiSettings === null) {
+    return (
+      <>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">Loading AI Settings...</h3>
+            <p className="text-muted-foreground">Please wait while we configure the model builder.</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <AISettingsProvider settings={aiSettings}>
+      <ModelBuilder
+        ref={builderRef}
+        initialSchema={model?.schemaJson ? JSON.parse(model.schemaJson) : undefined}
+        onSave={handleSaveModel}
+        className={className}
+        isNewModel={isNewModel}
+        workflowPersistence={effectivePersistence}
+        onWorkflowChange={handleWorkflowChange}
+        initialWorkflow={currentWorkflow}
+        existingWorkflows={existingWorkflows}
+      />
+    </AISettingsProvider>
+  )
+}
+```
+
+### Usage in Components
+
+```typescript
+// Example usage in a component
+import { useModelBuilder } from '@/hooks/useModelBuilder'
+import { Alert } from '@/components/ui/alert'
+
+export function ModelBuilderPage({ model }: { model: Model | null }) {
+  const { isEnabled, loading, ModelBuilderAdapter } = useModelBuilder()
+  const handleSave = async (data: any) => {
+    // Handle save logic
+    console.log('Saving model:', data)
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (!isEnabled) {
+    return (
+      <Alert>
+        Model Builder module is not enabled. Please enable it in settings.
+      </Alert>
+    )
+  }
+
+  if (!ModelBuilderAdapter) {
+    return <div>Loading Model Builder...</div>
+  }
+
+  return (
+    <ModelBuilderAdapter 
+      model={model} 
+      onSave={handleSave}
+    />
+  )
+}
+```
+
+## Settings UI
+
+### Modules Settings Page
+
+```typescript
+// From app/dashboard/settings/modules/page.tsx - Admin settings UI
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import type { Module } from '@/modules/types'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Loader2, Settings, ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
+import Link from 'next/link'
+
+export default function ModulesSettingsPage() {
+  const { data: session } = useSession()
+  const router = useRouter()
+  const [modules, setModules] = useState<Module[]>([])
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState<string | null>(null)
+
+  const isAdmin = session?.user?.role === 'ADMIN'
+
+  useEffect(() => {
+    if (!isAdmin) {
+      router.push('/dashboard')
+      return
+    }
+
+    loadModules()
+  }, [isAdmin, router])
+
+  const loadModules = async () => {
+    try {
+      const response = await fetch('/api/modules')
+      if (response.ok) {
+        const data = await response.json()
+        setModules(data.modules || [])
+      } else {
+        toast.error('Failed to load modules')
+      }
+    } catch (error) {
+      console.error('Error loading modules:', error)
+      toast.error('Error loading modules')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleToggleModule = async (moduleId: string, enabled: boolean) => {
+    setUpdating(moduleId)
+    try {
+      const response = await fetch('/api/modules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleId, enabled })
+      })
+
+      if (response.ok) {
+        setModules(prev => 
+          prev.map(mod => 
+            mod.id === moduleId ? { ...mod, enabled } : mod
+          )
+        )
+        toast.success(`Module ${enabled ? 'enabled' : 'disabled'} successfully`)
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to update module')
+      }
+    } catch (error) {
+      console.error('Error updating module:', error)
+      toast.error('Error updating module')
+    } finally {
+      setUpdating(null)
+    }
+  }
+
+  if (!isAdmin) {
+    return null // Will redirect
+  }
+
+  return (
+    <div className="container mx-auto py-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Link href="/dashboard/settings">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Settings
+          </Button>
+        </Link>
+        <Settings className="h-5 w-5" />
+        <h1 className="text-2xl font-bold">Modules</h1>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {modules.map((module) => (
+            <div key={module.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-1">
+                <h3 className="font-semibold">{module.name}</h3>
+                <p className="text-sm text-muted-foreground">{module.description}</p>
+                {module.version && (
+                  <p className="text-xs text-muted-foreground">Version {module.version}</p>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor={`module-${module.id}`}>Enabled</Label>
+                <Switch
+                  id={`module-${module.id}`}
+                  checked={module.enabled}
+                  onCheckedChange={(checked) => handleToggleModule(module.id, checked)}
+                  disabled={updating === module.id}
+                />
+                {updating === module.id && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+## Adding a New Module
+
+### Step-by-Step Guide
+
+1. **Define Module ID**: Add to `MODULE_IDS` in `modules/types.ts`
+```typescript
+export const MODULE_IDS = {
+  MODEL_BUILDER: 'plexus-builder',
+  NEW_MODULE: 'new-module-name' // Add this
+} as const
+```
+
+2. **Register Module**: Add to `initializeDefaultModules` in `modules/registry.ts`
+```typescript
+private initializeDefaultModules (): void {
+  // Existing modules...
+  
+  // New module
+  this.modules.set(MODULE_IDS.NEW_MODULE, {
+    id: MODULE_IDS.NEW_MODULE,
+    name: 'New Module',
+    description: 'Description of the new module',
+    enabled: false, // Default disabled
+    version: '1.0.0'
+  })
+}
+```
+
+3. **Create Hook**: Create a hook similar to `useModelBuilder.ts`
+```typescript
+// hooks/useNewModule.ts
+export function useNewModule() {
+  // Similar implementation to useModelBuilder
+  // Check module status and dynamically load adapter
+}
+```
+
+4. **Create Adapter**: (Optional) If wrapping an external package
+```typescript
+// adapters/NewModuleAdapter.tsx
+export function NewModuleAdapter(props: NewModuleProps) {
+  // Adapter implementation
+}
+```
+
+5. **Add UI**: Implement settings and management pages as needed
+
+## Best Practices
+
+### Performance
+- **Lazy Loading**: Always use dynamic imports for module adapters
+- **Code Splitting**: Modules should not increase initial bundle size
+- **SSR Safety**: Handle server-side rendering properly
+
+### User Experience
+- **Graceful Degradation**: Always provide fallback UI if module is disabled
+- **Loading States**: Show appropriate loading indicators during module loading
+- **Error Handling**: Handle module loading failures gracefully
+
+### Architecture
+- **Thin Adapters**: Keep business logic in services, not in adapter layer
+- **Type Safety**: Use TypeScript interfaces for all module contracts
+- **Singleton Pattern**: Use singleton instances for registry and service
+
+### Security
+- **Role-Based Access**: Only admins can enable/disable modules
+- **Validation**: Validate module IDs and requests
+---
+
+This module system provides a flexible foundation for extending Plexus Platform with optional features while maintaining a clean separation between core functionality and optional modules.

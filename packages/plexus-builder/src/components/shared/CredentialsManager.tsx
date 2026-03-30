@@ -42,6 +42,17 @@ const credentialFields: Record<CredentialType, Array<{ key: string; label: strin
   getty: [
     { key: 'apiKey', label: 'Getty API Key', type: 'password', placeholder: 'Enter your Getty API key (optional)' }
   ],
+  apiKey: [
+    { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'Enter your API key' },
+    { key: 'apiKeyHeader', label: 'Header Name', type: 'text', placeholder: 'X-API-Key (default)' }
+  ],
+  bearer: [
+    { key: 'bearerToken', label: 'Bearer Token', type: 'password', placeholder: 'Enter your Bearer token' }
+  ],
+  basic: [
+    { key: 'basicUsername', label: 'Username', type: 'text', placeholder: 'Enter username' },
+    { key: 'basicPassword', label: 'Password', type: 'password', placeholder: 'Enter password' }
+  ],
   custom: [
     { key: 'endpoint', label: 'API Endpoint', type: 'text', placeholder: 'https://api.example.com/{id}' },
     { key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'Enter API key (optional)' },
@@ -136,6 +147,9 @@ export function CredentialsManager() {
       case 'geonames': return <Globe className="h-4 w-4" />
       case 'europeana': return <Globe className="h-4 w-4" />
       case 'getty': return <Key className="h-4 w-4" />
+      case 'apiKey': return <Key className="h-4 w-4" />
+      case 'bearer': return <Lock className="h-4 w-4" />
+      case 'basic': return <Lock className="h-4 w-4" />
       case 'custom': return <Lock className="h-4 w-4" />
     }
   }
@@ -187,6 +201,9 @@ export function CredentialsManager() {
                     <SelectItem value="geonames">GeoNames</SelectItem>
                     <SelectItem value="europeana">Europeana</SelectItem>
                     <SelectItem value="getty">Getty Vocabularies</SelectItem>
+                    <SelectItem value="apiKey">API Key</SelectItem>
+                    <SelectItem value="bearer">Bearer Token</SelectItem>
+                    <SelectItem value="basic">Basic Auth</SelectItem>
                     <SelectItem value="custom">Custom API</SelectItem>
                   </SelectContent>
                 </Select>

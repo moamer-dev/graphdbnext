@@ -1,0 +1,490 @@
+---
+title: Types
+description: Core data models and TypeScript types used throughout Plexus Builder
+---
+
+# Database Models & Types
+
+Plexus Builder uses a comprehensive type system to represent graph schemas, workflows, and application state. All models are defined with TypeScript to ensure type safety and developer experience.
+
+## Core Graph Models
+
+### Node Model
+
+The core node representation in the graph schema:
+
+```typescript
+export interface Node {
+  id: string                    // Unique identifier
+  label: string                  // Display label (e.g., "Person", "Publication")
+  type: string                   // Internal type identifier
+  properties: Property[]        // Node property definitions
+  position: { x: number; y: number }  // Canvas position
+  groupId?: string               // Optional group membership
+  order?: number                 // Order for ungrouped nodes
+  data?: Record<string, unknown> // Additional metadata
+}
+```
+
+**Key Characteristics**:
+- **Unique ID**: Each node has a unique identifier for reference
+- **Label vs Type**: Label is user-facing, type is internal
+- **Position**: Canvas position for visual representation
+- **Properties**: Schema definition for node properties
+
+### Property Model
+
+Properties define the schema for node and relationship attributes:
+
+```typescript
+export interface Property {
+  key: string                    // Property key/name
+  type: 'string' | 'number' | 'boolean' | 'date' | 'array' | 'object'
+  required: boolean              // Whether property is mandatory
+  defaultValue?: unknown         // Default value for new instances
+  description?: string           // Property description
+}
+```
+
+**Property Types**:
+- **string**: Text values and identifiers
+- **number**: Numeric values (integers, floats)
+- **boolean**: True/false values
+- **date**: Date/time values
+- **array**: Arrays of values
+- **object**: Complex nested objects
+
+### Relationship Model
+
+Relationships define connections between nodes:
+
+```typescript
+export interface Relationship {
+  id: string                    // Unique relationship identifier
+  type: string                  // Relationship type (e.g., "AUTHORED", "CONTAINS")
+  from: string                  // Source node ID
+  to: string                    // Target node ID
+  properties?: Property[]       // Relationship properties
+  cardinality?: 'one-to-one' | 'one-to-many' | 'many-to-many'
+  data?: Record<string, unknown> // Additional metadata
+}
+```
+
+**Cardinality Types**:
+- **one-to-one**: Each source node connects to exactly one target node
+- **one-to-many**: One source node can connect to multiple target nodes
+- **many-to-many**: Multiple source nodes can connect to multiple target nodes
+
+### Relationship Type Model
+
+Reusable relationship type definitions:
+
+```typescript
+export interface RelationshipType {
+  type: string                  // Relationship type name
+  properties?: Property[]       // Standard properties for this type
+  cardinality?: 'one-to-one' | 'one-to-many' | 'many-to-many'
+}
+```
+
+## Application State Models
+
+### Model Builder State
+
+Complete state for the model builder interface:
+
+```typescript
+export interface ModelBuilderState {
+  nodes: Node[]                          // All nodes in the schema
+  relationships: Relationship[]          // All relationships
+  relationshipTypes: RelationshipType[]  // Reusable relationship types
+  groups: NodeGroup[]                    // Node groups
+  selectedNode: string | null           // Currently selected node
+  selectedRelationship: string | null   // Currently selected relationship
+  selectedOntologyId: string | null      // Global ontology selection
+  isSemanticEnabled?: boolean            // Semantic enrichment toggle
+  hideUnconnectedNodes: boolean          // Visibility toggle
+  rootNodeId: string | null             // Root node for workflow execution
+  metadata: {
+    name: string                         // Model name
+    description: string                  // Model description
+    version: string                      // Model version
+  }
+}
+```
+
+### Node Group Model
+
+Groups organize nodes visually and logically:
+
+```typescript
+export interface NodeGroup {
+  id: string                    // Unique group identifier
+  name: string                  // Group display name
+  collapsed: boolean            // Whether group is collapsed
+  order: number                 // Group order in UI
+}
+```
+
+## Schema Export Models
+
+### Schema Definition Model
+
+Exportable schema definition:
+
+```typescript
+export interface Schema {
+  nodes: Array<{
+    label: string               // Node label
+    type: string                // Node type
+    properties: Array<{
+      name: string              // Property name
+      type: string              // Property type
+      required?: boolean        // Whether required
+      default?: unknown         // Default value
+      description?: string      // Property description
+    }>
+  }>
+  relationships: Array<{
+    type: string                // Relationship type
+    from: string                // Source node type
+    to: string                  // Target node type
+    properties?: Array<{
+      name: string              // Property name
+      type: string              // Property type
+      required?: boolean        // Whether required
+      default?: unknown         // Default value
+    }>
+    cardinality?: string        // Relationship cardinality
+  }>
+}
+```
+
+## Workflow Models
+
+### Tool Canvas Node Model
+
+Tool nodes in the workflow canvas:
+
+```typescript
+export type ToolNodeType =
+  | 'tool:if'
+  | 'tool:switch'
+  | 'tool:delay'
+  | 'tool:http'
+  | 'tool:fetch-api'
+  | 'tool:webhook'
+  | 'tool:fetch-orcid'
+  | 'tool:fetch-geonames'
+  | 'tool:fetch-europeana'
+  | 'tool:fetch-getty'
+
+export interface ToolCanvasNode {
+  id: string
+  type: ToolNodeType
+  label: string
+  targetNodeId?: string // Main node this tool is attached to
+  config: Record<string, unknown>
+  position: { x: number; y: number }
+  inputs?: number
+  outputs?: Array<{ id: string; label: string }>
+}
+```
+
+### Action Canvas Node Model
+
+Action nodes in the workflow canvas:
+
+```typescript
+export type ActionNodeType =
+  | 'action:set-property'
+  | 'action:create-relationship'
+  | 'action:group'
+  | 'action:skip'
+  | 'action:extract-and-normalize-attributes'
+  | 'action:update-node'
+  | 'action:delete-node'
+  | 'action:create-reference-chain'
+  | 'action:format-property'
+  | 'action:create-token-nodes'
+  | 'action:merge-children-text'
+  | 'action:create-text-node'
+  | 'action:copy-property'
+  | 'action:update-relationship'
+  | 'action:extract-and-compute-property'
+  | 'action:create-node-with-lookup'
+  | 'action:merge-properties'
+  | 'action:split-property'
+  | 'action:clone-node'
+  | 'action:merge-nodes'
+  | 'action:create-node-complete'
+  | 'action:create-annotation-nodes'
+  | 'action:delete-relationship'
+  | 'action:reverse-relationship'
+  | 'action:defer-relationship'
+
+export interface ActionCanvasNode {
+  id: string
+  type: ActionNodeType
+  label: string
+  config: Record<string, unknown>
+  position: { x: number; y: number }
+  isGroup?: boolean
+  children?: string[] // Array of action IDs that belong to this group
+  isExpanded?: boolean
+  enabled?: boolean // For action groups, whether the group is enabled
+}
+```
+
+### Workflow Edge Models
+
+Connections between workflow nodes:
+
+```typescript
+export interface ToolCanvasEdge {
+  id: string
+  source: string
+  target: string
+  sourceHandle?: string
+  targetHandle?: string
+}
+
+export interface ActionCanvasEdge {
+  id: string
+  source: string
+  target: string
+  sourceHandle?: string
+  targetHandle?: string
+}
+
+export interface WorkflowCanvasEdge {
+  id: string
+  source: string
+  target: string
+}
+```
+
+### Workflow Definition
+
+Complete workflow definition:
+
+```typescript
+export interface WorkflowDefinition {
+  toolNodes: ToolCanvasNode[]     // All tool nodes
+  actionNodes: ActionCanvasNode[] // All action nodes
+  edges: (ToolCanvasEdge | ActionCanvasEdge)[] // All connections
+  rootNodeId?: string            // Root node for execution
+}
+```
+
+## Registry Models
+
+### Component Metadata
+
+Metadata for registry components:
+
+```typescript
+export interface ItemMetadata {
+  label: string                 // Display label
+  description: string            // Component description
+  icon: LucideIcon             // Icon component
+  category: string              // Category ID
+  color?: string                // Text color class
+  bgColor?: string              // Background color class
+  isApiTool?: boolean           // Whether this is an API tool
+  order?: number                // Display order
+  hidden?: boolean              // Whether hidden from UI
+}
+```
+
+### Action Definition
+
+Complete action definition for registry:
+
+```typescript
+export interface ActionDefinition extends BaseDefinition {
+  executor?: (action: any, ctx: any) => void     // Execution function
+}
+
+export interface BaseDefinition {
+  id: string                    // Unique action ID
+  metadata: ItemMetadata         // UI metadata
+  configSchema: ConfigField[]    // Configuration schema
+  defaultConfig: Record<string, any> // Default configuration
+}
+```
+
+### Tool Definition
+
+Complete tool definition for registry:
+
+```typescript
+export interface ToolDefinition extends BaseDefinition {
+  executor?: (tool: any, ctx: any) => Promise<any> // Execution function
+}
+```
+
+### Configuration Field Schema
+
+Schema for configuration UI generation:
+
+```typescript
+export interface ConfigField {
+  name: string                  // Field name/key
+  label: string                 // Display label
+  type: FieldType               // Field type
+  placeholder?: string          // Placeholder text
+  defaultValue?: unknown        // Default value
+  required?: boolean            // Whether required
+  options?: Array<{            // Options for select fields
+    label: string
+    value: string
+  }>
+  dependsOn?: string            // Parent field dependency
+  dependsOnValue?: unknown      // Required parent value
+  description?: string          // Field description
+}
+
+export type FieldType = 
+  | 'text'      // Text input
+  | 'number'    // Number input
+  | 'boolean'   // Checkbox/toggle
+  | 'select'    // Dropdown select
+  | 'properties' // Key-value pairs
+  | 'mappings'  // Source-target mappings
+  | 'separator' // Visual separator
+```
+
+## XML Processing Models
+
+### XML Element Information
+
+Information about XML elements during analysis:
+
+```typescript
+export interface XmlElementInfo {
+  elementNames: string[]        // All element names found
+  attributeNames: string[]       // All attribute names found
+  rootElements: string[]        // Root element names
+}
+```
+
+### XML Analysis Rules
+
+Rules for XML analysis during import:
+
+```typescript
+export interface XmlAnalysisRules {
+  ignoredElements?: string[]     // Elements to ignore
+  ignoredSubtrees?: string[]      // Subtrees to ignore
+  referenceAttributes?: string[]  // Attributes that create references
+  patternRules?: {
+    alternativeAttributes?: string[]
+    annotationAttributes?: string[]
+    translationAttributes?: string[]
+    choiceIndicators?: string[]
+  }
+  relationshipTypeMappings?: Record<string, string[]>
+  textContentRules?: {
+    characterLevelElements?: string[]
+    signLevelElements?: string[]
+  }
+}
+```
+
+### XML Structure Analysis
+
+Analysis results for XML structure:
+
+```typescript
+export interface XmlStructureAnalysis {
+  rootElement: string            // Root element name
+  elementTree: ElementNode       // Hierarchical element tree
+  elementCounts: Record<string, number> // Element frequencies
+  attributeCounts: Record<string, number> // Attribute frequencies
+  complexity: {
+    maxDepth: number             // Maximum nesting depth
+    totalElements: number        // Total element count
+    uniqueElements: number       // Unique element count
+  }
+}
+```
+
+## AI Integration Models
+
+### AI Settings
+
+Configuration for AI features:
+
+```typescript
+export interface AISettings {
+  enabled: boolean              // Whether AI is enabled
+  provider: string              // AI provider (openai, anthropic, etc.)
+  apiKey: string                // API key
+  model: string                 // Model name
+  temperature: number           // Generation temperature
+  maxTokens: number             // Maximum tokens
+  features: {
+    xmlMappingAssistant: boolean
+    xmlRulesAssistant: boolean
+    nodePropertySuggestion: boolean
+    relationshipRecommendation: boolean
+    schemaDesign: boolean
+    workflowGeneration: boolean
+    researchAssistant: boolean
+  }
+}
+```
+
+### AI Agent Context
+
+Context for AI agent interactions:
+
+```typescript
+export interface ResearchAssistantContext {
+  currentView?: 'import-wizard' | 'plexus-builder' | 'workflow-builder'
+  currentState?: {
+    selectedNodeId?: string | null
+    selectedRelationshipId?: string | null
+    nodeCount?: number
+    relationshipCount?: number
+    nodes?: Array<{ label: string; type: string; id: string }>
+    relationships?: Array<{ type: string; from: string; to: string; id: string }>
+  }
+  userHistory?: unknown[]
+  xmlContent?: string
+}
+```
+
+## Type Safety and Validation
+
+### Zod Schemas
+
+Runtime validation schemas for critical types:
+
+```typescript
+import { z } from 'zod'
+
+// Node validation schema
+export const NodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  type: z.string(),
+  properties: z.array(PropertySchema),
+  position: z.object({ x: z.number(), y: z.number() }),
+  groupId: z.string().optional(),
+  order: z.number().optional(),
+  data: z.record(z.unknown()).optional()
+})
+
+// Property validation schema
+export const PropertySchema = z.object({
+  key: z.string(),
+  type: z.enum(['string', 'number', 'boolean', 'date', 'array', 'object']),
+  required: z.boolean(),
+  defaultValue: z.unknown().optional(),
+  description: z.string().optional()
+})
+```
+
+This comprehensive type system ensures type safety throughout the application while providing clear contracts for all data structures and APIs.

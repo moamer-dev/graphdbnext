@@ -19,7 +19,7 @@ export default function EditModelPage() {
 
   const { isEnabled, loading: moduleLoading, ModelBuilderAdapter } = useModelBuilder()
   const { data: modelData, isLoading } = resourceHooks.models.useSingle(modelId)
-  const updateModelMutation = resourceHooks.models.useUpdate()
+  const updateModelMutation = resourceHooks.models.useUpdate({ showToast: false })
   const builderRef = useRef<ModelBuilderRef>(null)
 
   // Clear builder state when unmounting

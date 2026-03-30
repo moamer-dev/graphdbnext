@@ -1,0 +1,972 @@
+---
+title: State Management
+description: Understanding Zustand stores and state patterns in Plexus Builder
+---
+
+# State Management
+
+Plexus Builder uses Zustand for state management, providing a lightweight, performant solution that scales well with complex applications. The state architecture follows a store-per-feature pattern with clear separation of concerns.
+
+## Zustand Architecture Overview
+
+<Mermaid chart="
+graph TB
+    subgraph State Layer
+        A[Model Builder Store]
+        B[Workflow Canvas Store]
+        C[Action Canvas Store]
+        D[Tool Canvas Store]
+        E[XML Import Wizard Store]
+        F[Configuration Stores]
+    end
+    
+    subgraph UI Components
+        G[Model Builder UI]
+        H[Workflow Builder UI]
+        I[Wizard UI]
+        J[Configuration Panels]
+    end
+    
+    subgraph Services
+        K[Workflow Executor]
+        L[XML Processor]
+        M[AI Services]
+    end
+    
+    G --> A
+    G --> D
+    H --> B
+    H --> C
+    H --> D
+    I --> E
+    J --> F
+    
+    A --> K
+    B --> K
+    E --> L
+    F --> M
+" />
+
+## Core Store Architecture
+
+### Model Builder Store
+
+The central store for graph schema management:
+
+```typescript
+interface ModelBuilderActions {
+  // Node actions
+  addNode: (node: Omit<Node, 'id' | 'position'>) => string
+  updateNode: (id: string, updates: Partial<Node>) => void
+  deleteNode: (id: string) => void
+  setNodePosition: (id: string, position: { x: number; y: number }) => void
+  reorderNodes: (activeId: string, overId: string) => void
+
+  // Relationship actions
+  addRelationship: (relationship: Omit<Relationship, 'id'>) => string
+  updateRelationship: (id: string, updates: Partial<Relationship>, updateAllWithType?: boolean, oldType?: string) => void
+  deleteRelationship: (id: string) => void
+
+  // Relationship type actions
+  addRelationshipType: (type: RelationshipType) => void
+  getRelationshipType: (type: string) => RelationshipType | undefined
+
+  // Selection
+  selectNode: (id: string | null) => void
+  selectRelationship: (id: string | null) => void
+
+  // Metadata
+  updateMetadata: (metadata: Partial<ModelBuilderState['metadata']>) => void
+
+  // Group actions
+  addGroup: (name: string) => string
+  updateGroup: (id: string, updates: Partial<NodeGroup>) => void
+  deleteGroup: (id: string, deleteNodes?: boolean) => void
+  toggleGroup: (id: string) => void
+  reorderUngroupedNodes: (activeId: string, overId: string) => void
+  moveNodeToGroup: (nodeId: string, groupId: string | null) => void
+
+  // Bulk operations
+  clear: () => void
+  loadState: (state: Partial<ModelBuilderState>) => void
+  organizeLayout: (type?: 'hierarchical' | 'grid' | 'circular') => void
+
+  // Validation
+  validate: () => { valid: boolean; errors: string[] }
+
+  // Visibility
+  setHideUnconnectedNodes: (hide: boolean) => void
+
+  // Root node management
+  setRootNodeId: (nodeId: string | null) => void
+
+  // Semantic
+  setSelectedOntologyId: (ontologyId: string | null) => void
+  setIsSemanticEnabled: (enabled: boolean) => void
+}
+
+export type ModelBuilderStore = ModelBuilderState & ModelBuilderActions
+
+const initialState: ModelBuilderState = {
+  nodes: [],
+  relationships: [],
+  relationshipTypes: [],
+  groups: [],
+  selectedNode: null,
+  selectedRelationship: null,
+  hideUnconnectedNodes: false,
+  rootNodeId: null,
+  selectedOntologyId: null,
+  isSemanticEnabled: false,
+  metadata: {
+    name: '',
+    description: '',
+    version: '1.0.0'
+  }
+}
+
+export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
+  ...initialState,
+
+  addNode: (node) => {
+    const id = generateId()
+    const position = getNextPosition(get().nodes)
+    set((state) => ({
+      nodes: [...state.nodes, { ...node, id, position }]
+    }))
+    return id
+  },
+
+  updateNode: (id, updates) => {
+    set((state) => ({
+      nodes: state.nodes.map(node => 
+        node.id === id ? { ...node, ...updates } : node
+      )
+    }))
+  },
+
+  deleteNode: (id) => {
+    set((state) => {
+      const newNodes = state.nodes.filter(node => node.id !== id)
+      const newRelationships = state.relationships.filter(
+        rel => rel.from !== id && rel.to !== id
+      )
+      return {
+        nodes: newNodes,
+        relationships: newRelationships,
+        selectedNode: state.selectedNode === id ? null : state.selectedNode
+      }
+    })
+  },
+
+  // ... other implementations
+}))
+```
+
+**Key Features**:
+- **Immutable Updates**: All state updates are immutable
+- **Derived State**: Computed values using selectors
+- **Action Composition**: Complex actions composed from simpler ones
+- **Validation**: Built-in validation for state consistency
+
+### Workflow Canvas Store
+
+Manages the workflow builder canvas state:
+
+```typescript
+export type WorkflowNodeKind = 'trigger' | 'condition' | 'action'
+export type WorkflowNodeType =
+  | 'trigger:xml-start'
+  | 'condition:has-attribute'
+  | 'condition:has-text'
+  | 'condition:has-children'
+  | 'action:create-node'
+  | 'action:create-relationship'
+  | 'action:set-property'
+  | 'action:skip'
+  | 'action:create-node-text'
+  | 'action:create-node-tokens'
+  | 'tool:if'
+  | 'tool:switch'
+  | 'tool:loop'
+  | 'tool:merge'
+  | 'tool:filter'
+  | 'tool:delay'
+
+export interface WorkflowCanvasNode {
+  id: string
+  kind: WorkflowNodeKind
+  type: WorkflowNodeType
+  label: string
+  targetNodeId?: string
+  config: Record<string, any>
+  position: { x: number; y: number }
+}
+
+export interface WorkflowCanvasEdge {
+  id: string
+  source: string
+  target: string
+}
+
+interface WorkflowCanvasState {
+  nodes: WorkflowCanvasNode[]
+  edges: WorkflowCanvasEdge[]
+  selectedNodeId: string | null
+  addNode: (node: Omit<WorkflowCanvasNode, 'id'>) => string
+  updateNode: (id: string, updates: Partial<WorkflowCanvasNode>) => void
+  deleteNode: (id: string) => void
+  addEdge: (edge: Omit<WorkflowCanvasEdge, 'id'>) => string
+  deleteEdge: (id: string) => void
+  selectNode: (id: string | null) => void
+  clear: () => void
+}
+
+export const useWorkflowCanvasStore = create<WorkflowCanvasState>((set, get) => ({
+  nodes: [],
+  edges: [],
+  selectedNodeId: null,
+
+  addNode: (node) => {
+    const id = generateId()
+    set((state) => ({
+      nodes: [...state.nodes, { ...node, id }]
+    }))
+    return id
+  },
+
+  updateNode: (id, updates) => {
+    set((state) => ({
+      nodes: state.nodes.map(node => 
+        node.id === id ? { ...node, ...updates } : node
+      )
+    }))
+  },
+
+  deleteNode: (id) => {
+    set((state) => {
+      const newNodes = state.nodes.filter(node => node.id !== id)
+      const newEdges = state.edges.filter(
+        edge => edge.source !== id && edge.target !== id
+      )
+      return {
+        nodes: newNodes,
+        edges: newEdges,
+        selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId
+      }
+    })
+  },
+
+  addEdge: (edge) => {
+    const id = generateId()
+    set((state) => ({
+      edges: [...state.edges, { ...edge, id }]
+    }))
+    return id
+  },
+
+  deleteEdge: (id) => {
+    set((state) => ({
+      edges: state.edges.filter(edge => edge.id !== id)
+    }))
+  },
+
+  selectNode: (id) => set({ selectedNodeId: id }),
+
+  clear: () => set({
+    nodes: [],
+    edges: [],
+    selectedNodeId: null
+  })
+}))
+```
+
+### XML Import Wizard Store
+
+Manages the multi-step XML import process:
+
+```typescript
+export type WizardStep = 'upload' | 'configure-rules' | 'analyze' | 'configure' | 'review'
+
+interface XmlImportWizardState {
+  // Step management
+  step: WizardStep
+
+  // File
+  selectedFile: File | null
+
+  // Analysis rules
+  analysisRules: Partial<XmlAnalysisRules>
+
+  // Analysis results
+  analysis: XmlStructureAnalysis | null
+
+  // Mapping configuration
+  mapping: XmlMappingConfig | null
+
+  // Selected elements
+  selectedElements: Set<string>
+
+  // Available elements from XML (for dropdowns)
+  availableElements: XmlElementInfo | null
+
+  // Root node element name (from mapping)
+  rootElementName: string | null
+
+  // Error state
+  error: string | null
+
+  // Semantic
+  selectedOntologyId: string | null
+  showSemantic: boolean
+}
+
+interface XmlImportWizardActions {
+  // Step navigation
+  setStep: (step: WizardStep) => void
+
+  // File management
+  setSelectedFile: (file: File | null) => void
+
+  // Rules management
+  setAnalysisRules: (rules: Partial<XmlAnalysisRules>) => void
+
+  // Analysis management
+  setAnalysis: (analysis: XmlStructureAnalysis | null) => void
+
+  // Mapping management
+  setMapping: (mapping: XmlMappingConfig | null) => void
+
+  // Element selection
+  setSelectedElements: (elements: Set<string>) => void
+  toggleElementSelection: (element: string) => void
+
+  // Available elements
+  setAvailableElements: (elements: XmlElementInfo | null) => void
+
+  // Root element
+  setRootElementName: (name: string | null) => void
+
+  // Error handling
+  setError: (error: string | null) => void
+
+  // Semantic
+  setSelectedOntologyId: (ontologyId: string | null) => void
+  setShowSemantic: (show: boolean) => void
+
+  // Reset
+  reset: () => void
+}
+
+export type XmlImportWizardStore = XmlImportWizardState & XmlImportWizardActions
+
+export const useXmlImportWizardStore = create<XmlImportWizardStore>((set, get) => ({
+  // Initial state
+  step: 'upload',
+  selectedFile: null,
+  analysisRules: {},
+  analysis: null,
+  mapping: null,
+  selectedElements: new Set(),
+  availableElements: null,
+  rootElementName: null,
+  error: null,
+  selectedOntologyId: null,
+  showSemantic: false,
+
+  // Actions
+  setStep: (step) => set({ step }),
+  
+  setSelectedFile: (file) => set({ selectedFile: file }),
+  
+  setAnalysisRules: (rules) => set((state) => ({
+    analysisRules: { ...state.analysisRules, ...rules }
+  })),
+  
+  setAnalysis: (analysis) => set({ analysis }),
+  
+  setMapping: (mapping) => set({ mapping }),
+  
+  setSelectedElements: (elements) => set({ selectedElements: elements }),
+  
+  toggleElementSelection: (element) => set((state) => {
+    const newSelected = new Set(state.selectedElements)
+    if (newSelected.has(element)) {
+      newSelected.delete(element)
+    } else {
+      newSelected.add(element)
+    }
+    return { selectedElements: newSelected }
+  }),
+  
+  setAvailableElements: (elements) => set({ availableElements: elements }),
+  
+  setRootElementName: (name) => set({ rootElementName: name }),
+  
+  setError: (error) => set({ error }),
+  
+  setSelectedOntologyId: (ontologyId) => set({ selectedOntologyId: ontologyId }),
+  
+  setShowSemantic: (show) => set({ showSemantic: show }),
+
+  reset: () => set({
+    step: 'upload',
+    selectedFile: null,
+    analysisRules: {},
+    analysis: null,
+    mapping: null,
+    selectedElements: new Set(),
+    availableElements: null,
+    rootElementName: null,
+    error: null,
+    selectedOntologyId: null,
+    showSemantic: false
+  })
+}))
+```
+
+### Action Configuration Store
+
+Manages configuration for individual action nodes:
+
+```typescript
+export interface TextTransform {
+  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'
+  replaceFrom?: string
+  replaceTo?: string
+  regexPattern?: string
+  regexReplacement?: string
+}
+
+export interface ActionConfigurationState {
+  // Action metadata
+  actionNodeId: string | null
+  actionLabel: string
+  selectedGroupId: string
+
+  // Group config (for action:group type)
+  groupLabel: string
+  groupEnabled: boolean
+
+  // Test/Execution state
+  testResult: { success: boolean; output: string; details?: string } | null
+  isExecuting: boolean
+  showApiResponseModal: boolean
+  graphResult: Array<Record<string, unknown>> | null
+  showGraphModal: boolean
+
+  // Text transforms
+  textTransforms: TextTransform[]
+
+  // Configuration
+  config: Record<string, any>
+}
+
+interface ActionConfigurationActions {
+  // Action selection
+  setActionNode: (nodeId: string | null) => void
+  setActionLabel: (label: string) => void
+
+  // Group management
+  setSelectedGroupId: (groupId: string) => void
+  setGroupLabel: (label: string) => void
+  setGroupEnabled: (enabled: boolean) => void
+
+  // Test/Execution
+  setTestResult: (result: { success: boolean; output: string; details?: string } | null) => void
+  setIsExecuting: (executing: boolean) => void
+  setShowApiResponseModal: (show: boolean) => void
+  setGraphResult: (result: Array<Record<string, unknown>> | null) => void
+  setShowGraphModal: (show: boolean) => void
+
+  // Text transforms
+  addTextTransform: (transform: TextTransform) => void
+  updateTextTransform: (index: number, transform: Partial<TextTransform>) => void
+  removeTextTransform: (index: number) => void
+
+  // Configuration
+  setConfig: (config: Record<string, any>) => void
+  updateConfig: (key: string, value: any) => void
+
+  // Reset
+  reset: () => void
+}
+
+export type ActionConfigurationStore = ActionConfigurationState & ActionConfigurationActions
+
+export const useActionConfigurationStore = create<ActionConfigurationStore>((set, get) => ({
+  // Initial state
+  actionNodeId: null,
+  actionLabel: '',
+  selectedGroupId: '',
+  groupLabel: '',
+  groupEnabled: true,
+  testResult: null,
+  isExecuting: false,
+  showApiResponseModal: false,
+  graphResult: null,
+  showGraphModal: false,
+  textTransforms: [],
+  config: {},
+
+  // Actions
+  setActionNode: (nodeId) => set({ actionNodeId: nodeId }),
+  setActionLabel: (label) => set({ actionLabel: label }),
+  
+  setSelectedGroupId: (groupId) => set({ selectedGroupId: groupId }),
+  setGroupLabel: (label) => set({ groupLabel: label }),
+  setGroupEnabled: (enabled) => set({ groupEnabled: enabled }),
+  
+  setTestResult: (result) => set({ testResult: result }),
+  setIsExecuting: (executing) => set({ isExecuting: executing }),
+  setShowApiResponseModal: (show) => set({ showApiResponseModal: show }),
+  setGraphResult: (result) => set({ graphResult: result }),
+  setShowGraphModal: (show) => set({ showGraphModal: show }),
+  
+  addTextTransform: (transform) => set((state) => ({
+    textTransforms: [...state.textTransforms, transform]
+  })),
+  
+  updateTextTransform: (index, transform) => set((state) => ({
+    textTransforms: state.textTransforms.map((t, i) => 
+      i === index ? { ...t, ...transform } : t
+    )
+  })),
+  
+  removeTextTransform: (index) => set((state) => ({
+    textTransforms: state.textTransforms.filter((_, i) => i !== index)
+  })),
+  
+  setConfig: (config) => set({ config }),
+  updateConfig: (key, value) => set((state) => ({
+    config: { ...state.config, [key]: value }
+  })),
+
+  reset: () => set({
+    actionNodeId: null,
+    actionLabel: '',
+    selectedGroupId: '',
+    groupLabel: '',
+    groupEnabled: true,
+    testResult: null,
+    isExecuting: false,
+    showApiResponseModal: false,
+    graphResult: null,
+    showGraphModal: false,
+    textTransforms: [],
+    config: {}
+  })
+}))
+```
+
+### Tool Configuration Store
+
+Manages configuration for individual tool nodes:
+
+```typescript
+import type { ConnectionStatus } from '../components/shared/ConnectionStatusIndicator'
+
+export interface ToolConfigurationState {
+  toolNodeId: string | null
+  toolLabel: string
+  
+  // Test/Execution state
+  testResult: { success: boolean; output: string; details?: string } | null
+  isExecuting: boolean
+  testIdInput: string
+  executedApiResponse: unknown | null
+  apiResponseModalOpen: boolean
+  responseHistory: Array<{
+    id: string
+    timestamp: number
+    toolId: string
+    toolLabel: string
+    response: unknown
+    params?: Record<string, unknown>
+  }>
+  connectionStatus: ConnectionStatus
+  validationErrors: Array<{ field: string; message: string }>
+
+  // Generic config object
+  config: Record<string, any>
+}
+
+interface ToolConfigurationActions {
+  // Tool selection
+  setToolNode: (nodeId: string | null) => void
+  setToolLabel: (label: string) => void
+
+  // Test/Execution
+  setTestResult: (result: { success: boolean; output: string; details?: string } | null) => void
+  setIsExecuting: (executing: boolean) => void
+  setTestIdInput: (input: string) => void
+  setExecutedApiResponse: (response: unknown | null) => void
+  setApiResponseModalOpen: (open: boolean) => void
+
+  // Response history
+  addToResponseHistory: (entry: {
+    id: string
+    timestamp: number
+    toolId: string
+    toolLabel: string
+    response: unknown
+    params?: Record<string, unknown>
+  }) => void
+  clearResponseHistory: () => void
+
+  // Connection status
+  setConnectionStatus: (status: ConnectionStatus) => void
+
+  // Validation
+  setValidationErrors: (errors: Array<{ field: string; message: string }>) => void
+  addValidationError: (error: { field: string; message: string }) => void
+  clearValidationErrors: () => void
+
+  // Configuration
+  setConfig: (config: Record<string, any>) => void
+  updateConfig: (key: string, value: any) => void
+
+  // Reset
+  reset: () => void
+}
+
+export type ToolConfigurationStore = ToolConfigurationState & ToolConfigurationActions
+
+export const useToolConfigurationStore = create<ToolConfigurationStore>((set, get) => ({
+  // Initial state
+  toolNodeId: null,
+  toolLabel: '',
+  testResult: null,
+  isExecuting: false,
+  testIdInput: '',
+  executedApiResponse: null,
+  apiResponseModalOpen: false,
+  responseHistory: [],
+  connectionStatus: 'disconnected',
+  validationErrors: [],
+  config: {},
+
+  // Actions
+  setToolNode: (nodeId) => set({ toolNodeId: nodeId }),
+  setToolLabel: (label) => set({ toolLabel: label }),
+  
+  setTestResult: (result) => set({ testResult: result }),
+  setIsExecuting: (executing) => set({ isExecuting: executing }),
+  setTestIdInput: (input) => set({ testIdInput: input }),
+  setExecutedApiResponse: (response) => set({ executedApiResponse: response }),
+  setApiResponseModalOpen: (open) => set({ apiResponseModalOpen: open }),
+  
+  addToResponseHistory: (entry) => set((state) => ({
+    responseHistory: [...state.responseHistory, entry]
+  })),
+  
+  clearResponseHistory: () => set({ responseHistory: [] }),
+  
+  setConnectionStatus: (status) => set({ connectionStatus: status }),
+  
+  setValidationErrors: (errors) => set({ validationErrors: errors }),
+  addValidationError: (error) => set((state) => ({
+    validationErrors: [...state.validationErrors, error]
+  })),
+  
+  clearValidationErrors: () => set({ validationErrors: [] }),
+  
+  setConfig: (config) => set({ config }),
+  updateConfig: (key, value) => set((state) => ({
+    config: { ...state.config, [key]: value }
+  })),
+
+  reset: () => set({
+    toolNodeId: null,
+    toolLabel: '',
+    testResult: null,
+    isExecuting: false,
+    testIdInput: '',
+    executedApiResponse: null,
+    apiResponseModalOpen: false,
+    responseHistory: [],
+    connectionStatus: 'disconnected',
+    validationErrors: [],
+    config: {}
+  })
+}))
+```
+
+### Credentials Store
+
+Manages API credentials for external services with persistent storage:
+
+```typescript
+import { persist } from 'zustand/middleware'
+
+export type CredentialType = 
+  | 'orcid'
+  | 'geonames'
+  | 'europeana'
+  | 'getty'
+  | 'custom'
+
+export interface ApiCredential {
+  id: string
+  name: string
+  type: CredentialType
+  data: Record<string, string> // Encrypted or plain (for now plain, can add encryption later)
+  createdAt: number
+  updatedAt: number
+}
+
+interface CredentialsStore {
+  credentials: ApiCredential[]
+  addCredential: (credential: Omit<ApiCredential, 'id' | 'createdAt' | 'updatedAt'>) => string
+  updateCredential: (id: string, updates: Partial<Omit<ApiCredential, 'id' | 'createdAt'>>) => void
+  deleteCredential: (id: string) => void
+  getCredential: (id: string) => ApiCredential | undefined
+  getCredentialsByType: (type: CredentialType) => ApiCredential[]
+}
+
+export const useCredentialsStore = create<CredentialsStore>()(
+  persist(
+    (set, get) => ({
+      credentials: [],
+
+      addCredential: (credential) => {
+        const id = generateId()
+        const now = Date.now()
+        const newCredential: ApiCredential = {
+          ...credential,
+          id,
+          createdAt: now,
+          updatedAt: now
+        }
+        
+        set((state) => ({
+          credentials: [...state.credentials, newCredential]
+        }))
+        return id
+      },
+
+      updateCredential: (id, updates) => {
+        set((state) => ({
+          credentials: state.credentials.map(cred =>
+            cred.id === id
+              ? { ...cred, ...updates, updatedAt: Date.now() }
+              : cred
+          )
+        }))
+      },
+
+      deleteCredential: (id) => {
+        set((state) => ({
+          credentials: state.credentials.filter(cred => cred.id !== id)
+        }))
+      },
+
+      getCredential: (id) => {
+        return get().credentials.find(cred => cred.id === id)
+      },
+
+      getCredentialsByType: (type) => {
+        return get().credentials.filter(cred => cred.type === type)
+      }
+    }),
+    {
+      name: 'plexus-credentials',
+      partialize: (state) => ({ credentials: state.credentials })
+    }
+  )
+)
+```
+
+### Workflow Store
+
+Manages workflow steps and execution logic:
+
+```typescript
+export type WorkflowStepKind = 'condition' | 'action'
+
+export type WorkflowStepType =
+  | 'has-attribute'
+  | 'has-text'
+  | 'has-children'
+  | 'create-node'
+  | 'create-relationship'
+  | 'create-text-node'
+  | 'create-node-text'
+  | 'create-node-tokens'
+  | 'set-property'
+  | 'skip'
+
+export type WorkflowStepGuard = 'always' | 'ifTrue' | 'ifFalse'
+
+export interface WorkflowStep {
+  id: string
+  kind: WorkflowStepKind
+  type: WorkflowStepType
+  guard?: WorkflowStepGuard
+  config: Record<string, any>
+}
+
+interface WorkflowState {
+  stepsByNodeId: Record<string, WorkflowStep[]>
+  addStep: (nodeId: string, step: Omit<WorkflowStep, 'id'>) => string
+  updateStep: (nodeId: string, stepId: string, updates: Partial<WorkflowStep>) => void
+  deleteStep: (nodeId: string, stepId: string) => void
+  getSteps: (nodeId: string) => WorkflowStep[]
+  clearSteps: (nodeId: string) => void
+  clearAllSteps: () => void
+}
+
+export const useWorkflowStore = create<WorkflowState>((set, get) => ({
+  stepsByNodeId: {},
+
+  addStep: (nodeId, step) => {
+    const id = generateId()
+    const newStep: WorkflowStep = { ...step, id }
+    
+    set((state) => ({
+      stepsByNodeId: {
+        ...state.stepsByNodeId,
+        [nodeId]: [...(state.stepsByNodeId[nodeId] || []), newStep]
+      }
+    }))
+    return id
+  },
+
+  updateStep: (nodeId, stepId, updates) => {
+    set((state) => ({
+      stepsByNodeId: {
+        ...state.stepsByNodeId,
+        [nodeId]: state.stepsByNodeId[nodeId]?.map(step =>
+          step.id === stepId ? { ...step, ...updates } : step
+        ) || []
+      }
+    }))
+  },
+
+  deleteStep: (nodeId, stepId) => {
+    set((state) => ({
+      stepsByNodeId: {
+        ...state.stepsByNodeId,
+        [nodeId]: state.stepsByNodeId[nodeId]?.filter(step => step.id !== stepId) || []
+      }
+    }))
+  },
+
+  getSteps: (nodeId) => {
+    return get().stepsByNodeId[nodeId] || []
+  },
+
+  clearSteps: (nodeId) => {
+    set((state) => {
+      const newStepsByNodeId = { ...state.stepsByNodeId }
+      delete newStepsByNodeId[nodeId]
+      return { stepsByNodeId: newStepsByNodeId }
+    })
+  },
+
+  clearAllSteps: () => set({ stepsByNodeId: {} })
+}))
+```
+
+## State Patterns and Best Practices
+
+### 1. Store Organization
+
+Plexus Builder follows a store-per-feature pattern with clear separation of concerns:
+
+- **Model Builder Store**: Manages graph schema (nodes, relationships, groups)
+- **Workflow Canvas Store**: Manages workflow canvas state
+- **Action Canvas Store**: Manages action nodes and edges
+- **Tool Canvas Store**: Manages tool nodes and edges
+- **XML Import Wizard Store**: Manages multi-step XML import process
+- **Action Configuration Store**: Manages configuration for individual action nodes
+- **Tool Configuration Store**: Manages configuration for individual tool nodes
+- **Credentials Store**: Manages API credentials for external services
+- **Workflow Store**: Manages workflow steps and execution logic
+
+### 2. Immutable Updates
+
+All state updates use immutable patterns:
+
+```typescript
+// Immutable update
+updateNode: (id, updates) => {
+  set((state) => ({
+    nodes: state.nodes.map(node => 
+      node.id === id ? { ...node, ...updates } : node
+    )
+  }))
+}
+
+// Incorrect: Direct mutation (never done)
+updateNode: (id, updates) => {
+  const node = state.nodes.find(n => n.id === id)
+  Object.assign(node, updates) // ❌ Never do this
+}
+```
+
+### 3. State Initialization
+
+Stores use proper initialization patterns:
+
+```typescript
+const initialState: ModelBuilderState = {
+  nodes: [],
+  relationships: [],
+  relationshipTypes: [],
+  groups: [],
+  selectedNode: null,
+  selectedRelationship: null,
+  hideUnconnectedNodes: false,
+  rootNodeId: null,
+  selectedOntologyId: null,
+  isSemanticEnabled: false,
+  metadata: {
+    name: '',
+    description: '',
+    version: '1.0.0'
+  }
+}
+
+export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
+  ...initialState,
+  // ... actions
+}))
+```
+
+## Type Safety
+
+### Store Type Definitions
+
+Each store properly extends its state with actions:
+
+```typescript
+// State interface
+interface ModelBuilderState {
+  nodes: Node[]
+  relationships: Relationship[]
+  // ... other state properties
+}
+
+// Actions interface
+interface ModelBuilderActions {
+  addNode: (node: Omit<Node, 'id' | 'position'>) => string
+  updateNode: (id: string, updates: Partial<Node>) => void
+  // ... other actions
+}
+
+// Combined store type
+export type ModelBuilderStore = ModelBuilderState & ModelBuilderActions
+```
+
+### Action Type Safety
+
+Actions use proper TypeScript types:
+
+```typescript
+addNode: (node: Omit<Node, 'id' | 'position'>) => string
+updateNode: (id: string, updates: Partial<Node>) => void
+deleteNode: (id: string) => void
+```
+
+This state management architecture provides a solid foundation for building complex applications while maintaining type safety and performance.

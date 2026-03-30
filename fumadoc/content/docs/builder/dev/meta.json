@@ -1,0 +1,15 @@
+{
+  "title": "Developer Guides",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "Code",
+  "pages": [
+    "architecture-overview",
+    "design-patterns",
+    "types",
+    "state-management",
+    "ai-integration",
+    "workflow-system",
+    "services-layer"
+    ]
+}

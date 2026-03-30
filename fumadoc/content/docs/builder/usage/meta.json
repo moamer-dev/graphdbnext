@@ -1,0 +1,10 @@
+{
+  "title": "Usage",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "Rocket",
+  "pages": [
+    "model-schema-creation",
+    "graph-generation"
+  ]
+}

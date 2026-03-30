@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
 import { Input } from '../ui/input'
+import { Textarea } from '../ui/textarea'
 import { Label } from '../ui/label'
 import { Checkbox } from '../ui/checkbox'
 import {
@@ -23,9 +23,18 @@ interface SchemaFormProps {
   config: Record<string, any>
   onChange: (name: string, value: any) => void
   apiResponse?: unknown
+  getCredentialsByType?: (type: string) => Array<{ id: string; name: string }>
+  getCredential?: (id: string) => { id: string; name: string } | undefined
 }
 
-export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaFormProps) {
+export function SchemaForm({ 
+  schema, 
+  config, 
+  onChange, 
+  apiResponse,
+  getCredentialsByType,
+  getCredential
+}: SchemaFormProps) {
   const renderLabel = (field: ConfigField) => {
     return (
       <div className="flex items-center gap-1.5 mb-1.5">
@@ -42,7 +51,10 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
     if (field.dependsOn) {
       const depValue = config[field.dependsOn]
       if (field.dependsOnValue !== undefined) {
-        if (depValue !== field.dependsOnValue) return null
+        const matches = Array.isArray(field.dependsOnValue)
+          ? field.dependsOnValue.includes(depValue)
+          : depValue === field.dependsOnValue
+        if (!matches) return null
       } else if (!depValue) {
         return null
       }
@@ -52,11 +64,12 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
 
     switch (field.type) {
       case 'text':
+      case 'textarea':
       case 'number':
         return (
           <div key={field.name} className="space-y-1">
             {renderLabel(field)}
-            {apiResponse && field.type === 'text' ? (
+            {apiResponse && (field.type === 'text' || field.type === 'textarea') ? (
               <JsonFieldSelector
                 data={apiResponse}
                 value={value || ''}
@@ -64,11 +77,18 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
                 placeholder={field.placeholder || "Enter value or select from JSON..."}
                 label=""
               />
+            ) : field.type === 'textarea' ? (
+              <Textarea
+                placeholder={field.placeholder}
+                className="min-h-[120px] text-xs font-mono bg-muted/20 focus:bg-background transition-colors"
+                value={value || ''}
+                onChange={(e) => onChange(field.name, e.target.value)}
+              />
             ) : (
               <Input
                 type={field.type}
                 placeholder={field.placeholder}
-                className="h-8 text-xs bg-muted/20 border-muted-foreground/20 focus:bg-background transition-colors"
+                className="h-8 text-xs bg-muted/20 focus:bg-background transition-colors"
                 value={value || ''}
                 onChange={(e) => onChange(field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
               />
@@ -101,7 +121,7 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
           <div key={field.name} className="space-y-1">
             {renderLabel(field)}
             <Select value={value || ''} onValueChange={(val) => onChange(field.name, val)}>
-              <SelectTrigger className="h-8 text-xs bg-muted/20 border-muted-foreground/20 focus:bg-background transition-colors">
+              <SelectTrigger className="h-8 text-xs bg-muted/20 focus:bg-background transition-colors">
                 <SelectValue placeholder={field.placeholder || "Select..."} />
               </SelectTrigger>
               <SelectContent>
@@ -115,6 +135,33 @@ export function SchemaForm({ schema, config, onChange, apiResponse }: SchemaForm
             {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
           </div>
         )
+
+      case 'credential': {
+        const providerType = field.credentialType || (field.dependsOn ? config[field.dependsOn] : '')
+        const credentials = getCredentialsByType ? getCredentialsByType(providerType) : []
+        const currentCred = getCredential && value ? getCredential(value) : null
+
+        return (
+          <div key={field.name} className="space-y-1">
+            {renderLabel(field)}
+            <Select value={value || ''} onValueChange={(val) => onChange(field.name, val)}>
+              <SelectTrigger className="h-8 text-xs bg-muted/20 border-muted-foreground/20 focus:bg-background transition-colors">
+                <SelectValue placeholder={field.placeholder || `Select ${providerType} credential...`} />
+              </SelectTrigger>
+              <SelectContent>
+                {credentials.map((cred) => (
+                  <SelectItem key={cred.id} value={cred.id}>
+                    {cred.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
+            {currentCred && <p className="text-[10px] text-primary italic px-1">Active: {currentCred.name}</p>}
+            {!credentials.length && <p className="text-[10px] text-destructive italic px-1">No credentials found for {providerType}.</p>}
+          </div>
+        )
+      }
 
       case 'properties': {
         const properties = (value || []) as Array<{ key: string; value: string }>

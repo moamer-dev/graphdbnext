@@ -1,0 +1,10 @@
+{
+  "title": "Model Schema",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "GitBranch",
+  "pages": [
+    "model-schema-import",
+    "create-model-schema"
+  ]
+}

@@ -41,6 +41,8 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const setSelectedOntologyId = useModelBuilderStore((state) => state.setSelectedOntologyId)
   const isSemanticEnabled = useModelBuilderStore((state) => state.isSemanticEnabled)
   const setIsSemanticEnabled = useModelBuilderStore((state) => state.setIsSemanticEnabled)
+  const isWorkflowVisible = useModelBuilderStore((state) => state.isWorkflowVisible)
+  const setIsWorkflowVisible = useModelBuilderStore((state) => state.setIsWorkflowVisible)
   const selectedRelationship = useModelBuilderStore((state) => state.selectedRelationship)
 
   const toolNodes = useToolCanvasStore((state) => state.nodes)
@@ -492,6 +494,8 @@ export function useModelBuilderInternal(props: any, ref: any) {
     confirmWorkflowChange,
     cancelWorkflowChange,
     triggerSaveInternal,
+    isWorkflowVisible,
+    setIsWorkflowVisible,
     setFocusNodeFn: ui.setFocusNodeFn,
     setFocusRelationshipFn: ui.setFocusRelationshipFn
   }

@@ -71,12 +71,28 @@ export const modelCrudService = createCrudService<Model>({
     schemaJson: true,
     schemaMd: true
   },
-  // Format Date objects to strings
+  // Format Date objects to strings and calculate counts
   formatData: (data: unknown[]) => {
     return data.map((item) => {
       const record = item as Record<string, unknown>
+      let noteCount = 0
+      let relationCount = 0
+      
+      // Calculate counts from schemaJson if available
+      if (record.schemaJson && typeof record.schemaJson === 'object') {
+        const schema = record.schemaJson as Record<string, unknown>
+        if (schema.nodes && typeof schema.nodes === 'object') {
+          noteCount = Object.keys(schema.nodes).length
+        }
+        if (schema.relations && typeof schema.relations === 'object') {
+          relationCount = Object.keys(schema.relations).length
+        }
+      }
+      
       return {
         ...record,
+        noteCount,
+        relationCount,
         createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : record.createdAt,
         updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : record.updatedAt
       }

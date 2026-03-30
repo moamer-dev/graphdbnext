@@ -1,0 +1,827 @@
+---
+title: Services Layer
+description: Architecture and implementation of Plexus Platform services
+---
+
+# Services Layer
+
+The Plexus Platform services layer provides a clean separation between the UI and data access layers, implementing business logic, data transformation, and external service integrations. Services are organized into client-safe and server-only categories to prevent build errors.
+
+## Services Architecture
+
+<Mermaid chart="
+graph TB
+    subgraph &quot;UI Layer&quot;
+        A[React Components] --> B[Custom Hooks]
+        B --> C[Zustand Stores]
+    end
+    
+    subgraph &quot;Services Layer&quot;
+        D[Client-Safe Services] --> E[Core Services]
+        D --> F[Graph Services]
+        D --> G[Visualization Service]
+        H[Server-Only Services] --> I[Database Services]
+        H --> J[AI Services]
+        H --> K[Schema Services]
+    end
+    
+    subgraph &quot;Data Layer&quot;
+        L[Prisma Client] --> M[PostgreSQL]
+        N[Graph Drivers] --> O[Neo4j/Memgraph]
+        P[AI Clients] --> Q[AI Providers]
+    end
+    
+    C --> D
+    E --> L
+    F --> N
+    J --> P
+" />
+
+## Service Organization
+
+### Client-Safe Services (services/index.ts)
+
+Services that are safe to use in the browser environment:
+
+```typescript
+// From services/index.ts - Client-safe exports
+export { ExportService } from './core/ExportService'
+export { moduleService } from './core/ModuleService'
+export { UpdateMutationService } from './core/UpdateMutationService'
+export { GraphVisualizationService, type GraphNode, type GraphEdge, type GraphData } from './graph/GraphVisualizationService'
+export { QueryBuilderService, type QueryNode, type QueryRelationship } from './graph/QueryBuilderService'
+export { CustomVisualizationService, type VisualizationConfig } from './visualization/CustomVisualizationService'
+export { GraphExportService } from './graph/GraphExportService'
+
+// Type-only exports for server services (Safe for browser as they are removed during build)
+export type { CollaborativeService } from './core/CollaborativeService'
+export type { AIService, NLQueryRequest, NLQueryResponse, QuerySuggestion } from './ai/AIService'
+export type { SchemaExplorerService, SchemaStatistics, SchemaNode, SchemaProperty, SchemaRelationship } from './graph/SchemaExplorerService'
+export type { SchemaLoaderService, Schema } from './graph/SchemaLoaderService'
+export type { GraphAnalyticsService } from './graph/GraphAnalyticsService'
+export type { GraphComparisonService } from './graph/GraphComparisonService'
+export type { MemgraphService } from './graph/MemgraphService'
+```
+
+### Server-Only Services (services/server.ts)
+
+Services that require server-side dependencies:
+
+```typescript
+// From services/server.ts - Server-only exports
+export { CollaborativeService } from './core/CollaborativeService'
+export { moduleService } from './core/ModuleService'
+export { UpdateMutationService } from './core/UpdateMutationService'
+
+// Graph DB Services
+export { SchemaExplorerService, type SchemaStatistics, type SchemaNode, type SchemaProperty, type SchemaRelationship } from './graph/SchemaExplorerService'
+export { SchemaLoaderService, type Schema } from './graph/SchemaLoaderService'
+export { GraphAnalyticsService } from './graph/GraphAnalyticsService'
+export { GraphComparisonService } from './graph/GraphComparisonService'
+export { MemgraphService, getMemgraphService } from './graph/MemgraphService'
+export * from './graph/graph-database'
+
+// AI Services
+export { AIService, type NLQueryRequest, type NLQueryResponse, type QuerySuggestion } from './ai/AIService'
+
+// Database CRUD Services
+export * from './crud'
+export * from './core/createCrudService'
+export * from './core/CrudService'
+```
+
+## Core Services
+
+### Graph Visualization Service
+
+```typescript
+// From services/graph/GraphVisualizationService.ts - Main visualization service
+import * as d3 from 'd3'
+
+export interface GraphNode extends d3.SimulationNodeDatum {
+  id: string
+  labels: string[]
+  properties: Record<string, unknown>
+  nodeId?: number
+}
+
+export interface GraphEdge {
+  id: string
+  source: string
+  target: string
+  type: string
+  properties: Record<string, unknown>
+  relationshipId?: number
+}
+
+export interface GraphData {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+export class GraphVisualizationService {
+  private simulation: d3.Simulation<GraphNode, GraphEdge> | null = null
+  private svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null
+  private g: d3.Selection<SVGGElement, unknown, null, undefined> | null = null
+  private zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
+
+  /**
+   * Extract nodes and edges from query results
+   */
+  extractGraphData(results: unknown[], allowedNodeIds?: Set<number>): GraphData {
+    const nodeMap = new Map<number, GraphNode>()
+    const edgeMap = new Map<string, GraphEdge>()
+    const relationshipsToProcess: Array<{ 
+      id: number, 
+      type: string, 
+      start: number, 
+      end: number, 
+      properties: Record<string, unknown> 
+    }> = []
+
+    // Process query results to extract graph data
+    results.forEach((result: unknown) => {
+      if (!result || typeof result !== 'object') return
+      
+      // Extract nodes and relationships from result
+      // Implementation details...
+    })
+
+    return { nodes: Array.from(nodeMap.values()), edges: Array.from(edgeMap.values()) }
+  }
+
+  /**
+   * Create D3 force simulation
+   */
+  createSimulation(width: number, height: number): d3.Simulation<GraphNode, GraphEdge> {
+    return d3.forceSimulation<GraphNode, GraphEdge>()
+      .force('link', d3.forceLink<GraphNode, GraphEdge>().id(d => d.id))
+      .force('charge', d3.forceManyBody().strength(-300))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(30))
+  }
+}
+```
+
+### Custom Visualization Service
+
+```typescript
+// From services/visualization/CustomVisualizationService.ts - Query result visualization
+import type { GraphNode, GraphEdge } from '../graph/GraphVisualizationService'
+
+export type LayoutType = 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline'
+
+export interface VisualizationConfig {
+  nodeColorBy?: {
+    property: string
+    colorMap: Record<string, string>
+    defaultColor?: string
+  }
+  nodeLabelColors?: Record<string, string>
+  nodeSizeBy?: {
+    property: string
+    minSize?: number
+    maxSize?: number
+    scale?: 'linear' | 'log' | 'sqrt'
+  }
+  edgeColorBy?: {
+    property: string
+    colorMap: Record<string, string>
+    defaultColor?: string
+  }
+  relationshipTypeColors?: Record<string, string>
+  edgeWidthBy?: {
+    property: string
+    minWidth?: number
+    maxWidth?: number
+    scale?: 'linear' | 'log' | 'sqrt'
+  }
+  layout?: LayoutType
+  layoutOptions?: {
+    hierarchical?: { root?: string; direction?: 'TB' | 'BT' | 'LR' | 'RL' }
+    circular?: { radius?: number; startAngle?: number }
+    grid?: { rows?: number; cols?: number }
+    timeline?: { timeProperty: string; timeFormat?: string }
+  }
+}
+
+export class CustomVisualizationService {
+  /**
+   * Get node color based on configuration
+   */
+  getNodeColor(node: GraphNode, config?: VisualizationConfig): string {
+    // Priority 1: Property-based color mapping
+    if (config?.nodeColorBy) {
+      const { property, colorMap } = config.nodeColorBy
+      const value = node.properties[property]
+
+      if (value !== null && value !== undefined) {
+        const valueStr = String(value)
+        if (colorMap[valueStr]) {
+          return colorMap[valueStr]
+        }
+      }
+    }
+
+    // Priority 2: Label-based color mapping
+    if (config?.nodeLabelColors) {
+      const specificLabel = this.getSpecificLabel(node.labels)
+      if (config.nodeLabelColors[specificLabel]) {
+        return config.nodeLabelColors[specificLabel]
+      }
+    }
+
+    return this.getDefaultNodeColor(node.labels)
+  }
+
+  /**
+   * Get node size based on configuration
+   */
+  getNodeSize(node: GraphNode, config?: VisualizationConfig): number {
+    const defaultSize = 15
+
+    if (!config?.nodeSizeBy) {
+      return defaultSize
+    }
+
+    const { property, minSize = 10, maxSize = 30, scale = 'linear' } = config.nodeSizeBy
+    const value = node.properties[property]
+
+    if (value === null || value === undefined || typeof value !== 'number') {
+      return defaultSize
+    }
+
+    const allValues = this.getAllNodeValues(property)
+    if (allValues.length === 0) {
+      return defaultSize
+    }
+
+    const min = Math.min(...allValues)
+    const max = Math.max(...allValues)
+
+    if (min === max) {
+      return defaultSize
+    }
+
+    let normalized: number
+    if (scale === 'log') {
+      normalized = (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min))
+    } else if (scale === 'sqrt') {
+      normalized = (Math.sqrt(value) - Math.sqrt(min)) / (Math.sqrt(max) - Math.sqrt(min))
+    } else {
+      normalized = (value - min) / (max - min)
+    }
+
+    return minSize + (maxSize - minSize) * normalized
+  }
+
+  /**
+   * Apply layout to nodes
+   */
+  applyLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    config?: VisualizationConfig
+  ): GraphNode[] {
+    const layout = config?.layout || 'force'
+    const options = config?.layoutOptions
+
+    switch (layout) {
+      case 'hierarchical':
+        return this.applyHierarchicalLayout(nodes, edges, options?.hierarchical)
+      case 'circular':
+        return this.applyCircularLayout(nodes, edges, options?.circular)
+      case 'grid':
+        return this.applyGridLayout(nodes, edges, options?.grid)
+      case 'timeline':
+        return this.applyTimelineLayout(nodes, edges, options?.timeline)
+      default:
+        return nodes
+    }
+  }
+
+  private applyCircularLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    options?: { radius?: number; startAngle?: number }
+  ): GraphNode[] {
+    const radius = options?.radius || 200
+    const startAngle = options?.startAngle || 0
+    const centerX = 400
+    const centerY = 300
+
+    const angleStep = (2 * Math.PI) / nodes.length
+
+    nodes.forEach((node, i) => {
+      const angle = startAngle + i * angleStep
+      node.x = centerX + radius * Math.cos(angle)
+      node.y = centerY + radius * Math.sin(angle)
+    })
+
+    return nodes
+  }
+
+  private applyGridLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    options?: { rows?: number; cols?: number }
+  ): GraphNode[] {
+    const cols = options?.cols || Math.ceil(Math.sqrt(nodes.length))
+    const rows = options?.rows || Math.ceil(nodes.length / cols)
+    const cellWidth = 800 / cols
+    const cellHeight = 600 / rows
+
+    nodes.forEach((node, i) => {
+      const row = Math.floor(i / cols)
+      const col = i % cols
+      node.x = col * cellWidth + cellWidth / 2
+      node.y = row * cellHeight + cellHeight / 2
+    })
+
+    return nodes
+  }
+
+  private applyTimelineLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    options?: { timeProperty: string; timeFormat?: string }
+  ): GraphNode[] {
+    if (!options?.timeProperty) {
+      return nodes
+    }
+
+    const timeValues: number[] = []
+
+    nodes.forEach(node => {
+      const timeValue = node.properties[options.timeProperty!]
+      if (timeValue) {
+        const date = new Date(String(timeValue))
+        if (!isNaN(date.getTime())) {
+          timeValues.push(date.getTime())
+        }
+      }
+    })
+
+    if (timeValues.length === 0) {
+      return nodes
+    }
+
+    const minTime = Math.min(...timeValues)
+    const maxTime = Math.max(...timeValues)
+    const timeRange = maxTime - minTime || 1
+
+    const width = 800
+    const height = 600
+    const verticalSpacing = height / nodes.length
+
+    nodes.forEach((node, i) => {
+      const timeValue = node.properties[options.timeProperty!]
+      if (timeValue) {
+        const date = new Date(String(timeValue))
+        if (!isNaN(date.getTime())) {
+          const normalized = (date.getTime() - minTime) / timeRange
+          node.x = normalized * width
+        } else {
+          node.x = width / 2
+        }
+      } else {
+        node.x = width / 2
+      }
+      node.y = i * verticalSpacing + verticalSpacing / 2
+    })
+
+    return nodes
+  }
+
+  private getDefaultNodeColor(labels: string[]): string {
+    const colorMap: Record<string, string> = {
+      Word: '#3b82f6',
+      Seg: '#10b981',
+      Sign: '#f59e0b',
+      Character: '#ef4444',
+      Phrase: '#8b5cf6',
+      Part: '#ec4899',
+      Line: '#06b6d4',
+      Surface: '#14b8a6',
+      Column: '#f97316'
+    }
+
+    for (const label of labels) {
+      if (colorMap[label]) {
+        return colorMap[label]
+      }
+    }
+
+    return '#6b7280'
+  }
+
+  private getSpecificLabel(labels: string[]): string {
+    const genericLabels = ['Thing', 'TextUnit', 'VisualUnit', 'GraphicalUnit', 'GrammaticalUnit', 'MorphologicalUnit', 'TextInformationLayer', 'PoetologicalUnit']
+    const specificLabels = labels.filter(label => !genericLabels.includes(label))
+    return specificLabels.length > 0 ? specificLabels[specificLabels.length - 1] : labels[labels.length - 1] || 'Node'
+  }
+
+  private getAllNodeValues(property: string): number[] {
+    // Implementation for getting all node values for scaling
+    return []
+  }
+
+  private getAllEdgeValues(property: string): number[] {
+    // Implementation for getting all edge values for scaling
+    return []
+  }
+
+  private applyHierarchicalLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    options?: { root?: string; direction?: 'TB' | 'BT' | 'LR' | 'RL' }
+  ): GraphNode[] {
+    // Implementation for hierarchical layout
+    return nodes
+  }
+}
+```
+
+### Query Builder Service
+
+```typescript
+// From services/graph/QueryBuilderService.ts - Cypher query building
+export interface QueryNode {
+  id: string
+  label?: string
+  properties?: Record<string, unknown>
+  alias?: string
+}
+
+export interface QueryRelationship {
+  id: string
+  type: string
+  source: string
+  target: string
+  properties?: Record<string, unknown>
+  direction?: 'outgoing' | 'incoming' | 'undirected'
+}
+
+export interface QueryCondition {
+  id: string
+  nodeId?: string
+  relationshipId?: string
+  property: string
+  operator: string
+  value: unknown
+}
+
+export class QueryBuilderService {
+  /**
+   * Build Cypher query from components
+   */
+  buildQuery(
+    nodes: QueryNode[],
+    relationships: QueryRelationship[],
+    conditions: QueryCondition[],
+    returnFields: string[],
+    limit?: number
+  ): string {
+    const matchClause = this.buildMatchClause(nodes, relationships)
+    const whereClause = this.buildWhereClause(conditions)
+    const returnClause = this.buildReturnClause(returnFields)
+    const limitClause = limit ? ` LIMIT ${limit}` : ''
+
+    return `${matchClause}${whereClause}${returnClause}${limitClause}`.trim()
+  }
+
+  private buildMatchClause(nodes: QueryNode[], relationships: QueryRelationship[]): string {
+    if (nodes.length === 0) return ''
+
+    let matchClause = 'MATCH '
+
+    // Build node patterns
+    const nodePatterns = nodes.map(node => {
+      const alias = node.alias || node.id
+      const label = node.label ? `:${node.label}` : ''
+      const props = node.properties ? ` ${JSON.stringify(node.properties)}` : ''
+      return `(${alias}${label}${props})`
+    })
+
+    matchClause += nodePatterns.join(', ')
+
+    // Build relationship patterns
+    relationships.forEach(rel => {
+      const sourceNode = nodes.find(n => n.id === rel.source)
+      const targetNode = nodes.find(n => n.id === rel.target)
+      
+      if (sourceNode && targetNode) {
+        const sourceAlias = sourceNode.alias || sourceNode.id
+        const targetAlias = targetNode.alias || targetNode.id
+        const relProps = rel.properties ? ` ${JSON.stringify(rel.properties)}` : ''
+        
+        let relPattern = ''
+        if (rel.direction === 'incoming') {
+          relPattern = `<-[${rel.type}${relProps}]-`
+        } else if (rel.direction === 'undirected') {
+          relPattern = `-[${rel.type}${relProps}]-`
+        } else {
+          relPattern = `-[${rel.type}${relProps}]->`
+        }
+        
+        matchClause += `(${sourceAlias})${relPattern}(${targetAlias})`
+      }
+    })
+
+    return matchClause
+  }
+
+  private buildWhereClause(conditions: QueryCondition[]): string {
+    if (conditions.length === 0) return ''
+
+    const conditionStrings = conditions.map(condition => {
+      let entity = ''
+      if (condition.nodeId) {
+        entity = condition.nodeId
+      } else if (condition.relationshipId) {
+        entity = condition.relationshipId
+      }
+
+      const operator = this.mapOperator(condition.operator)
+      const value = typeof condition.value === 'string' ? `'${condition.value}'` : condition.value
+      
+      return `${entity}.${condition.property} ${operator} ${value}`
+    })
+
+    return ' WHERE ' + conditionStrings.join(' AND ')
+  }
+
+  private buildReturnClause(returnFields: string[]): string {
+    if (returnFields.length === 0) return ' RETURN *'
+    
+    return ' RETURN ' + returnFields.join(', ')
+  }
+
+  private mapOperator(operator: string): string {
+    const operatorMap: Record<string, string> = {
+      'equals': '=',
+      'not_equals': '!=',
+      'greater_than': '>',
+      'less_than': '<',
+      'greater_equal': '>=',
+      'less_equal': '<=',
+      'contains': 'CONTAINS',
+      'starts_with': 'STARTS WITH',
+      'ends_with': 'ENDS WITH'
+    }
+    
+    return operatorMap[operator] || '='
+  }
+}
+```
+
+## Server-Side Services
+
+### AI Service
+
+```typescript
+// From services/ai/AIService.ts - Natural language to Cypher
+export interface NLQueryRequest {
+  question: string
+  context?: string
+  schema?: string
+}
+
+export interface NLQueryResponse {
+  cypher: string
+  result: unknown[]
+  explanation?: string
+}
+
+export interface QuerySuggestion {
+  question: string
+  cypher: string
+  description: string
+}
+
+export class AIService {
+  /**
+   * Convert natural language to Cypher query
+   */
+  async generateCypher(request: NLQueryRequest): Promise<NLQueryResponse> {
+    // Implementation using LangChain and AI providers
+    // This integrates with the /api/chat/agent endpoint
+    throw new Error('Server-side implementation')
+  }
+
+  /**
+   * Get query suggestions based on schema
+   */
+  async getQuerySuggestions(schema: string): Promise<QuerySuggestion[]> {
+    // Generate common query patterns for the given schema
+    throw new Error('Server-side implementation')
+  }
+}
+```
+
+### Schema Explorer Service
+
+```typescript
+// From services/graph/SchemaExplorerService.ts - Database schema analysis
+export interface SchemaStatistics {
+  nodeCount: number
+  relationshipCount: number
+  nodeLabels: string[]
+  relationshipTypes: string[]
+  propertyKeys: Record<string, number>
+}
+
+export interface SchemaNode {
+  label: string
+  count: number
+  properties: SchemaProperty[]
+}
+
+export interface SchemaProperty {
+  name: string
+  type: string
+  count: number
+  unique: boolean
+  indexed: boolean
+}
+
+export interface SchemaRelationship {
+  type: string
+  count: number
+  properties: SchemaProperty[]
+  sourceLabels: string[]
+  targetLabels: string[]
+}
+
+export class SchemaExplorerService {
+  /**
+   * Get comprehensive schema statistics
+   */
+  async getSchemaStatistics(): Promise<SchemaStatistics> {
+    // Implementation queries the graph database for schema info
+    throw new Error('Server-side implementation')
+  }
+
+  /**
+   * Get detailed node schema information
+   */
+  async getNodeSchema(): Promise<SchemaNode[]> {
+    // Implementation queries node labels and properties
+    throw new Error('Server-side implementation')
+  }
+
+  /**
+   * Get detailed relationship schema information
+   */
+  async getRelationshipSchema(): Promise<SchemaRelationship[]> {
+    // Implementation queries relationship types and properties
+    throw new Error('Server-side implementation')
+  }
+}
+```
+
+## Core Utility Services
+
+### Export Service
+
+```typescript
+// From services/core/ExportService.ts - Data export functionality
+export class ExportService {
+  /**
+   * Export graph data to various formats
+   */
+  async exportGraph(data: GraphData, format: 'json' | 'csv' | 'xlsx'): Promise<Blob> {
+    switch (format) {
+      case 'json':
+        return this.exportToJSON(data)
+      case 'csv':
+        return this.exportToCSV(data)
+      case 'xlsx':
+        return this.exportToXLSX(data)
+      default:
+        throw new Error(`Unsupported export format: ${format}`)
+    }
+  }
+
+  private exportToJSON(data: GraphData): Blob {
+    const json = JSON.stringify(data, null, 2)
+    return new Blob([json], { type: 'application/json' })
+  }
+
+  private exportToCSV(data: GraphData): Blob {
+    // Implementation for CSV export
+    throw new Error('CSV export implementation')
+  }
+
+  private exportToXLSX(data: GraphData): Blob {
+    // Implementation for Excel export
+    throw new Error('XLSX export implementation')
+  }
+}
+```
+
+### Module Service
+
+```typescript
+// From services/core/ModuleService.ts - Feature module management
+export interface ModuleConfig {
+  name: string
+  enabled: boolean
+  dependencies?: string[]
+  settings?: Record<string, unknown>
+}
+
+export class ModuleService {
+  private modules: Map<string, ModuleConfig> = new Map()
+
+  /**
+   * Register a module
+   */
+  registerModule(config: ModuleConfig): void {
+    this.modules.set(config.name, config)
+  }
+
+  /**
+   * Enable/disable a module
+   */
+  setModuleEnabled(name: string, enabled: boolean): void {
+    const module = this.modules.get(name)
+    if (module) {
+      module.enabled = enabled
+    }
+  }
+
+  /**
+   * Check if module is enabled
+   */
+  isModuleEnabled(name: string): boolean {
+    const module = this.modules.get(name)
+    return module?.enabled || false
+  }
+
+  /**
+   * Get all enabled modules
+   */
+  getEnabledModules(): ModuleConfig[] {
+    return Array.from(this.modules.values()).filter(m => m.enabled)
+  }
+}
+```
+
+## Service Integration Patterns
+
+### Client-Side Usage
+
+```typescript
+// Using client-safe services in components
+import { GraphVisualizationService, CustomVisualizationService } from '@/services'
+
+export function GraphVisualization({ data, config }: Props) {
+  const graphService = new GraphVisualizationService()
+  const vizService = new CustomVisualizationService()
+
+  const processedData = graphService.extractGraphData(data)
+  const styledNodes = processedData.nodes.map(node => ({
+    ...node,
+    color: vizService.getNodeColor(node, config),
+    size: vizService.getNodeSize(node, config)
+  }))
+
+  const layoutNodes = vizService.applyLayout(styledNodes, processedData.edges, config)
+
+  // Render visualization
+  return null
+}
+```
+
+### Server-Side Usage
+
+```typescript
+// Using server-only services in API routes
+import { AIService, SchemaExplorerService } from '@/services/server'
+
+export async function POST(request: NextRequest) {
+  const aiService = new AIService()
+  const schemaService = new SchemaExplorerService()
+
+  const schema = await schemaService.getSchemaStatistics()
+  const response = await aiService.generateCypher({
+    question: body.question,
+    schema: JSON.stringify(schema)
+  })
+
+  return NextResponse.json(response)
+}
+```
+
+## Key Architecture Principles
+
+1. **Separation of Concerns**: Client-safe vs server-only services
+2. **Type Safety**: Full TypeScript support with proper interfaces
+3. **Modularity**: Services organized by domain and functionality
+4. **Reusability**: Generic services for common operations
+5. **Extensibility**: Easy to add new services and functionality
+
+---
+
+This services architecture provides a robust foundation for the Plexus Platform, with clear separation between client and server concerns and comprehensive functionality for graph data management and visualization.

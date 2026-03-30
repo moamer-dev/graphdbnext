@@ -57,11 +57,6 @@ async function main () {
   })
 
   console.log('Admin user created successfully!')
-  console.log(`   Email: ${admin.email}`)
-  console.log(`   Password: ${adminPassword}`)
-  console.log(`   Role: ${admin.role}`)
-  console.log('')
-  console.log('IMPORTANT: Change the default password in production!')
 }
 
 main()

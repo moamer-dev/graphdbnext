@@ -54,14 +54,7 @@ registerTool({
     hidden: false
   },
   executor: executeSwitchTool,
-  configSchema: [
-    { name: 'switchSource', label: 'Switch Source', type: 'select', options: [
-      { label: 'Attribute', value: 'attribute' },
-      { label: 'Element Name', value: 'elementName' },
-      { label: 'Text Content', value: 'textContent' }
-    ], defaultValue: 'attribute' },
-    { name: 'switchAttributeName', label: 'Attribute Name', type: 'text', dependsOn: 'switchSource', dependsOnValue: 'attribute' }
-  ],
+  configSchema: [],
   defaultConfig: { switchSource: 'attribute', switchAttributeName: '', switchCases: [] }
 })
 
@@ -109,15 +102,27 @@ registerTool({
         { label: 'GET', value: 'GET' },
         { label: 'POST', value: 'POST' },
         { label: 'PUT', value: 'PUT' },
+        { label: 'PATCH', value: 'PATCH' },
         { label: 'DELETE', value: 'DELETE' }
       ],
       defaultValue: 'GET'
     },
     { name: 'url', label: 'URL', type: 'text', placeholder: 'https://api.example.com/data' },
+    { name: 'useCredential', label: 'Use Stored Credential', type: 'boolean', defaultValue: false },
+    { 
+      name: 'credentialId', 
+      label: 'Credential', 
+      type: 'credential', 
+      dependsOn: 'useCredential', 
+      dependsOnValue: true,
+      description: 'Select a stored credential for automated authentication'
+    },
     { 
       name: 'authType', 
-      label: 'Auth Type', 
+      label: 'Manual Auth Type', 
       type: 'select', 
+      dependsOn: 'useCredential',
+      dependsOnValue: false,
       options: [
         { label: 'None', value: 'none' },
         { label: 'Bearer Token', value: 'bearer' },
@@ -126,18 +131,56 @@ registerTool({
       ],
       defaultValue: 'none'
     },
+    // Manual Auth Fields
     { name: 'bearerToken', label: 'Token', type: 'text', dependsOn: 'authType', dependsOnValue: 'bearer' },
-    { name: 'storeInContext', label: 'Store in Context Key', type: 'text', defaultValue: 'httpResponse' }
+    { name: 'basicUsername', label: 'Username', type: 'text', dependsOn: 'authType', dependsOnValue: 'basic' },
+    { name: 'basicPassword', label: 'Password', type: 'text', dependsOn: 'authType', dependsOnValue: 'basic' },
+    { name: 'apiKey', label: 'API Key', type: 'text', dependsOn: 'authType', dependsOnValue: 'apiKey' },
+    { name: 'apiKeyHeader', label: 'Header Name', type: 'text', dependsOn: 'authType', dependsOnValue: 'apiKey', placeholder: 'X-API-Key' },
+    
+    { name: 'queryParams', label: 'Query Parameters', type: 'properties' },
+    { name: 'headers', label: 'Custom Headers', type: 'properties' },
+    
+    { 
+      name: 'bodyType', 
+      label: 'Body Type', 
+      type: 'select', 
+      options: [
+        { label: 'JSON', value: 'json' },
+        { label: 'Text', value: 'text' },
+        { label: 'Form Data', value: 'form-data' },
+        { label: 'URL Encoded', value: 'x-www-form-urlencoded' }
+      ],
+      defaultValue: 'json',
+      dependsOn: 'method',
+      dependsOnValue: ['POST', 'PUT', 'PATCH']
+    },
+    { 
+      name: 'body', 
+      label: 'Request Body', 
+      type: 'textarea', 
+      dependsOn: 'method',
+      dependsOnValue: ['POST', 'PUT', 'PATCH'],
+      placeholder: '{"key": "value"}'
+    },
+    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 },
+    { 
+      name: 'storeInContext', 
+      label: 'Store in Context Key', 
+      type: 'text', 
+      defaultValue: 'httpResponse',
+      details: 'Specify a name (key) to store the API response in the workflow context. You can then use this data in subsequent actions using templates, like {{myKey.property}}.'
+    }
   ],
-  defaultConfig: { method: 'GET', url: '', authType: 'none', headers: [], queryParams: [], storeInContext: 'httpResponse' }
+  defaultConfig: { method: 'GET', url: '', useCredential: false, authType: 'none', headers: [], queryParams: [], storeInContext: 'httpResponse', timeout: 10000 }
 })
 
-// 4. Fetch API (Wikidata, etc.)
+// 4. Fetch API (Wikidata, ORCID, GND, etc.)
 registerTool({
   id: 'tool:fetch-api',
   metadata: {
     label: 'Fetch API',
-    description: 'Fetch data from research APIs (Wikidata, etc.)',
+    description: 'Fetch data from research and authority APIs',
     icon: Search,
     category: 'external_services',
     color: 'text-sky-600',
@@ -154,24 +197,73 @@ registerTool({
       type: 'select', 
       options: [
         { label: 'Wikidata', value: 'wikidata' },
-        { label: 'ORCID', value: 'orcid' },
-        { label: 'GeoNames', value: 'geonames' }
+        { label: 'GND (German Authority)', value: 'gnd' },
+        { label: 'VIAF (International Authority)', value: 'viaf' },
+        { label: 'ORCID (Researcher IDs)', value: 'orcid' },
+        { label: 'GeoNames (Geographical)', value: 'geonames' },
+        { label: 'DBLP (Comp. Science)', value: 'dblp' },
+        { label: 'CrossRef (Academic Pubs)', value: 'crossref' },
+        { label: 'Europeana (Cultural Heritage)', value: 'europeana' },
+        { label: 'Getty Vocabularies', value: 'getty' },
+        { label: 'Library of Congress', value: 'loc' },
+        { label: 'Custom API', value: 'custom' }
       ],
       defaultValue: 'wikidata'
+    },
+    { 
+      name: 'credentialId', 
+      label: 'Credential', 
+      type: 'credential', 
+      dependsOn: 'apiProvider', 
+      dependsOnValue: ['orcid', 'geonames', 'europeana', 'getty'],
+      description: 'Select credentials for authenticated access'
+    },
+    { 
+      name: 'apiKey', 
+      label: 'API Key', 
+      type: 'text', 
+      dependsOn: 'apiProvider', 
+      dependsOnValue: ['orcid', 'geonames', 'europeana', 'getty'],
+      description: 'Optional API key for higher rate limits or private data'
+    },
+    { 
+      name: 'customEndpoint', 
+      label: 'Custom Endpoint URL', 
+      type: 'text', 
+      dependsOn: 'apiProvider', 
+      dependsOnValue: 'custom',
+      placeholder: 'https://api.example.com/data/{id}',
+      description: 'Use {id} as a placeholder for the extracted identifier'
     },
     { 
       name: 'idSource', 
       label: 'ID Source', 
       type: 'select', 
       options: [
-        { label: 'Attribute', value: 'attribute' },
-        { label: 'Text Content', value: 'textContent' }
+        { label: 'XML Attribute', value: 'attribute' },
+        { label: 'Text Content', value: 'textContent' },
+        { label: 'XPath', value: 'xpath' }
       ],
       defaultValue: 'attribute'
     },
-    { name: 'idAttribute', label: 'Attribute Name', type: 'text', dependsOn: 'idSource', dependsOnValue: 'attribute' }
+    { name: 'idAttribute', label: 'Attribute Name', type: 'text', dependsOn: 'idSource', dependsOnValue: 'attribute', placeholder: 'e.g. wiki:id' },
+    { name: 'idXpath', label: 'XPath Expression', type: 'text', dependsOn: 'idSource', dependsOnValue: 'xpath', placeholder: 'e.g. ./@id' },
+    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 },
+    { 
+      name: 'storeInContext', 
+      label: 'Store in Context Key', 
+      type: 'text', 
+      placeholder: 'e.g. userData',
+      details: 'Specify a name (key) to store the API response in the workflow context. You can then use this data in subsequent actions using templates, like {{userData.name}}.'
+    }
   ],
-  defaultConfig: { apiProvider: 'wikidata', idSource: 'attribute', idAttribute: 'wiki:id', timeout: 10000 }
+  defaultConfig: { 
+    apiProvider: 'wikidata', 
+    idSource: 'attribute', 
+    idAttribute: 'wiki:id', 
+    timeout: 10000,
+    storeInContext: ''
+  }
 })
 
 // 6. Webhook
@@ -199,35 +291,5 @@ registerTool({
   defaultConfig: { url: '', method: 'POST', headers: [], authType: 'none' }
 })
 
-// 7. Authenticated Research APIs
-const researchApis = [
-  { id: 'tool:fetch-orcid', label: 'Fetch ORCID', provider: 'orcid' },
-  { id: 'tool:fetch-geonames', label: 'Fetch GeoNames', provider: 'geonames' },
-  { id: 'tool:fetch-europeana', label: 'Fetch Europeana', provider: 'europeana' },
-  { id: 'tool:fetch-getty', label: 'Fetch Getty TGN', provider: 'getty' }
-]
+// Removed separate tool registrations as they are now consolidated in tool:fetch-api
 
-researchApis.forEach(api => {
-  registerTool({
-    id: api.id,
-    metadata: {
-      label: api.label,
-      description: `Fetch data from ${api.label} research API`,
-      icon: Search,
-      category: 'external_services',
-      color: 'text-sky-600',
-      bgColor: 'bg-sky-50',
-      isApiTool: true,
-      hidden: false
-    },
-    executor: executeFetchApiTool,
-    configSchema: [
-      { name: 'idSource', label: 'ID Source', type: 'select', options: [
-        { label: 'Attribute', value: 'attribute' },
-        { label: 'Text Content', value: 'textContent' }
-      ], defaultValue: 'attribute' },
-      { name: 'idAttribute', label: 'Attribute Name', type: 'text', dependsOn: 'idSource', dependsOnValue: 'attribute' }
-    ],
-    defaultConfig: { apiProvider: api.provider, idSource: 'attribute', idAttribute: 'id', timeout: 10000 }
-  })
-})

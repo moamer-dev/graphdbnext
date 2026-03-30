@@ -1,0 +1,9 @@
+{
+  "title": "Canvas",
+  "collapsible": true,
+  "defaultOpen": false,
+  "pages": [
+    "workflows",
+    "components"
+  ]
+}

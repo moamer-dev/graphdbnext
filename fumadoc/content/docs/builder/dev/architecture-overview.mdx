@@ -1,0 +1,570 @@
+---
+title: Architecture Overview
+description: Understanding the Plexus Builder architecture and core components
+---
+
+# Architecture Overview
+
+Plexus Builder is built with a modular, component-based architecture that separates concerns across multiple layers. The system follows React patterns with Zustand for state management and a centralized registry system for workflow components.
+
+## High-Level Architecture
+
+<Mermaid chart="
+flowchart TB
+    subgraph UI_Layer[UI Layer]
+        A[Model Builder Canvas]
+        B[Workflow Builder]
+        C[XML Import Wizard]
+        D[Configuration Panels]
+    end
+    
+    subgraph State_Management[State Management]
+        E[Zustand Stores]
+        F[Model Builder Store]
+        G[Workflow Stores]
+        H[Wizard Stores]
+    end
+    
+    subgraph Registry_System[Registry System]
+        I[Workflow Registry]
+        J[Action Definitions]
+        K[Tool Definitions]
+        L[Category Management]
+    end
+    
+    subgraph Services_Layer[Services Layer]
+        M[Workflow Executor]
+        N[XML Processing]
+        O[AI Services]
+        P[TIB Terminology]
+    end
+    
+    subgraph Utility_Layer[Utility Layer]
+        Q[Canvas Utils]
+        R[Export Utils]
+        S[Schema Converters]
+        T[XML Helpers]
+    end
+    
+    A --> E
+    B --> G
+    C --> H
+    D --> F
+    
+    E --> I
+    G --> I
+    H --> I
+    
+    I --> J
+    I --> K
+    I --> L
+    
+    J --> M
+    K --> M
+    L --> M
+    
+    M --> N
+    M --> O
+    M --> P
+    
+    N --> T
+    O --> Q
+    P --> R
+" />
+
+## Core Architecture Principles
+
+### 1. Component-Based Design
+- **Modular Components**: Each major feature is a self-contained component
+- **Reusable Patterns**: Common patterns extracted into shared components
+- **Clear Boundaries**: Well-defined interfaces between components
+
+### 2. Centralized State Management
+- **Zustand Stores**: Lightweight, performant state management
+- **Store Separation**: Each major feature has its own store
+- **Cross-Store Communication**: Stores communicate through actions and selectors
+
+### 3. Registry Pattern
+- **Centralized Registry**: Single source of truth for workflow components
+- **Dynamic Registration**: Components register themselves at runtime
+- **Type Safety**: Full TypeScript support for registry operations
+
+### 4. Service Layer Architecture
+- **Separation of Concerns**: Business logic separated from UI logic
+- **Dependency Injection**: Services injected into components
+- **Testable Design**: Services easily testable in isolation
+
+## Directory Structure
+
+```
+src/
+├── ai/                    # AI agents and services
+│   ├── agents/           # AI agent implementations
+│   ├── config/           # AI configuration
+│   ├── models/           # AI model configurations
+│   └── tools/            # AI tool executors
+├── components/            # React components
+│   ├── ModelBuilder.tsx  # Main model builder component
+│   ├── ai/               # AI-related components
+│   ├── canvas/           # Canvas components
+│   ├── dialogs/          # Dialog components
+│   ├── editor/           # Editor components
+│   ├── nodes/            # Node components
+│   ├── palette/          # Workflow palette
+│   ├── shared/           # Shared UI components
+│   ├── sidebars/         # Sidebar components
+│   ├── ui/               # UI primitives
+│   ├── viewer/           # Viewer components
+│   ├── wizard/           # XML import wizard
+│   └── workflow/         # Workflow components
+├── hooks/                # Custom React hooks
+├── index.ts              # Main entry point
+├── index.css             # Main styles
+├── registry/             # Workflow component registry
+│   ├── actions/          # Action definitions
+│   ├── tools/            # Tool definitions
+│   └── types.ts          # Registry type definitions
+├── services/             # Business logic services
+│   ├── apiClient.ts      # API client
+│   ├── schema/           # Schema services
+│   ├── tibTerminologyService.ts
+│   ├── workflow/         # Workflow services
+│   └── xml/              # XML processing services
+├── stores/               # Zustand state stores
+│   ├── modelBuilderStore.ts
+│   ├── workflowCanvasStore.ts
+│   └── xmlImportWizardStore.ts
+├── types/                # TypeScript type definitions
+│   ├── index.ts          # Core types
+│   ├── mappingConfig.ts  # XML mapping types
+│   └── semanticTypes.ts  # Semantic enrichment types
+└── utils/                # Utility functions
+    ├── apiResponseCache.ts
+    ├── canvasUtils.ts    # Canvas manipulation
+    ├── cn.ts              # Class name utilities
+    ├── exportUtils.ts    # Data export utilities
+    ├── jsonPathExpression.ts
+    ├── layout.ts          # Layout algorithms
+    ├── mappingConfigConverter.ts
+    ├── mappingConfigExamples.ts
+    ├── mappingConfigHelpers.ts
+    ├── markdownParser.ts
+    ├── rdfExportUtils.ts
+    ├── schemaConverter.ts
+    ├── schemaJsonConverter.ts
+    ├── toast.ts           # Toast notifications
+    ├── workflowConfigExport.ts
+    ├── xmlElementExtractor.ts
+    ├── xmlElementFactSheet.ts
+    └── xmlToJsonTree.ts
+```
+
+## Key Architectural Components
+
+### 1. Workflow Registry System
+
+The workflow registry is the central hub for managing all workflow components:
+
+```typescript
+import { ActionDefinition, ToolDefinition, CategoryMetadata } from './types'
+import { Boxes } from 'lucide-react'
+
+class WorkflowRegistry {
+  private actions: Map<string, ActionDefinition> = new Map()
+  private tools: Map<string, ToolDefinition> = new Map()
+  private actionCategories: Map<string, CategoryMetadata> = new Map()
+  private toolCategories: Map<string, CategoryMetadata> = new Map()
+
+  registerAction(definition: ActionDefinition) {
+    this.actions.set(definition.id, definition)
+  }
+
+  registerTool(definition: ToolDefinition) {
+    this.tools.set(definition.id, definition)
+  }
+
+  registerActionCategory(category: CategoryMetadata) {
+    this.actionCategories.set(category.id, category)
+  }
+
+  registerToolCategory(category: CategoryMetadata) {
+    this.toolCategories.set(category.id, category)
+  }
+
+  getAction(id: string): ActionDefinition | undefined {
+    return this.actions.get(id)
+  }
+
+  getTool(id: string): ToolDefinition | undefined {
+    return this.tools.get(id)
+  }
+
+  getAllActions(): ActionDefinition[] {
+    return Array.from(this.actions.values())
+  }
+
+  getAllTools(): ToolDefinition[] {
+    return Array.from(this.tools.values())
+  }
+
+  getActionCategories(): CategoryMetadata[] {
+    const registered = Array.from(this.actionCategories.values())
+    const usedIds = new Set(registered.map(c => c.id))
+    
+    // Add any used but unregistered categories
+    this.getAllActions().forEach(action => {
+      if (action.metadata.category && !usedIds.has(action.metadata.category)) {
+        registered.push({
+          id: action.metadata.category,
+          label: action.metadata.category,
+          icon: Boxes as any
+        })
+        usedIds.add(action.metadata.category)
+      }
+    })
+    
+    return registered.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+  }
+}
+```
+
+**Key Features**:
+- **Dynamic Registration**: Components register themselves at import time
+- **Type Safety**: Full TypeScript support for all registry operations
+- **Category Management**: Automatic categorization of components
+- **Metadata Support**: Rich metadata for UI generation
+
+### 2. State Management Architecture
+
+Plexus Builder uses Zustand for state management with a store-per-feature approach:
+
+```typescript
+import { create } from 'zustand'
+import type { Node, Relationship, ModelBuilderState, NodeGroup, RelationshipType } from '../types'
+
+interface ModelBuilderActions {
+  // Node actions
+  addNode: (node: Omit<Node, 'id' | 'position'>) => string
+  updateNode: (id: string, updates: Partial<Node>) => void
+  deleteNode: (id: string) => void
+  setNodePosition: (id: string, position: { x: number; y: number }) => void
+  reorderNodes: (activeId: string, overId: string) => void
+
+  // Relationship actions
+  addRelationship: (relationship: Omit<Relationship, 'id'>) => string
+  updateRelationship: (id: string, updates: Partial<Relationship>, updateAllWithType?: boolean, oldType?: string) => void
+  deleteRelationship: (id: string) => void
+
+  // Relationship type actions
+  addRelationshipType: (type: RelationshipType) => void
+  getRelationshipType: (type: string) => RelationshipType | undefined
+
+  // Selection
+  selectNode: (id: string | null) => void
+  selectRelationship: (id: string | null) => void
+
+  // Metadata
+  updateMetadata: (metadata: Partial<ModelBuilderState['metadata']>) => void
+
+  // Group actions
+  addGroup: (name: string) => string
+  updateGroup: (id: string, updates: Partial<NodeGroup>) => void
+  deleteGroup: (id: string, deleteNodes?: boolean) => void
+  toggleGroup: (id: string) => void
+  reorderUngroupedNodes: (activeId: string, overId: string) => void
+  moveNodeToGroup: (nodeId: string, groupId: string | null) => void
+
+  // Bulk operations
+  clear: () => void
+  loadState: (state: Partial<ModelBuilderState>) => void
+  organizeLayout: (type?: 'hierarchical' | 'grid' | 'circular') => void
+
+  // Validation
+  validate: () => { valid: boolean; errors: string[] }
+
+  // Visibility
+  setHideUnconnectedNodes: (hide: boolean) => void
+
+  // Root node management
+  setRootNodeId: (nodeId: string | null) => void
+
+  // Semantic
+  setSelectedOntologyId: (ontologyId: string | null) => void
+  setIsSemanticEnabled: (enabled: boolean) => void
+}
+
+export type ModelBuilderStore = ModelBuilderState & ModelBuilderActions
+
+export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
+  // Initial state and implementations...
+}))
+```
+
+**Store Architecture**:
+- **Model Builder Store**: Manages graph schema (nodes, relationships)
+- **Workflow Stores**: Manage workflow canvas and execution state
+- **Wizard Store**: Manages XML import wizard state
+- **Configuration Stores**: Manage component configuration state
+
+### 3. Component Architecture
+
+The UI follows a hierarchical component structure:
+
+<Mermaid chart="
+flowchart TD
+    A[PlexusBuilder<br/>Main Application]
+    A --> B[ModelBuilder<br/>Schema Design]
+    B --> E[ModelCanvas<br/>Visual Schema Editor]
+    B --> F[NodeEditor<br/>Node Properties]
+    B --> G[RelationshipEditor<br/>Relationship Config]
+    
+    B --> C[WorkflowBuilder<br/>Workflow Design]
+    C --> H[WorkflowCanvas<br/>Visual Workflow Editor]
+    C --> I[ToolPalette<br/>Tools Library]
+    C --> J[ConfigurationSidebar<br/>Component Settings]
+    
+    C --> D[XmlImportWizard<br/>XML Processing]
+    D --> K[WizardSteps<br/>Step-by-Step Guide]
+    D --> L[MappingConfigurator<br/>XML Mapping]
+    D --> M[AnalysisPanel<br/>XML Analysis]
+    
+    style A fill:#e1f5fe,stroke:#0288d1,stroke-width:3px
+    style B fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style C fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#f8f9fa,stroke:#6c757d
+    style F fill:#f8f9fa,stroke:#6c757d
+    style G fill:#f8f9fa,stroke:#6c757d
+    style H fill:#f8f9fa,stroke:#6c757d
+    style I fill:#f8f9fa,stroke:#6c757d
+    style J fill:#f8f9fa,stroke:#6c757d
+    style K fill:#f8f9fa,stroke:#6c757d
+    style L fill:#f8f9fa,stroke:#6c757d
+    style M fill:#f8f9fa,stroke:#6c757d
+" />
+
+**Component Principles**:
+- **Single Responsibility**: Each component has a single, well-defined purpose
+- **Props Interface**: Clear props interface with TypeScript
+- **Hook Integration**: Components use hooks for state and side effects
+- **Composition**: Complex components built from smaller, reusable components
+
+### 4. Service Layer Architecture
+
+Services handle business logic and external integrations:
+
+```typescript
+// Workflow Execution Service
+export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJson> {
+  const {
+    xmlContent,
+    schemaJson,
+    nodes,
+    relationships,
+    toolNodes,
+    toolEdges,
+    actionNodes,
+    actionEdges,
+    startNodeId
+  } = options
+
+  // Parse XML and execute workflow
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(xmlContent, 'text/xml')
+  
+  // Execute workflow logic...
+  return result
+}
+
+// ExecuteOptions Interface
+export interface ExecuteOptions {
+  xmlContent: string
+  schemaJson: SchemaJson
+  nodes: BuilderNode[]
+  relationships: Relationship[]
+  toolNodes: ToolCanvasNode[]
+  toolEdges: ToolCanvasEdge[]
+  actionNodes: ActionCanvasNode[]
+  actionEdges: ActionCanvasEdge[]
+  startNodeId?: string
+}
+
+// ExecutionContext Interface
+export interface ExecutionContext {
+  xmlDocument: Document
+  xmlElement: Element
+  parentGraphNode: GraphJsonNode | null
+  currentGraphNode: GraphJsonNode | null
+  builderNode: BuilderNode | null
+  elementToGraph: Map<Element, GraphJsonNode>
+  deferredRelationships: Array<{...}>
+  deferredOperations: DeferredOperation[]
+  // ... other properties
+}
+```
+
+```typescript
+// TIB Terminology Service
+import type { TibOntology, TibClass, TibProperty, TibApiResponse } from '../types/semanticTypes'
+
+class LRUCache<T> {
+  private cache: Map<string, { value: T; timestamp: number }>
+  private maxSize: number
+  private ttl: number
+
+  constructor(maxSize: number = 100, ttlMinutes: number = 30) {
+    this.cache = new Map()
+    this.maxSize = maxSize
+    this.ttl = ttlMinutes * 60 * 1000
+  }
+
+  get(key: string): T | null {
+    const item = this.cache.get(key)
+    if (!item) return null
+
+    // Check if expired
+    if (Date.now() - item.timestamp > this.ttl) {
+      this.cache.delete(key)
+      return null
+    }
+
+    // Move to end (LRU)
+    this.cache.delete(key)
+    this.cache.set(key, item)
+    return item.value
+  }
+
+  set(key: string, value: T): void {
+    // Remove oldest if at capacity
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey)
+      }
+    }
+
+    this.cache.set(key, { value, timestamp: Date.now() })
+  }
+}
+```
+
+### 5. Data Flow Architecture
+
+#### User Interaction Flow
+
+<Mermaid chart="
+sequenceDiagram
+    participant U as User
+    participant UI as UI Component
+    participant S as Store
+    participant R as Registry
+    participant SR as Service
+    
+    U->>UI: Drag Action to Canvas
+    UI->>S: Add Workflow Node
+    S->>R: Get Action Definition
+    R->>S: Return Action Metadata
+    S->>UI: Update Canvas State
+    UI->>U: Show Updated Canvas
+" />
+
+### 2. Workflow Execution Flow
+
+<Mermaid chart="
+sequenceDiagram
+    participant U as User
+    participant UI as UI
+    participant S as Store
+    participant WE as WorkflowExecutor
+    participant XML as XMLService
+    participant AI as AIService
+    
+    U->>UI: Click Generate
+    UI->>S: Get Workflow Definition
+    S->>WE: Execute Workflow
+    WE->>XML: Parse XML Data
+    XML->>WE: Return Parsed XML
+    WE->>AI: Process with AI (if enabled)
+    AI->>WE: Return AI Results
+    WE->>S: Update with Results
+    S->>UI: Show Generated Graph
+" />
+
+## Technology Stack
+
+### Core Dependencies
+- **React 18/19**: UI framework with hooks and concurrent features
+- **TypeScript**: Type safety and developer experience
+- **Zustand**: Lightweight state management
+- **ReactFlow**: Visual workflow canvas
+- **Tailwind CSS**: Utility-first styling
+
+### AI and Language Processing
+- **LangChain**: AI agent framework and LLM integration
+- **@langchain/core**: Core LangChain components
+- **@langchain/openai**: OpenAI integration
+- **@langchain/anthropic**: Anthropic integration
+
+### XML and Data Processing
+- **@xmldom/xmldom**: XML parsing and DOM manipulation
+- **jsonrepair**: JSON repair and validation
+- **zod**: Schema validation and type safety
+
+### UI Components
+- **Radix UI**: Unstyled, accessible UI primitives
+- **Lucide React**: Icon library
+- **React DnD Kit**: Drag and drop functionality
+- **CodeMirror**: Code editing components
+
+## Performance Considerations
+
+### 1. State Management Performance
+- **Selective Subscriptions**: Components only subscribe to needed state slices
+- **Shallow Comparisons**: Zustand uses shallow comparisons for performance
+- **Memoized Selectors**: Expensive computations memoized in selectors
+
+### 2. Rendering Performance
+- **React.memo**: Components memoized to prevent unnecessary re-renders
+- **useCallback/useMemo**: Hooks used to optimize expensive operations
+- **Virtualization**: Large lists virtualized when needed
+
+### 3. Memory Management
+- **Cleanup Functions**: Proper cleanup in useEffect hooks
+- **Weak References**: Used where appropriate for large data structures
+- **Lazy Loading**: Components loaded on-demand when possible
+
+## Security Architecture
+
+### 1. Input Validation
+- **Zod Schemas**: All external inputs validated with Zod schemas
+- **Type Safety**: TypeScript provides compile-time type checking
+- **Runtime Validation**: Additional runtime validation for critical operations
+
+### 2. AI Integration Security
+- **API Key Management**: Secure API key storage and management
+- **Content Filtering**: AI responses filtered for malicious content
+- **Rate Limiting**: Built-in rate limiting for AI API calls
+
+### 3. Data Privacy
+- **Local Processing**: XML data processed locally when possible
+- **Minimal Data Sharing**: Only necessary data shared with external services
+- **User Control**: Users control what data is shared with AI services
+
+## Extensibility Architecture
+
+### 1. Plugin System
+- **Registry Pattern**: New components registered through registry
+- **Type Extensions**: TypeScript types extended for new components
+- **Hook Integration**: New functionality integrated through hooks
+
+### 2. Custom Actions/Tools
+- **Definition API**: Clear API for defining new actions and tools
+- **Execution Interface**: Standard interface for execution logic
+- **Configuration Schema**: Schema-based configuration UI generation
+
+### 3. Theme and Styling
+- **CSS Variables**: Theme customization through CSS variables
+- **Component Overrides**: Components can be styled through CSS classes
+- **Icon Customization**: Icons can be customized through registry
+
+This architecture provides a solid foundation for building complex graph database workflows while maintaining code quality, performance, and extensibility.

@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Node, Relationship, ModelBuilderState, NodeGroup, RelationshipType } from '../types'
 
 interface ModelBuilderActions {
@@ -54,6 +55,7 @@ interface ModelBuilderActions {
   // Semantic
   setSelectedOntologyId: (ontologyId: string | null) => void
   setIsSemanticEnabled: (enabled: boolean) => void
+  setIsWorkflowVisible: (visible: boolean) => void
 }
 
 export type ModelBuilderStore = ModelBuilderState & ModelBuilderActions
@@ -69,6 +71,7 @@ const initialState: ModelBuilderState = {
   rootNodeId: null,
   selectedOntologyId: null,
   isSemanticEnabled: false,
+  isWorkflowVisible: true,
   metadata: {
     name: '',
     description: '',
@@ -76,8 +79,10 @@ const initialState: ModelBuilderState = {
   }
 }
 
-export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
-  ...initialState,
+export const useModelBuilderStore = create<ModelBuilderStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
   addNode: (nodeData: Omit<Node, 'id' | 'position'>): string => {
     const id = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -542,7 +547,8 @@ export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
         groups: Array.isArray(state.groups) ? state.groups : (Array.isArray(current.groups) ? current.groups : []),
         relationshipTypes: relationshipTypes.length > 0 ? relationshipTypes : (Array.isArray(state.relationshipTypes) ? state.relationshipTypes : (Array.isArray(current.relationshipTypes) ? current.relationshipTypes : [])),
         isSemanticEnabled: state.isSemanticEnabled !== undefined ? state.isSemanticEnabled : current.isSemanticEnabled,
-        selectedOntologyId: state.selectedOntologyId !== undefined ? state.selectedOntologyId : current.selectedOntologyId
+        selectedOntologyId: state.selectedOntologyId !== undefined ? state.selectedOntologyId : current.selectedOntologyId,
+        isWorkflowVisible: state.isWorkflowVisible !== undefined ? state.isWorkflowVisible : current.isWorkflowVisible
       }
     })
   },
@@ -623,6 +629,21 @@ export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
 
   setIsSemanticEnabled: (enabled: boolean) => {
     set({ isSemanticEnabled: enabled })
+  },
+ 
+    setIsWorkflowVisible: (visible: boolean) => {
+      set({ isWorkflowVisible: visible })
+    }
+  }),
+  {
+    name: 'plexus-builder-preferences',
+    partialize: (state) => ({
+      isWorkflowVisible: state.isWorkflowVisible,
+      isSemanticEnabled: state.isSemanticEnabled,
+      selectedOntologyId: state.selectedOntologyId,
+      hideUnconnectedNodes: state.hideUnconnectedNodes,
+    }),
   }
-}))
+)
+)
 

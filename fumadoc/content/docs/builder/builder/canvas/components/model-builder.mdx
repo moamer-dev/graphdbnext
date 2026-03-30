@@ -1,0 +1,160 @@
+---
+title: Model Builder Component
+description: The main visual workspace for designing schemas and building workflows
+---
+
+# Model Builder Component
+
+The Model Builder is the central workspace of Plexus Builder, providing an intuitive visual interface where you can design graph schemas, build workflows, and transform XML data into meaningful graph structures.
+
+## Overview
+
+The Model Builder serves as your main creative workspace where you can:
+
+- **Design Graph Schemas Visually**: Create nodes and relationships through drag-and-drop
+- **Build Data Workflows**: Connect tools and actions to process XML data
+- **Configure Node Properties**: Define attributes and semantic mappings
+- **Execute Transformations**: Run workflows to generate graph output
+- **Manage XML Data**: Import, preview, and export XML content
+- **Access Terminology Services**: Use TIB terminology for standardized semantic mapping
+
+## Visual Workspace Layout
+
+<Mermaid chart="
+flowchart TD
+    subgraph ModelBuilder[Model Builder Workspace]
+        A[Header Controls] --> B[Main Canvas Area]
+        B --> C[Configuration Panels]
+        C --> D[Dialog System]
+        
+        subgraph Canvas[Main Canvas]
+            E[Node Palette] --> F[Workflow Workspace]
+            F --> G[Visual Connections]
+        end
+        
+        subgraph Panels[Configuration Panels]
+            H[Node Editor] --> I[Relationship Editor]
+            I --> J[Tool Settings]
+            J --> K[TIB Terminology Panel]
+        end
+        
+        subgraph Features[Additional Features]
+            L[XML Preview] --> M[Execution Progress]
+            M --> N[Status Indicators]
+        end
+        
+        B --> Canvas
+        C --> Panels
+        C --> Features
+    end
+" />
+
+## Main Interface Areas
+
+### 1. Header Control Bar
+The top section contains all essential controls for managing your model:
+
+- **Model Information**: Edit model name and metadata
+- **Workflow Selector**: Switch between different workflows
+- **Feature Toggles**: Enable semantic mode, XML preview, and toolbars
+- **File Operations**: Import/export, templates, and workflow management
+- **Execution Controls**: Run, save, and clear workflows
+
+### 2. Main Canvas Area
+The central workspace where you design your schemas and workflows:
+
+- **Node Palette**: Drag tools and actions onto the canvas
+- **Workspace**: Visual area for arranging and connecting nodes
+- **Visual Connections**: See relationships and workflow flow
+- **Zoom Controls**: Navigate large schemas with pan and zoom
+
+### 3. Configuration Panels
+Side panels that appear when you select elements:
+
+- **Node Editor**: Configure graph node properties and attributes
+- **Relationship Editor**: Define connections between nodes
+- **Tool Settings**: Configure workflow tools and parameters
+- **TIB Terminology Panel**: Access standardized terminology for semantic mapping
+
+### 4. Additional Features
+Supporting panels and dialogs for enhanced functionality:
+
+- **XML Preview**: View source XML content in real-time
+- **Execution Progress**: Monitor workflow execution status
+- **Status Indicators**: See system state and error messages
+
+## Key Features
+
+### Visual Schema Design
+- **Drag-and-Drop Interface**: Intuitive node creation and positioning
+- **Real-Time Updates**: See changes immediately as you work
+- **Connection Visualization**: Clear visual representation of relationships
+- **Smart Snapping**: Automatic alignment for clean layouts
+
+### Workflow Building
+- **Tool Library**: Access to control flow and external service tools
+- **Action Library**: Data transformation and manipulation actions
+- **Visual Flow**: See how data flows through your workflow
+- **Configuration Wizards**: Step-by-step setup for complex tools
+
+### Semantic Integration with TIB
+- **Standardized Terminology**: Access TIB terminology service for consistent naming
+- **Semantic Suggestions**: Get recommendations for node types and properties
+- **Ontology Mapping**: Map your nodes to standard semantic classes
+- **Property Validation**: Ensure your schema follows established standards
+
+### XML Processing
+- **Import Wizard**: Step-by-step XML import with validation
+- **Live Preview**: See XML content alongside your schema design
+- **Template Generation**: Create reusable templates for common structures
+- **Format Support**: Work with various XML formats and schemas
+
+## User Workflow
+
+### Getting Started
+1. **Create New Model**: Start with a blank canvas or import existing XML
+2. **Import XML Data**: Upload your XML file or paste content directly
+3. **Design Schema**: Create nodes by dragging from the palette
+4. **Define Relationships**: Connect nodes to show data relationships
+5. **Configure Properties**: Set up attributes and semantic mappings
+6. **Build Workflow**: Add tools and actions for data processing
+7. **Test Execution**: Run your workflow with sample data
+8. **Export Results**: Generate your graph in the desired format
+
+### Advanced Features
+- **Semantic Mode**: Enable TIB terminology integration for professional standards
+- **Workflow Management**: Save, load, and version your workflows
+- **Collaboration**: Share models and workflows with team members
+- **Performance Monitoring**: Track execution time and resource usage
+
+## Performance and Usability
+
+### Large Schema Support
+- **Virtual Canvas**: Handle large schemas without performance issues
+- **Level of Detail**: Show simplified view when zoomed out
+- **Lazy Loading**: Load details only when needed
+- **Memory Management**: Efficient handling of complex models
+
+### User Experience
+- **Responsive Design**: Works smoothly on different screen sizes
+- **Visual Feedback**: Clear indicators for all actions
+- **Error Prevention**: Validate inputs before applying changes
+- **Help System**: Built-in guidance and tooltips
+
+## Integration Features
+
+### TIB Terminology Service
+- **Real-Time Lookup**: Search terminology as you type
+- **Contextual Suggestions**: Get relevant terms based on your node type
+- **Standard Compliance**: Ensure your schema follows industry standards
+- **Multi-Language Support**: Work with terminology in different languages
+
+### External Services
+- **API Integration**: Connect to external data sources
+- **Webhook Support**: Trigger external processes
+- **Authentication**: Secure connection management
+- **Error Handling**: Graceful handling of service issues
+
+---
+
+The Model Builder provides a comprehensive, user-friendly environment that combines powerful functionality with intuitive design, enabling you to create sophisticated graph schemas and workflows with confidence and efficiency.

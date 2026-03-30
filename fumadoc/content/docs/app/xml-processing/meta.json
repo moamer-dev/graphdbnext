@@ -1,0 +1,10 @@
+{
+  "title": "XML Processing",
+  "collapsible": true,
+  "defaultOpen": false,
+  "icon": "FileText",
+  "pages": [
+    "generate-graph",
+    "xml-import"
+  ]
+}

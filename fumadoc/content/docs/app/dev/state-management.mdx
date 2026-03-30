@@ -1,0 +1,779 @@
+---
+title: State Management
+description: Comprehensive guide to state management with Zustand and TanStack Query
+---
+
+# State Management
+
+Plexus Platform uses a dual state management approach: Zustand for client-side state and TanStack Query for server state. This combination provides optimal performance, type safety, and developer experience.
+
+## State Management Architecture
+
+<Mermaid chart="
+flowchart TD
+    subgraph Client[Client State]
+        A[Zustand Stores] --> B[Database Store]
+        A --> C[Query Store]
+        A --> D[Analytics Store]
+    end
+    
+    subgraph Server[Server State]
+        E[TanStack Query] --> F[Query Cache]
+        E --> G[Mutation Cache]
+    end
+    
+    subgraph Data[Data Sources]
+        H[PostgreSQL] --> I[Prisma Client]
+        J[Graph Database] --> K[Graph Services]
+    end
+    
+    Client --> Server
+    Server --> I
+    Server --> K
+" />
+
+## Zustand Store Architecture
+
+### Store Organization
+
+#### Database Store
+```typescript
+interface DatabaseStore {
+  // Node Labels
+  nodeLabels: string[]
+  nodeLabelsLoading: boolean
+  nodeLabelsError: string | null
+  fetchNodeLabels: () => Promise<void>
+  invalidateNodeLabels: () => void
+  
+  // Relationship Types (cached by fromLabel-toLabel key)
+  relationshipTypes: Record<string, string[]> // key: "fromLabel-toLabel" or "any-any"
+  relationshipTypesLoading: Record<string, boolean>
+  relationshipTypesError: Record<string, string | null>
+  fetchRelationshipTypes: (fromLabel?: string, toLabel?: string) => Promise<void>
+  invalidateRelationshipTypes: () => void
+  
+  // Node Properties (cached by label)
+  nodeProperties: Record<string, string[]> // key: label
+  nodePropertiesLoading: Record<string, boolean>
+  nodePropertiesError: Record<string, string | null>
+  fetchNodeProperties: (label: string) => Promise<void>
+  invalidateNodeProperties: () => void
+  
+  // Database Connection
+  dbStatus: DatabaseStatus | null
+  isInitializing: boolean
+  checkStatus: (isInitialCheck?: boolean) => Promise<void>
+  
+  // Current Query & Results
+  currentQuery: string
+  queryResults: unknown[] | null
+  queryLoading: boolean
+  queryError: string | null
+  setQuery: (query: string) => void
+  executeQuery: (queryToExecute?: string) => Promise<void>
+}
+```
+
+#### Query Builder Store
+```typescript
+interface QueryBuilderStore {
+  // Core Query State
+  matchNodes: QueryNode[]
+  matchRelationships: QueryRelationship[]
+  conditions: QueryConditionType[]
+  returnFields: string[]
+  limit: string
+  limitMode: 'rows' | 'nodes'
+  
+  // Internal Counters
+  nodeIdCounter: number
+  relationshipIdCounter: number
+  
+  // UI State
+  restorationComplete: boolean
+  
+  // Actions - Node Management
+  addMultipleNodes: (labels: string[]) => void
+  removeNode: (id: string) => void
+  reorderNodes: (draggedIndex: number, dropIndex: number) => void
+  updateNode: (id: string, updates: Partial<QueryNode>) => void
+  
+  // Actions - Relationship Management
+  addRelationship: () => void
+  removeRelationship: (id: string) => void
+  updateRelationship: (id: string, updates: Partial<QueryRelationship>) => void
+  
+  // Actions - Condition Management
+  addCondition: () => void
+  removeCondition: (id: string) => void
+  updateCondition: (id: string, updates: Partial<QueryConditionType>) => void
+  
+  // Actions - Return Fields
+  setReturnFields: (fields: string[]) => void
+}
+```
+
+#### Analytics Store
+```typescript
+interface AnalyticsStore {
+  data: AnalyticsData | null
+  loading: boolean
+  error: string | null
+  lastUpdated: Date | null
+  
+  setData: (data: AnalyticsData) => void
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  reset: () => void
+}
+
+export const useAnalyticsStore = create<AnalyticsStore>((set) => ({
+  data: null,
+  loading: false,
+  error: null,
+  lastUpdated: null,
+  
+  setData: (data) => set({ 
+    data, 
+    loading: false, 
+    error: null,
+    lastUpdated: new Date()
+  }),
+  
+  setLoading: (loading) => set({ loading, error: null }),
+  
+  setError: (error) => set({ error, loading: false }),
+  
+  reset: () => set({
+    data: null,
+    loading: false,
+    error: null,
+    lastUpdated: null
+  })
+}))
+```
+
+#### Visualization Store
+```typescript
+interface VisualizationStore {
+  config: VisualizationConfig | null
+  comparisonMode: boolean
+  graph1: { nodes: unknown[]; edges: unknown[] } | null
+  graph2: { nodes: unknown[]; edges: unknown[] } | null
+  
+  setConfig: (config: VisualizationConfig) => void
+  setComparisonMode: (enabled: boolean) => void
+  setGraph1: (graph: { nodes: unknown[]; edges: unknown[] }) => void
+  setGraph2: (graph: { nodes: unknown[]; edges: unknown[] }) => void
+  reset: () => void
+}
+
+export const useVisualizationStore = create<VisualizationStore>((set) => ({
+  config: null,
+  comparisonMode: false,
+  graph1: null,
+  graph2: null,
+  
+  setConfig: (config) => set({ config }),
+  
+  setComparisonMode: (enabled) => set({ comparisonMode: enabled }),
+  
+  setGraph1: (graph) => set({ graph1: graph }),
+  
+  setGraph2: (graph) => set({ graph2: graph }),
+  
+  reset: () => set({
+    config: null,
+    comparisonMode: false,
+    graph1: null,
+    graph2: null
+  })
+}))
+```
+
+### Store Implementation Patterns
+
+#### Base Store Pattern
+```typescript
+'use client'
+
+import { create } from 'zustand'
+import { toast } from 'sonner'
+import { NodeQueries, RelationshipQueries, CommonQueries } from '@/queries/cypherQueries'
+
+export interface DatabaseStatus {
+  success?: boolean
+  connected?: boolean
+  stats?: {
+    nodeCount?: number
+    relationshipCount?: number
+  }
+  error?: string
+}
+
+export const useDatabaseStore = create<DatabaseStore>((set, get) => ({
+  // Initialize state
+  nodeLabels: [],
+  nodeLabelsLoading: false,
+  nodeLabelsError: null,
+  relationshipTypes: {},
+  relationshipTypesLoading: {},
+  relationshipTypesError: {},
+  // ... other initial state
+  
+  fetchNodeLabels: async () => {
+    const { nodeLabels, nodeLabelsLoading } = get()
+    if (nodeLabelsLoading) return
+    
+    set({ nodeLabelsLoading: true, nodeLabelsError: null })
+    try {
+      const labels = await NodeQueries.getAllLabels()
+      set({ nodeLabels: labels, nodeLabelsLoading: false })
+    } catch (error) {
+      set({ nodeLabelsError: error.message, nodeLabelsLoading: false })
+      toast.error('Failed to fetch node labels')
+    }
+  }
+  
+  // ... other methods
+}))
+```
+
+#### Async Action Pattern
+```typescript
+// Async action wrapper for error handling
+const withAsyncHandler = <T>(
+  store: any,
+  actionName: string,
+  asyncFn: () => Promise<T>
+) => {
+  store.setLoading(true);
+  store.clearError();
+  
+  try {
+    const result = await asyncFn();
+    return result;
+  } catch (error) {
+    store.setError(error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  } finally {
+    store.setLoading(false);
+  }
+};
+
+// Usage in store
+const databaseStore = createBaseStore('database-store', {
+  // ... initial state
+  
+  checkStatus: async () => {
+    return withAsyncHandler(databaseStore, 'checkStatus', async () => {
+      const status = await databaseService.checkStatus();
+      databaseStore.setState({ dbStatus: status, isConnected: status.connected });
+      return status;
+    });
+  },
+});
+```
+
+## TanStack Query Integration
+
+### Query Configuration
+
+#### Query Keys Factory
+```typescript
+/**
+ * Query Key Factories
+ * 
+ * Best practice: Centralize all query keys in one place
+ * This ensures type safety and prevents typos
+ * 
+ * Pattern: [resource, ...params] for hierarchical keys
+ */
+
+export const queryKeys = {
+  // Model queries
+  models: {
+    all: ['models'] as const,
+    lists: () => [...queryKeys.models.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) => 
+      [...queryKeys.models.lists(), filters] as const,
+    details: () => [...queryKeys.models.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.models.details(), id] as const,
+    paginated: (params: {
+      page: number
+      pageSize: number
+      sortBy?: string
+      sortOrder?: 'asc' | 'desc'
+      filters?: Record<string, unknown>
+    }) => [...queryKeys.models.lists(), 'paginated', params] as const
+  },
+  // User queries
+  users: {
+    all: ['users'] as const,
+    lists: () => [...queryKeys.users.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) => 
+      [...queryKeys.users.lists(), filters] as const,
+    details: () => [...queryKeys.users.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.users.details(), id] as const,
+    paginated: (params: {
+      page: number
+      pageSize: number
+      sortBy?: string
+      sortOrder?: 'asc' | 'desc'
+      filters?: Record<string, unknown>
+    }) => [...queryKeys.users.lists(), 'paginated', params] as const
+  },
+  // Query (SavedQuery) queries
+  queries: {
+    all: ['queries'] as const,
+    lists: () => [...queryKeys.queries.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) => 
+      [...queryKeys.queries.lists(), filters] as const,
+    details: () => [...queryKeys.queries.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.queries.details(), id] as const,
+    paginated: (params: {
+      page: number
+      pageSize: number
+      sortBy?: string
+      sortOrder?: 'asc' | 'desc'
+      filters?: Record<string, unknown>
+    }) => [...queryKeys.queries.lists(), 'paginated', params] as const
+  }
+} as const
+```
+
+#### Generic Resource Hook Factory
+```typescript
+'use client'
+
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+
+/**
+ * Generic Resource Hook Factory
+ * 
+ * Creates reusable hooks for any resource following the same pattern.
+ * This reduces boilerplate while maintaining type safety and flexibility.
+ * 
+ * Usage:
+ * ```typescript
+ * const useUsers = createResourceHooks({
+ *   resourceName: 'User',
+ *   basePath: '/api/users',
+ *   queryKeys: queryKeys.users,
+ *   viewPath: '/dashboard/users',
+ *   listPath: '/dashboard/users'
+ * })
+ * ```
+ */
+
+export interface ResourceConfig {
+  resourceName: string
+  basePath: string
+  viewPath?: string
+  listPath?: string
+  queryKeys: {
+    lists: () => readonly unknown[]
+    detail: (id: string) => readonly unknown[]
+    paginated: (params: FetchParams) => readonly unknown[]
+  }
+}
+
+export interface FetchParams {
+  page: number
+  pageSize: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+  filters?: Record<string, unknown>
+}
+```
+
+#### Mutations
+```typescript
+// Hook: Create
+function useCreate (options?: { onSuccess?: (data: T) => void }) {
+  const queryClient = useQueryClient()
+  const router = useRouter()
+
+  return useMutation({
+    mutationFn: createItem,
+    onSuccess: (data) => {
+      // Handle different response formats
+      let item: T | undefined
+      if ('data' in data) {
+        item = (data as SingleResourceResponse<T>).data
+      } else {
+        const dataRecord = data as unknown as Record<string, T>
+        item = dataRecord[config.resourceName.toLowerCase()]
+      }
+      
+      // Invalidate and refetch lists
+      queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+      
+      // Optionally prefetch the new item
+      if (item?.id) {
+        queryClient.setQueryData(config.queryKeys.detail(item.id), data)
+      }
+      
+      toast.success(`${config.resourceName} created successfully`)
+      
+      // Navigate to the new item if viewPath is configured
+      if (viewPath && item?.id) {
+        router.push(`${viewPath}/${item.id}`)
+      }
+      
+      if (item) {
+        options?.onSuccess?.(item)
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || `Failed to create ${config.resourceName}`)
+    }
+  })
+}
+
+// Hook: Update
+function useUpdate () {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<T> }) => 
+      updateItem(id, data),
+    onSuccess: (data, variables) => {
+      // Update the cache with the new data
+      queryClient.setQueryData(config.queryKeys.detail(variables.id), data)
+      
+      // Invalidate list queries to refetch
+      queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+      
+      toast.success(`${config.resourceName} updated successfully`)
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || `Failed to update ${config.resourceName}`)
+    }
+  })
+}
+
+// Hook: Delete
+function useDelete () {
+  const queryClient = useQueryClient()
+  const router = useRouter()
+
+  return useMutation({
+    mutationFn: deleteItem,
+    onSuccess: () => {
+      // Invalidate list queries
+      queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+      
+      toast.success(`${config.resourceName} deleted successfully`)
+      
+      // Navigate back to list if listPath is configured
+      if (listPath) {
+        router.push(listPath)
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || `Failed to delete ${config.resourceName}`)
+    }
+  })
+}
+```
+
+## State Synchronization
+
+### Actual Pattern: Separation of Concerns
+
+#### Zustand for UI State
+```typescript
+// From useQueryResults.ts - UI state management
+export function useQueryResults ({ results, loading, currentQuery }: UseQueryResultsProps) {
+  // Use store for pagination, search, and filters
+  const currentPage = useQueryResultsStore(state => state.currentPage)
+  const setCurrentPage = useQueryResultsStore(state => state.setCurrentPage)
+  const itemsPerPage = useQueryResultsStore(state => state.itemsPerPage)
+  const setItemsPerPage = useQueryResultsStore(state => state.setItemsPerPage)
+  const searchTerm = useQueryResultsStore(state => state.searchTerm)
+  const setSearchTerm = useQueryResultsStore(state => state.setSearchTerm)
+  const columnFilters = useQueryResultsStore(state => state.columnFilters)
+  const setColumnFilter = useQueryResultsStore(state => state.setColumnFilter)
+  
+  // TanStack Query for server state
+  const createQuery = resourceHooks.queries.useCreate()
+  
+  // UI state and server state work together
+  const filteredResults = useMemo(() => {
+    if (!results || results.length === 0) return []
+    return results.filter((result: unknown) => {
+      // Apply UI state (search, filters) to server data
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase()
+        const matchesSearch = Object.values(resultObj).some(value => {
+          const searchableText = getSearchableText(value)
+          return searchableText.includes(searchLower)
+        })
+        if (!matchesSearch) return false
+      }
+      // ... more filtering logic
+    })
+  }, [results, searchTerm, columnFilters])
+}
+```
+
+#### TanStack Query for Server State
+```typescript
+// From useResource.ts - Server state management
+function useList (params: FetchParams) {
+  return useQuery({
+    queryKey: config.queryKeys.paginated(params),
+    queryFn: () => fetchList(params),
+    staleTime: 1000 * 60 * 2, // 2 minutes for list data
+    placeholderData: keepPreviousData // Keep previous data while fetching
+  })
+}
+
+function useCreate (options?: { onSuccess?: (data: T) => void }) {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: createItem,
+    onSuccess: (data) => {
+      // Invalidate server state
+      queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+    }
+  })
+}
+```
+
+### Key Principles
+
+1. **Zustand**: UI state (pagination, search, filters, UI preferences)
+2. **TanStack Query**: Server state (API data, caching, mutations)
+3. **No Bridge Needed**: They serve different purposes and work together naturally
+4. **Component Level**: Components combine both as needed
+
+## Performance Optimization
+
+### Actual Performance Patterns
+
+#### useMemo for Expensive Calculations
+```typescript
+// From useQueryResults.ts - Memoize expensive operations
+const allKeys = useMemo(() => {
+  if (!results || results.length === 0) return []
+  const keys = new Set<string>()
+  results.forEach((result: unknown) => {
+    if (result && typeof result === 'object') {
+      Object.keys(result).forEach(key => keys.add(key))
+    }
+  })
+  return Array.from(keys)
+}, [results])
+
+// Memoize filtering logic
+const filteredResults = useMemo(() => {
+  if (!results || results.length === 0) return []
+  return results.filter((result: unknown) => {
+    if (!result || typeof result !== 'object') return false
+    const resultObj = result as Record<string, unknown>
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      const matchesSearch = Object.values(resultObj).some(value => {
+        const searchableText = getSearchableText(value)
+        return searchableText.includes(searchLower)
+      })
+      if (!matchesSearch) return false
+    }
+
+    for (const [column, filterValue] of Object.entries(columnFilters)) {
+      if (!filterValue) continue
+      const value = resultObj[column]
+      if (value === null || value === undefined) return false
+      
+      const searchableText = getSearchableText(value)
+      if (!searchableText.includes(filterValue.toLowerCase())) {
+        return false
+      }
+    }
+
+    return true
+  })
+}, [results, searchTerm, columnFilters])
+```
+
+#### useCallback for Event Handlers
+```typescript
+// From useQueryResults.ts - Memoize event handlers
+const handleViewModeChange = (mode: ViewMode) => {
+  lastStateView.current = mode
+  setViewMode(mode)
+  const params = new URLSearchParams(searchParams.toString())
+  if (mode === 'table') {
+    params.delete('view')
+  } else {
+    params.set('view', mode)
+  }
+  const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname
+  router.replace(newUrl, { scroll: false })
+}
+
+const handleColumnFilter = (column: string, value: string) => {
+  if (value) {
+    setColumnFilter(column, value)
+  } else {
+    removeColumnFilter(column)
+  }
+}
+```
+
+#### TanStack Query Performance Features
+```typescript
+// From useResource.ts - Built-in performance optimizations
+function useList (params: FetchParams) {
+  return useQuery({
+    queryKey: config.queryKeys.paginated(params),
+    queryFn: () => fetchList(params),
+    staleTime: 1000 * 60 * 2, // 2 minutes for list data
+    placeholderData: keepPreviousData // Keep previous data while fetching new data to prevent flickering
+  })
+}
+
+function useSingle (id: string, enabled = true) {
+  return useQuery({
+    queryKey: config.queryKeys.detail(id),
+    queryFn: () => fetchSingle(id),
+    enabled: enabled && !!id,
+    staleTime: 1000 * 60 * 5 // 5 minutes for detail data
+  })
+}
+```
+
+### Key Performance Principles
+
+1. **Memoize Expensive Operations**: Use `useMemo` for filtering, mapping, and calculations
+2. **Stable Event Handlers**: Use `useCallback` for event handlers passed to children
+3. **Query Caching**: Leverage TanStack Query's built-in caching with appropriate `staleTime`
+4. **Placeholder Data**: Use `keepPreviousData` to prevent UI flickering during refetches
+5. **Conditional Queries**: Use `enabled` option to prevent unnecessary requests
+
+## Error Handling
+
+### Actual Error Handling Patterns
+
+#### TanStack Query Error Handling
+```typescript
+// From useResource.ts - Mutation error handling
+function useCreate (options?: { onSuccess?: (data: T) => void }) {
+  const queryClient = useQueryClient()
+  const router = useRouter()
+
+  return useMutation({
+    mutationFn: createItem,
+    onSuccess: (data) => {
+      // Success handling...
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || `Failed to create ${config.resourceName}`)
+    }
+  })
+}
+
+function useUpdate () {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<T> }) => 
+      updateItem(id, data),
+    onSuccess: (data, variables) => {
+      // Success handling...
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || `Failed to update ${config.resourceName}`)
+    }
+  })
+}
+```
+
+#### Zustand Store Error Handling
+```typescript
+// From databaseStore.ts - Store error handling
+export const useDatabaseStore = create<DatabaseStore>((set, get) => ({
+  // ... other state
+  
+  fetchNodeLabels: async () => {
+    const { nodeLabels, nodeLabelsLoading } = get()
+    if (nodeLabelsLoading) return
+    
+    set({ nodeLabelsLoading: true, nodeLabelsError: null })
+    try {
+      const labels = await NodeQueries.getAllLabels()
+      set({ nodeLabels: labels, nodeLabelsLoading: false })
+    } catch (error) {
+      set({ nodeLabelsError: error.message, nodeLabelsLoading: false })
+      toast.error('Failed to fetch node labels')
+    }
+  }
+  
+  // ... other methods
+}))
+```
+
+#### API Error Handling
+```typescript
+// From useResource.ts - API error handling
+async function fetchList (params: FetchParams): Promise<ResourceResponse<T>> {
+  const response = await fetch(`${config.basePath}?${searchParams.toString()}`)
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: `Failed to fetch ${config.resourceName.toLowerCase()}s` }))
+    throw new Error(error.error || `Failed to fetch ${config.resourceName.toLowerCase()}s`)
+  }
+  
+  const result = await response.json()
+  
+  return {
+    data: result.data || [],
+    total: result.total || 0
+  }
+}
+```
+
+### Key Error Handling Principles
+
+1. **Toast Notifications**: Use `toast.error()` for user-facing errors
+2. **Error State**: Store error messages in state for UI display
+3. **Graceful Fallbacks**: Provide default error messages
+4. **Try-Catch**: Wrap async operations in try-catch blocks
+5. **Validation**: Check response.ok before parsing JSON
+
+## Summary
+
+### State Management Architecture in Plexus Platform
+
+The Plexus Platform uses a clean separation of concerns for state management:
+
+- **Zustand**: Client-side UI state (pagination, search, filters, UI preferences)
+- **TanStack Query**: Server state (API data, caching, mutations)
+- **No Complex Integration**: They work together naturally at the component level
+
+### Key Benefits
+
+1. **Type Safety**: Full TypeScript support throughout
+2. **Performance**: Built-in caching and memoization
+3. **Developer Experience**: Simple, predictable APIs
+4. **Maintainability**: Clear separation of responsibilities
+5. **User Experience**: Smooth interactions with proper loading and error states
+
+### Best Practices Used
+
+1. **Hierarchical Query Keys**: Organized cache structure
+2. **Generic Resource Hooks**: Reusable CRUD patterns
+3. **Toast Notifications**: Consistent user feedback
+4. **Memoization**: Optimize expensive calculations
+5. **Error Boundaries**: Graceful error handling
+
+---
+
+This state management architecture provides a robust, performant, and maintainable solution for managing both client and server state in the Plexus Platform, with proper separation of concerns and comprehensive error handling.

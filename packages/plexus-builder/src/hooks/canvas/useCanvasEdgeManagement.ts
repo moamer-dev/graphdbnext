@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../../stores/actionCanvasStore'
+import { isToolNodeId, isMainNodeId } from '../../utils/canvasUtils'
 
 export function useCanvasEdgeManagement() {
   const [deleteRelationshipDialogOpen, setDeleteRelationshipDialogOpen] = useState(false)
@@ -16,7 +17,7 @@ export function useCanvasEdgeManagement() {
     selectedRelationship
   } = useModelBuilderStore()
   
-  const { deleteEdge: deleteToolEdge } = useToolCanvasStore()
+  const { deleteEdge: deleteToolEdge, updateNode: updateToolNode, edges: toolEdges } = useToolCanvasStore()
   const { deleteEdge: deleteActionEdge } = useActionCanvasStore()
 
   const handleDeleteRelationship = useCallback((relationshipId: string) => {
@@ -50,8 +51,15 @@ export function useCanvasEdgeManagement() {
     if (!pendingEdgeId || !pendingEdgeType) return
     
     if (pendingEdgeType === 'tool') {
+      const edge = toolEdges.find(e => e.id === pendingEdgeId)
+      if (edge && isMainNodeId(edge.source)) {
+        console.log('Clearing targetNodeId for tool:', edge.target)
+        updateToolNode(edge.target, { targetNodeId: undefined })
+      }
+      console.log('Deleting tool edge:', pendingEdgeId)
       deleteToolEdge(pendingEdgeId)
     } else if (pendingEdgeType === 'action') {
+      console.log('Deleting action edge:', pendingEdgeId)
       deleteActionEdge(pendingEdgeId)
     }
     

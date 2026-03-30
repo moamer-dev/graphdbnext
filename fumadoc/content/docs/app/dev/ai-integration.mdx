@@ -1,0 +1,557 @@
+---
+title: AI Integration
+description: Natural language to Cypher query generation using LangChain
+---
+
+# AI Integration
+
+Plexus Platform integrates AI capabilities to convert natural language queries into Cypher statements for graph database interrogation. The AI system is focused specifically on query generation and uses LangChain with Mistral AI for this purpose.
+
+## AI Architecture Overview
+
+<Mermaid chart="
+graph TB
+    subgraph &quot;User Interface&quot;
+        A[ChatAgent Component] --> B[Natural Language Input]
+        B --> C[AI Query Assistant]
+    end
+    
+    subgraph &quot;API Layer&quot;
+        D[API Chat Agent] --> E[Authentication]
+        E --> F[AI Settings Validation]
+        F --> G[Graph DB Connection]
+    end
+    
+    subgraph &quot;AI Processing&quot;
+        H[LangChain Framework] --> I[ChatMistralAI Model]
+        I --> J[GraphCypherQAChain]
+        J --> K[PromptTemplate]
+        K --> L[Cypher Generation]
+    end
+    
+    subgraph &quot;Graph Database&quot;
+        M[Neo4j/Memgraph] --> N[Schema Extraction]
+        N --> O[Query Execution]
+        O --> P[Result Processing]
+    end
+    
+    A --> D
+    D --> H
+    H --> M
+    P --> A
+" />
+
+## Core AI Implementation
+
+### Chat Agent API Route
+
+```typescript
+// From app/api/chat/agent/route.ts - Main AI endpoint
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { Neo4jGraph } from '@langchain/community/graphs/neo4j_graph'
+import { MemgraphGraph } from '@langchain/community/graphs/memgraph_graph'
+import { ChatMistralAI } from '@langchain/mistralai'
+import { GraphCypherQAChain } from '@langchain/community/chains/graph_qa/cypher'
+import { PromptTemplate } from '@langchain/core/prompts'
+
+const CYPHSER_GENERATION_TEMPLATE = `Task:Generate Cypher statement to query a graph database.
+Instructions:
+Use only the provided relationship types and properties in the schema.
+Do not use any other relationship types or properties that are not provided.
+Schema:
+{schema}
+Note: Do not include any explanations or apologies in your responses.
+Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
+Do not include any text except the generated Cypher statement.
+Do not use markdown or code blocks.
+The question is:
+{question}`
+
+const CYPHER_GENERATION_PROMPT = new PromptTemplate({
+    template: CYPHSER_GENERATION_TEMPLATE,
+    inputVariables: ['schema', 'question'],
+})
+```
+
+### AI Processing Pipeline
+
+```typescript
+// From app/api/chat/agent/route.ts - AI processing logic
+export async function POST(request: NextRequest) {
+    try {
+        // 1. Authentication
+        const session = await getServerSession(authOptions)
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const { question } = body
+
+        if (!question) {
+            return NextResponse.json({ error: 'Question is required' }, { status: 400 })
+        }
+
+        // 2. Fetch AI Settings
+        const userSettings = await prisma.userSettings.findUnique({
+            where: { userId: session.user.id },
+            select: { aiSettings: true }
+        })
+
+        const aiSettings = userSettings?.aiSettings as unknown as AISettings
+
+        if (!aiSettings?.enabled) {
+            return NextResponse.json({ error: 'AI is disabled in settings' }, { status: 403 })
+        }
+
+        const apiKey = aiSettings.model.apiKey
+        if (!apiKey) {
+            return NextResponse.json({ error: 'AI API Key not configured' }, { status: 400 })
+        }
+
+        // 3. Initialize Graph Database
+        const dbType = (process.env.GRAPH_DB_TYPE || 'memgraph').toLowerCase()
+        const host = process.env.GRAPH_DB_HOST || process.env.MEMGRAPH_HOST || process.env.NEO4J_HOST || '127.0.0.1'
+        const port = process.env.GRAPH_DB_PORT || process.env.MEMGRAPH_PORT || process.env.NEO4J_PORT || '7687'
+        const username = process.env.GRAPH_DB_USERNAME || process.env.NEO4J_USERNAME || 'neo4j'
+        const password = process.env.GRAPH_DB_PASSWORD || process.env.NEO4J_PASSWORD || 'password'
+        const url = process.env.NEO4J_URI || process.env.NEO4J_URL || `bolt://${host}:${port}`
+        const database = process.env.NEO4J_DATABASE || null
+
+        let graph;
+        if (dbType === 'neo4j') {
+            graph = await Neo4jGraph.initialize({
+                url,
+                username,
+                password,
+                database: database as string,
+            })
+        } else {
+            // Memgraph
+            graph = await MemgraphGraph.initialize({
+                url,
+                username,
+                password,
+            })
+        }
+
+        // 4. Initialize Chat Model (Mistral)
+        const model = new ChatMistralAI({
+            apiKey: apiKey,
+            modelName: aiSettings.model.modelName || 'mistral-medium',
+            temperature: aiSettings.model.temperature || 0,
+        })
+
+        // 5. Create Chain
+        const chain = GraphCypherQAChain.fromLLM({
+            llm: model,
+            graph: graph,
+            cypherPrompt: CYPHER_GENERATION_PROMPT,
+            returnDirect: false,
+            returnIntermediateSteps: true, // Enable intermediate steps to get the Cypher query
+        })
+
+        // 6. Run Chain
+        const response = await chain.invoke({
+            query: question,
+        })
+
+        // Extract Cypher query from intermediate steps
+        let generatedCypher = '';
+        if (response.intermediateSteps && Array.isArray(response.intermediateSteps)) {
+            const stepWithQuery = response.intermediateSteps.find((step: any) => step.query);
+            if (stepWithQuery) {
+                generatedCypher = stepWithQuery.query;
+            }
+        }
+
+        return NextResponse.json({
+            result: response.result,
+            cypher: generatedCypher
+        })
+
+    } catch (error: any) {
+        console.error('Error in AI Agent:', error)
+        return NextResponse.json(
+            { error: error.message || 'Internal Server Error' },
+            { status: 500 }
+        )
+    }
+}
+```
+
+## Frontend Integration
+
+### ChatAgent Component
+
+```typescript
+// From components/database/ChatAgent.tsx - UI component
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Label } from '@/components/ui/label'
+import { Sparkles, Send, Bot, User, Loader2, AlertCircle, Play } from 'lucide-react'
+
+interface Message {
+    id: string
+    role: 'user' | 'assistant'
+    content: string
+    timestamp: Date
+    cypher?: string
+}
+
+interface ChatAgentProps {
+    onVisualize?: (cypher: string) => void
+}
+
+export function ChatAgent({ onVisualize }: ChatAgentProps) {
+    const [messages, setMessages] = useState<Message[]>([])
+    const [input, setInput] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!input.trim() || loading) return
+
+        const userMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: input,
+            timestamp: new Date()
+        }
+
+        setMessages(prev => [...prev, userMessage])
+        setInput('')
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch('/api/chat/agent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: userMessage.content })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to get response')
+            }
+
+            const agentMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: data.result,
+                timestamp: new Date(),
+                cypher: data.cypher
+            }
+
+            setMessages(prev => [...prev, agentMessage])
+        } catch (err: any) {
+            console.error('Chat Error:', err)
+            setError(err.message || 'Something went wrong')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="flex flex-col h-full bg-muted/5">
+            <div className="space-y-2 p-4 pb-2">
+                <Label className="text-xs font-semibold flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    AI Query Assistant
+                </Label>
+                <p className="text-xs text-muted-foreground/70">
+                    Ask questions about your data in natural language.
+                </p>
+            </div>
+
+            <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                    {messages.length === 0 && (
+                        <div className="text-center py-10 px-4 text-muted-foreground/50 text-xs">
+                            <Bot className="h-8 w-8 mx-auto mb-3 opacity-20" />
+                            <p>No messages yet.</p>
+                            <p className="mt-2">Start by asking a question about your graph data.</p>
+                        </div>
+                    )}
+                    
+                    {messages.map((message) => (
+                        <div key={message.id} className="flex gap-3">
+                            <div className="flex-shrink-0">
+                                {message.role === 'user' ? (
+                                    <User className="h-4 w-4 mt-1 text-muted-foreground" />
+                                ) : (
+                                    <Bot className="h-4 w-4 mt-1 text-primary" />
+                                )}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                <div className="bg-background rounded-lg p-3 border">
+                                    <p className="text-sm">{message.content}</p>
+                                    {message.cypher && (
+                                        <div className="mt-2 pt-2 border-t">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-muted-foreground">Generated Cypher:</span>
+                                                {onVisualize && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-6 px-2 text-xs"
+                                                        onClick={() => onVisualize(message.cypher!)}
+                                                    >
+                                                        <Play className="h-3 w-3 mr-1" />
+                                                        Run
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
+                                                {message.cypher}
+                                            </pre>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    {loading && (
+                        <div className="flex gap-3">
+                            <div className="flex-shrink-0">
+                                <Bot className="h-4 w-4 mt-1 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="bg-background rounded-lg p-3 border">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        <span className="text-sm text-muted-foreground">Thinking...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {error && (
+                        <div className="flex gap-3">
+                            <div className="flex-shrink-0">
+                                <AlertCircle className="h-4 w-4 mt-1 text-destructive" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                                    <p className="text-sm text-destructive">{error}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
+
+            <div className="p-4 pt-2">
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                    <Input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Ask about your data..."
+                        disabled={loading}
+                        className="flex-1"
+                    />
+                    <Button type="submit" size="sm" disabled={loading || !input.trim()}>
+                        {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Send className="h-4 w-4" />
+                        )}
+                    </Button>
+                </form>
+            </div>
+        </div>
+    )
+}
+```
+
+## AI Configuration
+
+### User Settings Structure
+
+```typescript
+// From @plexus/builder - AI Settings interface
+interface AISettings {
+  enabled: boolean
+  model: {
+    modelName: string
+    temperature: number
+    apiKey: string
+  }
+  features: {
+    queryAiAgent: boolean
+  }
+}
+```
+
+### Environment Variables
+
+```bash
+# Graph Database Configuration
+GRAPH_DB_TYPE=memgraph          # or 'neo4j'
+GRAPH_DB_HOST=127.0.0.1
+GRAPH_DB_PORT=7687
+GRAPH_DB_USERNAME=neo4j
+GRAPH_DB_PASSWORD=password
+NEO4J_URI=bolt://127.0.0.1:7687
+NEO4J_DATABASE=neo4j
+
+# Alternative Neo4j Configuration
+NEO4J_HOST=127.0.0.1
+NEO4J_PORT=7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+
+# Memgraph Configuration
+MEMGRAPH_HOST=127.0.0.1
+MEMGRAPH_PORT=7687
+```
+
+## AI Features
+
+### Natural Language to Cypher
+
+The AI system converts natural language questions into Cypher queries:
+
+**Example Input:**
+```
+"Find all people who work for companies in the technology industry"
+```
+
+**Generated Cypher:**
+```cypher
+MATCH (p:Person)-[:WORKS_FOR]->(c:Company)
+WHERE c.industry = 'technology'
+RETURN p, c
+```
+
+**Natural Language Response:**
+```
+I found 15 people who work for technology companies. The query retrieved their names and the companies they work for.
+```
+
+### Key Capabilities
+
+1. **Schema Awareness**: Uses only existing node labels and relationship types
+2. **Cypher Generation**: Produces valid Cypher statements
+3. **Result Processing**: Provides natural language explanations
+4. **Error Handling**: Graceful failure with user-friendly messages
+5. **Authentication**: Secured with NextAuth session validation
+6. **Settings Integration**: Respects user AI preferences
+
+## Integration Points
+
+### Query Interface Integration
+
+The ChatAgent is integrated into the database query interface:
+
+```typescript
+// From components/database/QueryView.tsx - Integration example
+{aiSettings.enabled && aiSettings.features.queryAiAgent && (
+  <div className="w-full">
+    <ChatAgent onVisualize={handleCypherVisualization} />
+  </div>
+)}
+```
+
+### Visualization Callback
+
+Generated Cypher queries can be visualized:
+
+```typescript
+const handleCypherVisualization = (cypher: string) => {
+  // Execute the generated Cypher query
+  // Update the graph visualization
+  setCurrentQuery(cypher)
+  executeQuery(cypher)
+}
+```
+
+## Security and Privacy
+
+### Data Protection
+
+1. **User Isolation**: Each user can only query their own graph data
+2. **API Key Security**: API keys stored encrypted in user settings
+3. **Session Validation**: All requests require authenticated sessions
+4. **Schema Limitation**: AI can only use existing schema elements
+
+### Error Handling
+
+1. **Input Validation**: Validates natural language input
+2. **AI Settings Check**: Verifies AI is enabled and configured
+3. **Graph Connection**: Handles database connection failures
+4. **API Failures**: Graceful degradation when AI services fail
+
+## Performance Considerations
+
+### Optimization Strategies
+
+1. **Model Configuration**: Low temperature (0) for consistent Cypher generation
+2. **Caching**: Graph schema cached for repeated queries
+3. **Connection Pooling**: Reuses graph database connections
+4. **Async Processing**: Non-blocking AI request handling
+
+### Resource Usage
+
+1. **Graph Schema**: Automatically extracted and cached
+2. **Model Selection**: Uses efficient Mistral models
+3. **Response Size**: Limits response length for performance
+4. **Timeout Handling**: Prevents hanging requests
+
+## Usage Examples
+
+### Basic Query Generation
+
+```
+User: "How many nodes are in my graph?"
+AI: "Your graph contains 1,247 nodes across 8 different labels."
+Cypher: MATCH (n) RETURN count(n) as nodeCount
+```
+
+### Complex Relationship Queries
+
+```
+User: "Find all employees who report to managers in the engineering department"
+AI: "I found 23 employees who report to engineering managers."
+Cypher: MATCH (e:Employee)-[:REPORTS_TO]->(m:Manager)-[:WORKS_IN]->(d:Department {name: 'engineering'}) RETURN e, m, d
+```
+
+### Property-based Filtering
+
+```
+User: "Show me all products priced above $100"
+AI: "There are 45 products with prices above $100."
+Cypher: MATCH (p:Product) WHERE p.price > 100 RETURN p.name, p.price
+```
+
+## Limitations and Considerations
+
+### Current Scope
+
+1. **Query Generation Only**: AI is limited to Cypher query generation
+2. **No Data Modification**: Read-only queries for safety
+3. **Schema Dependency**: Requires existing graph schema
+4. **Language Support**: English language queries only
+
+### Best Practices
+
+1. **Clear Questions**: Use specific, well-formed questions
+2. **Schema Awareness**: Understand your graph structure
+3. **Query Validation**: Review generated Cypher before execution
+4. **Error Handling**: Handle AI failures gracefully
+
+---
+
+This AI integration provides a powerful natural language interface for graph database querying, making complex Cypher queries accessible to users without technical expertise in graph databases.

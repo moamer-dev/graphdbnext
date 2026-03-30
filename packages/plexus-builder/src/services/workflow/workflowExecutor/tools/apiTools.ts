@@ -2,12 +2,14 @@ import type { ToolCanvasNode } from '../../../../stores/toolCanvasStore'
 import type { ExecutionContext } from '../types'
 import type { ToolExecutor } from './types'
 import { fetchFromApi, extractIdFromElement, type ApiProvider } from '../../../apiClient'
+import { useCredentialsStore } from '../../../../stores/credentialsStore'
 
 export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const provider = (tool.config.apiProvider as ApiProvider) || 'wikidata'
   const idSource = (tool.config.idSource as 'attribute' | 'textContent' | 'xpath') || 'attribute'
   const idAttribute = tool.config.idAttribute as string | undefined
   const idXpath = tool.config.idXpath as string | undefined
+  const credentialId = tool.config.credentialId as string | undefined
   const apiKey = tool.config.apiKey as string | undefined
   const customEndpoint = tool.config.customEndpoint as string | undefined
   const customHeaders = tool.config.customHeaders as Record<string, string> | undefined
@@ -18,7 +20,7 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
 
   if (!id) {
     console.warn(`[Fetch API Tool] No ID found for provider ${provider}`)
-    return { result: false }
+    return ({ result: false })
   }
 
   if (!ctx.apiData) {
@@ -26,14 +28,18 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
   }
 
   try {
+    // Access credentials from store for client-side execution
+    const getCredential = (id: string) => useCredentialsStore.getState().getCredential(id)
+
     const response = await fetchFromApi({
       provider: provider === 'custom' ? 'custom' : provider,
       id,
       apiKey,
+      credentialId,
       customEndpoint,
       customHeaders,
       timeout
-    })
+    }, getCredential)
 
     if (response.success && response.data) {
       if (ctx.apiData) {
@@ -46,7 +52,7 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
     console.error(`[Fetch API Tool] Error:`, error)
   }
 
-  return { result: true }
+  return ({ result: true })
 }
 
 
@@ -95,9 +101,27 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
     'Accept': 'application/json'
   }
 
+  // Handle Credentials
   if (useCredential && credentialId) {
-    console.warn('[HTTP Tool] Credential-based auth requires credentials to be passed in ExecuteOptions')
+    const credential = useCredentialsStore.getState().getCredential(credentialId)
+    if (credential) {
+      const credData = credential.data
+      
+      if (credData.bearerToken) {
+        requestHeaders['Authorization'] = `Bearer ${credData.bearerToken}`
+      } else if (credData.apiKey) {
+        const header = credData.apiKeyHeader || 'X-API-Key'
+        requestHeaders[header] = credData.apiKey
+      } else if (credData.basicUsername) {
+        const basic = btoa(`${credData.basicUsername}:${credData.basicPassword || ''}`)
+        requestHeaders['Authorization'] = `Basic ${basic}`
+      } else if (credData.token) {
+        // Fallback or generic token
+        requestHeaders['Authorization'] = `Bearer ${credData.token}`
+      }
+    }
   } else {
+    // Manual Auth
     if (authType === 'bearer' && bearerToken) {
       requestHeaders['Authorization'] = `Bearer ${bearerToken}`
     } else if (authType === 'basic' && basicUsername) {
@@ -105,8 +129,6 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
       requestHeaders['Authorization'] = `Basic ${basicAuth}`
     } else if (authType === 'apiKey' && apiKey) {
       requestHeaders[apiKeyHeader] = apiKey
-    } else if (authType === 'custom' && customHeaderName) {
-      requestHeaders[customHeaderName] = customHeaderValue || ''
     }
   }
 
@@ -169,4 +191,5 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
 
   return { result: true }
 }
+
 

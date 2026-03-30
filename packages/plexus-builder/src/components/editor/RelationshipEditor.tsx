@@ -20,7 +20,6 @@ import {
 } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { Pencil, X } from 'lucide-react'
-// OntologyCombobox moved to ModelBuilder toolbar
 import { SemanticPropertySelect } from '../wizard/XmlImportWizard/components/SemanticPropertySelect'
 import type { Relationship, Node } from '../../types'
 import { RelationshipRecommendationPanel } from '../ai/RelationshipRecommendationPanel'
@@ -65,7 +64,39 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
     <div className={className + ' flex flex-col h-full'}>
       <div className="p-4 border-b shrink-0">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Edit Relationship</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">Edit Relationship</h3>
+            {fromNode && toNode && (
+              <RelationshipRecommendationPanel
+                fromNodeId={editor.from}
+                toNodeId={editor.to}
+                currentType={editor.type}
+                currentCardinality={editor.cardinality}
+                onApply={(suggestion) => {
+                  if (relationship) {
+                    updateRelationship(relationship.id, {
+                      type: suggestion.type,
+                      cardinality: suggestion.cardinality,
+                    })
+                    editor.handleTypeInputChange(suggestion.type)
+                    if (suggestion.cardinality) {
+                      editor.handleCardinalityChange(suggestion.cardinality)
+                    }
+                  }
+                }}
+                onRemove={() => {
+                  if (relationship) {
+                    updateRelationship(relationship.id, {
+                      type: '',
+                      cardinality: undefined,
+                    })
+                    editor.handleTypeInputChange('')
+                    editor.handleCardinalityChange('none')
+                  }
+                }}
+              />
+            )}
+          </div>
           <Button
             type="button"
             variant="ghost"
@@ -83,25 +114,6 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-4 space-y-4">
-          {fromNode && toNode && (
-            <RelationshipRecommendationPanel
-              fromNodeId={editor.from}
-              toNodeId={editor.to}
-              onApply={(suggestion) => {
-                if (relationship) {
-                  updateRelationship(relationship.id, {
-                    type: suggestion.type,
-                    cardinality: suggestion.cardinality,
-                  })
-                  editor.handleTypeInputChange(suggestion.type)
-                  if (suggestion.cardinality) {
-                    editor.handleCardinalityChange(suggestion.cardinality)
-                  }
-                }
-              }}
-            />
-          )}
-
           <div>
             <label className="text-xs font-medium mb-1 block">Type</label>
             <div className="space-y-2">
@@ -336,7 +348,6 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
         </div>
       </div>
 
-      {/* Bulk Update Confirmation Dialog */}
       <Dialog
         open={editor.showBulkUpdateDialog}
         onOpenChange={(open) => {
@@ -387,4 +398,3 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
     </div>
   )
 }
-

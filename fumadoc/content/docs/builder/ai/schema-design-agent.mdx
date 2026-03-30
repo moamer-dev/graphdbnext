@@ -1,0 +1,250 @@
+---
+title: Schema Design Agent
+description: AI agent for comprehensive graph database schema design and optimization
+---
+
+# Schema Design Agent
+
+The Schema Design Agent is an advanced AI assistant that helps researchers design optimal graph database schemas by understanding domain requirements, suggesting appropriate node types and relationships, and providing best practice recommendations for academic and research use cases.
+
+## Purpose
+
+The agent serves as a comprehensive schema design partner that can analyze natural language descriptions of research requirements and generate complete, well-structured graph database schemas optimized for scholarly data and research workflows.
+
+## Key Capabilities
+
+### Natural Language Understanding
+- **Requirement Analysis**: Understands research domain requirements from natural language descriptions
+- **Domain Interpretation**: Interprets academic and research domain concepts and terminology
+- **Use Case Comprehension**: Analyzes specific use cases and workflow requirements
+- **Constraint Recognition**: Identifies implicit constraints and requirements
+
+### Schema Generation
+- **Node Type Design**: Suggests appropriate node types with semantic, research-friendly names
+- **Relationship Modeling**: Designs meaningful relationships between node types
+- **Property Specification**: Recommends comprehensive property sets for each node type
+- **Cardinality Definition**: Determines appropriate relationship cardinality
+
+### Optimization and Validation
+- **Best Practice Recommendations**: Provides guidance on normalization, indexing, and query patterns
+- **Schema Validation**: Identifies potential issues and improvement opportunities
+- **Performance Optimization**: Suggests optimizations for query performance and storage efficiency
+- **Domain-Specific Insights**: Provides insights tailored to academic and research use cases
+
+## Input Requirements
+
+### Domain Description
+The agent accepts various forms of input:
+- **Natural Language Requirements**: Text descriptions of research needs and data requirements
+- **Sample Data**: Example data instances or XML structures
+- **Existing Schema**: Current schema definitions for enhancement or optimization
+- **Use Case Scenarios**: Specific workflows or analysis requirements
+
+### Context Information
+- **Research Domain**: Academic field or research area (e.g., bibliometrics, social networks, linguistics)
+- **Data Sources**: Types of data to be modeled (e.g., XML documents, survey data, institutional records)
+- **Analysis Requirements**: Types of queries and analyses to be performed
+- **Scale Considerations**: Expected data volume and complexity
+
+## Output Structure
+
+### Complete Schema Definition
+```typescript
+interface PropertySchema {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'date' | 'array' | 'object'
+  required?: boolean
+  description?: string
+}
+
+interface NodeSchema {
+  name: string
+  label: string
+  description: string
+  properties: PropertySchema[]
+}
+
+interface RelationshipSchema {
+  from: string
+  to: string
+  type: string
+  cardinality?: 'one-to-one' | 'one-to-many' | 'many-to-many'
+  properties?: PropertySchema[]
+  description?: string
+}
+
+interface SchemaSuggestion {
+  nodes: NodeSchema[]
+  relationships: RelationshipSchema[]
+  reasoning: string
+}
+```
+
+### Optimization Recommendations
+```typescript
+interface ImprovementSuggestion {
+  nodeId?: string
+  nodeLabel?: string
+  relationshipType?: string
+  propertyName?: string
+}
+
+interface ImprovementSchema {
+  type: 'add_node' | 'add_relationship' | 'modify_node' | 'add_property' | 'suggest_normalization'
+  severity: 'suggestion' | 'recommendation' | 'important'
+  message: string
+  suggestion?: ImprovementSuggestion
+}
+```
+
+## Configuration and Usage
+
+### Agent Initialization
+```typescript
+import { SchemaDesignAgent } from '@plexus/builder/ai/agents'
+
+const agent = new SchemaDesignAgent({
+  model: chatModel,
+  settings: aiSettings
+})
+```
+
+### Schema Design Request
+```typescript
+const schema = await agent.designSchema({
+  description: "I need to model academic publications with authors, journals, and citations. Track who authored what papers, which papers cite which other papers, and where papers were published.",
+  domain: "bibliographic",
+  requirements: {
+    queryTypes: ["author search", "citation analysis", "journal impact"],
+    dataVolume: "medium (10k-100k papers)",
+    updateFrequency: "weekly"
+  }
+})
+```
+
+### Schema Optimization
+```typescript
+const optimizations = await agent.optimizeSchema({
+  existingSchema: currentSchema,
+  performanceIssues: ["slow citation queries", "large memory usage"],
+  usagePatterns: ["frequent author lookups", "complex citation traversals"]
+})
+```
+
+## Integration Points
+
+### Schema Designer Integration
+- **Interactive Design**: Provides real-time suggestions as users build schemas
+- **Validation Feedback**: Offers immediate validation and improvement suggestions
+- **Template Generation**: Creates schema templates based on domain requirements
+- **Import/Export**: Supports importing existing schemas and exporting optimized versions
+
+### Model Builder Integration
+- **Schema Templates**: Provides pre-built schema templates for common research domains
+- **Auto-completion**: Suggests node and relationship types during modeling
+- **Consistency Checking**: Ensures schema consistency across the model
+- **Performance Guidance**: Offers performance optimization suggestions
+
+### TIB Terminology Integration
+- **Standard Concepts**: Maps domain concepts to standardized terminology
+- **Semantic Consistency**: Ensures schema aligns with standard semantic models
+- **Cross-Domain Compatibility**: Maintains compatibility with standard ontologies
+- **Terminology Updates**: Incorporates updates from terminology services
+
+## Best Practices
+
+### Schema Design Principles
+- **Semantic Clarity**: Use clear, meaningful names for nodes and relationships
+- **Normalization**: Apply appropriate normalization to avoid data redundancy
+- **Query Optimization**: Design schemas to support common query patterns
+- **Extensibility**: Build schemas that can evolve with changing requirements
+
+### Research Domain Considerations
+- **Academic Standards**: Follow domain-specific data modeling standards
+- **Citation Patterns**: Model citation and reference patterns appropriately
+- **Institutional Structures**: Represent institutional and organizational structures
+- **Temporal Aspects**: Handle temporal aspects of research data effectively
+
+### Performance Optimization
+- **Indexing Strategy**: Design schemas to support efficient indexing
+- **Traversal Patterns**: Optimize for common graph traversal patterns
+- **Storage Efficiency**: Balance completeness with storage efficiency
+- **Query Performance**: Consider query performance in schema design
+
+## Example Use Cases
+
+### Bibliographic Research
+**Domain**: Academic publications and citations
+**Schema Components**:
+- **Nodes**: Person, Publication, Journal, Institution, Conference
+- **Relationships**: AUTHORED, PUBLISHED_IN, CITED, AFFILIATED_WITH, REVIEWED
+- **Properties**: DOIs, publication dates, impact factors, author identifiers
+
+### Social Network Analysis
+**Domain**: Research collaboration networks
+**Schema Components**:
+- **Nodes**: Researcher, Institution, Project, Grant, Publication
+- **Relationships**: COLLABORATES_WITH, FUNDED_BY, WORKS_ON, SUPERVISES
+- **Properties**: Collaboration metrics, funding amounts, project durations
+
+### Historical Research
+**Domain**: Historical documents and archives
+**Schema Components**:
+- **Nodes**: Document, Person, Place, Event, Organization, Period
+- **Relationships**: MENTIONED_IN, PARTICIPATED_IN, LOCATED_AT, DURING
+- **Properties**: Dates, locations, document types, archival references
+
+## Advanced Features
+
+### Learning and Adaptation
+- **Pattern Recognition**: Learns from existing successful schema designs
+- **Domain Specialization**: Adapts to specific domain patterns and conventions
+- **User Preference Learning**: Incorporates user preferences in future suggestions
+- **Feedback Integration**: Improves suggestions based on user feedback
+
+### Multi-Domain Support
+- **Cross-Domain Mapping**: Identifies patterns across different research domains
+- **Interoperability**: Ensures schemas can work across domain boundaries
+- **Standard Compliance**: Maintains compliance with relevant standards
+- **Migration Support**: Supports schema migration and evolution
+
+### Validation and Testing
+- **Schema Validation**: Comprehensive validation of schema completeness and consistency
+- **Performance Prediction**: Predicts query performance based on schema design
+- **Data Simulation**: Simulates data to validate schema effectiveness
+- **Integration Testing**: Tests schema integration with existing systems
+
+## Error Handling and Validation
+
+### Input Validation
+- **Requirement Analysis**: Validates that requirements are clear and complete
+- **Domain Consistency**: Ensures domain descriptions are consistent and valid
+- **Feasibility Checking**: Validates that requested schemas are feasible and practical
+
+### Output Validation
+- **Schema Completeness**: Ensures generated schemas are complete and usable
+- **Consistency Checking**: Validates internal consistency of schema definitions
+- **Best Practice Compliance**: Ensures schemas follow graph database best practices
+
+### Error Recovery
+- **Graceful Degradation**: Provides partial results when complete analysis fails
+- **Fallback Suggestions**: Offers alternative suggestions when primary suggestions fail
+- **Error Explanation**: Provides clear explanations of any errors or limitations
+
+## Performance Considerations
+
+### Response Optimization
+- **Caching**: Caches common domain patterns and schema templates
+- **Incremental Design**: Supports incremental schema design and modification
+- **Parallel Processing**: Uses parallel processing for complex schema analysis
+- **Resource Management**: Optimizes resource usage for large-scale schema design
+
+### Scalability Support
+- **Large Schema Handling**: Efficiently handles large and complex schemas
+- **Incremental Updates**: Supports incremental updates without full regeneration
+- **Memory Optimization**: Optimizes memory usage for complex schema operations
+- **Performance Monitoring**: Monitors and optimizes performance over time
+
+---
+
+The Schema Design Agent provides comprehensive, intelligent schema design capabilities that help researchers create optimal graph database schemas. By combining natural language understanding with domain expertise and graph database best practices, the agent ensures that schemas are semantically meaningful, technically sound, and optimized for research applications.

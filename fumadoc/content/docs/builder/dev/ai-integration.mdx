@@ -1,0 +1,618 @@
+---
+title: AI Integration
+description: Understanding AI agents, services, and integration patterns in Plexus Builder
+---
+
+# AI Integration
+
+Plexus Builder integrates AI capabilities through a modular agent system that provides intelligent assistance for schema design, workflow generation, and data processing. The AI layer is designed to be extensible, configurable, and privacy-conscious.
+
+## AI Architecture Overview
+
+<Mermaid chart="
+flowchart TD
+    A[Node Property<br/>Suggestion Agent] --> I[LLM Service<br/>OpenAI, Anthropic, Mistral]
+    B[Relationship<br/>Recommendation Agent] --> I
+    C[Schema Design<br/>Agent] --> I
+    D[Workflow<br/>Generation Agent] --> I
+    E[XML Mapping<br/>Assistant] --> I
+    F[XML Rules<br/>Assistant] --> I
+    G[Research<br/>Assistant] --> I
+    H[Research Assistant<br/>Streaming] --> I
+    
+    I --> J[TIB Terminology<br/>Service]
+    I --> K[Tool Executor<br/>Service]
+    I --> L[Context Manager<br/>Service]
+    
+    I --> M[AI Settings Store<br/>Feature Flags Management]
+    I --> N[Provider Configuration<br/>Model Configuration]
+    
+    K --> O[Model Builder Tools<br/>Node & Relationship Creation]
+    K --> P[Workflow Tools<br/>XML Processing Tools]
+    K --> Q[Analysis Tools<br/>Schema Validation Tools]
+
+    classDef agent fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#0d47a1
+    classDef service fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
+    classDef config fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    classDef tool fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    
+    class A,B,C,D,E,F,G,H agent
+    class I,J,K,L service
+    class M,N config
+    class O,P,Q tool
+" />
+
+## AI Configuration System
+
+### AI Settings Model
+
+```typescript
+export type AIModelProvider = 'openai' | 'anthropic' | 'mistral' | 'ollama' | 'custom'
+
+export type AIModelName =
+  | 'gpt-4'
+  | 'gpt-4-turbo'
+  | 'gpt-3.5-turbo'
+  | 'claude-3-opus'
+  | 'claude-3-sonnet'
+  | 'claude-3-haiku'
+  | 'mistral-large-latest'
+  | 'mistral-medium-latest'
+  | 'mistral-small-latest'
+  | 'mistral-tiny'
+  | 'mistral-7b-instruct'
+  | 'mixtral-8x7b-instruct'
+  | 'mistral-7b-instruct-v0.1'
+  | 'mistral-7b-instruct-v0.2'
+  | 'mistral-7b-instruct-v0.3'
+  | 'llama2'
+  | 'mistral'
+  | 'custom'
+
+export interface AIModelConfig {
+  provider: AIModelProvider
+  modelName: AIModelName
+  apiKey?: string
+  baseUrl?: string
+  temperature?: number
+  maxTokens?: number
+  customConfig?: Record<string, unknown>
+}
+
+export interface AIFeatureFlags {
+  enabled: boolean
+  researchAssistantChatbot: boolean
+  xmlMappingAssistant: boolean
+  schemaDesignAgent: boolean
+  workflowGenerationAgent: boolean
+  relationshipRecommendation: boolean
+  nodePropertySuggestion: boolean
+  schemaOptimization: boolean
+  aiAgentsAsTools: boolean
+  semanticEnrichment: boolean
+}
+
+export interface AISettings {
+  enabled: boolean
+  model: AIModelConfig
+  features: AIFeatureFlags
+  storageKey?: string
+}
+
+export const DEFAULT_AI_SETTINGS: AISettings = {
+  enabled: false,
+  model: {
+    provider: 'openai',
+    modelName: 'gpt-4-turbo',
+    temperature: 0.7,
+    maxTokens: 4000
+  },
+  features: {
+    enabled: false,
+    researchAssistantChatbot: false,
+    xmlMappingAssistant: false,
+    schemaDesignAgent: false,
+    workflowGenerationAgent: false,
+    relationshipRecommendation: false,
+    nodePropertySuggestion: false,
+    schemaOptimization: false,
+    aiAgentsAsTools: false,
+    semanticEnrichment: false
+  }
+}
+```
+
+## AI Agent Architecture
+
+### Research Assistant Agent
+
+The main AI agent that helps users with graph database design and workflows:
+
+```typescript
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from '@langchain/core/messages'
+import { createModelBuilderTools } from '../tools/modelBuilderTools'
+import { createToolExecutor } from '../tools/toolExecutor'
+import type { ToolExecutionContext } from '../tools/toolExecutor'
+import type { AISettings } from '../config/types'
+
+export interface ResearchAssistantContext {
+  currentView?: 'import-wizard' | 'plexus-builder' | 'workflow-builder'
+  currentState?: {
+    selectedNodeId?: string | null
+    selectedRelationshipId?: string | null
+    nodeCount?: number
+    relationshipCount?: number
+    nodes?: Array<{ label: string; type: string; id: string }>
+    relationships?: Array<{ type: string; from: string; to: string; id: string }>
+  }
+  userHistory?: unknown[]
+  xmlContent?: string
+}
+
+const RESEARCH_ASSISTANT_SYSTEM_PROMPT = `You are a helpful research assistant for a Graph Database Model Builder application. 
+Your role is to help researchers understand, design, and optimize graph database schemas and workflows.
+
+Key capabilities:
+- Help users create and modify graph schemas (nodes and relationships)
+- Explain schema structures and suggest improvements
+- Guide users through the XML import wizard
+- Assist with workflow design (using tool:if, tool:switch, tool:delay, tool:fetch-api, tool:http, tool:webhook and various actions like action:create-node-complete, action:create-token-nodes)
+- Answer questions about graph database concepts and best practices
+
+Workflow Component Reference:
+Tools: tool:if, tool:switch, tool:delay, tool:fetch-api, tool:http, tool:webhook
+Primary Actions: action:create-node-complete, action:create-text-node, action:create-token-nodes, action:create-annotation-nodes, action:create-node-with-lookup, action:create-relationship, action:defer-relationship, action:create-reference-chain
+
+Guidelines:
+- Be concise but thorough
+- Use the available tools (create_node, create_relationship, etc. via langchain) to interact with the application when appropriate
+- Explain concepts clearly for researchers who may not be database experts
+- Suggest best practices for graph database design
+- When asked about workflows, use the get_workflow_registry tool to see the most up-to-date components available.
+- Use set_root_node to mark the entry point for XML processing.
+- Always provide context and reasoning for your suggestions`
+
+/**
+ * Simple agent that uses model with tools bound directly (no LangGraph dependency)
+ * This works client-side in the browser
+ */
+export async function invokeResearchAssistant(
+  model: BaseChatModel,
+  input: {
+    message: string
+    context?: ResearchAssistantContext
+  },
+  settings: AISettings
+): Promise<{
+  response: string
+  toolCalls?: Array<{
+    name: string
+    args: Record<string, any>
+    result?: any
+  }>
+}> {
+  // Create tool executor with access to model builder store
+  const toolExecutor = createToolExecutor(context)
+  
+  // Create LangChain tools for model builder operations
+  const tools = createModelBuilderTools(toolExecutor)
+  
+  // Bind tools to the model
+  const modelWithTools = model.bindTools(tools)
+  
+  // Prepare messages
+  const messages: BaseMessage[] = [
+    new SystemMessage(RESEARCH_ASSISTANT_SYSTEM_PROMPT),
+    new HumanMessage(input.message)
+  ]
+  
+  // Add context information if provided
+  if (input.context) {
+    const contextMessage = buildContextMessage(input.context)
+    if (contextMessage) {
+      messages.splice(1, 0, contextMessage)
+    }
+  }
+  
+  // Invoke the model
+  const response = await modelWithTools.invoke(messages)
+  
+  // Handle tool calls if any
+  const toolCalls = []
+  if (response.tool_calls && response.tool_calls.length > 0) {
+    for (const toolCall of response.tool_calls) {
+      const tool = tools.find(t => t.name === toolCall.name)
+      if (tool) {
+        const result = await tool.invoke(toolCall.args)
+        toolCalls.push({
+          name: toolCall.name,
+          args: toolCall.args,
+          result
+        })
+      }
+    }
+  }
+  
+  return {
+    response: response.content as string,
+    toolCalls
+  }
+}
+
+function buildContextMessage(context: ResearchAssistantContext): BaseMessage | null {
+  if (!context.currentState && !context.currentView && !context.xmlContent) {
+    return null
+  }
+  
+  let contextText = 'Current Application Context:\n'
+  
+  if (context.currentView) {
+    contextText += `Current View: ${context.currentView}\n`
+  }
+  
+  if (context.currentState) {
+    contextText += `Current State:\n`
+    contextText += `- Nodes: ${context.currentState.nodeCount || 0}\n`
+    contextText += `- Relationships: ${context.currentState.relationshipCount || 0}\n`
+    
+    if (context.currentState.selectedNodeId) {
+      contextText += `- Selected Node: ${context.currentState.selectedNodeId}\n`
+    }
+    
+    if (context.currentState.selectedRelationshipId) {
+      contextText += `- Selected Relationship: ${context.currentState.selectedRelationshipId}\n`
+    }
+    
+    if (context.currentState.nodes && context.currentState.nodes.length > 0) {
+      contextText += '- Recent Nodes:\n'
+      context.currentState.nodes.slice(0, 5).forEach(node => {
+        contextText += `  - ${node.label} (${node.type})\n`
+      })
+    }
+  }
+  
+  if (context.xmlContent) {
+    contextText += `\nXML Content (first 1000 chars):\n${context.xmlContent.slice(0, 1000)}...\n`
+  }
+  
+  return new HumanMessage(contextText)
+}
+```
+
+## AI Services Layer
+
+### Model Factory
+
+Creates LangChain chat models based on AI configuration:
+
+```typescript
+import { ChatOpenAI } from '@langchain/openai'
+import { ChatAnthropic } from '@langchain/anthropic'
+import { ChatMistralAI } from '@langchain/mistralai'
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
+import type { AIModelConfig } from '../config/types'
+
+/**
+ * Creates a LangChain chat model based on the AI model configuration
+ */
+export function createChatModel(config: AIModelConfig): BaseChatModel {
+  // Validate API key for providers that require it (except ollama)
+  if (config.provider !== 'ollama' && (!config.apiKey || config.apiKey.trim() === '')) {
+    throw new Error(`API key is required for ${config.provider} provider. Please configure it in AI settings.`)
+  }
+
+  const modelOptions = {
+    temperature: config.temperature ?? 0.7,
+    maxTokens: config.maxTokens ?? 4000,
+    timeout: 30000,
+    ...config.customConfig,
+  }
+
+  switch (config.provider) {
+    case 'openai': {
+      const modelName = getOpenAIModelName(config.modelName)
+      return new ChatOpenAI({
+        modelName,
+        apiKey: config.apiKey || undefined,
+        configuration: config.baseUrl ? { baseURL: config.baseUrl } : undefined,
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+        timeout: modelOptions.timeout,
+      })
+    }
+
+    case 'anthropic': {
+      const modelName = getAnthropicModelName(config.modelName)
+      return new ChatAnthropic({
+        model: modelName,
+        apiKey: config.apiKey || undefined,
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+      })
+    }
+
+    case 'mistral': {
+      const modelName = getMistralModelName(config.modelName)
+      return new ChatMistralAI({
+        model: modelName,
+        apiKey: config.apiKey || undefined,
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+        timeout: modelOptions.timeout,
+      })
+    }
+
+    case 'ollama': {
+      return new ChatOllama({
+        model: config.modelName,
+        baseUrl: config.baseUrl || 'http://localhost:11434',
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+        timeout: modelOptions.timeout,
+      })
+    }
+
+    case 'custom': {
+      // Custom provider implementation
+      throw new Error('Custom provider not yet implemented')
+    }
+
+    default:
+      throw new Error(`Unsupported provider: ${config.provider}`)
+  }
+}
+
+function getOpenAIModelName(modelName: AIModelName): string {
+  const openaiModels: Record<AIModelName, string> = {
+    'gpt-4': 'gpt-4',
+    'gpt-4-turbo': 'gpt-4-turbo-preview',
+    'gpt-3.5-turbo': 'gpt-3.5-turbo',
+    // Add other model mappings as needed
+  }
+  return openaiModels[modelName] || modelName
+}
+
+function getAnthropicModelName(modelName: AIModelName): string {
+  const anthropicModels: Record<AIModelName, string> = {
+    'claude-3-opus': 'claude-3-opus-20240229',
+    'claude-3-sonnet': 'claude-3-sonnet-20240229',
+    'claude-3-haiku': 'claude-3-haiku-20240307',
+  }
+  return anthropicModels[modelName] || modelName
+}
+
+function getMistralModelName(modelName: AIModelName): string {
+  return modelName // Mistral uses the model names directly
+}
+```
+
+### Tool Executor Service
+
+Executes AI tools and manages tool context:
+
+```typescript
+import type { Node, Relationship, Property } from '../../types'
+import type { ModelBuilderStore } from '../../stores/modelBuilderStore'
+
+/**
+ * Tool execution context that provides access to the model builder store
+ * This allows AI tools to actually execute actions (create nodes, relationships, etc.)
+ */
+export interface ToolExecutionContext {
+  getStore: () => ModelBuilderStore
+  getNodes: () => Node[]
+  getRelationships: () => Relationship[]
+}
+
+/**
+ * Creates tool execution handlers that can interact with the model builder store
+ */
+export function createToolExecutor(context: ToolExecutionContext) {
+  return {
+    /**
+     * Creates a node in the model builder store
+     */
+    async createNode(args: {
+      name: string
+      label?: string
+      description?: string
+      properties?: Array<{ name: string; type: string; required?: boolean }>
+    }): Promise<string> {
+      // Get fresh store and nodes state each time
+      const store = context.getStore()
+      const nodes = context.getNodes()
+      
+      // Check if node with same name/type already exists (case-insensitive)
+      const nodeLabel = args.label || args.name
+      const existingNode = nodes.find(n => 
+        n.type.toLowerCase() === args.name.toLowerCase() || 
+        n.label.toLowerCase() === nodeLabel.toLowerCase()
+      )
+      
+      if (existingNode) {
+        return `Node "${nodeLabel}" (${args.name}) already exists with ID: ${existingNode.id}. Available properties: ${existingNode.properties.map(p => p.key).join(', ')}. No duplicate created.`
+      }
+      
+      const properties: Property[] = (args.properties || []).map(prop => ({
+        key: prop.name,
+        type: prop.type as Property['type'],
+        required: prop.required ?? false,
+      }))
+      
+      const nodeId = store.addNode({
+        type: args.name,
+        label: nodeLabel,
+        description: args.description || '',
+        properties
+      })
+      
+      return `Created node "${nodeLabel}" (${args.name}) with ID: ${nodeId}. Properties: ${properties.map(p => p.key).join(', ')}.`
+    },
+
+    /**
+     * Creates a relationship in the model builder store
+     */
+    async createRelationship(args: {
+      fromNode: string
+      toNode: string
+      type: string
+      description?: string
+      properties?: Array<{ name: string; type: string; required?: boolean }>
+    }): Promise<string> {
+      const store = context.getStore()
+      const nodes = context.getNodes()
+      
+      // Find the source and target nodes
+      const fromNode = nodes.find(n => n.label === args.fromNode || n.type === args.fromNode)
+      const toNode = nodes.find(n => n.label === args.toNode || n.type === args.toNode)
+      
+      if (!fromNode) {
+        return `Source node "${args.fromNode}" not found. Available nodes: ${nodes.map(n => `${n.label} (${n.type})`).join(', ')}`
+      }
+      
+      if (!toNode) {
+        return `Target node "${args.toNode}" not found. Available nodes: ${nodes.map(n => `${n.label} (${n.type})`).join(', ')}`
+      }
+      
+      const properties: Property[] = (args.properties || []).map(prop => ({
+        key: prop.name,
+        type: prop.type as Property['type'],
+        required: prop.required ?? false,
+      }))
+      
+      const relationshipId = store.addRelationship({
+        from: fromNode.id,
+        to: toNode.id,
+        type: args.type,
+        description: args.description || '',
+        properties
+      })
+      
+      return `Created relationship "${args.type}" from "${fromNode.label}" to "${toNode.label}" with ID: ${relationshipId}.`
+    },
+
+    /**
+     * Sets the root node for XML processing
+     */
+    async setRootNode(args: {
+      nodeLabel: string
+    }): Promise<string> {
+      const store = context.getStore()
+      const nodes = context.getNodes()
+      
+      const node = nodes.find(n => n.label === args.nodeLabel || n.type === args.nodeLabel)
+      
+      if (!node) {
+        return `Node "${args.nodeLabel}" not found. Available nodes: ${nodes.map(n => `${n.label} (${n.type})`).join(', ')}`
+      }
+      
+      store.setRootNodeId(node.id)
+      
+      return `Set "${node.label}" as the root node for XML processing.`
+    },
+
+    /**
+     * Gets the current workflow registry
+     */
+    async getWorkflowRegistry(): Promise<string> {
+      const registry = workflowRegistry.getRegistry()
+      
+      const tools = registry.tools.map(tool => ({
+        id: tool.id,
+        label: tool.metadata.label,
+        description: tool.metadata.description,
+        category: tool.metadata.category
+      }))
+      
+      const actions = registry.actions.map(action => ({
+        id: action.id,
+        label: action.metadata.label,
+        description: action.metadata.description,
+        category: action.metadata.category
+      }))
+      
+      return JSON.stringify({
+        tools,
+        actions,
+        categories: registry.categories
+      }, null, 2)
+    }
+  }
+}
+```
+
+## AI Integration Patterns
+
+### Basic Usage Pattern
+
+```typescript
+import { createChatModel } from '../models/factory'
+import { invokeResearchAssistant } from '../agents/ResearchAssistantAgent'
+import { createToolExecutor } from '../tools/toolExecutor'
+import type { AISettings } from '../config/types'
+
+// Example usage in a React component
+export const useResearchAssistant = () => {
+  const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const settings = useAISettingsStore(state => state.settings)
+  const modelBuilderStore = useModelBuilderStore()
+  
+  const sendMessage = async (message: string, context?: ResearchAssistantContext) => {
+    if (!settings.enabled) {
+      setError('AI is disabled. Please enable it in settings.')
+      return
+    }
+    
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Create model from settings
+      const model = createChatModel(settings.model)
+      
+      // Create tool executor with store access
+      const toolExecutor = createToolExecutor({
+        getStore: () => modelBuilderStore,
+        getNodes: () => modelBuilderStore.nodes,
+        getRelationships: () => modelBuilderStore.relationships
+      })
+      
+      // Invoke the research assistant
+      const result = await invokeResearchAssistant(model, { message, context }, settings)
+      setResponse(result.response)
+      
+      // Handle tool calls if any
+      if (result.toolCalls && result.toolCalls.length > 0) {
+        console.log('Tool calls executed:', result.toolCalls)
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  return { response, loading, error, sendMessage }
+}
+```
+
+## Available AI Agents
+
+The Plexus Builder includes the following AI agents in the `/src/ai/agents` directory:
+
+- **ResearchAssistantAgent** - General purpose assistant for schema design and workflows
+- **ResearchAssistantAgentStreaming** - Streaming version of the research assistant
+- **NodePropertySuggestionAgent** - Suggests properties for nodes based on semantic analysis
+- **RelationshipRecommendationAgent** - Recommends relationship types between nodes
+- **SchemaDesignAgent** - Generates complete schema designs from descriptions
+- **WorkflowGenerationAgent** - Creates XML-to-graph transformation workflows
+- **XmlMappingAssistant** - Helps with XML element to graph node mapping
+- **XmlRulesAssistant** - Assists with XML analysis rule configuration
+
+This AI integration architecture provides a flexible foundation for incorporating AI capabilities into Plexus Builder while maintaining type safety and proper error handling.

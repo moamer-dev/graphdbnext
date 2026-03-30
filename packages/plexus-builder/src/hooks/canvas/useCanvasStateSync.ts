@@ -15,34 +15,39 @@ import { useCanvasVisibility } from './useCanvasVisibility'
 import { labelFromType } from '../../utils/canvasUtils'
 import type { Node as BuilderNode, Relationship } from '../../types'
 
-function calculateStoreNodesSig(nodes: BuilderNode[], visibleNodeIds: Set<string>, wfNodes: any[], toolNodes: any[], actionNodes: any[]) {
+function calculateStoreNodesSig(nodes: BuilderNode[], visibleNodeIds: Set<string>, wfNodes: any[], toolNodes: any[], actionNodes: any[], rootNodeId: string | null, isWorkflowVisible: boolean) {
   const storePart = nodes
     .filter(n => visibleNodeIds.has(n.id))
     .map(n => `${n.id}:${n.position.x}:${n.position.y}:${n.label}:${n.type}`)
     .sort()
     .join('|')
   
-  const extraPart = [...wfNodes, ...toolNodes, ...actionNodes]
-    .map(n => n.id)
+  const extraPart = !isWorkflowVisible ? 'hidden' : [...wfNodes, ...toolNodes, ...actionNodes]
+    .map(n => {
+      // Include label and a simple version/config marker to trigger re-renders on config/output changes
+      const configStr = n.config ? JSON.stringify(n.config).length : '0'
+      const outputsStr = n.outputs ? n.outputs.length : '0'
+      return `${n.id}:${n.label}:${configStr}:${outputsStr}`
+    })
     .sort()
     .join('|')
 
-  return `${storePart}#${extraPart}`
+  return `${storePart}#${extraPart}#${rootNodeId || ''}#${isWorkflowVisible}`
 }
 
-function calculateStoreRelationshipsSig(rels: Relationship[], visibleNodeIds: Set<string>, selectedRelId: string | null, wfEdges: any[], toolEdges: any[], actionEdges: any[]) {
+function calculateStoreRelationshipsSig(rels: Relationship[], visibleNodeIds: Set<string>, selectedRelId: string | null, wfEdges: any[], toolEdges: any[], actionEdges: any[], isWorkflowVisible: boolean) {
   const storePart = rels
     .filter(r => visibleNodeIds.has(r.from) && visibleNodeIds.has(r.to))
     .map(r => `${r.id}:${r.from}:${r.to}:${r.type}:${r.id === selectedRelId ? '1' : '0'}`)
     .sort()
     .join('|')
 
-  const extraPart = [...wfEdges, ...toolEdges, ...actionEdges]
+  const extraPart = !isWorkflowVisible ? 'hidden' : [...wfEdges, ...toolEdges, ...actionEdges]
     .map(e => e.id)
     .sort()
     .join('|')
 
-  return `${storePart}#${extraPart}`
+  return `${storePart}#${extraPart}#${isWorkflowVisible}`
 }
 
 interface UseCanvasStateSyncProps {
@@ -72,7 +77,8 @@ export function useCanvasStateSync({
     selectedNode,
     selectedRelationship,
     hideUnconnectedNodes,
-    rootNodeId
+    rootNodeId,
+    isWorkflowVisible
   } = useModelBuilderStore()
 
   const { visibleNodeIds } = useCanvasVisibility()
@@ -136,7 +142,7 @@ export function useCanvasStateSync({
           }
         }))
 
-      const workflowNodes = wfNodes.map((wn) => ({
+      const workflowNodes = !isWorkflowVisible ? [] : wfNodes.map((wn) => ({
         id: wn.id,
         type: 'workflow',
         position: wn.position,
@@ -157,7 +163,7 @@ export function useCanvasStateSync({
         }
       }))
 
-      const toolNodesFlow = toolNodes.map((tn) => ({
+      const toolNodesFlow = !isWorkflowVisible ? [] : toolNodes.map((tn) => ({
         id: tn.id,
         type: 'tool',
         position: tn.position,
@@ -191,7 +197,7 @@ export function useCanvasStateSync({
         }
       })
 
-      const actionNodesFlow = actionNodes
+      const actionNodesFlow = !isWorkflowVisible ? [] : actionNodes
         .filter(an => !actionsInGroups.has(an.id))
         .map((an) => {
           const isGroup = an.type === 'action:group' || an.isGroup === true
@@ -293,7 +299,7 @@ export function useCanvasStateSync({
         })
 
       // 1. Calculate signature from UNTAINTED data (before adding callbacks)
-      const sig = calculateStoreNodesSig(storeNodes, visibleNodeIds, wfNodes, toolNodes, actionNodes)
+      const sig = calculateStoreNodesSig(storeNodes, visibleNodeIds, wfNodes, toolNodes, actionNodes, rootNodeId, isWorkflowVisible || false)
 
       // 2. Build the tainted objects with callbacks
       const finalNodes = [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow] as Node[]
@@ -303,7 +309,7 @@ export function useCanvasStateSync({
       console.error('[DEBUG] Error calculating rfNodes:', e)
       return { nodes: [], sig: '' }
     }
-  }, [storeNodes, visibleNodeIds, stepsByNodeId, handleDeleteNode, wfNodes, selectNode, selectWfNode, selectRelationship, deleteWfNode, selectedNode, selectedWfNodeId, toolNodes, selectedToolNodeId, selectToolNode, deleteToolNode, actionNodes, selectedActionNodeId, selectActionNode, deleteActionNode, updateActionNode, addActionNode, onSwitchTab, rootNodeId])
+  }, [storeNodes, visibleNodeIds, stepsByNodeId, handleDeleteNode, wfNodes, selectNode, selectWfNode, selectRelationship, deleteWfNode, selectedNode, selectedWfNodeId, toolNodes, selectedToolNodeId, selectToolNode, deleteToolNode, actionNodes, selectedActionNodeId, selectActionNode, deleteActionNode, updateActionNode, addActionNode, onSwitchTab, rootNodeId, isWorkflowVisible])
 
   const rfNodes = dataNodes.nodes
   const reactFlowNodesSig = dataNodes.sig
@@ -365,7 +371,7 @@ export function useCanvasStateSync({
         }))
     })()
 
-    const workflowEdges: Edge[] = wfEdges
+    const workflowEdges: Edge[] = !isWorkflowVisible ? [] : wfEdges
       .filter((e) => e.source && e.target)
       .map((e) => ({
         id: e.id,
@@ -376,7 +382,7 @@ export function useCanvasStateSync({
         style: { strokeDasharray: '4 4', stroke: '#f59e0b' }
       }))
 
-    const attachEdges: Edge[] = wfNodes
+    const attachEdges: Edge[] = !isWorkflowVisible ? [] : wfNodes
       .filter((n) => n.targetNodeId)
       .map((n) => ({
         id: `${n.id}__attach`,
@@ -387,7 +393,7 @@ export function useCanvasStateSync({
         style: { strokeDasharray: '4 4', stroke: '#f59e0b' }
       }))
 
-    const toolEdgesFlow: Edge[] = toolEdges.map((e) => ({
+    const toolEdgesFlow: Edge[] = !isWorkflowVisible ? [] : toolEdges.map((e) => ({
       id: e.id,
       source: e.source,
       target: e.target,
@@ -402,7 +408,7 @@ export function useCanvasStateSync({
       }
     }))
 
-    const actionEdgesFlow: Edge[] = actionEdges.map((e) => ({
+    const actionEdgesFlow: Edge[] = !isWorkflowVisible ? [] : actionEdges.map((e) => ({
       id: e.id,
       source: e.source,
       target: e.target,
@@ -418,13 +424,13 @@ export function useCanvasStateSync({
     }))
 
     // 1. Calculate signature from UNTAINTED data (before adding callbacks)
-    const sig = calculateStoreRelationshipsSig(storeRelationships, visibleNodeIds, selectedRelationship, wfEdges, toolEdges, actionEdges)
+    const sig = calculateStoreRelationshipsSig(storeRelationships, visibleNodeIds, selectedRelationship, wfEdges, toolEdges, actionEdges, isWorkflowVisible || false)
 
     // 2. Build the tainted objects with callbacks
     const finalEdges = [...relEdges, ...workflowEdges, ...attachEdges, ...toolEdgesFlow, ...actionEdgesFlow] as Edge[]
 
     return { edges: finalEdges, sig }
-  }, [storeRelationships, selectedRelationship, handleSelectRelationshipRef, handleDeleteRelationship, visibleNodeIds, hideUnconnectedNodes, wfEdges, wfNodes, toolEdges, actionEdges, handleDeleteEdge])
+  }, [storeRelationships, selectedRelationship, handleSelectRelationshipRef, handleDeleteRelationship, visibleNodeIds, hideUnconnectedNodes, wfEdges, wfNodes, toolEdges, actionEdges, handleDeleteEdge, isWorkflowVisible])
 
   const rfEdges = dataEdges.edges
   const reactFlowEdgesSig = dataEdges.sig

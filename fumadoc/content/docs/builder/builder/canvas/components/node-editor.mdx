@@ -1,0 +1,198 @@
+---
+title: Node Editor
+description: Comprehensive interface for editing graph nodes, properties, and semantic mappings
+---
+
+# Node Editor
+
+The Node Editor is your primary interface for fine-tuning individual graph nodes, managing properties, and configuring semantic mappings using the TIB terminology service. It provides comprehensive tools for configuring every aspect of graph nodes in your schema.
+
+## Overview
+
+The Node Editor enables you to:
+- **Configure Basic Properties**: Edit node labels, types, and group assignments
+- **Set Root Nodes**: Designate workflow execution starting points
+- **Semantic Enrichment**: Map nodes to TIB terminology service classes and properties
+- **Manage Properties**: Add, edit, and remove node properties
+- **View XML Details**: Examine source XML structure and statistics
+- **Get TIB Suggestions**: Receive standardized terminology recommendations
+
+## Visual Layout
+
+<Mermaid chart="
+flowchart TD
+    subgraph NodeEditor[Node Editor Interface]
+        A[Header Controls] --> B[Basic Properties]
+        B --> C[Semantic Enrichment]
+        C --> D[Property Management]
+        D --> E[XML Element Details]
+        E --> F[TIB Suggestions]
+    end
+    
+    subgraph Properties[Property Sections]
+        G[Label/Type/Group] --> H[Root Node Toggle]
+        H --> I[TIB Semantic Class]
+        I --> J[TIB Semantic Properties]
+        J --> K[Custom Properties]
+    end
+    
+    subgraph XML[XML Information]
+        L[Type Statistics] --> M[Children Elements]
+        M --> N[Parent Element]
+        N --> O[Ancestor Chain]
+    end
+    
+    D --> Properties
+    E --> XML
+" />
+
+## Key Features
+
+### Header Controls
+- **Focus Node**: Center the selected node on the canvas for better visibility
+- **Show/Hide Others**: Toggle visibility of unconnected nodes to reduce clutter
+- **Close Editor**: Return to the main canvas view
+
+### Basic Properties
+- **Node Label**: Edit the display name that appears on the canvas
+- **Node Type**: Define the node type for categorization and organization
+- **Group Assignment**: Organize nodes into logical groups for better management
+- **Root Node Toggle**: Set the starting point for workflow execution
+
+### Semantic Enrichment with TIB
+- **TIB Class Selection**: Map nodes to standardized terminology classes
+- **TIB Property Mapping**: Connect node properties to standard semantic properties
+- **Real-Time Lookup**: Search TIB terminology service as you type
+- **Contextual Suggestions**: Get relevant terms based on node context and type
+
+### XML Element Details
+- **Type Statistics**: View element counts, attributes, and structural information
+- **Children Elements**: See child element types and their frequencies
+- **Parent Element**: Understand the hierarchical context in the XML structure
+- **Ancestor Chain**: View the complete element path from root to current element
+
+### Property Management
+- **Add Properties**: Create new custom properties for your nodes
+- **Edit Values**: Modify existing property values with validation
+- **Delete Properties**: Remove unnecessary properties to keep your schema clean
+- **Type Validation**: Ensure property data integrity and consistency
+
+## User Workflow
+
+### Step 1: Select Node
+Click on any node in the canvas to open the Node Editor. The editor will display:
+- Current node properties and configuration
+- XML element information if available
+- Semantic mapping status
+- Property validation indicators
+
+### Step 2: Configure Basic Properties
+Set up the fundamental node characteristics:
+1. **Edit Label**: Change the display name for clarity
+2. **Set Type**: Define the node type for categorization
+3. **Assign Group**: Organize nodes into logical groups
+4. **Set Root Node**: Designate as workflow starting point if needed
+
+### Step 3: Enable Semantic Mode
+Activate TIB terminology service integration:
+1. **Toggle Semantic Mode**: Enable TIB service access
+2. **Select Ontology**: Choose appropriate terminology set from TIB
+3. **Map to Standards**: Connect node to TIB classes and properties
+4. **Validate Mapping**: Ensure semantic correctness and consistency
+
+### Step 4: Configure Properties
+Add and manage node properties:
+1. **Add Properties**: Create new custom properties as needed
+2. **Set Values**: Define property values with proper data types
+3. **Apply Validation**: Ensure data integrity and consistency
+4. **Test Configuration**: Validate with sample data if available
+
+### Step 5: Review XML Data
+Examine the source XML structure:
+1. **View Statistics**: Check element counts and structure
+2. **Examine Children**: Understand child element relationships
+3. **Review Hierarchy**: See parent and ancestor relationships
+4. **Validate Mapping**: Ensure XML to graph mapping is correct
+
+### Step 6: Apply TIB Suggestions
+Use standardized terminology recommendations:
+1. **Review Suggestions**: Consider TIB terminology recommendations
+2. **Apply Changes**: Accept relevant semantic mappings
+3. **Customize**: Modify suggestions to fit your specific needs
+4. **Validate**: Test final configuration with sample data
+
+## Advanced Features
+
+### Semantic Integration
+Deep integration with TIB terminology service:
+
+#### Real-Time Terminology Lookup
+- **Typeahead Search**: Find relevant TIB terms quickly
+- **Context Filtering**: See only applicable terminology for your node type
+- **Multi-Language Support**: Work with terminology in different languages
+- **Version Control**: Track terminology changes and updates
+
+#### Semantic Validation
+- **Compliance Checking**: Ensure your node follows TIB standards
+- **Suggestion Engine**: Get intelligent recommendations for improvements
+- **Error Reporting**: Identify semantic inconsistencies
+- **Correction Guidance**: Get specific fix suggestions
+
+#### Property Mapping
+- **Auto-Mapping**: Suggest standard property mappings from TIB
+- **Custom Mapping**: Create domain-specific property connections
+- **Validation**: Ensure mapping correctness and completeness
+- **Documentation**: Generate mapping reports for reference
+
+### Property Management
+Advanced property configuration and management:
+
+#### Data Types and Validation
+- **Type Definition**: Set appropriate data types for each property
+- **Validation Rules**: Define validation constraints and patterns
+- **Default Values**: Set automatic property assignments
+- **Required Fields**: Mark essential properties as mandatory
+
+#### Property Inheritance
+- **Type-Based Inheritance**: Inherit properties from node types
+- **Group Inheritance**: Propagate properties from group assignments
+- **Semantic Inheritance**: Get properties from TIB class mappings
+- **Custom Override**: Override inherited properties as needed
+
+## Best Practices
+
+### Node Design
+- **Clear Naming**: Use descriptive, consistent node names
+- **Type Organization**: Group similar nodes under common types
+- **Property Planning**: Plan your property structure before implementation
+- **Documentation**: Document node purposes and usage patterns
+
+### Semantic Integration
+- **Standard Compliance**: Follow TIB terminology standards consistently
+- **Mapping Strategy**: Develop a clear approach to TIB property mapping
+- **Validation**: Regular semantic validation checks
+- **Updates**: Keep TIB terminology mappings current
+
+### Property Management
+- **Consistent Types**: Use consistent data types across similar properties
+- **Validation Rules**: Implement comprehensive property validation
+- **Documentation**: Document property purposes and expected values
+- **Testing**: Test property configurations with realistic data
+
+## Troubleshooting
+
+### Common Issues
+- **Semantic Conflicts**: Resolve TIB terminology mapping issues
+- **Property Errors**: Fix property type and validation problems
+- **XML Mapping Issues**: Correct XML to graph mapping problems
+- **Performance Issues**: Optimize large property sets
+
+### Debug Tools
+- **Property Validation**: Use built-in validation tools
+- **Semantic Checking**: Run TIB compliance checks
+- **XML Analysis**: Examine XML structure and mapping
+- **Performance Monitoring**: Track node configuration performance
+
+---
+
+The Node Editor provides a comprehensive, user-friendly environment for configuring graph nodes with powerful semantic integration through TIB terminology service and robust property management tools, ensuring your nodes are both functionally correct and semantically consistent.

@@ -1,0 +1,175 @@
+---
+title: Node Property Suggestion Agent
+description: AI agent for suggesting node properties based on semantic analysis and domain knowledge
+---
+
+# Node Property Suggestion Agent
+
+The Node Property Suggestion Agent is an AI-powered assistant that analyzes graph nodes and suggests appropriate properties based on semantic meaning, domain knowledge, and graph database best practices.
+
+## Purpose
+
+The agent helps users design comprehensive node schemas by suggesting relevant properties that capture the semantic meaning and data requirements of different node types in research-oriented graph databases.
+
+## Key Capabilities
+
+### Semantic Analysis
+- **Domain Understanding**: Analyzes node labels and types to understand semantic context
+- **Research Domain Expertise**: Specialized knowledge for academic, bibliographic, and research data
+- **Pattern Recognition**: Identifies common property patterns for similar node types
+
+### Property Suggestions
+- **Semantic Naming**: Suggests meaningful property names (e.g., "name", "email", "publicationDate")
+- **Type Recommendations**: Determines appropriate data types (string, number, boolean, date, array, object)
+- **Requirement Analysis**: Identifies which properties should be required vs optional
+- **Domain-Specific Properties**: Suggests properties relevant to specific research domains
+
+### Best Practices Integration
+- **Graph Database Standards**: Follows graph database property naming and design conventions
+- **Normalization Guidance**: Recommends property structures that support efficient querying
+- **Extensibility Considerations**: Suggests properties that support future schema evolution
+
+## Input Requirements
+
+### Node Analysis Context
+The agent requires information about:
+- **Node Label/Type**: The semantic type of the node (e.g., "Person", "Publication", "Institution")
+- **Existing Properties**: Current node properties (if any)
+- **Domain Context**: Research domain or application area
+- **Relationship Context**: How the node connects to other nodes
+
+### Usage Scenarios
+- **New Node Creation**: When adding new node types to the schema
+- **Schema Enhancement**: When improving existing node definitions
+- **Domain Adaptation**: When adapting schemas for specific research domains
+
+## Output Structure
+
+### Property Suggestions
+```typescript
+interface PropertySuggestion {
+  key: string                    // Property name
+  type: 'string' | 'number' | 'boolean' | 'date' | 'array' | 'object'
+  required?: boolean            // Whether property is required
+  description?: string          // Property description and purpose
+}
+
+interface NodePropertySuggestion {
+  suggestions: PropertySuggestion[]     // General suggestions
+  recommended?: PropertySuggestion[]     // Highly recommended properties
+}
+```
+
+### Response Categories
+- **General Suggestions**: Broad set of relevant properties (10+ suggestions)
+- **Recommended Properties**: Core properties that are typically essential
+- **Property Descriptions**: Clear explanations of each property's purpose
+- **Type Justification**: Reasoning behind data type recommendations
+
+## Configuration and Usage
+
+### Agent Initialization
+```typescript
+import { NodePropertySuggestionAgent } from '@plexus/builder/ai/agents'
+
+const agent = new NodePropertySuggestionAgent({
+  model: chatModel,
+  settings: aiSettings
+})
+```
+
+### Suggestion Request
+```typescript
+const suggestions = await agent.suggestProperties({
+  nodeLabel: "Person",
+  nodeType: "AcademicResearcher",
+  existingProperties: ["name", "email"],
+  domain: "bibliographic"
+})
+```
+
+## Integration Points
+
+### Node Editor Integration
+- **Property Panel**: Integrated into the node property configuration interface
+- **Real-time Suggestions**: Provides suggestions as users define node types
+- **Auto-completion**: Supports property name auto-completion with AI suggestions
+
+### Schema Designer Integration
+- **Schema Validation**: Suggests properties needed for complete schema definitions
+- **Consistency Checking**: Ensures property naming consistency across node types
+- **Relationship Impact**: Considers how properties affect relationship definitions
+
+### TIB Terminology Integration
+- **Standard Properties**: Suggests properties based on TIB terminology standards
+- **Semantic Mapping**: Maps domain concepts to standard property names
+- **Cross-Domain Consistency**: Ensures property consistency across different domains
+
+## Best Practices
+
+### Property Design
+- **Semantic Clarity**: Use property names that clearly express meaning
+- **Type Appropriateness**: Choose data types that match the property's purpose
+- **Required vs Optional**: Carefully consider which properties are essential
+- **Future Extensibility**: Design property structures that can evolve
+
+### Domain Considerations
+- **Research Standards**: Follow domain-specific data standards (e.g., bibliographic formats)
+- **Institutional Requirements**: Consider institutional or project-specific requirements
+- **Data Quality**: Design properties that support data validation and quality control
+
+### Performance Optimization
+- **Indexing Strategy**: Consider how properties will be used in queries and indexing
+- **Storage Efficiency**: Balance property completeness with storage efficiency
+- **Query Patterns**: Design properties to support common query patterns
+
+## Example Use Cases
+
+### Academic Research Domain
+**Node Type**: "Publication"
+**Suggested Properties**:
+- `title` (string, required) - Publication title
+- `publicationDate` (date, required) - Publication date
+- `doi` (string, optional) - Digital Object Identifier
+- `abstract` (string, optional) - Publication abstract
+- `authors` (array, optional) - List of author references
+- `venue` (string, optional) - Publication venue
+- `keywords` (array, optional) - Publication keywords
+
+### Social Network Analysis
+**Node Type**: "Person"
+**Suggested Properties**:
+- `name` (string, required) - Person's full name
+- `email` (string, optional) - Email address
+- `affiliation` (string, optional) - Institutional affiliation
+- `orcid` (string, optional) - ORCID identifier
+- `researchInterests` (array, optional) - Research interest areas
+- `position` (string, optional) - Academic or professional position
+
+## Error Handling and Validation
+
+### Input Validation
+- **Node Label Validation**: Ensures node labels are valid and meaningful
+- **Type Checking**: Validates suggested property types are appropriate
+- **Consistency Checking**: Ensures suggestions are consistent with existing schema
+
+### Response Validation
+- **Schema Compliance**: Validates responses against expected schema structure
+- **Quality Assurance**: Ensures suggestions are relevant and high-quality
+- **Fallback Handling**: Provides fallback suggestions when AI analysis fails
+
+## Performance Considerations
+
+### Response Time
+- **Caching**: Caches common node type suggestions for faster responses
+- **Batch Processing**: Supports batch property suggestions for multiple nodes
+- **Optimization**: Optimizes prompts and processing for faster response times
+
+### Resource Usage
+- **Model Selection**: Uses appropriate AI models for the complexity of the task
+- **Context Management**: Efficiently manages context for domain-specific suggestions
+- **Memory Optimization**: Optimizes memory usage for large-scale schema analysis
+
+---
+
+The Node Property Suggestion Agent provides intelligent, domain-aware property suggestions that help users create comprehensive, well-structured node schemas. By combining semantic analysis with domain expertise and graph database best practices, the agent ensures that node properties are meaningful, properly typed, and optimized for research applications.

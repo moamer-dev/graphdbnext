@@ -1,0 +1,687 @@
+---
+title: Actions
+description: User-friendly guide to workflow actions organized by categories
+---
+
+Actions are the fundamental building blocks of workflows in Plexus Builder. They define specific operations that can be performed on XML elements, nodes, relationships, and properties during the graph generation process. Each action is designed to solve specific data transformation needs.
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Plus, Settings, GitBranch, Hash, Layers } from 'lucide-react';
+
+## Action Categories
+
+<Cards>
+  <Card
+    icon={<Plus className="text-green-500" />}
+    title="Node Actions"
+    description="Create and manage graph nodes with property mapping and relationship setup."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#create-node" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Create Node</a>
+      <a href="#create-text-node" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Create Text Node</a>
+      <a href="#create-token-nodes" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Create Token Nodes</a>
+      <a href="#create-annotation-nodes" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Create Annotation Nodes</a>
+      <a href="#create-deferred-node" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Create Deferred Node</a>
+      <a href="#update-node" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Update Node</a>
+      <a href="#clone-node" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Clone Node</a>
+      <a href="#delete-node" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Delete Node</a>
+      <a href="#merge-nodes" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Merge Nodes</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Settings className="text-blue-500" />}
+    title="Property Actions"
+    description="Transform node properties with formatting, merging, and computation capabilities."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#set-property" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Set Property</a>
+      <a href="#copy-property" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Copy Property</a>
+      <a href="#merge-properties" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Merge Properties</a>
+      <a href="#split-property" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Split Property</a>
+      <a href="#extract-compute-property" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Extract & Compute</a>
+      <a href="#extract-normalize-attributes" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Extract & Normalize</a>
+      <a href="#format-property" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Format Property</a>
+    </div>
+  </Card>
+  <Card
+    icon={<GitBranch className="text-purple-500" />}
+    title="Relationship Actions"
+    description="Manage connections between nodes with deferred resolution and reference chains."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#create-relationship" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Create Relationship</a>
+      <a href="#defer-relationship" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Defer Relationship</a>
+      <a href="#update-relationship" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Update Relationship</a>
+      <a href="#delete-relationship" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Delete Relationship</a>
+      <a href="#reverse-relationship" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Reverse Relationship</a>
+      <a href="#create-reference-chain" className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors no-underline">Create Reference Chain</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Hash className="text-orange-500" />}
+    title="Workflow Control"
+    description="Control execution flow with action grouping and element management."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#action-group" className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors no-underline">Action Group</a>
+      <a href="#skip-element" className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors no-underline">Skip Element</a>
+      <a href="#merge-children-text" className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors no-underline">Merge Children Text</a>
+    </div>
+  </Card>
+</Cards>
+
+## Node Actions
+
+Node actions create, modify, and manage graph nodes in your workflow.
+
+### Create Node
+**Purpose**: Create new graph nodes from XML elements with property mapping and relationship setup.
+
+**When to Use**: 
+- Convert XML elements into graph nodes
+- Map XML attributes to node properties
+- Establish parent-child relationships automatically
+
+**XML Example**:
+```xml
+<surface xml:id="surface-1" n="1">
+```
+
+**Key Features**:
+- **Property Mapping**: Map XML attributes to node properties
+- **Unique ID Templates**: Prevent duplicate nodes with upsert logic (e.g., `{{ $json["xml:id"] }}`)
+- **Relationship Setup**: Create connections to parent or target nodes
+- **Flexible Targeting**: Connect to current, parent, or lookup nodes
+
+**Configuration Options**:
+- **Node Label**: The label assigned to the new node (e.g., `Surface`)
+- **Unique ID Template**: Template for upsert logic to avoid duplicates
+- **Attribute Mappings**: Map XML attributes to graph properties
+- **Relationship Configuration**: 
+  - **Mode**: `Standalone`, `Connected`, or `Deferred`
+  - **Type**: Connection label (e.g., `HAS_SURFACE`)
+  - **Direction**: `Outgoing` (Parent → New) or `Incoming` (New → Parent)
+  - **Target Lookup**: For deferred mode, specify target node details
+
+**Example Configuration**:
+- **Node Label**: `Surface`
+- **Unique ID Template**: `{{ $json["xml:id"] }}`
+- **Mappings**: `xml:id` → `id`, `n` → `number`
+- **Relationship**: `Connected` (Type: `HAS_SURFACE`, Direction: `Outgoing`)
+
+### Create Text Node
+**Purpose**: Extract text content into dedicated nodes with normalization options.
+
+**When to Use**:
+- Separate text content from structural elements
+- Apply text transformations (lowercase, trim, etc.)
+- Create searchable text nodes
+
+**XML Example**:
+```xml
+<w xml:id="word-1" lemma="hello" text="hello">hello</w>
+```
+
+**Key Features**:
+- **Text Sources**: Extract from element text or attributes
+- **Text Transforms**: Apply normalization operations (lowercase, trim, regex_replace)
+- **Parent Relationships**: Link to source elements
+- **Property Mapping**: Add additional metadata
+
+**Configuration Options**:
+- **Node Label**: Label for the text node (e.g., `WordContent`)
+- **Text Source**: Select `Text Content` (inner text) or `XML Attribute`
+- **Attribute Name**: If 'XML Attribute' is selected, specify the attribute name
+- **Transforms**: List of operations applied sequentially (e.g., `trim`, `lowercase`)
+- **Target Property Key**: Property key to store the text (e.g., `textContent`)
+- **Parent Relationship Type**: Type of link to parent node (e.g., `HAS_TEXT`)
+- **Property Mappings**: Key-value editor for additional properties
+
+**Example Configuration**:
+- **Node Label**: `WordContent`
+- **Text Source**: `Text Content`
+- **Transforms**: `trim`, `lowercase`
+- **Target Property Key**: `text`
+- **Parent Relationship**: `HAS_TEXT`
+
+### Create Token Nodes
+**Purpose**: Break text into individual token nodes (words, characters, etc.).
+
+**When to Use**:
+- Analyze text at granular level
+- Create word-by-word or character-by-character representations
+- Build linguistic analysis workflows
+
+**XML Example**:
+```xml
+<p>This is a note about word-1</p>
+```
+
+**Key Features**:
+- **Tokenization Options**: Character or word-level splitting
+- **Filter Patterns**: Include only matching tokens
+- **Structure Options**: Flat or chained token arrangements
+- **Relationship Types**: Define token-to-token connections
+
+**Configuration Options**:
+- **Parent Node Label**: Label for the context node containing tokens
+- **Token Node Label**: Label for individual token nodes (e.g., `Character`, `Word`)
+- **Relationship Type**: Type of link from parent to tokens (e.g., `CONTAINS_TOKEN`)
+- **Text Source**: Select `Text Content` or `XML Attribute`
+- **Attribute Name**: If 'XML Attribute' is selected, specify the source attribute
+- **Transforms**: Operations to run before tokenization
+- **Split By**: Delimiter for splitting (e.g., space for words). Leave empty for character-level
+- **Filter Pattern (Regex)**: Only create nodes for tokens matching pattern (e.g., `[a-zA-Z0-9]`)
+- **Structure**: 
+  - `Flat`: All token nodes connect directly to parent
+  - `Chained`: Tokens form a Linked List (Parent → Token1 → Token2)
+- **Next Token Relationship**: For chained structure, label for consecutive token links (e.g., `NEXT`)
+
+### Create Annotation Nodes
+**Purpose**: Create reference nodes for external annotations and links.
+
+**When to Use**:
+- Process scholarly annotations and references
+- Create cross-references between elements
+- Build citation networks
+
+**XML Example**:
+```xml
+<note xml:id="note-1" type="editorial" target="#word-1">
+```
+
+**Key Features**:
+- **Reference Attributes**: Extract reference IDs from XML
+- **Relationship Types**: Define annotation relationships
+- **Target Resolution**: Link to referenced elements
+
+**Configuration Options**:
+- **Attribute Name (Reference Attribute)**: XML attribute containing reference ID (e.g., `target`, `ref`, `corresp`)
+- **Relationship Label**: Label for relationship created between context node and referenced node (e.g., `ANNOTATES`, `REFERS_TO`)
+
+### Create Deferred Node
+**Purpose**: Find existing nodes or create them if they don't exist.
+
+**When to Use**:
+- Ensure unique entities across your graph
+- Consolidate duplicate references
+- Build entity resolution workflows
+
+**XML Example**:
+```xml
+<header>
+  <title>Test Document</title>
+  <author>Test Author</author>
+</header>
+```
+
+**Key Features**:
+- **Node Lookup**: Search for existing nodes by properties
+- **Conditional Creation**: Create only if not found
+- **Relationship Setup**: Connect to context nodes
+- **Strict Mode**: Fail if resolution fails
+
+**Configuration Options**:
+- **New Node Label**: Label used if a new node must be created
+- **Attribute Mappings**: Mappings representing the new node's initial properties
+- **Lookup Target**:
+  - **Target Label (Optional)**: Node label to search
+  - **Property Key**: Database property to search (e.g., `name`)
+  - **Property Value**: Dynamic value to search for (supports templates, e.g., `{{ $json.textContent }}`)
+- **Strict Lookup (Must Resolve)**: If enabled, workflow fails if target node cannot be found or created
+- **Relationship Type**: Define relationship label to context node
+- **Relationship Direction**: `Outgoing` or `Incoming`
+
+### Update Node
+**Purpose**: Modify existing node properties and labels.
+
+**When to Use**:
+- Add computed properties to nodes
+- Update node labels based on processing
+- Apply post-processing modifications
+
+**XML Example**:
+```xml
+<structure>
+  <stanza xml:id="stanza-1" n="1">
+```
+
+**Key Features**:
+- **Target Selection**: Update current, parent, or lookup nodes
+- **Property Updates**: Add or modify node properties
+- **Label Management**: Add or replace node labels
+- **Conditional Logic**: Apply updates based on conditions
+
+**Configuration Options**:
+- **Target Node (Node Targeting Section)**:
+  - **Alias**: Reference an aliased node from context (e.g., `current`, `parent`)
+  - **Lookup**: Find a node by specific property/value match within context
+- **Property Updates**: Key-Value Editor for adding/changing properties on matched node
+- **Add/Replace Labels**: Comma-separated list of labels to apply to node (e.g., `Stanza, Processed`)
+
+### Clone Node
+**Purpose**: Create copies of nodes with modifications.
+
+**When to Use**:
+- Create parallel processing branches
+- Generate alternative representations
+- Backup important nodes
+
+**XML Example**:
+```xml
+<seg xml:id="seg-1" type="text">
+```
+
+**Key Features**:
+- **Property Override**: Modify properties on cloned nodes
+- **Label Changes**: Set new labels for clones
+- **Relationship Setup**: Connect clones to original or other nodes
+- **Selective Cloning**: Choose which aspects to copy
+
+**Configuration Options**:
+- **Node to Clone**: Targeting section to select source node (Alias or Lookup)
+- **Property Modifications**: Key-Value Editor to override or add specific properties on cloned node
+- **New Labels**: Comma-separated list of labels to override original labels on clone
+- **Clone Relationship**: Configuration to optionally relate clone back to original or another node
+  - **Relationship Type**: Type of connection
+  - **Relationship Direction**: Direction of connection
+  - **Target Node Alias/Lookup**: Target for the relationship
+
+### Delete Node
+**Purpose**: Remove nodes from the graph based on conditions.
+
+**When to Use**:
+- Clean up temporary nodes
+- Remove unwanted elements
+- Implement conditional filtering
+
+**XML Example**:
+```xml
+<column xml:id="col-1" n="1">
+```
+
+**Key Features**:
+- **Conditional Deletion**: Delete only if properties match
+- **Target Selection**: Delete specific nodes
+- **Cleanup Options**: Handle orphaned relationships
+- **Safety Checks**: Prevent accidental deletions
+
+**Configuration Options**:
+- **Target Node**: Targeting section to select the node (Alias or Lookup)
+- **Property Match**: Key-Value Editor. The action only deletes the node if all specified properties match exactly. Leaving this empty deletes the node unconditionally
+
+### Merge Nodes
+**Purpose**: Combine multiple nodes into a single entity.
+
+**When to Use**:
+- Consolidate duplicate representations
+- Merge related entities
+- Resolve node conflicts
+
+**Key Features**:
+- **Merge Strategies**: Union, prefer source, or prefer target
+- **Property Combination**: Intelligent property merging
+- **Relationship Handling**: Preserve important connections
+- **Conflict Resolution**: Handle property conflicts
+
+**Configuration Options**:
+- **Target Node**: Targeting section to select the primary node that will remain
+- **Source Node(s) to Merge From**: Targeting section to select the nodes that will be merged into the target
+- **Merge Strategy**:
+  - `Union (merge all)`: Combines all properties
+  - `Prefer Source`: Source properties overwrite target
+  - `Prefer Target`: Target properties take precedence
+
+## Property Actions
+
+Property actions manipulate and transform node and relationship properties.
+
+### Set Property
+**Purpose**: Assign specific values to node properties.
+
+**When to Use**:
+- Add computed properties
+- Set default values
+- Apply fixed metadata
+
+**XML Example**:
+```xml
+<title>Test Document</title>
+```
+
+**Key Features**:
+- **Value Sources**: Static values or dynamic templates
+- **Template Support**: Use XML data in property values
+- **Type Safety**: Ensure proper data types
+- **Conditional Setting**: Apply based on conditions
+
+**Configuration Options**:
+- **Property Key**: The exact name of the property to set
+- **Property Value**: Supports manual input, template syntax (`{{ ... }}`), or JSON Field Selector if API response data is available in context
+
+### Copy Property
+**Purpose**: Transfer properties between nodes.
+
+**When to Use**:
+- Share data between related nodes
+- Pull parent attributes to children
+- Synchronize properties across nodes
+
+**XML Example**:
+```xml
+<column xml:id="col-1" n="1">
+  <line xml:id="line-1" n="1">
+```
+
+**Key Features**:
+- **Source Selection**: Choose source node
+- **Target Specification**: Define destination property
+- **Template Support**: Dynamic property names
+- **Cross-Node Transfer**: Move between different nodes
+
+**Configuration Options**:
+- **Source Property**: Key name on the source node (supports templates)
+- **Target Property**: Key name on the target node (supports templates)
+- **Source Node ID**: The ID of the node to copy from (Leave empty to default to the parent node)
+
+### Merge Properties
+**Purpose**: Combine multiple properties into one.
+
+**When to Use**:
+- Concatenate related information
+- Build composite properties
+- Aggregate data from multiple sources
+
+**XML Example**:
+```xml
+<w xml:id="word-1" lemma="hello" text="hello">hello</w>
+```
+
+**Key Features**:
+- **Merge Strategies**: Concatenate, object, or array
+- **Source Selection**: Choose multiple source properties
+- **Separators**: Define join characters
+- **Type Handling**: Preserve data types
+
+**Configuration Options**:
+- **Source Properties**: Comma-separated list of keys to merge
+- **Target Property**: Output key for the merged result (supports templates)
+- **Merge Strategy**:
+  - `Concatenate (space-separated)`: A string of all values
+  - `Object (key-value pairs)`: A JSON object with the original keys intact
+  - `Array`: A JSON array of the values
+
+### Split Property
+**Purpose**: Break single properties into multiple parts.
+
+**When to Use**:
+- Parse complex property values
+- Extract components from strings
+- Separate concatenated data
+
+**Key Features**:
+- **Delimiter Support**: Custom split characters
+- **Target Mapping**: Define destination properties
+- **Template Support**: Dynamic property names
+- **Error Handling**: Handle malformed data
+
+**Configuration Options**:
+- **Source Property**: Key to split (supports templates)
+- **Separator**: The string delimiter character (e.g., `,`, ` `) (supports templates)
+- **Target Properties**: Comma-separated list of keys to assign the resulting parts
+
+### Extract & Compute Property
+**Purpose**: Aggregate from multiple sources (attributes, text, static) with basic operations.
+
+**When to Use**:
+- Building a display string concatenating the word's id and its lemma
+- Combine data from multiple sources into one property
+- Apply mathematical operations on multiple values
+
+**XML Example**:
+```xml
+<w xml:id="word-1" lemma="hello" text="hello">hello</w>
+```
+
+**Key Features**:
+- **Multiple Sources**: Combine text, attributes, and static values
+- **Computation Types**: Concatenate, sum, or join with separator
+- **Template Support**: Dynamic source selection
+- **Type Conversion**: Handle different data types
+
+**Configuration Options**:
+- **Property Key**: The key for the computed result
+- **Computation Type**: `Concatenate`, `Sum (numbers)`, or `Join with separator`
+- **Separator** (If 'Concat' or 'Join' is selected): The string to insert between values
+- **Sources**: A dynamic list where each item requires:
+  - **Source Type**: `Text Content`, `XML Attribute`, or `Static Value`
+  - **Attribute Name**: (If type is 'XML Attribute') The attribute key
+  - **Static Value**: (If type is 'Static Value') The literal string
+
+### Extract & Normalize Attributes
+**Purpose**: Bulk mapper for many attributes at once with cleanup options.
+
+**When to Use**:
+- Processing `xml:id`, `type`, and `target` attributes in a single pass
+- Apply consistent transformations to multiple attributes
+- Clean up attribute names and values
+
+**XML Example**:
+```xml
+<note xml:id="note-1" type="editorial" target="#word-1">
+```
+
+**Key Features**:
+- **Bulk Mapping**: Process multiple attributes simultaneously
+- **Transformations**: Apply text operations
+- **Default Values**: Set fallback values
+- **Cleanup Options**: Remove original attributes
+
+**Configuration Options**:
+- **Remove original attributes from properties**: Checkbox to delete source attribute after successful mapping
+- **Attribute Mappings**: A dynamic list of individual mapping rules:
+  - **Source Attribute**: The XML attribute key (e.g., `xml:id`)
+  - **Target Property**: The Database property key (supports templates)
+  - **Default Value (Optional)**: Setting fallback (supports templates)
+  - **Transformations**: A list of operations applied specifically to this attribute (e.g., `trim`, `lowercase`)
+
+### Format Property
+**Purpose**: Standardizes string types into actual data types (dates, numbers).
+
+**When to Use**:
+- Ensuring attributes meant to be numbers are stored as numeric data types
+- Parse dates and timestamps
+- Format currency and percentages
+
+**XML Example**:
+```xml
+<surface xml:id="surface-1" n="1">
+```
+
+**Key Features**:
+- **Type Conversion**: Date, number, currency, percentage, text
+- **Format Patterns**: Custom formatting rules
+- **Locale Support**: International formatting
+- **Validation**: Ensure proper format
+
+**Configuration Options**:
+- **Property Key**: The property to format (supports templates)
+- **Format**: `Date`, `Number`, `Currency`, `Percentage`, or `Text`
+- **Format String (Optional)**: Locales or specific patterns (e.g., `en-US` or `YYYY-MM-DD`) **Locale Support**: International formatting
+- **Validation**: Ensure proper format
+
+## Relationship Actions
+
+Relationship actions create and manage connections between nodes.
+
+### Create Relationship
+**Purpose**: Establish connections between specific nodes.
+
+**When to Use**:
+- Link related entities
+- Build hierarchical structures
+- Define semantic connections
+
+**Key Features**:
+- **Node Selection**: Choose source and target nodes
+- **Relationship Types**: Define connection labels
+- **Direction Control**: Set relationship direction
+- **Property Assignment**: Add relationship metadata
+
+### Defer Relationship
+**Purpose**: Create relationships that will be resolved later.
+
+**When to Use**:
+- Connect elements processed at different times
+- Build forward references
+- Handle circular dependencies
+
+**Key Features**:
+- **Search Scope**: Children, descendants, or global
+- **Target Matching**: Find nodes by attributes
+- **Resolution Logic**: Smart node finding
+- **Error Handling**: Handle missing targets
+
+### Update Relationship
+**Purpose**: Modify existing relationship properties.
+
+**When to Use**:
+- Enhance relationships with metadata
+- Correct relationship types
+- Add computed properties
+
+**Key Features**:
+- **Relationship Matching**: Find specific connections
+- **Property Updates**: Modify relationship metadata
+- **Type Changes**: Update relationship labels
+- **Conditional Logic**: Apply based on criteria
+
+### Delete Relationship
+**Purpose**: Remove connections between nodes.
+
+**When to Use**:
+- Clean up incorrect relationships
+- Remove temporary connections
+- Implement relationship filtering
+
+**Key Features**:
+- **Selective Deletion**: Delete specific relationship types
+- **Property Matching**: Delete only if properties match
+- **Cleanup Handling**: Manage orphaned nodes
+- **Safety Checks**: Prevent accidental deletions
+
+### Reverse Relationship
+**Purpose**: Flip the direction of existing relationships.
+
+**When to Use**:
+- Correct relationship direction
+- Handle inverted data imports
+- Standardize relationship orientation
+
+**Key Features**:
+- **Direction Reversal**: Flip source and target
+- **Type Preservation**: Maintain relationship labels
+- **Property Transfer**: Keep relationship metadata
+- **Batch Processing**: Handle multiple relationships
+
+### Create Reference Chain
+**Purpose**: Build sequences of relationships from reference lists.
+
+**When to Use**:
+- Process multiple references in attributes
+- Build citation networks
+- Create sequential connections
+
+**Key Features**:
+- **Reference Parsing**: Extract multiple IDs from attributes
+- **Chain Building**: Create sequential relationships
+- **Target Resolution**: Find referenced nodes
+- **Missing Target Handling**: Create placeholders if needed
+
+## Workflow & Control
+
+Workflow control actions manage execution flow and processing logic.
+
+### Action Group
+**Purpose**: Organize and control sets of related actions.
+
+**When to Use**:
+- Group related processing steps
+- Enable/disable entire feature sets
+- Organize complex workflows
+
+**Key Features**:
+- **Logical Grouping**: Organize actions by purpose
+- **Master Toggle**: Enable/disable entire groups
+- **Nested Organization**: Create hierarchical structures
+- **Visual Clarity**: Improve workflow readability
+
+### Skip Element
+**Purpose**: Control which XML elements are processed.
+
+**When to Use**:
+- Ignore metadata sections
+- Skip processing of certain elements
+- Implement conditional processing
+
+**Key Features**:
+- **Element Skipping**: Skip current element processing
+- **Child Control**: Skip processing of children
+- **Selective Skipping**: Skip specific tag types
+- **Conditional Logic**: Skip based on criteria
+
+### Merge Children Text
+**Purpose**: Combine text from child elements into parent properties.
+
+**When to Use**:
+- Extract all text from containers
+- Build searchable text fields
+- Flatten nested text structures
+
+**Key Features**:
+- **Text Aggregation**: Combine child element text
+- **Separator Control**: Define join characters
+- **Tag Filtering**: Include/exclude specific elements
+- **Property Assignment**: Store merged text in properties
+
+## Advanced Actions
+
+Advanced actions provide specialized processing capabilities for complex scenarios.
+
+### Complex Operations
+Actions that perform sophisticated data transformations:
+- **Multi-step Processing**: Combine multiple operations
+- **Conditional Logic**: Complex decision trees
+- **Error Handling**: Robust error management
+- **Performance Optimization**: Efficient data processing
+
+### Annotation Processing
+Actions specialized for scholarly and semantic content:
+- **Reference Resolution**: Handle complex citations
+- **Semantic Analysis**: Process meaning and context
+- **Metadata Extraction**: Extract structured information
+- **Cross-Reference Building**: Create connection networks
+
+## Best Practices
+
+### Action Selection
+- **Start Simple**: Begin with basic actions
+- **Build Complexity**: Add sophistication gradually
+- **Test Incrementally**: Validate each step
+- **Document Logic**: Explain action purposes
+
+### Performance Optimization
+- **Batch Operations**: Group similar actions
+- **Conditional Logic**: Skip unnecessary processing
+- **Efficient Targeting**: Use specific node selection
+- **Memory Management**: Handle large datasets
+
+### Error Handling
+- **Validation**: Check inputs before processing
+- **Fallback Logic**: Handle unexpected data
+- **Logging**: Track action execution
+- **Recovery**: Implement error recovery mechanisms
+
+---
+
+Actions provide a comprehensive toolkit for transforming XML data into graph structures, with specialized operations for every data processing need. Choose the right actions for your specific requirements and build efficient, maintainable workflows.

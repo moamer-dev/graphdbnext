@@ -1,0 +1,235 @@
+---
+title: Research Assistant Agent
+description: Comprehensive AI assistant for graph database schema design and workflow guidance
+---
+
+# Research Assistant Agent
+
+The Research Assistant Agent is a comprehensive AI-powered assistant that helps researchers understand, design, and optimize graph database schemas and workflows. It provides expert guidance across the entire Plexus Builder ecosystem, from XML import wizard navigation to advanced workflow design.
+
+## Purpose
+
+The agent serves as a knowledgeable research companion that can assist with schema design, workflow creation, XML processing, and general graph database concepts. It combines deep domain expertise with practical application knowledge to help researchers succeed with their data modeling and analysis projects.
+
+## Key Capabilities
+
+### Schema Design Assistance
+- **Node and Relationship Creation**: Help users create and modify graph schemas
+- **Schema Optimization**: Suggest improvements and optimizations for existing schemas
+- **Best Practice Guidance**: Provide guidance on graph database design principles
+- **Domain-Specific Expertise**: Apply knowledge specific to research domains
+
+### Workflow Design Support
+- **Tool Selection**: Guide users in choosing appropriate workflow tools
+- **Action Configuration**: Assist with action configuration and parameter setup
+- **Workflow Optimization**: Suggest optimizations for workflow performance and efficiency
+- **Troubleshooting**: Help identify and resolve workflow issues
+
+### XML Import Wizard Guidance
+- **Wizard Navigation**: Guide users through the XML import wizard steps
+- **Configuration Assistance**: Help with wizard configuration options
+- **Import Optimization**: Suggest optimizations for XML import processes
+- **Error Resolution**: Assist with import-related issues and errors
+
+### Educational Support
+- **Concept Explanation**: Explain graph database concepts clearly for researchers
+- **Best Practice Education**: Teach best practices for data modeling and analysis
+- **Tool Usage Guidance**: Explain how to use various Plexus Builder features
+- **Domain Knowledge**: Provide domain-specific knowledge and insights
+
+## Integration with Application Tools
+
+### Model Builder Tools
+The agent has access to application tools that allow it to interact directly with the Plexus Builder interface:
+
+**Schema Management Tools**:
+- `create_node`: Create new nodes in the schema
+- `create_relationship`: Create relationships between nodes
+- `set_root_node`: Set the entry point for XML processing
+- `get_workflow_registry`: Access available workflow components
+
+**Contextual Tools**:
+- `get_current_schema`: Retrieve current schema information
+- `get_workflow_state`: Access current workflow state
+- `validate_schema`: Validate schema completeness and consistency
+
+## Context Awareness
+
+### Application Context
+The agent maintains awareness of:
+- **Current View**: Whether user is in import wizard, Plexus Builder, or workflow builder
+- **Schema State**: Current nodes, relationships, and their properties
+- **Selection State**: Currently selected nodes or relationships
+- **Workflow State**: Current workflow configuration and components
+
+### User History
+- **Conversation History**: Maintains context of ongoing conversations
+- **User Preferences**: Learns from user interactions and preferences
+- **Project Context**: Understands project-specific requirements and constraints
+- **Domain Knowledge**: Builds domain-specific knowledge over time
+
+## Configuration and Usage
+
+### Agent Initialization
+```typescript
+import { ResearchAssistantAgent } from '@plexus/builder/ai/agents'
+
+const agent = new ResearchAssistantAgent({
+  model: chatModel,
+  settings: aiSettings,
+  toolContext: toolExecutionContext,
+  appContext: {
+    currentView: 'plexus-builder',
+    currentState: {
+      nodeCount: 15,
+      relationshipCount: 23,
+      selectedNodeId: 'node-123',
+      nodes: [
+        { label: 'Person', type: 'Author', id: 'node-123' },
+        { label: 'Publication', type: 'Paper', id: 'node-456' }
+      ]
+    }
+  }
+})
+```
+
+### Interaction Example
+```typescript
+const response = await agent.invoke(
+  "I need to create a relationship between my Person and Publication nodes to represent authorship. What's the best way to do this?",
+  conversationHistory,
+  toolContext,
+  appContext
+)
+```
+
+## Use Case Scenarios
+
+### Schema Design Sessions
+**User Query**: "I'm designing a schema for bibliographic data. What nodes and relationships should I include?"
+
+**Agent Response**:
+- Analyzes current schema context
+- Suggests appropriate node types (Person, Publication, Journal, Institution)
+- Recommends relationship types (AUTHORED, PUBLISHED_IN, AFFILIATED_WITH)
+- Provides best practice guidance for bibliographic schemas
+- May use `create_node` and `create_relationship` tools to help build the schema
+
+### Workflow Design Assistance
+**User Query**: "How do I create a workflow that processes TEI documents and extracts author information?"
+
+**Agent Response**:
+- Explains appropriate tools (tool:if, tool:switch for conditional processing)
+- Recommends specialized actions (action:create-node-complete, action:create-token-nodes)
+- Provides step-by-step workflow construction guidance
+- May use `get_workflow_registry` to show available components
+
+### XML Import Wizard Help
+**User Query**: "I'm stuck on the mapping configuration step. How do I map XML attributes to graph properties?"
+
+**Agent Response**:
+- Provides step-by-step guidance for the mapping configuration
+- Explains the relationship between XML attributes and graph properties
+- Suggests optimal mapping strategies for the user's XML structure
+- Offers troubleshooting advice for common mapping issues
+
+### General Concept Questions
+**User Query**: "What's the difference between one-to-many and many-to-many relationships in graph databases?"
+
+**Agent Response**:
+- Provides clear, researcher-friendly explanation of relationship cardinality
+- Gives examples relevant to research domains
+- Explains implications for query patterns and performance
+- Suggests when to use each type of relationship
+
+## Best Practices Integration
+
+### Graph Database Best Practices
+- **Semantic Naming**: Encourages clear, meaningful node and relationship names
+- **Normalization Guidance**: Provides guidance on appropriate normalization levels
+- **Performance Optimization**: Suggests optimizations for query performance
+- **Scalability Considerations**: Considers scalability in design recommendations
+
+### Research Domain Best Practices
+- **Domain Standards**: Follows standards specific to research domains
+- **Data Quality**: Emphasizes data quality and validation practices
+- **Reproducibility**: Promotes reproducible research practices
+- **Documentation**: Encourages good documentation practices
+
+### Workflow Best Practices
+- **Modular Design**: Promotes modular, maintainable workflow design
+- **Error Handling**: Emphasizes proper error handling and recovery
+- **Performance Optimization**: Suggests performance optimization strategies
+- **Testing**: Recommends workflow testing and validation
+
+## Advanced Features
+
+### Learning and Adaptation
+- **User Preference Learning**: Adapts responses based on user feedback and preferences
+- **Domain Specialization**: Develops expertise in specific research domains
+- **Pattern Recognition**: Recognizes patterns in user queries and responses
+- **Contextual Improvement**: Improves responses based on application context
+
+### Multi-Modal Support
+- **Visual Context**: Understands visual context of schema and workflow designs
+- **Interactive Guidance**: Provides interactive, step-by-step guidance
+- **Real-time Assistance**: Offers real-time assistance during design processes
+- **Progressive Disclosure**: Reveals information progressively based on user needs
+
+### Collaboration Support
+- **Team Knowledge**: Builds knowledge of team-specific standards and practices
+- **Project Continuity**: Maintains context across sessions and projects
+- **Standardization**: Promotes standardization across team projects
+- **Knowledge Sharing**: Facilitates knowledge sharing among team members
+
+## Error Handling and Recovery
+
+### Input Validation
+- **Query Validation**: Validates user queries for clarity and feasibility
+- **Context Validation**: Ensures context information is accurate and relevant
+- **Tool Validation**: Validates tool usage and parameters
+- **Capability Validation**: Ensures requests are within agent capabilities
+
+### Error Recovery
+- **Graceful Degradation**: Provides helpful responses even when tools fail
+- **Alternative Suggestions**: Offers alternative approaches when primary methods fail
+- **Error Explanation**: Explains errors clearly and constructively
+- **Recovery Guidance**: Provides guidance for recovering from errors
+
+### Limitation Awareness
+- **Scope Awareness**: Clearly communicates limitations and scope
+- **Alternative Resources**: Suggests alternative resources when appropriate
+- **Escalation**: Knows when to escalate to human experts
+- **Transparency**: Is transparent about capabilities and limitations
+
+## Performance Considerations
+
+### Response Optimization
+- **Context Caching**: Caches context information for faster responses
+- **Tool Optimization**: Optimizes tool usage for efficiency
+- **Response Caching**: Caches common responses for frequently asked questions
+- **Parallel Processing**: Uses parallel processing when appropriate
+
+### Resource Management
+- **Memory Optimization**: Optimizes memory usage for large contexts
+- **Tool Selection**: Selects appropriate tools for each task
+- **Context Management**: Efficiently manages conversation and application context
+- **Model Optimization**: Uses appropriate AI models for task complexity
+
+## Integration Architecture
+
+### Tool Integration
+- **Direct Tool Access**: Has direct access to application tools
+- **Tool Execution**: Can execute tools to modify application state
+- **Tool Validation**: Validates tool parameters and execution
+- **Result Processing**: Processes tool results for user responses
+
+### Context Integration
+- **Real-time Context**: Accesses real-time application context
+- **State Synchronization**: Maintains synchronization with application state
+- **Event Handling**: Responds to application events and changes
+- **Multi-view Awareness**: Understands different application views and contexts
+
+---
+
+The Research Assistant Agent provides comprehensive, context-aware assistance for researchers working with graph databases and workflows in the Plexus Builder ecosystem. By combining deep domain expertise with direct application integration, the agent serves as an intelligent companion that can guide users through complex data modeling and analysis tasks while maintaining awareness of their specific context and needs.

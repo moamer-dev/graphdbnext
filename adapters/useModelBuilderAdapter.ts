@@ -15,13 +15,15 @@ export interface UseModelBuilderAdapterProps {
   onSave?: (data: { schemaJson: unknown; schemaMd: string; name: string; description?: string }) => Promise<Model | void>
   builderRef?: React.RefObject<ModelBuilderRef | null>
   workflowPersistence?: WorkflowPersistence
+  onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
 
 export function useModelBuilderAdapter({
   model,
   onSave,
   builderRef,
-  workflowPersistence
+  workflowPersistence,
+  onPushToDB: passedOnPushToDB
 }: UseModelBuilderAdapterProps) {
   const loadedRef = useRef(false)
   const lastModelIdRef = useRef<string | null>(model?.id || null)
@@ -198,6 +200,32 @@ export function useModelBuilderAdapter({
     }
   }
 
+  const handlePushToDB = async (graph: Array<Record<string, unknown>>) => {
+    if (passedOnPushToDB) {
+      return await passedOnPushToDB(graph)
+    }
+
+    try {
+      const response = await fetch('/api/database/load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ graph })
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to push to database')
+      }
+      
+      const data = await response.json()
+      toast.success(data.message || 'Graph successfully pushed to database')
+    } catch (error) {
+      console.error('Error pushing to DB:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to push to database')
+      throw error
+    }
+  }
+
   return {
     aiSettings,
     existingWorkflows,
@@ -205,6 +233,7 @@ export function useModelBuilderAdapter({
     effectivePersistence,
     handleWorkflowChange,
     handleSaveModel,
+    onPushToDB: handlePushToDB,
     isNewModel: !model || model.id === 'new'
   }
 }

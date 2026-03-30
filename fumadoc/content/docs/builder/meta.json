@@ -1,0 +1,11 @@
+{
+  "root": true,
+  "title": "Plexus Builder",
+  "pages": [
+    "index",
+    "usage",
+    "builder",
+    "ai",
+    "dev"
+  ]
+}

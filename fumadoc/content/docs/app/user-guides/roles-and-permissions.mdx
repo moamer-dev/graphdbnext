@@ -1,0 +1,183 @@
+---
+title: Roles and Permissions
+description: Understanding user roles and access control in Plexus Platform
+---
+
+# Roles and Permissions
+
+Plexus Platform implements a role-based access control (RBAC) system with two main user types. Understanding these roles is essential for navigating the platform effectively and ensuring proper security.
+
+## User Types
+
+### Regular Users
+Regular users have access to core graph modeling and data management features:
+
+**Available Features:**
+- **Model Schema**: Create, edit, and manage their own graph models
+- **XML to Graph**: Convert XML documents into graph structures
+- **Graph Data Management**: Query and explore data within their own models
+- **Limited Settings**: Basic user preferences (AI settings may be restricted)
+
+**Restrictions:**
+- Can only access their own graph models and data
+- Cannot access admin panel or system-wide settings
+- Cannot manage other users or system configurations
+- Cannot view or modify system queries
+
+### Admin Users
+Admin users have full system access and can manage the entire platform:
+
+**Additional Admin-Only Features:**
+- **Admin Panel** (`/dashboard/admin`): Complete system management
+  - **User Management**: View, edit, and manage all user accounts
+  - **Query Management**: Access and manage system-wide query library
+  - **System Monitoring**: Overview of all platform activity
+- **System Settings** (`/dashboard/settings`): Platform-wide configuration
+  - **AI Settings**: Configure AI models and agents for all users
+  - **Module Management**: Enable/disable platform features
+  - **System Configuration**: Database settings, authentication, etc.
+
+**Admin Capabilities:**
+- Access all user-created models and data
+- Manage user accounts and permissions
+- Configure system-wide settings
+- Monitor platform usage and performance
+- Access advanced debugging and monitoring tools
+
+## Access Control Implementation
+
+The platform uses NextAuth sessions with role-based middleware:
+
+```typescript
+// Role checking happens automatically
+const isAdmin = session.user.role === 'ADMIN'
+const canAccessResource = isAdmin || resource.userId === session.user.id
+```
+
+### Protected Routes
+
+Access to different parts of the platform is controlled by user roles:
+
+| Route | Access Level | Description |
+|-------|--------------|-------------|
+| `/dashboard/admin/*` | Admin Only | Complete system administration |
+| `/dashboard/settings/*` | Admin Only | Platform-wide configuration |
+| `/dashboard/graph/model/*` | Owner + Admin | User's own models, admins see all |
+| `/dashboard/database/*` | Owner + Admin | User's own data, admins see all |
+| `/dashboard/*` | All Users | Standard dashboard features |
+
+### Resource Ownership
+
+**Regular Users:**
+- Can only access resources they created
+- Cannot view or modify other users' models
+- Cannot access system-wide configurations
+
+**Admin Users:**
+- Can access any resource regardless of ownership
+- Can modify or delete any user's models
+- Can manage system-wide settings and configurations
+
+## Admin Workflows
+
+### Managing Users
+1. **Navigate**: Click "Settings" → "Admin Panel" → "User Management"
+2. **View Users**: See all registered users and their roles
+3. **Edit User**: Modify user roles, permissions, or account status
+4. **Create User**: Add new users to the platform
+5. **Monitor Activity**: Track user login and activity patterns
+
+### System Configuration
+1. **Navigate**: Click "Settings" → "AI Settings" or "Module Management"
+2. **Configure AI**: Set up AI models and agents for all users
+3. **Manage Modules**: Enable or disable platform features
+4. **System Settings**: Configure database connections, authentication, etc.
+5. **Save Changes**: Apply system-wide configuration updates
+
+### Query Library Management
+1. **Navigate**: Click "Settings" → "Admin Panel" → "Query Management"
+2. **View Queries**: Access all saved queries across the platform
+3. **Edit System Queries**: Modify predefined query templates
+4. **Add Queries**: Create new system-wide query templates
+5. **Monitor Usage**: Track query performance and usage statistics
+
+## Security Best Practices
+
+### For Admin Users
+- **Regular Password Updates**: Change admin passwords periodically
+- **Principle of Least Privilege**: Only use admin access when necessary
+- **Audit Trail**: Monitor admin actions and user management
+- **Secure Sessions**: Always log out when finished with admin tasks
+
+### For Regular Users
+- **Data Ownership**: Only work with your own models and data
+- **Resource Sharing**: Use proper channels to share models with others
+- **Permission Requests**: Contact admins for elevated access when needed
+
+### System Security
+- **Role Validation**: The system automatically validates user roles on each request
+- **Session Management**: Sessions are securely managed with proper expiration
+- **Access Logging**: All access attempts are logged for security monitoring
+- **Resource Isolation**: User data is isolated at the database level
+
+## Troubleshooting Access Issues
+
+### Access Denied Errors
+**Symptoms**: "Access denied" or permission error messages
+
+**Solutions**:
+- Verify user role (admin vs regular user)
+- Check if trying to access admin-only features
+- Ensure resource ownership (users can only access their own models)
+- Contact administrator if role needs to be changed
+
+### Admin Panel Not Accessible
+**Symptoms**: Cannot access `/dashboard/admin` routes
+
+**Solutions**:
+- Confirm user has ADMIN role in database
+- Check session authentication
+- Try logging out and back in
+- Verify admin permissions in user management
+
+### Settings Page Unavailable
+**Symptoms**: Cannot access `/dashboard/settings` routes
+
+**Solutions**:
+- Only admin users can access `/dashboard/settings`
+- Regular users will see access denied
+- Request admin privileges if needed
+- Review user permissions with an administrator
+
+### Resource Access Problems
+**Symptoms**: Cannot view or edit specific models or data
+
+**Solutions**:
+- Check if you own the resource (regular users)
+- Verify the resource exists
+- Contact admin if you need access to others' resources
+- Check for any system-wide restrictions
+
+## Role Assignment
+
+### Default Roles
+- **First User**: Automatically assigned ADMIN role during setup
+- **New Users**: Default to USER role unless assigned otherwise
+
+### Changing Roles
+Only admin users can change user roles:
+1. Go to Admin Panel → User Management
+2. Find the user to modify
+3. Edit their role from USER to ADMIN or vice versa
+4. Save changes
+5. User may need to log out and back in for changes to take effect
+
+### Role-Based UI
+The dashboard interface adapts based on user roles:
+- **Admin Users**: See additional navigation options for admin functions
+- **Regular Users**: See streamlined interface focused on their work
+- **Mixed Views**: Some sections show different content based on permissions
+
+---
+
+*Related: [Dashboard Guide](./dashboard), [Getting Started](./getting-started)*

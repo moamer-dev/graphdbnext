@@ -555,9 +555,11 @@ registerAction({
     label: 'Create Annotation Nodes',
     description: 'Create individual nodes for specific annotations',
     icon: FileText,
-    category: 'advanced_actions',
+    category: 'node_actions',
     color: 'text-amber-600',
-    bgColor: 'bg-amber-50'
+    bgColor: 'bg-amber-50',
+    order: 2,
+    hidden: false
   },
   executor: executeCreateAnnotationNodesAction,
   configSchema: [

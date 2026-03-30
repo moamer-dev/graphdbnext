@@ -1,0 +1,293 @@
+---
+title: Tool Editor
+description: Comprehensive interface for configuring workflow tools with conditions and API integration
+---
+
+# Tool Editor
+
+The Tool Editor provides a comprehensive interface for configuring workflow tools that control data flow and external integrations. It offers advanced condition building, API configuration, and testing capabilities to ensure your tools work correctly in complex workflows.
+
+## Overview
+
+The Tool Editor enables you to:
+- **Configure Tool Types**: Set up control flow and external service tools
+- **Build Conditions**: Create complex element matching rules
+- **Integrate APIs**: Connect to external services and webhooks
+- **Test Configurations**: Validate tools with sample data
+- **Monitor Performance**: Track execution metrics and responses
+
+## Visual Interface
+
+<Mermaid chart="
+flowchart TD
+    subgraph ToolEditor[Tool Editor Layout]
+        A[Tool Header] --> B[Condition Builder]
+        B --> C[Configuration Forms]
+        C --> D[API Integration]
+        D --> E[Test Execution]
+        E --> F[Response Analysis]
+        F --> G[Performance Metrics]
+    end
+    
+    subgraph Conditions[Condition Building]
+        H[Element Matching] --> I[Attribute Rules]
+        I --> J[Logical Operators]
+        J --> K[Test Scenarios]
+        K --> L[Validation Rules]
+    end
+    
+    subgraph API[External Services]
+        M[HTTP Configuration] --> N[Authentication]
+        N --> O[Webhook Setup]
+        O --> P[Response Handling]
+    end
+    
+    subgraph Testing[Test Capabilities]
+        Q[Sample Data] --> R[Execution Results]
+        R --> S[Error Analysis]
+        S --> T[Performance Data]
+    end
+    
+    B --> Conditions
+    D --> API
+    E --> Testing
+" />
+
+## Key Features
+
+### Tool Configuration
+- **Tool Selection**: Choose from available tool types
+- **Basic Settings**: Configure fundamental tool parameters
+- **Advanced Options**: Set up specialized tool features
+- **Validation**: Ensure configuration correctness
+
+### Condition Builder
+- **Element Matching**: Define which XML elements to process
+- **Attribute Conditions**: Set criteria based on element attributes
+- **Logical Operators**: Combine conditions with AND/OR logic
+- **Test Scenarios**: Create and test condition combinations
+
+### API Integration
+- **HTTP Configuration**: Set up API endpoints and methods
+- **Authentication**: Configure secure API connections
+- **Webhook Setup**: Define webhook triggers and payloads
+- **Response Handling**: Process API responses effectively
+
+### Testing Capabilities
+- **Test Execution**: Run tools with sample data
+- **Response Analysis**: Examine API responses and results
+- **Performance Monitoring**: Track execution time and resource usage
+- **Error Handling**: Identify and resolve configuration issues
+
+## Tool Types
+
+### Control Flow Tools
+Manage the execution flow of your workflows:
+
+#### If / Else Tool
+- **Conditional Branching**: Route data based on conditions
+- **Multiple Conditions**: Combine complex rule sets
+- **Nested Logic**: Create sophisticated decision trees
+- **Fallback Handling**: Define else scenarios
+
+#### Switch Tool
+- **Multi-Way Branching**: Route based on value matching
+- **Case Management**: Handle multiple value scenarios
+- **Default Cases**: Set fallback behavior
+- **Pattern Matching**: Support regex and wildcard patterns
+
+#### Delay Tool
+- **Timing Control**: Add delays between processing steps
+- **Configurable Duration**: Set precise timing intervals
+- **Conditional Delays**: Delay based on specific conditions
+- **Batch Processing**: Control processing throughput
+
+### External Services Tools
+Connect to external systems and services:
+
+#### HTTP Request Tool
+- **REST API Integration**: Connect to any RESTful API
+- **Method Support**: GET, POST, PUT, DELETE, PATCH
+- **Header Management**: Custom request headers
+- **Response Parsing**: Handle various response formats
+
+#### Webhook Tool
+- **Event Triggering**: Send webhook notifications
+- **Payload Configuration**: Custom webhook data
+- **Retry Logic**: Handle failed webhook deliveries
+- **Authentication**: Secure webhook connections
+
+## Condition Building
+
+### Element Matching
+Define which XML elements your tool should process:
+
+#### Tag Name Matching
+- **Exact Match**: Match specific element names
+- **Pattern Matching**: Use wildcards and regex
+- **Namespace Support**: Handle XML namespaces
+- **Case Sensitivity**: Configure matching behavior
+
+#### Attribute Conditions
+Set criteria based on element attributes:
+- **Value Comparison**: Compare attribute values
+- **Existence Checks**: Test for attribute presence
+- **Type Validation**: Validate attribute data types
+- **Range Conditions**: Check numeric ranges
+
+#### Text Content Conditions
+Evaluate element text content:
+- **Content Matching**: Match text patterns
+- **Length Checks**: Validate text length
+- **Language Detection**: Handle multilingual content
+- **Format Validation**: Check text formats
+
+### Logical Operations
+Combine conditions with logical operators:
+
+#### AND Logic
+- **All Conditions**: Require all conditions to be true
+- **Short-Circuit**: Stop evaluation on first false
+- **Performance**: Optimize condition order
+- **Error Handling**: Handle evaluation errors
+
+#### OR Logic
+- **Any Condition**: Require at least one true condition
+- **Priority**: Set condition evaluation priority
+- **Fallback**: Define default behavior
+- **Optimization**: Improve evaluation performance
+
+#### Complex Logic
+- **Nested Groups**: Create complex condition trees
+- **Parentheses**: Control evaluation order
+- **Custom Functions**: Define custom logic
+- **Validation**: Ensure logic correctness
+
+## API Integration
+
+### HTTP Configuration
+Set up connections to external APIs:
+
+#### Endpoint Configuration
+- **URL Setup**: Define API endpoints
+- **Method Selection**: Choose HTTP methods
+- **Path Parameters**: Configure dynamic paths
+- **Query Parameters**: Set up query strings
+
+#### Request Headers
+- **Custom Headers**: Add custom request headers
+- **Authentication**: Set auth headers
+- **Content Type**: Define request format
+- **CORS Handling**: Configure cross-origin requests
+
+#### Request Body
+- **JSON Payload**: Configure JSON requests
+- **Form Data**: Handle form submissions
+- **Binary Data**: Support file uploads
+- **Template Variables**: Use dynamic content
+
+### Authentication
+Secure your API connections:
+
+#### API Key Authentication
+- **Key Management**: Store API keys securely
+- **Header Injection**: Add keys to headers
+- **Key Rotation**: Support key updates
+- **Multi-Key**: Handle multiple API keys
+
+#### OAuth Authentication
+- **Token Management**: Handle OAuth tokens
+- **Refresh Logic**: Automatic token refresh
+- **Scope Configuration**: Set permission scopes
+- **Error Handling**: Manage auth failures
+
+#### Basic Authentication
+- **Credential Storage**: Secure credential storage
+- **Encoding**: Proper Base64 encoding
+- **Multi-User**: Support multiple user credentials
+- **Session Management**: Handle auth sessions
+
+### Webhook Configuration
+Set up outgoing webhook notifications:
+
+#### Trigger Configuration
+- **Event Types**: Define webhook triggers
+- **Condition Filters**: Filter webhook events
+- **Rate Limiting**: Control webhook frequency
+- **Retry Logic**: Handle failed deliveries
+
+#### Payload Configuration
+- **Data Mapping**: Map workflow data to webhook payload
+- **Template Variables**: Use dynamic content
+- **Format Options**: JSON, XML, form data
+- **Compression**: Compress webhook payloads
+
+## Testing and Validation
+
+### Test Execution
+Run your tools with sample data:
+
+#### Sample Data
+- **XML Samples**: Use realistic XML data
+- **Test Scenarios**: Create multiple test cases
+- **Edge Cases**: Test boundary conditions
+- **Error Cases**: Test error handling
+
+#### Execution Monitoring
+- **Real-Time Status**: Watch execution progress
+- **Step Tracking**: Monitor each execution step
+- **Resource Usage**: Track memory and CPU usage
+- **Performance Metrics**: Measure execution time
+
+### Response Analysis
+Examine tool execution results:
+
+#### Response Parsing
+- **Format Detection**: Auto-detect response formats
+- **Data Extraction**: Extract relevant data
+- **Error Parsing**: Handle error responses
+- **Validation**: Verify response correctness
+
+#### Performance Analysis
+- **Response Time**: Measure API response times
+- **Throughput**: Track data processing rates
+- **Error Rates**: Monitor failure rates
+- **Resource Usage**: Analyze resource consumption
+
+## Best Practices
+
+### Tool Configuration
+- **Clear Naming**: Use descriptive tool names
+- **Documentation**: Document tool purposes
+- **Modular Design**: Create reusable tool configurations
+- **Version Control**: Track tool configuration changes
+
+### Condition Building
+- **Simple Logic**: Keep conditions as simple as possible
+- **Testing**: Test all condition combinations
+- **Performance**: Optimize condition evaluation
+- **Error Handling**: Handle unexpected inputs
+
+### API Integration
+- **Security**: Use secure authentication methods
+- **Error Handling**: Implement robust error handling
+- **Rate Limiting**: Respect API rate limits
+- **Monitoring**: Track API performance and usage
+
+## Troubleshooting
+
+### Common Issues
+- **Condition Failures**: Debug condition logic
+- **API Errors**: Resolve API connection issues
+- **Performance Problems**: Optimize slow operations
+- **Configuration Errors**: Fix setup mistakes
+
+### Debug Tools
+- **Condition Testing**: Test condition logic
+- **API Debugging**: Examine API requests/responses
+- **Performance Profiling**: Identify bottlenecks
+- **Log Analysis**: Review execution logs
+
+---
+
+The Tool Editor provides a comprehensive, powerful environment for configuring workflow tools with advanced condition building, API integration, and testing capabilities, ensuring your tools work reliably in complex data processing scenarios.

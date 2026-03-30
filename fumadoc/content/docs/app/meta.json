@@ -1,0 +1,13 @@
+{
+  "root": true,
+  "title": "Plexus Platform",
+  "pages": [
+    "index",
+    "user-guides",
+    "model-schema",
+    "xml-processing",
+    "database",
+    "faq",
+    "dev"
+  ]
+}

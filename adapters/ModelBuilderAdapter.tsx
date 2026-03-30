@@ -17,6 +17,7 @@ export interface ModelBuilderAdapterProps {
   className?: string
   builderRef?: React.RefObject<ModelBuilderRef | null>
   workflowPersistence?: WorkflowPersistence
+  onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
 
 /**
@@ -28,7 +29,8 @@ export function ModelBuilderAdapter({
   onSave,
   className,
   builderRef,
-  workflowPersistence
+  workflowPersistence,
+  onPushToDB
 }: ModelBuilderAdapterProps) {
   const {
     aiSettings,
@@ -37,12 +39,14 @@ export function ModelBuilderAdapter({
     effectivePersistence,
     handleWorkflowChange,
     handleSaveModel,
+    onPushToDB: adapterOnPushToDB,
     isNewModel
   } = useModelBuilderAdapter({
     model,
     onSave,
     builderRef,
-    workflowPersistence
+    workflowPersistence,
+    onPushToDB
   })
 
   if (aiSettings === null) {
@@ -67,6 +71,7 @@ export function ModelBuilderAdapter({
           className="h-full"
           onWorkflowChange={handleWorkflowChange}
           onSaveModel={handleSaveModel}
+          onPushToDB={adapterOnPushToDB}
           isNewModel={isNewModel}
         />
       </div>

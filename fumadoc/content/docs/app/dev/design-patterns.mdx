@@ -1,0 +1,861 @@
+---
+title: Design Patterns
+description: Design patterns and architectural patterns used in Plexus Platform
+---
+
+# Design Patterns
+
+Plexus Platform employs various design patterns to ensure maintainability, scalability, and code reusability. This guide covers the key patterns used throughout the application based on the actual implementation.
+
+## Pattern Overview
+
+<Mermaid chart="
+flowchart TD
+    subgraph Creational[Creational Patterns]
+        A1[Service Factory] --> B1[Resource Hooks]
+        C1[Builder Pattern] --> D1[Query Builder]
+    end
+    
+    subgraph Structural[Structural Patterns]
+        A2[Adapter Pattern] --> B2[Database Adapters]
+        C2[Facade Pattern] --> D2[Service Layer]
+    end
+    
+    subgraph Behavioral[Behavioral Patterns]
+        A3[Observer Pattern] --> B3[Zustand Stores]
+        C3[Strategy Pattern] --> D3[AI Providers]
+    end
+    
+    subgraph Architectural[Architectural Patterns]
+        A4[Service Isolation] --> B4[Client/Server Split]
+        C4[Hook Pattern] --> D4[React Integration]
+    end
+    
+    Creational --> Structural
+    Structural --> Behavioral
+    Behavioral --> Architectural
+" />
+
+## Creational Patterns
+
+### Service Factory Pattern
+
+#### Resource Hook Factory
+```typescript
+// From hooks/react-query/useResource.ts - Generic resource hook factory
+export function createResourceHooks<T extends { id: string }>(config: ResourceConfig) {
+  const viewPath = config.viewPath || config.listPath
+  const listPath = config.listPath || config.basePath.replace('/api/', '/dashboard/')
+
+  // Hook: Create
+  function useCreate (options?: { onSuccess?: (data: T) => void }) {
+    const queryClient = useQueryClient()
+    const router = useRouter()
+
+    return useMutation({
+      mutationFn: createItem,
+      onSuccess: (data) => {
+        // Handle different response formats
+        let item: T | undefined
+        if ('data' in data) {
+          item = (data as SingleResourceResponse<T>).data
+        } else {
+          const dataRecord = data as unknown as Record<string, T>
+          item = dataRecord[config.resourceName.toLowerCase()]
+        }
+        
+        // Invalidate and refetch lists
+        queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+        
+        // Optionally prefetch the new item
+        if (item?.id) {
+          queryClient.setQueryData(config.queryKeys.detail(item.id), data)
+        }
+        
+        toast.success(`${config.resourceName} created successfully`)
+        
+        // Navigate to the new item if viewPath is configured
+        if (viewPath && item?.id) {
+          router.push(`${viewPath}/${item.id}`)
+        }
+        
+        if (item) {
+          options?.onSuccess?.(item)
+        }
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || `Failed to create ${config.resourceName}`)
+      }
+    })
+  }
+
+  // Hook: Update
+  function useUpdate () {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+      mutationFn: ({ id, data }: { id: string; data: Partial<T> }) => 
+        updateItem(id, data),
+      onSuccess: (data, variables) => {
+        // Update the cache with the new data
+        queryClient.setQueryData(config.queryKeys.detail(variables.id), data)
+        
+        // Invalidate list queries to refetch
+        queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+        
+        toast.success(`${config.resourceName} updated successfully`)
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || `Failed to update ${config.resourceName}`)
+      }
+    })
+  }
+
+  // Hook: Delete
+  function useDelete () {
+    const queryClient = useQueryClient()
+    const router = useRouter()
+
+    return useMutation({
+      mutationFn: deleteItem,
+      onSuccess: () => {
+        // Invalidate list queries
+        queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+        
+        toast.success(`${config.resourceName} deleted successfully`)
+        
+        // Navigate back to list if listPath is configured
+        if (listPath) {
+          router.push(listPath)
+        }
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || `Failed to delete ${config.resourceName}`)
+      }
+    })
+  }
+
+  return {
+    useList,
+    useSingle,
+    useCreate,
+    useUpdate,
+    useDelete
+  }
+}
+```
+
+#### Usage Example
+```typescript
+// From hooks/react-query/index.ts - Resource hook usage
+export const resourceHooks = createResourceHooks({
+  resourceName: 'Query',
+  basePath: '/api/queries',
+  queryKeys: queryKeys.queries,
+  viewPath: '/dashboard/queries',
+  listPath: '/dashboard/queries'
+})
+```
+
+### Builder Pattern
+
+#### Query Builder Service
+```typescript
+// From services/graph/QueryBuilderService.ts - Cypher query builder
+export interface QueryNode {
+  id: string
+  label?: string
+  properties?: Record<string, unknown>
+  alias?: string
+}
+
+export interface QueryRelationship {
+  id: string
+  type: string
+  source: string
+  target: string
+  properties?: Record<string, unknown>
+  direction?: 'outgoing' | 'incoming' | 'undirected'
+}
+
+export interface QueryCondition {
+  id: string
+  nodeId?: string
+  relationshipId?: string
+  property: string
+  operator: string
+  value: unknown
+}
+
+export class QueryBuilderService {
+  /**
+   * Build Cypher query from components
+   */
+  buildQuery(
+    nodes: QueryNode[],
+    relationships: QueryRelationship[],
+    conditions: QueryCondition[],
+    returnFields: string[],
+    limit?: number
+  ): string {
+    const matchClause = this.buildMatchClause(nodes, relationships)
+    const whereClause = this.buildWhereClause(conditions)
+    const returnClause = this.buildReturnClause(returnFields)
+    const limitClause = limit ? ` LIMIT ${limit}` : ''
+
+    return `${matchClause}${whereClause}${returnClause}${limitClause}`.trim()
+  }
+
+  private buildMatchClause(nodes: QueryNode[], relationships: QueryRelationship[]): string {
+    if (nodes.length === 0) return ''
+
+    let matchClause = 'MATCH '
+
+    // Build node patterns
+    const nodePatterns = nodes.map(node => {
+      const alias = node.alias || node.id
+      const label = node.label ? `:${node.label}` : ''
+      const props = node.properties ? ` ${JSON.stringify(node.properties)}` : ''
+      return `(${alias}${label}${props})`
+    })
+
+    matchClause += nodePatterns.join(', ')
+
+    // Build relationship patterns
+    relationships.forEach(rel => {
+      const sourceNode = nodes.find(n => n.id === rel.source)
+      const targetNode = nodes.find(n => n.id === rel.target)
+      
+      if (sourceNode && targetNode) {
+        const sourceAlias = sourceNode.alias || sourceNode.id
+        const targetAlias = targetNode.alias || targetNode.id
+        const relProps = rel.properties ? ` ${JSON.stringify(rel.properties)}` : ''
+        
+        let relPattern = ''
+        if (rel.direction === 'incoming') {
+          relPattern = `<-[${rel.type}${relProps}]-`
+        } else if (rel.direction === 'undirected') {
+          relPattern = `-[${rel.type}${relProps}]-`
+        } else {
+          relPattern = `-[${rel.type}${relProps}]->`
+        }
+        
+        matchClause += `(${sourceAlias})${relPattern}(${targetAlias})`
+      }
+    })
+
+    return matchClause
+  }
+
+  private buildWhereClause(conditions: QueryCondition[]): string {
+    if (conditions.length === 0) return ''
+
+    const conditionStrings = conditions.map(condition => {
+      let entity = ''
+      if (condition.nodeId) {
+        entity = condition.nodeId
+      } else if (condition.relationshipId) {
+        entity = condition.relationshipId
+      }
+
+      const operator = this.mapOperator(condition.operator)
+      const value = typeof condition.value === 'string' ? `'${condition.value}'` : condition.value
+      
+      return `${entity}.${condition.property} ${operator} ${value}`
+    })
+
+    return ' WHERE ' + conditionStrings.join(' AND ')
+  }
+
+  private buildReturnClause(returnFields: string[]): string {
+    if (returnFields.length === 0) return ' RETURN *'
+    
+    return ' RETURN ' + returnFields.join(', ')
+  }
+
+  private mapOperator(operator: string): string {
+    const operatorMap: Record<string, string> = {
+      'equals': '=',
+      'not_equals': '!=',
+      'greater_than': '>',
+      'less_than': '<',
+      'greater_equal': '>=',
+      'less_equal': '<=',
+      'contains': 'CONTAINS',
+      'starts_with': 'STARTS WITH',
+      'ends_with': 'ENDS WITH'
+    }
+    
+    return operatorMap[operator] || '='
+  }
+}
+```
+
+### Module Pattern
+
+#### Feature Module Management
+```typescript
+// From services/core/ModuleService.ts - Module management
+export interface ModuleConfig {
+  name: string
+  enabled: boolean
+  dependencies?: string[]
+  settings?: Record<string, unknown>
+}
+
+export class ModuleService {
+  private modules: Map<string, ModuleConfig> = new Map()
+
+  /**
+   * Register a module
+   */
+  registerModule(config: ModuleConfig): void {
+    this.modules.set(config.name, config)
+  }
+
+  /**
+   * Enable/disable a module
+   */
+  setModuleEnabled(name: string, enabled: boolean): void {
+    const module = this.modules.get(name)
+    if (module) {
+      module.enabled = enabled
+    }
+  }
+
+  /**
+   * Check if module is enabled
+   */
+  isModuleEnabled(name: string): boolean {
+    const module = this.modules.get(name)
+    return module?.enabled || false
+  }
+
+  /**
+   * Get all enabled modules
+   */
+  getEnabledModules(): ModuleConfig[] {
+    return Array.from(this.modules.values()).filter(m => m.enabled)
+  }
+}
+```
+
+## Structural Patterns
+
+### Adapter Pattern
+
+#### Database Adapters
+```typescript
+// From services/graph/graph-database/index.ts - Database abstraction
+export interface GraphDatabaseDriver {
+  connect(): Promise<void>
+  disconnect(): Promise<void>
+  run(query: string, parameters?: Record<string, any>): Promise<QueryResult>
+  getSchema(): Promise<GraphSchema>
+}
+
+export class Neo4jAdapter implements GraphDatabaseDriver {
+  constructor(private config: Neo4jConfig) {}
+
+  async connect(): Promise<void> {
+    // Neo4j connection logic
+  }
+
+  async run(query: string, parameters?: Record<string, any>): Promise<QueryResult> {
+    // Neo4j query execution
+    throw new Error('Not implemented')
+  }
+
+  async getSchema(): Promise<GraphSchema> {
+    // Neo4j schema extraction
+    throw new Error('Not implemented')
+  }
+}
+
+export class MemgraphAdapter implements GraphDatabaseDriver {
+  constructor(private config: MemgraphConfig) {}
+
+  async connect(): Promise<void> {
+    // Memgraph connection logic
+  }
+
+  async run(query: string, parameters?: Record<string, any>): Promise<QueryResult> {
+    // Memgraph query execution
+    throw new Error('Not implemented')
+  }
+
+  async getSchema(): Promise<GraphSchema> {
+    // Memgraph schema extraction
+    throw new Error('Not implemented')
+  }
+}
+```
+
+#### Service Isolation Adapter
+```typescript
+// From services/index.ts - Client/Server service separation
+// Client-safe services (can run in browser)
+export { GraphVisualizationService, type GraphNode, type GraphEdge, type GraphData } from './graph/GraphVisualizationService'
+export { QueryBuilderService, type QueryNode, type QueryRelationship } from './graph/QueryBuilderService'
+export { CustomVisualizationService, type VisualizationConfig } from './visualization/CustomVisualizationService'
+
+// Type-only exports for server services (Safe for browser as they are removed during build)
+export type { AIService, NLQueryRequest, NLQueryResponse, QuerySuggestion } from './ai/AIService'
+export type { SchemaExplorerService, SchemaStatistics, SchemaNode, SchemaProperty, SchemaRelationship } from './graph/SchemaExplorerService'
+```
+
+### Facade Pattern
+
+#### Service Layer Facade
+```typescript
+// From services/index.ts - Unified service interface
+// Centralized Services Export (Client-Safe)
+export { ExportService } from './core/ExportService'
+export { moduleService } from './core/ModuleService'
+export { UpdateMutationService } from './core/UpdateMutationService'
+export { GraphVisualizationService, type GraphNode, type GraphEdge, type GraphData } from './graph/GraphVisualizationService'
+export { QueryBuilderService, type QueryNode, type QueryRelationship } from './graph/QueryBuilderService'
+export { CustomVisualizationService, type VisualizationConfig } from './visualization/CustomVisualizationService'
+export { GraphExportService } from './graph/GraphExportService'
+```
+
+### Repository Pattern
+
+#### CRUD Service Repository
+```typescript
+// From services/core/CrudService.ts - Generic CRUD operations
+export interface CrudService<T, CreateData, UpdateData> {
+  create(data: CreateData): Promise<T>
+  findById(id: string): Promise<T | null>
+  findMany(filters?: any): Promise<T[]>
+  update(id: string, data: UpdateData): Promise<T>
+  delete(id: string): Promise<void>
+}
+
+export function createCrudService<T, CreateData, UpdateData>(
+  config: CrudServiceConfig<T>
+): CrudService<T, CreateData, UpdateData> {
+  return {
+    async create(data: CreateData): Promise<T> {
+      const response = await fetch(config.basePath, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `Failed to create ${config.resourceName}` }))
+        throw new Error(error.error || `Failed to create ${config.resourceName}`)
+      }
+
+      return response.json()
+    },
+
+    async findById(id: string): Promise<T | null> {
+      const response = await fetch(`${config.basePath}/${id}`)
+      
+      if (!response.ok) {
+        if (response.status === 404) return null
+        throw new Error(`Failed to fetch ${config.resourceName}`)
+      }
+
+      return response.json()
+    },
+
+    async findMany(filters?: any): Promise<T[]> {
+      const searchParams = new URLSearchParams()
+      Object.entries(filters || {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          searchParams.append(key, String(value))
+        }
+      })
+
+      const response = await fetch(`${config.basePath}?${searchParams.toString()}`)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${config.resourceName}s`)
+      }
+
+      const result = await response.json()
+      return result.data || []
+    },
+
+    async update(id: string, data: UpdateData): Promise<T> {
+      const response = await fetch(`${config.basePath}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update ${config.resourceName}`)
+      }
+
+      return response.json()
+    },
+
+    async delete(id: string): Promise<void> {
+      const response = await fetch(`${config.basePath}/${id}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete ${config.resourceName}`)
+      }
+    }
+  }
+}
+```
+
+## Behavioral Patterns
+
+### Observer Pattern
+
+#### Zustand State Management
+```typescript
+// From stores/databaseStore.ts - State observer pattern
+interface DatabaseStore {
+  // Node Labels
+  nodeLabels: string[]
+  nodeLabelsLoading: boolean
+  nodeLabelsError: string | null
+  fetchNodeLabels: () => Promise<void>
+  invalidateNodeLabels: () => void
+  
+  // Other state...
+}
+
+export const useDatabaseStore = create<DatabaseStore>((set, get) => ({
+  // Initial state
+  nodeLabels: [],
+  nodeLabelsLoading: false,
+  nodeLabelsError: null,
+  // ... other state
+  
+  fetchNodeLabels: async () => {
+    const { nodeLabels, nodeLabelsLoading } = get()
+    if (nodeLabelsLoading) return
+    
+    set({ nodeLabelsLoading: true, nodeLabelsError: null })
+    try {
+      const labels = await NodeQueries.getAllLabels()
+      set({ nodeLabels: labels, nodeLabelsLoading: false })
+    } catch (error) {
+      set({ nodeLabelsError: error.message, nodeLabelsLoading: false })
+      toast.error('Failed to fetch node labels')
+    }
+  },
+  
+  // ... other methods
+}))
+```
+
+#### Store Subscription Pattern
+```typescript
+// From hooks/query/useQueryResults.ts - Store subscription
+export function useQueryResults ({ results, loading, currentQuery }: UseQueryResultsProps) {
+  // Use store for pagination, search, and filters
+  const currentPage = useQueryResultsStore(state => state.currentPage)
+  const setCurrentPage = useQueryResultsStore(state => state.setCurrentPage)
+  const itemsPerPage = useQueryResultsStore(state => state.itemsPerPage)
+  const setItemsPerPage = useQueryResultsStore(state => state.setItemsPerPage)
+  const searchTerm = useQueryResultsStore(state => state.searchTerm)
+  const setSearchTerm = useQueryResultsStore(state => state.setSearchTerm)
+  // ... other store subscriptions
+
+  // Reset to page 1 when results change
+  useEffect(() => {
+    startTransition(() => {
+      setCurrentPage(1)
+      setSearchTerm('')
+      clearColumnFilters()
+    })
+  }, [results, setCurrentPage, setSearchTerm, clearColumnFilters])
+}
+```
+
+### Strategy Pattern
+
+#### AI Provider Strategy
+```typescript
+// From app/api/chat/agent/route.ts - AI provider selection
+export async function POST(request: NextRequest) {
+  // ... authentication and validation
+
+  // Initialize Chat Model (Mistral) - Strategy pattern
+  const model = new ChatMistralAI({
+    apiKey: apiKey,
+    modelName: aiSettings.model.modelName || 'mistral-medium',
+    temperature: aiSettings.model.temperature || 0,
+  })
+
+  // Create Chain - Strategy for query generation
+  const chain = GraphCypherQAChain.fromLLM({
+    llm: model,
+    graph: graph,
+    cypherPrompt: CYPHER_GENERATION_PROMPT,
+    returnDirect: false,
+    returnIntermediateSteps: true,
+  })
+
+  // Execute strategy
+  const response = await chain.invoke({
+    query: question,
+  })
+}
+```
+
+#### Visualization Layout Strategy
+```typescript
+// From services/visualization/CustomVisualizationService.ts - Layout strategy pattern
+export type LayoutType = 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline'
+
+export class CustomVisualizationService {
+  /**
+   * Apply layout to nodes
+   */
+  applyLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    config?: VisualizationConfig
+  ): GraphNode[] {
+    const layout = config?.layout || 'force'
+    const options = config?.layoutOptions
+
+    switch (layout) {
+      case 'hierarchical':
+        return this.applyHierarchicalLayout(nodes, edges, options?.hierarchical)
+      case 'circular':
+        return this.applyCircularLayout(nodes, edges, options?.circular)
+      case 'grid':
+        return this.applyGridLayout(nodes, edges, options?.grid)
+      case 'timeline':
+        return this.applyTimelineLayout(nodes, edges, options?.timeline)
+      default:
+        return nodes
+    }
+  }
+
+  private applyCircularLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    options?: { radius?: number; startAngle?: number }
+  ): GraphNode[] {
+    const radius = options?.radius || 200
+    const startAngle = options?.startAngle || 0
+    const centerX = 400
+    const centerY = 300
+
+    const angleStep = (2 * Math.PI) / nodes.length
+
+    nodes.forEach((node, i) => {
+      const angle = startAngle + i * angleStep
+      node.x = centerX + radius * Math.cos(angle)
+      node.y = centerY + radius * Math.sin(angle)
+    })
+
+    return nodes
+  }
+
+  private applyGridLayout(
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    options?: { rows?: number; cols?: number }
+  ): GraphNode[] {
+    const cols = options?.cols || Math.ceil(Math.sqrt(nodes.length))
+    const rows = options?.rows || Math.ceil(nodes.length / cols)
+    const cellWidth = 800 / cols
+    const cellHeight = 600 / rows
+
+    nodes.forEach((node, i) => {
+      const row = Math.floor(i / cols)
+      const col = i % cols
+      node.x = col * cellWidth + cellWidth / 2
+      node.y = row * cellHeight + cellHeight / 2
+    })
+
+    return nodes
+  }
+
+  // ... other layout methods
+}
+```
+
+### Command Pattern
+
+#### Mutation Commands
+```typescript
+// From services/core/UpdateMutationService.ts - Command pattern for mutations
+export class UpdateMutationService {
+  async executeMutation<T>(
+    mutationFn: () => Promise<T>,
+    options?: {
+      onSuccess?: (data: T) => void
+      onError?: (error: Error) => void
+    }
+  ): Promise<T> {
+    try {
+      const result = await mutationFn()
+      options?.onSuccess?.(result)
+      return result
+    } catch (error) {
+      options?.onError?.(error as Error)
+      throw error
+    }
+  }
+}
+```
+
+## Architectural Patterns
+
+### Service Isolation Pattern
+
+#### Client/Server Separation
+```typescript
+// From services/index.ts - Client-safe services
+// Isomorphic/Client-Safe Services
+export { ExportService } from './core/ExportService'
+export { moduleService } from './core/ModuleService'
+export { GraphVisualizationService, type GraphNode, type GraphEdge, type GraphData } from './graph/GraphVisualizationService'
+export { QueryBuilderService, type QueryNode, type QueryRelationship } from './graph/QueryBuilderService'
+export { CustomVisualizationService, type VisualizationConfig } from './visualization/CustomVisualizationService'
+
+// Type-only exports for server services (Safe for browser as they are removed during build)
+export type { CollaborativeService } from './core/CollaborativeService'
+export type { AIService, NLQueryRequest, NLQueryResponse, QuerySuggestion } from './ai/AIService'
+export type { SchemaExplorerService, SchemaStatistics, SchemaNode, SchemaProperty, SchemaRelationship } from './graph/SchemaExplorerService'
+```
+
+```typescript
+// From services/server.ts - Server-only services
+// Server-Only Services
+export { CollaborativeService } from './core/CollaborativeService'
+export { SchemaExplorerService, type SchemaStatistics, type SchemaNode, type SchemaProperty, type SchemaRelationship } from './graph/SchemaExplorerService'
+export { GraphAnalyticsService } from './graph/GraphAnalyticsService'
+export { MemgraphService, getMemgraphService } from './graph/MemgraphService'
+
+// AI Services
+export { AIService, type NLQueryRequest, type NLQueryResponse, type QuerySuggestion } from './ai/AIService'
+```
+
+### Hook Pattern
+
+#### React Integration Hooks
+```typescript
+// From hooks/query/useQueryResults.ts - Custom hook pattern
+interface UseQueryResultsProps {
+  results: unknown[] | null
+  loading?: boolean
+  currentQuery?: string
+}
+
+export function useQueryResults ({ results, loading, currentQuery }: UseQueryResultsProps) {
+  // Store subscriptions
+  const currentPage = useQueryResultsStore(state => state.currentPage)
+  const setCurrentPage = useQueryResultsStore(state => state.setCurrentPage)
+  // ... other store subscriptions
+
+  // TanStack Query for server state
+  const createQuery = resourceHooks.queries.useCreate()
+
+  // Memoized computations
+  const filteredResults = useMemo(() => {
+    if (!results || results.length === 0) return []
+    return results.filter((result: unknown) => {
+      // Filter logic based on store state
+    })
+  }, [results, searchTerm, columnFilters])
+
+  // Event handlers
+  const handleViewModeChange = (mode: ViewMode) => {
+    // Handle view mode changes
+  }
+
+  return {
+    // Return state and handlers
+    filteredResults,
+    currentPage,
+    handleViewModeChange,
+    // ... other returns
+  }
+}
+```
+
+### Repository Pattern
+
+#### Data Access Abstraction
+```typescript
+// From services/core/CrudService.ts - Repository implementation
+export interface CrudServiceConfig<T> {
+  resourceName: string
+  basePath: string
+  transform?: (data: any) => T
+}
+
+export function createCrudService<T, CreateData, UpdateData>(
+  config: CrudServiceConfig<T>
+): CrudService<T, CreateData, UpdateData> {
+  return {
+    async create(data: CreateData): Promise<T> {
+      const response = await fetch(config.basePath, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `Failed to create ${config.resourceName}` }))
+        throw new Error(error.error || `Failed to create ${config.resourceName}`)
+      }
+
+      const result = await response.json()
+      return config.transform ? config.transform(result) : result
+    },
+
+    // ... other CRUD operations
+  }
+}
+```
+
+## Pattern Benefits
+
+### Advantages of Used Patterns
+
+#### Service Factory Pattern
+- **Code Reusability**: Generic resource hooks reduce duplication
+- **Type Safety**: Strong typing with TypeScript generics
+- **Consistency**: Standardized CRUD operations across resources
+
+#### Builder Pattern
+- **Fluent Interface**: Easy-to-read query building
+- **Flexibility**: Complex queries built step by step
+- **Validation**: Query validation at build time
+
+#### Observer Pattern (Zustand)
+- **Performance**: Selective subscriptions prevent unnecessary re-renders
+- **Simplicity**: Clean state management without boilerplate
+- **Type Safety**: Full TypeScript support
+
+#### Strategy Pattern
+- **Flexibility**: Easy to switch AI providers or layouts
+- **Extensibility**: Simple to add new strategies
+- **Testability**: Each strategy can be tested independently
+
+#### Service Isolation Pattern
+- **Build Safety**: Client/Server separation prevents build errors
+- **Performance**: Client-only code loads faster
+- **Security**: Server-only code protected from client access
+
+#### Hook Pattern
+- **Encapsulation**: Complex logic encapsulated in reusable hooks
+- **Composition**: Easy to combine multiple hooks
+- **Testing**: Hooks can be tested independently
+
+#### Repository Pattern
+- **Abstraction**: Clean data access interface
+- **Testability**: Easy to mock for testing
+- **Flexibility**: Can swap implementations without changing calling code
+
+---
+
+These patterns provide a solid foundation for building maintainable, scalable, and testable software in the Plexus Platform, with emphasis on type safety, performance, and developer experience.

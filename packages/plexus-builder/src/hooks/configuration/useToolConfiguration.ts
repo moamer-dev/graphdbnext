@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useEffect } from 'react'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
@@ -24,6 +24,16 @@ export function useToolConfiguration(toolNodeId: string | null) {
   
   const getCredentialsByType = useCredentialsStore((state) => state.getCredentialsByType)
   const getCredential = useCredentialsStore((state) => state.getCredential)
+
+  // Load configuration into store only when toolNodeId changes
+  useEffect(() => {
+    if (toolNodeId) {
+      useToolConfigurationStore.getState().loadFromToolNode(toolNode)
+    } else {
+      useToolConfigurationStore.getState().reset()
+    }
+    // Only reload when switching nodes, otherwise we might overwrite unsaved changes while typing
+  }, [toolNodeId])
 
   // Real instances state (Access from config)
   const realInstances = (config.realInstances as any[]) || []

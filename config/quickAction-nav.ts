@@ -36,6 +36,12 @@ export const quickActionNavItems: QuickActionGroup[] = [
         icon: Network,
         items: [
             {
+                label: 'Create Model',
+                href: '/dashboard/graph/model/new',
+                icon: Plus,
+                description: 'Design a new graph model'
+            },
+            {
                 label: 'Browse Models',
                 href: '/dashboard/graph/model?view=grid',
                 icon: Grid,
@@ -46,13 +52,6 @@ export const quickActionNavItems: QuickActionGroup[] = [
                 href: '/dashboard/graph/model?action=upload',
                 icon: Upload,
                 description: 'Import JSON or Markdown schema'
-            },
-
-            {
-                label: 'Create Model',
-                href: '/dashboard/graph/model/new',
-                icon: Plus,
-                description: 'Design a new graph model'
             },
             {
                 label: 'Download JSON Template',

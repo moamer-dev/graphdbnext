@@ -1,0 +1,272 @@
+---
+title: Architecture Overview
+description: High-level architecture and system design of Plexus Platform
+---
+
+# Architecture Overview
+
+Plexus Platform is a modern graph database management system built with Next.js, designed to provide comprehensive tools for graph data management, analysis, and visualization.
+
+## System Architecture
+
+<Mermaid chart="
+flowchart TD
+    subgraph Frontend[Frontend Layer]
+        A[Next.js App] --> B[React Components]
+        B --> C[Plexus Builder Adapter]
+    end
+    
+    subgraph Services[Services Layer]
+        D[Core Services] --> E[AI Services]
+        D --> F[Graph Services]
+    end
+    
+    subgraph Data[Data Layer]
+        G[Prisma ORM] --> H[PostgreSQL]
+        I[Graph Database] --> J[Neo4j/Memgraph]
+    end
+    
+    subgraph External[External]
+        K[Plexus Builder] --> L[Workflow Engine]
+        M[LangChain] --> N[AI Models]
+    end
+    
+    Frontend --> Services
+    Frontend --> External
+    C --> K
+    Services --> Data
+    E --> M
+" />
+
+## Core Architecture Principles
+
+### 1. Modular Design
+- **Separation of Concerns**: Clear boundaries between UI, state, services, and data
+- **Plugin Architecture**: Extensible system for graph databases and AI providers
+- **Component Reusability**: Shared components across different features
+
+### 2. Performance Optimization
+- **Lazy Loading**: Components and data loaded on demand
+- **Caching Strategy**: Multi-level caching for optimal performance
+- **Progressive Enhancement**: Core functionality works without advanced features
+
+### 3. Scalability
+- **Horizontal Scaling**: Stateless design for easy scaling
+- **Database Sharding**: Support for distributed graph databases
+- **Microservices Ready**: Service-oriented architecture
+
+## Technology Stack
+
+### Frontend Technologies
+
+#### Core Framework
+- **Next.js 14**: React framework with App Router
+- **React 18**: Component-based UI with hooks
+- **TypeScript**: Type-safe development
+
+#### UI Components
+- **Radix UI**: Accessible component primitives
+- **Tailwind CSS**: Utility-first styling
+- **Lucide React**: Icon library
+- **D3.js**: Data visualization
+
+#### Code Editor
+- **CodeMirror**: Advanced code editing
+- **Cypher Language Support**: Syntax highlighting for graph queries
+
+### State Management
+
+#### Zustand Stores
+- **Lightweight**: Minimal boilerplate state management
+- **TypeScript Support**: Full type safety
+- **DevTools Integration**: Debugging capabilities
+
+#### TanStack Query
+- **Server State**: Efficient server state management
+- **Caching**: Intelligent caching and background updates
+- **Error Handling**: Comprehensive error management
+
+### Data Layer
+
+#### Primary Database
+- **PostgreSQL**: Metadata and user data
+- **Prisma ORM**: Type-safe database access
+- **Migrations**: Schema versioning
+
+#### Graph Databases
+- **Neo4j**: Industry-standard graph database
+- **Memgraph**: High-performance graph database
+- **Unified Interface**: Abstracted graph operations
+
+### AI Integration
+
+#### LangChain Framework
+- **Multi-Provider Support**: Various AI model providers
+- **Chain Composition**: Complex AI workflows
+- **Memory Management**: Conversation context
+
+#### AI Services
+- **Natural Language Processing**: Query generation
+- **Schema Assistance**: AI-powered schema design
+- **Analytics Insights**: Pattern recognition
+
+## Data Flow Architecture
+
+<Mermaid chart="
+sequenceDiagram
+    participant U as User Interface
+    participant S as Zustand Store
+    participant Q as TanStack Query
+    participant API as API Layer
+    participant DB as Database
+    participant G as Graph DB
+    participant AI as AI Services
+    
+    U->>S: User Action
+    S->>Q: Query Request
+    Q->>API: API Call
+    API->>DB: Metadata Query
+    API->>G: Graph Query
+    G-->>API: Graph Results
+    DB-->>API: Metadata Results
+    API-->>Q: Combined Results
+    Q-->>S: Update State
+    S-->>U: UI Update
+    
+    Note over U,AI: AI-Powered Features
+    U->>AI: Natural Language Query
+    AI->>G: Generated Cypher
+    G-->>AI: Query Results
+    AI-->>U: Enhanced Results
+" />
+
+## Service Layer Architecture
+
+### Core Services
+
+#### Database Service
+- **Connection Management**: Database connection pooling
+- **Query Execution**: Optimized query execution
+- **Transaction Management**: ACID compliance
+
+#### Graph Service
+- **Multi-DB Support**: Unified graph database interface
+- **Query Builder**: Dynamic query generation
+- **Visualization**: Graph data transformation
+
+#### AI Service
+- **Provider Abstraction**: Multiple AI providers
+- **Chain Management**: Complex AI workflows
+- **Context Management**: Conversation state
+
+### Integration Services
+
+#### Plexus Builder Integration
+- **Workflow Engine**: Execute visual workflows
+- **Schema Management**: Model schema operations
+- **Tool Registry**: Extensible tool system
+
+#### Visualization Service
+- **Graph Rendering**: D3.js-based visualization
+- **Layout Algorithms**: Multiple layout options
+- **Interactive Features**: Zoom, pan, selection
+
+## Security Architecture
+
+### Authentication & Authorization
+- **NextAuth.js**: Authentication framework
+- **Role-Based Access**: User permission system
+- **Session Management**: Secure session handling
+
+### Data Security
+- **Encryption**: Data at rest and in transit
+- **Input Validation**: Comprehensive input sanitization
+- **SQL Injection Prevention**: Parameterized queries
+
+### API Security
+- **Rate Limiting**: Request throttling
+- **CORS Configuration**: Cross-origin resource sharing
+- **API Keys**: Secure API access
+
+## Performance Architecture
+
+### Caching Strategy
+<Mermaid chart="
+graph LR
+    A[User Request] --> B[Browser Cache]
+    B --> C[CDN Cache]
+    C --> D[Application Cache]
+    D --> E[Database Cache]
+    E --> F[Database]
+    
+    G[Background Updates] --> D
+    H[Cache Invalidation] --> B
+    H --> C
+    H --> D
+" />
+
+### Optimization Techniques
+- **Code Splitting**: Dynamic imports for optimal loading
+- **Image Optimization**: Next.js image optimization
+- **Bundle Analysis**: Regular bundle size monitoring
+- **Performance Monitoring**: Real-time performance metrics
+
+## Deployment Architecture
+
+### Container Strategy
+- **Docker Compose**: Local development environment
+- **Multi-Stage Builds**: Optimized Docker images
+- **Environment Configuration**: Flexible deployment
+
+### Infrastructure
+- **Database Clustering**: High availability setup
+- **Load Balancing**: Request distribution
+- **Monitoring**: Application and infrastructure monitoring
+
+## Development Architecture
+
+### Code Organization
+```
+src/
+├── app/                 # Next.js App Router
+├── adapters/           # Adapter patterns
+├── components/          # React components
+├── hooks/              # Custom React hooks
+├── services/           # Business logic services
+├── stores/             # Zustand state management
+├── queries/            # Database queries
+├── types/              # TypeScript definitions
+└── utils/              # Utility functions
+```
+
+### Development Workflow
+- **Feature Branching**: Git flow for feature development
+- **Code Reviews**: Pull request process
+- **Automated Testing**: CI/CD pipeline
+- **Type Safety**: Strict TypeScript configuration
+
+## Integration Points
+
+### Plexus Builder Integration
+- **Component Adapter**: Bridge between app and builder
+- **Data Synchronization**: Real-time data sync
+- **Event System**: Cross-component communication
+
+### External Services
+- **AI Providers**: Multiple AI model integrations
+- **Graph Databases**: Unified database interface
+- **File Storage**: Document and media storage
+
+## Monitoring & Observability
+
+### Application Monitoring
+- **Error Tracking**: Comprehensive error logging
+- **Performance Metrics**: Real-time performance data
+- **User Analytics**: Usage patterns and insights
+
+### Infrastructure Monitoring
+- **Database Performance**: Query optimization metrics
+- **Resource Usage**: CPU, memory, and storage monitoring
+- **Network Performance**: Latency and throughput metrics
+
+This architecture provides a solid foundation for a scalable, maintainable, and performant graph database management platform while maintaining flexibility for future enhancements and integrations.

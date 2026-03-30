@@ -1,0 +1,78 @@
+---
+title: Welcome to Plexus
+description: The professional graph database platform for Digital Humanities research
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { LayoutDashboard, Package, FileCode, Zap } from 'lucide-react';
+
+
+Welcome to the official documentation for **Plexus**, a state-of-the-art platform designed to facilitate graph database management and dynamic graph construction from complex XML sources.
+
+Plexus is split into two primary components to serve both researchers and developers:
+
+<Cards>
+  <Card
+    icon={<LayoutDashboard className="text-amber-500" />}
+    title="Plexus Platform"
+    description="The main research application. Manage projects, import XML data, and visualize your knowledge graphs."
+    href="/docs/app/user-guides/getting-started"
+  />
+  <Card
+    icon={<Package className="text-blue-500" />}
+    title="Plexus Builder"
+    description="The technical core. A standalone React package for building visual graph modeling workflows."
+    href="/docs/builder"
+  />
+</Cards>
+
+## For Researchers
+
+If you are a researcher in Digital Humanities, start with our user guides to understand how to turn your XML archives into interactive graph databases.
+
+- [Getting Started](/docs/app/user-guides/getting-started)
+- [Importing XML Data](/docs/app/xml-processing/xml-import)
+- [Querying your Graph](/docs/app/database/querying)
+
+## For Developers
+
+Learn how to extend Plexus, build custom modules, or integrate the `@plexus/builder` package into your own applications.
+
+- [System Architecture](/docs/app/dev/architecture-overview)
+- [Design Patterns](/docs/app/dev/design-patterns)
+- [Database Models](/docs/app/dev/database-models)
+- [State Management](/docs/app/dev/state-management)
+- [AI Integration](/docs/app/dev/ai-integration)
+- [Workflow System](/docs/app/dev/workflow-system)
+- [Services Layer](/docs/app/dev/services-layer)
+- [Module System](/docs/app/dev/module-system)
+
+## Key Features
+
+### **Visual Graph Builder**
+- Intuitive drag-and-drop interface for graph construction
+- Real-time collaboration features
+- Advanced workflow execution engine
+
+### **AI-Powered Assistance**
+- Intelligent node and relationship suggestions
+- Automated schema design from XML analysis
+- Semantic enrichment with terminology services
+
+### **High-Performance Engine**
+- Optimized XML parsing and processing
+- Efficient graph algorithms and visualization
+- Scalable architecture for large datasets
+
+### **Extensible Architecture**
+- Modular design for easy customization
+- Comprehensive API for integration
+- Plugin system for custom functionality
+
+---
+
+> [!TIP]
+> Use the **Switcher** in the top-left corner of the sidebar to quickly toggle between Platform and Builder documentation.
+
+> [!NOTE]
+> All documentation has been recently revised to ensure complete accuracy with the actual codebase. Every code example and pattern shown reflects real implementations in Plexus Builder.

@@ -1,0 +1,53 @@
+---
+title: System Architecture
+description: Technical overview of the Plexus platform architecture and design patterns
+---
+
+# System Architecture
+
+Plexus is built with a modern, scalable architecture optimized for the Digital Humanities research domain. It emphasizes **Service Isolation**, **Type Safety**, and **Modular Extensibility**.
+
+## Core Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router & Turbopack)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Prisma ORM](https://www.prisma.io/)
+- **Graph Engine**: [Cypher](https://opencypher.org/) compatibility for graph databases
+- **AI Integration**: Custom AI Service layer with OpenAI/Anthropic support
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) for client-side state
+- **UI System**: [Radix UI](https://www.radix-ui.com/) and [Tailwind CSS](https://tailwindcss.com/)
+
+## Service Isolation Pattern
+
+To ensure a stable and secure application, Plexus follows a strict **Service Isolation** pattern. This prevents server-only dependencies (like `fs`, `dns`, or `prisma`) from being bundled into client-side components.
+
+### Structure
+
+- **`services/server.ts`**: The exclusive entry point for server-side logic. Includes database operations, file system access, and AI provider logic.
+- **`services/index.ts`**: Exports only isomorphic logic, shared constants, and **Type-only** definitions for server services.
+- **`adapters/`**: Bridging components that safely connect client-side packages (like the Builder) to server-side resources via APIs.
+
+<Mermaid chart="
+graph TD
+    Client[Client Browser] --> Adapters[Adapters & Hooks]
+    Adapters --> API[Next.js API Routes]
+    API --> ServerServices[Server Services /services/server.ts]
+    ServerServices --> DB[Prisma / Database]
+    ServerServices --> AI[AI Providers]
+" />
+
+## Module System
+
+Plexus features a dynamic module system that allows features like the **Plexus Builder** to be toggled at runtime. This allows for a modular deployment strategy where only necessary features are active.
+
+For detailed information, see the [Module System](./module-system) guide.
+
+## Database Integration
+
+We use **Prisma 7** with the `driverAdapters` preview feature to enable high-performance PostgreSQL connections.
+
+### Key Models
+
+- **User**: Authentication and role-based access control.
+- **Model**: Stores graph schemas (JSON/Markdown) and metadata.
+- **Workflow**: Manages graph processing and analysis logic.
+- **SavedQuery**: Reusable Cypher queries for researchers.

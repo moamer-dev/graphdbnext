@@ -8,6 +8,9 @@ export type CredentialType =
   | 'geonames'
   | 'europeana'
   | 'getty'
+  | 'apiKey'
+  | 'bearer'
+  | 'basic'
   | 'custom'
 
 export interface ApiCredential {

@@ -1,0 +1,250 @@
+---
+title: Dashboard Guide
+description: Complete guide to the Plexus Platform dashboard interface and navigation
+---
+
+# Dashboard Guide
+
+The Plexus Dashboard is your central hub for managing graph models, data, and platform settings. This guide covers every feature and navigation option available in the dashboard interface.
+
+## Dashboard Overview
+
+Upon logging in, you'll see the main dashboard with four main action groups:
+
+1. **Model Schema** - Design and manage graph data models
+2. **XML to Graph** - Convert XML documents into graph structures  
+3. **Graph Data Management** - Interact with your graph database
+4. **Settings** - Configure application and AI features
+
+## 1. Model Schema
+
+This section is dedicated to creating, managing, and visualizing your graph data models.
+
+### Browse Models
+- **Path**: `/dashboard/graph/model?view=grid`
+- **Purpose**: View all your existing graph models in a grid layout
+- **Features**: 
+  - Visual model cards with metadata
+  - Quick access to model editing
+  - Model deletion and duplication options
+  - Search and filter capabilities
+
+### Upload Schema
+- **Path**: `/dashboard/graph/model?action=upload`
+- **Purpose**: Import existing schemas from external files
+- **Supported Formats**:
+  - **JSON Schema**: Structured graph model definition
+  - **Markdown Schema**: Human-readable model documentation
+- **Features**:
+  - Drag-and-drop file upload
+  - Schema validation before import
+  - Automatic model creation from valid schemas
+
+### Create Model
+- **Path**: `/dashboard/graph/model/new`
+- **Purpose**: Design a new graph model from scratch
+- **Features**:
+  - Visual node and relationship designer
+  - Property definition for nodes
+  - Relationship type configuration
+  - Real-time schema validation
+  - Interactive canvas for model design
+
+### Download JSON Template
+- **Purpose**: Get a pre-formatted JSON template for schema creation
+- **Use Case**: Start with the correct structure for your custom models
+- **Template Includes**:
+  - Node definitions with property types
+  - Relationship type specifications
+  - Example configurations
+
+### Download MD Template
+- **Purpose**: Get a Markdown template for documenting graph models
+- **Use Case**: Create human-readable model documentation
+- **Template Features**:
+  - Structured sections for nodes and relationships
+  - Property type documentation
+  - Example usage patterns
+
+## 2. XML to Graph
+
+This section focuses on converting XML documents into graph database structures.
+
+### Convert XML
+- **Path**: `/dashboard/graph/model/new/from-xml`
+- **Purpose**: Transform XML files into graph models and data
+- **Features**:
+  - XML file upload and parsing
+  - Visual XML structure mapping
+  - Node and relationship extraction rules
+  - XPath-based element selection
+  - Attribute-to-property mapping
+  - Batch processing for multiple files
+
+**Supported XML Types**:
+- TEI (Text Encoding Initiative) documents
+- Custom XML schemas
+- Hierarchical data structures
+- Mixed content XML
+
+## 3. Graph Data Management
+
+This section provides tools for interacting directly with your graph database.
+
+### Manage Data
+- **Path**: `/dashboard/database`
+- **Purpose**: Explore and manage graph nodes and relationships
+- **Features**:
+  - Visual graph exploration
+  - Node creation, editing, and deletion
+  - Relationship management
+  - Property editing
+  - Graph visualization and layout options
+  - Search and filter capabilities
+
+### Query UI
+- **Path**: `/dashboard/database/queries?mode=library`
+- **Purpose**: Execute and manage Cypher queries
+- **Features**:
+  - Query editor with syntax highlighting
+  - Query library for saved queries
+  - Query execution history
+  - Result visualization (tables, graphs)
+  - Query performance metrics
+  - Export options for query results
+
+**Query Modes**:
+- **Library**: Access saved and template queries
+- **Editor**: Write and execute custom queries
+- **History**: View and rerun previous queries
+
+### Analytics
+- **Path**: `/dashboard/database/analytics`
+- **Purpose**: View comprehensive graph statistics and insights
+- **Features**:
+  - Node and relationship counts
+  - Graph density metrics
+  - Degree distribution analysis
+  - Schema overview
+  - Data quality indicators
+  - Performance statistics
+  - Visual charts and graphs
+
+## 4. Settings (Admin Only)
+
+This section allows administrators to configure various aspects of the Plexus Platform. **Only admin users can access these settings.**
+
+### AI Settings
+- **Path**: `/dashboard/settings/ai`
+- **Purpose**: Configure AI models and intelligent agents
+- **Features**:
+  - AI model selection and configuration
+  - Agent behavior settings
+  - Natural language query processing
+  - AI-powered schema suggestions
+  - Automation rules configuration
+  - Integration with external AI services
+
+**AI Capabilities**:
+- Natural language to Cypher conversion
+- Automated schema generation from data
+- Intelligent data mapping suggestions
+- Pattern recognition in graph data
+
+### Modules
+- **Path**: `/dashboard/settings/modules`
+- **Purpose**: Manage optional platform features and extensions
+- **Features**:
+  - Enable/disable platform modules
+  - Extension management
+  - Plugin configuration
+  - Feature flag controls
+  - Integration settings
+  - Performance optimization options
+
+## Workflow Examples
+
+### Creating a New Graph Model (Project)
+
+In Plexus, **projects are created through graph models**. Each graph model represents a project with its own schema and data.
+
+1. **Navigate**: Click "Model Schema" → "Create Model"
+2. **Design**: Use the visual canvas to add nodes and relationships
+3. **Configure**: Set properties and relationship types
+4. **Validate**: Check schema for errors
+5. **Save**: Store the model - this becomes your project
+
+The graph database connection is automatically configured based on your environment variables (`GRAPH_DB_TYPE`).
+
+### Importing XML Data
+
+1. **Prepare**: Have your XML file ready
+2. **Navigate**: Click "XML to Graph" → "Convert XML"
+3. **Upload**: Select your XML file
+4. **Map**: Define XML-to-graph mapping rules
+5. **Build**: Go to Plexus Model builder and create a model based on the mapping and workflows
+6. **Execute**: Run the conversion process and post the graph data to the graph database
+7. **Review**: Check results in the data management section
+
+### Querying Your Graph
+
+1. **Navigate**: Click "Graph Data Management" → "Query UI"
+2. **Select**: Choose a query from the library or write your own
+3. **Execute**: Run the query against your graph (Memgraph or Neo4j)
+4. **Visualize**: View results in table or graph format
+5. **Export**: Save results for further analysis
+
+## Best Practices
+
+### Model Design
+- Start with a clear conceptual model
+- Use consistent naming conventions
+- Define necessary constraints upfront
+- Document your schema thoroughly
+- Remember: each model represents a project
+
+### Data Management
+- Regular backups of critical data
+- Monitor query performance
+- Use indexes for frequently accessed properties
+- Validate data integrity periodically
+- Choose the right graph database (Memgraph for development, Neo4j for production)
+
+### Security
+- Regularly update admin passwords
+- Use appropriate user roles
+- Secure database connections
+- Monitor access logs
+- Configure authentication for Neo4j in production
+
+## Troubleshooting
+
+### Common Dashboard Issues
+
+**Action groups not responding**
+- Check browser console for errors
+- Refresh the page and retry
+- Ensure JavaScript is enabled
+
+**Slow loading times**
+- Check network connectivity
+- Verify database server status
+- Clear browser cache
+
+**Query execution failures**
+- Validate Cypher syntax
+- Check database connectivity
+- Review user permissions for the specific data
+
+> [!NOTE]
+> For access-related issues and role-based troubleshooting, see our [Roles and Permissions Guide](./roles-and-permissions#troubleshooting-access-issues).
+
+### Getting Help
+
+- Check the browser console for error messages
+- Review the troubleshooting section in getting-started guide
+- Contact support with specific error details
+
+---
+
+*Next: [XML Import Guide](./xml-import)*

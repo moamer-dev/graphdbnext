@@ -5,8 +5,9 @@ import { Switch } from './ui/switch'
 import { OntologyCombobox } from './wizard/XmlImportWizard/components/OntologyCombobox'
 import { Button } from './ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem } from './ui/dropdown-menu'
-import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle } from 'lucide-react'
+import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck } from 'lucide-react'
 import { cn } from '../utils/cn'
+import { SemanticValidationDialog } from './semantic/SemanticValidationDialog'
 
 interface ModelBuilderHeaderProps {
   className?: string
@@ -32,6 +33,8 @@ interface ModelBuilderHeaderProps {
   setAgentsPanelOpen: (val: boolean) => void
   onSave?: () => void
   hasWorkflowItems: boolean
+  isWorkflowVisible: boolean
+  setIsWorkflowVisible: (val: boolean) => void
   onClearWorkflow: () => void
   xmlUploadInputRef: React.RefObject<HTMLInputElement | null>
   onUploadXml: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -51,6 +54,7 @@ interface ModelBuilderHeaderProps {
   showToolbar: boolean
   setShowToolbar: (val: boolean) => void
   onOpenCredentials: () => void
+  isNewModel?: boolean
 }
 
 export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
@@ -77,6 +81,8 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   setAgentsPanelOpen,
   onSave,
   hasWorkflowItems,
+  isWorkflowVisible,
+  setIsWorkflowVisible,
   onClearWorkflow,
   xmlUploadInputRef,
   onUploadXml,
@@ -94,8 +100,11 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   onDownloadRelationshipTemplate,
   showToolbar,
   setShowToolbar,
-  onOpenCredentials
+  onOpenCredentials,
+  isNewModel = false
 }) => {
+  const [semanticValidationOpen, setSemanticValidationOpen] = React.useState(false)
+
   return (
     <div className={cn("flex items-center gap-3 p-3 border-b bg-background", className)}>
       <Input
@@ -156,12 +165,34 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
           </div>
         )}
 
+        {hasWorkflowItems && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Workflow:</span>
+            <Switch
+              id="show-workflow-canvas"
+              checked={isWorkflowVisible}
+              onCheckedChange={setIsWorkflowVisible}
+              className="scale-75"
+            />
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Editor:</span>
           <Switch
             id="show-property-editor"
             checked={sidebarOpen}
             onCheckedChange={setSidebarOpen}
+            className="scale-75"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Toolbar:</span>
+          <Switch
+            id="show-canvas-toolbar"
+            checked={showToolbar}
+            onCheckedChange={setShowToolbar}
             className="scale-75"
           />
         </div>
@@ -192,7 +223,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
               Credentials Manager
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Configuration</DropdownMenuLabel>
+            <DropdownMenuLabel>Import Data</DropdownMenuLabel>
             <DropdownMenuItem onSelect={onImportSchema}>
               <Upload className="h-3.5 w-3.5 mr-2" />
               Import Schema
@@ -206,20 +237,34 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Export Data</DropdownMenuLabel>
                 <DropdownMenuItem onSelect={onExportJson}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export JSON
+                  <Download className="h-3.5 w-3.5 mr-2" /> Export Schema JSON
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={onExportMarkdown}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export Markdown
+                  <Download className="h-3.5 w-3.5 mr-2" /> Export Schema Markdown
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={onExportRdf}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export RDF
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={onExportTtl}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export TTL
-                </DropdownMenuItem>
+                 {hasWorkflowItems && (
                 <DropdownMenuItem onSelect={onExportWorkflow}>
                   <Download className="h-3.5 w-3.5 mr-2" /> Export Workflow
                 </DropdownMenuItem>
+                )}
+                {isSemanticEnabled && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Semantic Layer</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={() => setSemanticValidationOpen(true)}>
+                      <ShieldCheck className="h-3.5 w-3.5 mr-2" />
+                      Validate Semantics
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Export Semantic Data</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={onExportRdf}>
+                      <Download className="h-3.5 w-3.5 mr-2" /> Export RDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={onExportTtl}>
+                      <Download className="h-3.5 w-3.5 mr-2" /> Export TTL
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Templates</DropdownMenuLabel>
                 <DropdownMenuItem onSelect={onDownloadNodeTemplate}>
@@ -230,19 +275,11 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>View Options</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
-              checked={showToolbar}
-              onCheckedChange={setShowToolbar}
-            >
-              <Layout className="h-3.5 w-3.5 mr-2" />
-              Show Canvas Toolbar
-            </DropdownMenuCheckboxItem>
+
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {onSave && (
+        {!isNewModel && onSave && (
           <Button
             variant="default"
             size="sm"
@@ -291,13 +328,18 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
             size="sm"
             onClick={onRunWorkflow}
             className="h-7 text-[10px] px-2"
-            disabled={!hasContent}
+            disabled={!hasContent || !hasWorkflowItems}
           >
             <PlayCircle className="h-3.5 w-3.5 lg:mr-1" />
-            <span className="hidden lg:inline">Generate</span>
+            <span className="hidden lg:inline">Build a Graph</span>
           </Button>
         </div>
       </div>
+      
+      <SemanticValidationDialog 
+        open={semanticValidationOpen} 
+        setOpen={setSemanticValidationOpen} 
+      />
     </div>
   )
 }

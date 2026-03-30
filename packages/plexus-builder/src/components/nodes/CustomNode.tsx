@@ -18,7 +18,7 @@ interface CustomNodeData {
 export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) => {
   return (
     <div
-      className={`relative rounded-lg border transition-all bg-white ${
+      className={`relative rounded-lg border transition-all bg-white group ${
         data.isRoot 
           ? 'border-amber-400 border-2 bg-linear-to-br from-yellow-50 to-amber-50 shadow-md' 
           : selected 
@@ -26,9 +26,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
             : 'border-gray-300 hover:border-gray-400'
       }`}
       onClick={() => {
-        // Don't stop propagation - let ReactFlow handle the click
-        // This prevents double-selection calls
-        console.log('[custom-node] click', { label: data.label, type: data.type })
+        // ReactFlow handles the click
       }}
       style={{ minWidth: 80, padding: '6px 10px' }}
     >
@@ -79,6 +77,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         type="target"
         position={Position.Top}
         id="relation-in"
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ 
           left: '20%', 
           background: '#6b7280', 
@@ -90,7 +89,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         }}
         title="Relation In"
       />
-      <div className="absolute -top-6 left-[20%] transform -translate-x-1/2 pointer-events-none">
+      <div className="absolute -top-6 left-[20%] transform -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
         <span className="text-[10px] font-medium text-gray-600 whitespace-nowrap">
           -relation in-
         </span>
@@ -101,6 +100,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         type="source"
         position={Position.Bottom}
         id="relation-out"
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ 
           left: '20%', 
           background: '#6b7280', 
@@ -112,7 +112,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         }}
         title="Relation Out"
       />
-      <div className="absolute -bottom-3 left-[20%] transform -translate-x-1/2 pointer-events-none">
+      <div className="absolute -bottom-3 left-[20%] transform -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
         <span className="text-[8px] font-medium text-gray-600 whitespace-nowrap">
           -relation out-
         </span>
@@ -123,6 +123,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         type="source"
         position={Position.Left}
         id="tools"
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ 
           top: '50%', 
           background: '#9ca3af', 
@@ -134,7 +135,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         }}
         title="Tools"
       />
-      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-full -ml-1 pointer-events-none">
+      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-full -ml-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
         <span className="text-[8px] font-medium text-gray-600 whitespace-nowrap">
           -tools-
         </span>

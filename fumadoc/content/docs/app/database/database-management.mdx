@@ -1,0 +1,320 @@
+---
+title: Database Management
+description: Complete guide to managing, querying, and analyzing your graph database in Plexus Platform
+---
+
+# Database Management
+
+The Plexus Database Management interface provides comprehensive tools for managing, querying, and analyzing your graph database. Whether you're using Memgraph or Neo4j, this interface gives you full control over your graph data with powerful features for exploration, manipulation, and analytics.
+
+## Accessing Database Management
+
+### Navigation
+- **Path**: Dashboard → Database
+- **URL**: `/dashboard/database`
+- **Requirements**: Graph database connection configured
+
+### Database Support
+- **Memgraph**: High-performance graph database
+- **Neo4j**: Industry-standard graph database
+- **Automatic Detection**: System detects your configured database type
+- **Connection Status**: Real-time connection monitoring
+
+## System Status Overview
+
+### Connection Monitoring
+
+#### Status Indicators
+- **Connection State**: Shows Connected/Disconnected status
+- **Real-time Updates**: Automatic status refresh
+- **Manual Refresh**: Manual status check capability
+- **Error Handling**: Clear error messages for connection issues
+
+#### Database Statistics
+- **Node Count**: Total number of nodes in the database
+- **Relationship Count**: Total number of relationships
+- **Node Labels**: Number of distinct node labels
+- **Live Updates**: Statistics update in real-time
+
+### Quick Import
+
+#### File Upload
+- **JSON Support**: Import graph data from JSON files
+- **Validation**: File format validation before import
+
+#### Import Process
+1. **Select File**: Click upload area or drag JSON file
+2. **Validation**: System validates JSON structure
+3. **Import**: Data is loaded into graph database
+4. **Confirmation**: Success notification with import details
+
+## Data Explorer Interface
+
+### Navigation and Views
+
+#### Tab Organization
+- **Nodes Tab**: Focus on node management and exploration
+- **Relationships Tab**: Focus on relationship management
+- **Switching**: Seamless transition between tabs
+
+### Search and Filtering
+
+#### Node Search
+- **Real-time Search**: Instant filtering as you type
+- **Label Filtering**: Filter by specific node labels
+- **Combined Filters**: Apply multiple filters simultaneously
+- **Search Results**: Highlighted matching terms
+
+#### Relationship Search
+- **Type Filtering**: Filter by relationship types
+- **Content Search**: Search within relationship properties
+- **Bidirectional**: Search from either direction
+- **Result Count**: Shows number of matching relationships
+
+#### Advanced Filtering
+- **Label-based**: Filter nodes by their labels
+- **Type-based**: Filter relationships by their types
+- **Property-based**: Filter by property values
+- **Combined Logic**: AND/OR filter combinations
+
+## Node Management
+
+### Node Exploration
+
+#### Label Organization
+- **Hierarchical Display**: Nodes grouped by labels
+- **Expandable Groups**: Collapse/expand label groups
+- **Node Counting**: Shows count per label
+- **Visual Indicators**: Icons for different node types
+
+#### Node Properties
+- **Property Display**: All node properties visible
+- **Type Information**: Data types for each property
+- **Value Preview**: Quick view of property values
+- **Edit Capability**: In-place property editing
+
+#### Node Analytics
+- **Distribution Analysis**: Property value distributions
+- **Uniqueness Counts**: Unique value counts per property
+- **Relationship Summary**: Connected relationships overview
+- **Statistical Insights**: Data quality metrics
+
+### Node Operations
+
+#### Creation
+- **Create Node Dialog**: Structured node creation interface
+- **Label Selection**: Choose from existing or new labels
+- **Property Definition**: Add properties with types
+- **Validation**: Real-time validation during creation
+
+#### Viewing and Inspection
+- **Node Fact Sheet**: Detailed node information panel
+- **Relationship View**: All connected relationships
+- **Property Details**: Complete property listing
+- **Visual Preview**: Node visualization options
+
+#### Bulk Operations
+- **Multi-Selection**: Select multiple nodes simultaneously
+- **Bulk Actions**: Apply operations to selected nodes
+- **Selection Controls**: Select all/clear all options
+- **Progress Tracking**: Visual feedback for bulk operations
+
+### Node Deletion
+
+#### Individual Deletion
+- **Delete Confirmation**: Prevents accidental deletions
+- **Impact Analysis**: Shows what will be deleted
+- **Relationship Handling**: Options for connected relationships
+- **Undo Capability**: Recovery options for accidental deletions
+
+#### Bulk Deletion
+- **Label-based Deletion**: Delete all nodes of a specific label
+- **Safety Checks**: Multiple confirmation steps
+- **Impact Preview**: Shows deletion scope
+- **Rollback Options**: Recovery mechanisms
+
+## Relationship Management
+
+### Relationship Exploration
+
+#### Type Organization
+- **Grouped by Type**: Relationships organized by type
+- **Expandable Sections**: Collapse/expand type groups
+- **Count Display**: Shows count per relationship type
+- **Directional Indicators**: Visual direction indicators
+
+#### Relationship Properties
+- **Property Display**: All relationship properties
+- **Source/Target Info**: Connected node information
+- **Type Information**: Relationship type details
+- **Cardinality Display**: Relationship cardinality
+
+#### Relationship Analytics
+- **Type Distribution**: Distribution of relationship types
+- **Node Connectivity**: Connection patterns analysis
+- **Property Statistics**: Relationship property analytics
+- **Graph Metrics**: Overall graph structure metrics
+
+### Relationship Operations
+
+#### Creation
+- **Create Relationship Dialog**: Structured creation interface
+- **Node Selection**: Choose source and target nodes
+- **Type Definition**: Select or define relationship type
+- **Property Configuration**: Add relationship properties
+
+#### Viewing and Inspection
+- **Relationship Details**: Complete relationship information
+- **Node Context**: Connected node information
+- **Property Editor**: Edit relationship properties
+- **Visualization**: Relationship visualization options
+
+#### Bulk Operations
+- **Multi-Selection**: Select multiple relationships
+- **Bulk Actions**: Apply operations to selection
+- **Type-based Selection**: Select by relationship type
+- **Progress Feedback**: Operation progress tracking
+
+### Relationship Deletion
+
+#### Individual Deletion
+- **Delete Confirmation**: Prevents accidental deletions
+- **Node Impact**: Shows affected nodes
+- **Cascading Effects**: Impact on graph structure
+- **Recovery Options**: Undo capabilities
+
+#### Bulk Deletion
+- **Type-based Deletion**: Delete by relationship type
+- **Safety Measures**: Multiple confirmation steps
+- **Impact Analysis**: Preview deletion effects
+- **Data Integrity**: Maintains graph consistency
+
+## Advanced Features
+
+### Schema Explorer
+
+#### Schema Analysis
+- **Label Statistics**: Statistics per node label
+- **Property Analysis**: Property distribution analysis
+- **Relationship Patterns**: Relationship type analysis
+- **Graph Structure**: Overall schema insights
+
+#### Schema Validation
+- **Consistency Checks**: Validate schema integrity
+- **Type Validation**: Check data type consistency
+- **Relationship Rules**: Validate relationship constraints
+- **Quality Reports**: Data quality assessments
+
+### Data Import/Export
+
+#### Import Capabilities
+- **JSON Format**: Standard JSON graph format
+- **File Validation**: Pre-import validation
+- **Incremental Import**: Add to existing data
+- **Conflict Resolution**: Handle data conflicts
+
+#### Export Options
+- **JSON Export**: Export graph data as JSON
+- **Selective Export**: Export specific labels/types
+- **Format Options**: Multiple export formats
+- **Compression**: Compressed export options
+
+## User Interface Features
+
+### Responsive Design
+
+#### Layout Adaptation
+- **Mobile Support**: Works on mobile devices
+- **Tablet Optimization**: Tablet-optimized interface
+- **Desktop Features**: Full desktop functionality
+- **Touch Support**: Touch-friendly controls
+
+#### Accessibility
+- **Keyboard Navigation**: Full keyboard support
+- **Screen Reader**: Screen reader compatible
+- **High Contrast**: High contrast mode
+- **Font Scaling**: Adjustable font sizes
+
+### User Experience
+
+#### Visual Feedback
+- **Loading Indicators**: Progress indicators
+- **Status Messages**: Clear status communications
+- **Error Messages**: Helpful error information
+- **Success Notifications**: Confirmation messages
+
+#### Interaction Design
+- **Intuitive Controls**: Easy-to-use controls
+- **Consistent Interface**: Uniform design patterns
+- **Quick Actions**: Frequently used actions accessible
+- **Context Menus**: Right-click context options
+
+## Troubleshooting
+
+### Common Issues
+
+#### Connection Problems
+- **Database Offline**: Check database status
+- **Network Issues**: Verify network connectivity
+- **Configuration Errors**: Check database configuration
+- **Authentication**: Verify credentials
+
+#### Performance Issues
+- **Large Datasets**: Pagination for large data
+- **Memory Usage**: Browser memory management
+- **Query Timeout**: Long-running queries
+- **System Resources**: Resource optimization
+
+#### Data Issues
+- **Invalid Data**: Data validation errors
+- **Corruption**: Data corruption handling
+- **Inconsistency**: Data inconsistency resolution
+- **Backup Issues**: Backup and recovery
+
+### Error Handling
+
+#### Error Messages
+- **Clear Descriptions**: Understandable error messages
+- **Suggested Actions**: Recommended solutions
+- **Error Codes**: Standardized error codes
+- **Logging**: Error logging for debugging
+
+#### Recovery Options
+- **Auto-recovery**: Automatic error recovery
+- **Manual Recovery**: Manual recovery options
+- **Data Rollback**: Undo capability
+- **Support Integration**: Contact support options
+
+## Best Practices
+
+### Data Management
+
+#### Organization
+- **Consistent Labeling**: Use consistent node labels
+- **Property Standards**: Standardize property naming
+- **Relationship Types**: Clear relationship definitions
+- **Documentation**: Document your schema
+
+#### Quality Assurance
+- **Regular Validation**: Periodic data validation
+- **Backup Strategy**: Regular data backups
+- **Testing**: Test operations on sample data
+- **Monitoring**: Monitor database health
+
+### Performance Optimization
+
+#### Query Optimization
+- **Index Usage**: Use appropriate indexes
+- **Query Design**: Efficient query design
+- **Batch Operations**: Use batch operations
+- **Caching**: Utilize query caching
+
+#### Resource Management
+- **Memory Management**: Monitor memory usage
+- **Connection Pooling**: Use connection pooling
+- **Regular Maintenance**: Regular database maintenance
+- **Capacity Planning**: Plan for growth
+
+---
+
+*Related: [Generate Graph](./generate-graph), [Querying](./querying), [Dashboard Guide](./dashboard), [Getting Started](./getting-started)*

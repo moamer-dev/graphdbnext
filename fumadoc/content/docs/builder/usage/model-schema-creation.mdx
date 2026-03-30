@@ -1,0 +1,352 @@
+---
+title: Model Schema Creation
+description: Create and design graph database schemas using the visual Model Builder interface
+---
+
+# Model Schema Creation
+
+Model Schema Creation in Plexus Builder allows you to design and construct graph database schemas visually using an intuitive drag-and-drop interface. This powerful feature enables researchers to create comprehensive data models without writing code, while leveraging AI assistance and semantic terminology integration.
+
+## Overview
+
+The Model Builder provides a visual canvas where you can:
+- **Design Node Types**: Create and configure different node types with properties
+- **Define Relationships**: Establish connections between node types with proper cardinality
+- **Apply Semantic Standards**: Integrate with TIB terminology service for consistent naming
+- **Get AI Assistance**: Use AI agents to suggest optimal schema designs
+- **Validate Schemas**: Ensure schema completeness and consistency
+
+## Getting Started
+
+### Accessing the Model Builder
+
+1. **Navigate to Builder**: From the main interface, select the Model Builder
+2. **Create New Schema**: Choose "Create New Schema" or start with a template
+3. **Select Canvas**: The visual canvas will appear with the node palette and configuration panels
+
+### Interface Components
+
+#### Main Canvas
+- **Node Palette**: Drag node types onto the canvas
+- **Workspace**: Design your schema visually
+- **Connection Tools**: Create relationships between nodes
+- **Configuration Panels**: Edit node and relationship properties
+
+#### Side Panels
+- **Node Editor**: Configure selected node properties
+- **Relationship Editor**: Define connection parameters
+- **TIB Terminology Panel**: Access standardized terminology
+- **Schema Validation**: Check schema completeness
+
+## Creating Node Types
+
+### Adding Nodes to the Canvas
+
+1. **Select Node Type**: From the node palette, choose a node type
+2. **Drag to Canvas**: Drag the node onto the canvas
+3. **Position Node**: Arrange nodes in a logical layout
+4. **Configure Properties**: Open the Node Editor to set properties
+
+### Node Configuration
+
+#### Basic Properties
+- **Label**: Display name for the node (e.g., "Person", "Publication")
+- **Type**: Internal node type identifier
+- **Description**: Purpose and context of the node
+
+#### Property Definition
+- **Property Name**: Internal property identifier
+- **Display Name**: User-friendly property name
+- **Data Type**: String, number, boolean, date, array, or object
+- **Required**: Whether the property is mandatory
+- **Default Value**: Default value for the property
+- **Validation Rules**: Constraints and validation patterns
+
+#### Example Node Configuration
+```typescript
+// Person Node
+{
+  label: "Person",
+  type: "Person",
+  description: "Individual person in the research network",
+  properties: [
+    {
+      name: "name",
+      displayName: "Full Name",
+      type: "string",
+      required: true,
+      validation: { minLength: 1, maxLength: 255 }
+    },
+    {
+      name: "email",
+      displayName: "Email Address",
+      type: "string",
+      required: false,
+      validation: { pattern: "^[^@]+@[^@]+\.[^@]+$" }
+    },
+    {
+      name: "orcid",
+      displayName: "ORCID Identifier",
+      type: "string",
+      required: false,
+      validation: { pattern: "^\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]$" }
+    }
+  ]
+}
+```
+
+### AI-Assisted Node Creation
+
+#### Node Property Suggestion Agent
+1. **Select Node**: Click on a node in the canvas
+2. **Open AI Assistant**: Click the AI Assistant button in the Node Editor
+3. **Get Suggestions**: The AI will suggest relevant properties based on:
+   - Node type and label
+   - Domain context
+   - Common patterns for similar nodes
+   - Best practices for graph databases
+
+#### Example AI Suggestions
+For a "Publication" node, the AI might suggest:
+- `title` (string, required) - Publication title
+- `publicationDate` (date, required) - Publication date
+- `doi` (string, optional) - Digital Object Identifier
+- `abstract` (string, optional) - Publication abstract
+- `authors` (array, optional) - List of author references
+- `venue` (string, optional) - Publication venue
+
+## Creating Relationships
+
+### Adding Relationships
+
+1. **Select Source Node**: Click on the source node
+2. **Create Relationship**: Drag from the source to the target node
+3. **Configure Relationship**: Open the Relationship Editor
+4. **Set Properties**: Define relationship type and properties
+
+### Relationship Configuration
+
+#### Basic Properties
+- **Type**: Relationship type (e.g., "AUTHORED", "PUBLISHED_IN")
+- **Direction**: Direction of the relationship (source → target)
+- **Cardinality**: One-to-one, one-to-many, or many-to-many
+- **Description**: Purpose and meaning of the relationship
+
+#### Relationship Properties
+- **Property Name**: Internal property identifier
+- **Data Type**: String, number, boolean, or date
+- **Required**: Whether the property is mandatory
+- **Default Value**: Default value for the property
+
+#### Example Relationship Configuration
+```typescript
+// AUTHORED Relationship
+{
+  type: "AUTHORED",
+  from: "Person",
+  to: "Publication",
+  direction: "outgoing",
+  cardinality: "one-to-many",
+  description: "Person authored the publication",
+  properties: [
+    {
+      name: "authorOrder",
+      displayName: "Author Order",
+      type: "number",
+      required: false,
+      validation: { min: 1 }
+    },
+    {
+      name: "contributionType",
+      displayName: "Contribution Type",
+      type: "string",
+      required: false,
+      validation: { enum: ["primary", "secondary", "contributor"] }
+    }
+  ]
+}
+```
+
+### AI-Assisted Relationship Creation
+
+#### Relationship Recommendation Agent
+1. **Select Two Nodes**: Click on two nodes to connect
+2. **Open AI Assistant**: Click the AI Assistant button
+3. **Get Recommendations**: The AI will suggest:
+   - Appropriate relationship types
+   - Optimal cardinality
+   - Relevant properties
+   - Confidence scores for each suggestion
+
+#### Example AI Recommendations
+For connecting "Person" to "Publication":
+- `AUTHORED` (one-to-many, high confidence) - Person authored the publication
+- `REVIEWED` (one-to-many, medium confidence) - Person reviewed the publication
+- `CITED` (many-to-many, medium confidence) - Person cited the publication
+
+## Semantic Integration
+
+### TIB Terminology Service
+
+#### Accessing Standardized Terminology
+1. **Enable Semantic Mode**: Toggle semantic mode in the toolbar
+2. **Open TIB Panel**: Access the TIB Terminology Panel
+3. **Search Concepts**: Search for standardized concepts
+4. **Apply to Schema**: Apply standardized names and relationships
+
+#### Benefits of TIB Integration
+- **Consistent Naming**: Use standardized terminology across projects
+- **Interoperability**: Ensure compatibility with other systems
+- **Semantic Clarity**: Improve understanding of schema meaning
+- **Domain Standards**: Follow domain-specific standards
+
+#### Example TIB Integration
+Instead of custom names like "persName" → "PersonNode":
+- **Standardized**: "Person" (from TIB terminology)
+- **Properties**: Use standard property names like "name", "identifier"
+- **Relationships**: Use standard relationship types like "affiliatedWith"
+
+### Semantic Validation
+
+#### Validation Features
+- **Terminology Compliance**: Check against TIB terminology
+- **Semantic Consistency**: Ensure semantic meaning is preserved
+- **Domain Alignment**: Verify alignment with domain standards
+- **Cross-Domain Compatibility**: Ensure compatibility across domains
+
+## Schema Templates
+
+### Available Templates
+
+#### Bibliographic Schema
+- **Nodes**: Person, Publication, Journal, Institution, Conference
+- **Relationships**: AUTHORED, PUBLISHED_IN, AFFILIATED_WITH, PRESENTED_AT
+- **Properties**: Standard bibliographic properties (DOI, dates, identifiers)
+
+#### Social Network Schema
+- **Nodes**: Person, Organization, Event, Location, Project
+- **Relationships**: KNOWS, WORKS_FOR, ATTENDED, LOCATED_AT
+- **Properties**: Network analysis properties (centrality measures, timestamps)
+
+#### Historical Research Schema
+- **Nodes**: Document, Person, Place, Event, Organization, Period
+- **Relationships**: MENTIONED_IN, PARTICIPATED_IN, LOCATED_AT, DURING
+- **Properties**: Historical properties (dates, locations, archival references)
+
+### Using Templates
+
+1. **Browse Templates**: Access the template library
+2. **Preview Template**: Review template structure and documentation
+3. **Customize Template**: Modify template to fit specific needs
+4. **Save as New**: Save customized template for future use
+
+## Schema Validation
+
+### Validation Checks
+
+#### Completeness Validation
+- **Required Properties**: Ensure all required properties are defined
+- **Relationship Coverage**: Verify all necessary relationships exist
+- **Type Consistency**: Check data type consistency across the schema
+
+#### Consistency Validation
+- **Naming Conventions**: Verify consistent naming patterns
+- **Relationship Logic**: Ensure relationships make logical sense
+- **Cardinality Consistency**: Check cardinality definitions
+
+#### Performance Validation
+- **Indexing Strategy**: Suggest optimal indexing patterns
+- **Query Optimization**: Identify potential query performance issues
+- **Scalability Considerations**: Evaluate scalability implications
+
+### Validation Results
+
+#### Success Indicators
+- **Green Check**: Schema passes all validation checks
+- **Performance Score**: Overall performance rating
+- **Best Practices Compliance**: Alignment with best practices
+
+#### Issues and Suggestions
+- **Warning Messages**: Non-critical issues that should be addressed
+- **Error Messages**: Critical issues that must be resolved
+- **Improvement Suggestions**: Recommendations for optimization
+
+## Best Practices
+
+### Schema Design Principles
+
+#### Semantic Clarity
+- **Meaningful Names**: Use names that clearly express meaning
+- **Consistent Terminology**: Maintain consistent naming throughout
+- **Domain Relevance**: Use terminology relevant to your domain
+- **Avoid Ambiguity**: Choose names that minimize confusion
+
+#### Structural Design
+- **Normalization**: Apply appropriate normalization to avoid redundancy
+- **Modularity**: Design schemas in modular, reusable components
+- **Extensibility**: Build schemas that can evolve with changing requirements
+- **Maintainability**: Design schemas that are easy to understand and modify
+
+#### Performance Considerations
+- **Query Patterns**: Design schemas to support common query patterns
+- **Indexing Strategy**: Consider indexing requirements during design
+- **Data Volume**: Plan for expected data volume and growth
+- **Access Patterns**: Optimize for expected access patterns
+
+### Common Pitfalls to Avoid
+
+#### Design Mistakes
+- **Over-normalization**: Excessive normalization can hurt performance
+- **Under-normalization**: Insufficient normalization can cause data redundancy
+- **Poor Naming**: Unclear or inconsistent naming creates confusion
+- **Ignoring Cardinality**: Incorrect cardinality leads to data integrity issues
+
+#### Performance Issues
+- **Deep Hierarchies**: Excessively deep relationship hierarchies
+- **Large Properties**: Storing large data in node properties
+- **Missing Indexes**: Forgetting to plan for indexing requirements
+- **Inefficient Queries**: Not considering query patterns during design
+
+## Advanced Features
+
+### Schema Inheritance
+- **Base Types**: Create base node types with common properties
+- **Type Extension**: Extend base types for specialized use cases
+- **Property Inheritance**: Inherit properties from parent types
+- **Relationship Inheritance**: Inherit relationship patterns
+
+### Schema Versioning
+- **Version Control**: Track schema changes over time
+- **Migration Planning**: Plan for schema migrations and updates
+- **Backward Compatibility**: Maintain compatibility with existing data
+- **Change Management**: Manage schema changes systematically
+
+### Schema Documentation
+- **Auto-Documentation**: Generate documentation from schema definitions
+- **Visual Documentation**: Create visual schema diagrams
+- **API Documentation**: Generate API documentation from schema
+- **User Guides**: Create user guides for schema usage
+
+## Integration with Other Features
+
+### Workflow Integration
+- **Schema-Based Workflows**: Design workflows based on schema definitions
+- **Type Validation**: Validate workflow data against schema
+- **Property Mapping**: Map XML data to schema properties
+- **Relationship Creation**: Create relationships based on schema definitions
+
+### XML Import Integration
+- **Schema Mapping**: Map XML structures to graph schemas
+- **Type Detection**: Automatically detect node types from XML
+- **Property Extraction**: Extract XML attributes to schema properties
+- **Relationship Inference**: Infer relationships from XML hierarchy
+
+### AI Integration
+- **Schema Suggestions**: Get AI suggestions for schema improvements
+- **Automated Design**: Use AI to generate complete schemas
+- **Optimization Recommendations**: Receive optimization suggestions
+- **Best Practice Guidance**: Get guidance on schema best practices
+
+---
+
+Model Schema Creation in Plexus Builder provides a powerful, intuitive interface for designing graph database schemas. By combining visual design tools with AI assistance and semantic integration, researchers can create high-quality, standards-compliant schemas that support their specific research needs while following best practices for graph database design.

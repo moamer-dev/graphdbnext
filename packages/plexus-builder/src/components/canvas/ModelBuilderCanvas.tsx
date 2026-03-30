@@ -37,7 +37,7 @@ import { Relationship } from '../../types'
 interface ModelBuilderCanvasProps {
   className?: string
   sidebarOpen?: boolean
-  onToggleSidebar?: () => void
+  onToggleSidebar?: (open?: boolean) => void
   onRegisterFocusApi?: (api: (nodeId: string) => void) => void
   onRegisterFocusRelationshipApi?: (api: (relId: string) => void) => void
   onSwitchTab?: (tab: 'nodes' | 'relationships' | 'tools' | 'actions') => void
@@ -100,7 +100,9 @@ const ModelBuilderCanvasInner = ({
     onSelectionChange
   } = useCanvasSelection({
     isUpdatingSelectionRef,
-    onSwitchTab: onSwitchTab as any
+    onSwitchTab: onSwitchTab as any,
+    onToggleSidebar,
+    sidebarOpen
   })
 
   // Hook 4: Connection Handling
@@ -287,7 +289,7 @@ function CanvasToolbarInner({
 }: {
   canvasRef: React.RefObject<HTMLDivElement | null>
   sidebarOpen?: boolean
-  onToggleSidebar?: () => void
+  onToggleSidebar?: (open?: boolean) => void
   showGrid?: boolean
   snapToGrid?: boolean
   onGridToggle?: (enabled: boolean) => void

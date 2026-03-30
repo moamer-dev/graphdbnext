@@ -1,10 +1,10 @@
-# GraphDBNext Documentation
+# Plexus Documentation
 
-This is the official documentation website for GraphDBNext, built with Next.js and Fumadocs.
+This is the official documentation website for Plexus, built with Next.js and Fumadocs.
 
 ## About
 
-GraphDBNext is a modern graph database management platform that provides tools for creating, visualizing, and analyzing graph databases. This documentation site contains comprehensive guides, API references, and tutorials to help you get the most out of GraphDBNext.
+Plexus is a modern graph database management platform that provides tools for creating, visualizing, and analyzing graph databases. This documentation site contains comprehensive guides, API references, and tutorials to help you get the most out of Plexus.
 
 ## Technology Stack
 
@@ -105,10 +105,10 @@ npm run build
 
 ```bash
 # Build Docker image
-docker build -t graphdbnext-docs .
+docker build -t plexus-docs .
 
 # Run container
-docker run -p 3000:3000 graphdbnext-docs
+docker run -p 3000:3000 plexus-docs
 ```
 
 ## Customization
@@ -141,15 +141,15 @@ To contribute to the documentation:
 
 ## Support
 
-For questions about GraphDBNext:
+For questions about Plexus:
 
-- Visit the main [GraphDBNext repository](https://github.com/your-org/graphdbnext)
+- Visit the main [Plexus repository](https://github.com/your-org/plexus)
 - Check the [FAQ section](/docs/faq)
 - Contact the support team
 
 ## License
 
-This documentation is licensed under the same terms as GraphDBNext.
+This documentation is licensed under the same terms as Plexus.
 
 ---
 

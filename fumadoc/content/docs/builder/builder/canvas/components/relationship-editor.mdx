@@ -1,0 +1,218 @@
+---
+title: Relationship Editor
+description: Specialized interface for configuring node connections with semantic enrichment
+---
+
+# Relationship Editor
+
+The Relationship Editor provides a specialized interface for configuring connections between nodes in your graph schema. It offers comprehensive tools for defining relationship types, setting cardinality, and integrating with TIB terminology service for semantic consistency.
+
+## Overview
+
+The Relationship Editor enables you to:
+- **Configure Connection Types**: Define how nodes are related
+- **Set Cardinality Rules**: Establish one-to-one, one-to-many relationships
+- **Map to TIB Terminology**: Use standardized relationship terminology
+- **Manage Properties**: Add relationship-specific attributes
+- **Validate Connections**: Ensure semantic consistency
+
+## Visual Interface
+
+<Mermaid chart="
+flowchart TD
+    subgraph RelationshipEditor[Relationship Editor Layout]
+        A[Connection Header] --> B[Node Overview]
+        B --> C[Type Configuration]
+        C --> D[Cardinality Settings]
+        D --> E[Semantic Mapping]
+        E --> F[Properties Management]
+        F --> G[TIB Recommendations]
+    end
+    
+    subgraph Connection[Connection Details]
+        H[Source Node] --> I[Target Node]
+        I --> J[Relationship Direction]
+        J --> K[Connection Status]
+    end
+    
+    subgraph Semantic[TIB Integration]
+        L[Standard Types] --> M[Property Mapping]
+        M --> N[Validation Rules]
+        N --> O[Contextual Suggestions]
+    end
+    
+    B --> Connection
+    E --> Semantic
+" />
+
+## Key Features
+
+### Connection Overview
+- **Node Identification**: Clear display of connected nodes
+- **Visual Direction**: Indicate relationship flow
+- **Connection Status**: Show configuration completeness
+- **Quick Actions**: Common relationship operations
+
+### Relationship Configuration
+- **Type Selection**: Choose from predefined relationship types
+- **Custom Types**: Create domain-specific relationship types
+- **Direction Control**: Set bidirectional or unidirectional flow
+- **Label Management**: Edit relationship display names
+
+### Cardinality Management
+- **One-to-One**: Single connections between nodes
+- **One-to-Many**: Hub-spoke relationship patterns
+- **Many-to-Many**: Complex relationship networks
+- **Conditional Rules**: Context-dependent cardinality
+
+### Semantic Integration with TIB
+- **Standard Types**: Access TIB terminology for relationships
+- **Property Mapping**: Map relationship attributes to standards
+- **Validation**: Ensure semantic correctness
+- **Recommendations**: Get AI-powered type suggestions
+
+### Properties Configuration
+- **Attribute Management**: Add relationship-specific properties
+- **Type Validation**: Ensure data type consistency
+- **Default Values**: Set automatic property assignments
+- **Inheritance Rules**: Propagate properties from types
+
+## User Workflow
+
+### Step 1: Select Relationship
+Click on any connection line in the canvas to open the Relationship Editor. The editor will display:
+
+- **Source Node**: The originating node
+- **Target Node**: The destination node
+- **Current Type**: Existing relationship type
+- **Configuration Status**: Validation indicators
+
+### Step 2: Configure Basic Settings
+Set up the fundamental relationship parameters:
+
+1. **Relationship Type**: Choose from available types or create custom
+2. **Direction**: Set the flow direction
+3. **Label**: Edit the display name
+4. **Description**: Add explanatory notes
+
+### Step 3: Set Cardinality
+Define the connection constraints:
+
+- **Select Cardinality Type**: One-to-one, one-to-many, many-to-many
+- **Configure Rules**: Set specific constraints
+- **Add Conditions**: Context-dependent requirements
+- **Test Scenarios**: Validate with sample data
+
+### Step 4: Enable Semantic Mode
+Activate TIB terminology integration:
+
+1. **Toggle Semantic Mode**: Enable TIB service access
+2. **Select Ontology**: Choose appropriate terminology set
+3. **Map to Standards**: Connect to TIB relationship types
+4. **Validate Mapping**: Ensure semantic correctness
+
+### Step 5: Configure Properties
+Add relationship-specific attributes:
+
+- **Add Properties**: Create new attributes
+- **Set Types**: Define data types and constraints
+- **Default Values**: Establish automatic assignments
+- **Validation Rules**: Set up data validation
+
+### Step 6: Apply Recommendations
+Use intelligent suggestions:
+
+- **Review Suggestions**: Consider AI-powered recommendations
+- **Apply Changes**: Accept relevant improvements
+- **Customize**: Modify suggestions as needed
+- **Validate**: Test final configuration
+
+## Advanced Features
+
+### Conditional Relationships
+Create relationships that appear based on specific conditions:
+
+- **Context Rules**: Environment-dependent connections
+- **Data Conditions**: Value-based relationship creation
+- **Temporal Rules**: Time-based relationship validity
+- **User Preferences**: Customizable relationship visibility
+
+### Relationship Templates
+Create reusable relationship patterns:
+
+- **Save Templates**: Store common configurations
+- **Apply Templates**: Quick setup for standard relationships
+- **Customize**: Modify templates for specific needs
+- **Share**: Distribute templates across projects
+
+### Validation Engine
+Comprehensive relationship validation:
+
+- **Semantic Checks**: Ensure TIB compliance
+- **Structural Rules**: Validate graph structure
+- **Data Integrity**: Check data consistency
+- **Performance**: Optimize relationship queries
+
+## TIB Terminology Integration
+
+### Real-Time Lookup
+Search TIB terminology as you configure relationships:
+
+- **Typeahead Search**: Find relevant terms quickly
+- **Context Filtering**: See only applicable terminology
+- **Multi-Language Support**: Work in different languages
+- **Version Control**: Track terminology changes
+
+### Semantic Validation
+Ensure your relationships follow established standards:
+
+- **Compliance Checking**: Validate against TIB rules
+- **Suggestion Engine**: Get improvement recommendations
+- **Error Reporting**: Identify semantic issues
+- **Correction Guidance**: Get fix suggestions
+
+### Property Mapping
+Connect relationship properties to standard attributes:
+
+- **Auto-Mapping**: Suggest standard property mappings
+- **Custom Mapping**: Create domain-specific connections
+- **Validation**: Ensure mapping correctness
+- **Documentation**: Generate mapping reports
+
+## Best Practices
+
+### Relationship Design
+- **Clear Naming**: Use descriptive, consistent names
+- **Appropriate Types**: Choose relationship types carefully
+- **Cardinality Planning**: Design scalable relationship patterns
+- **Documentation**: Maintain clear relationship descriptions
+
+### Semantic Integration
+- **Standard Compliance**: Follow TIB terminology standards
+- **Consistent Mapping**: Use uniform property mappings
+- **Validation**: Regular semantic validation checks
+- **Updates**: Keep terminology mappings current
+
+### Performance Optimization
+- **Efficient Queries**: Design for query performance
+- **Indexing Strategy**: Plan relationship indexing
+- **Caching**: Cache frequently accessed relationships
+- **Monitoring**: Track relationship query performance
+
+## Troubleshooting
+
+### Common Issues
+- **Invalid Types**: Resolve terminology conflicts
+- **Cardinality Errors**: Fix relationship constraint issues
+- **Mapping Problems**: Correct property mapping errors
+- **Performance Issues**: Optimize relationship queries
+
+### Validation Errors
+- **Semantic Conflicts**: Resolve terminology inconsistencies
+- **Structural Issues**: Fix graph structure problems
+- **Data Problems**: Correct data type mismatches
+- **Configuration Errors**: Fix setup issues
+
+---
+
+The Relationship Editor provides a comprehensive, user-friendly environment for configuring node connections with powerful semantic integration through TIB terminology service, ensuring your graph relationships are both functionally correct and semantically consistent.

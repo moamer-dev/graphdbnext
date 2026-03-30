@@ -1,0 +1,310 @@
+---
+title: Model Schema Import
+description: Complete guide to importing, managing, and visualizing graph model schemas in Plexus
+---
+
+# Model Schema Import and Management
+
+This guide covers everything you need to know about importing, managing, and visualizing graph model schemas in Plexus Platform. You'll learn how to upload schemas, download templates, and work with the model visualization interface.
+
+## Overview
+
+Plexus supports two primary ways to create graph models:
+1. **Upload Schema**: Import existing schemas from JSON or Markdown files
+2. **Create Model**: Design schemas visually using the Plexus Builder canvas
+
+## 1. Downloading Schema Templates
+
+Before importing, it's helpful to understand the expected schema format by downloading templates.
+
+### Template Types
+
+#### JSON Template
+- **Format**: Structured JSON with nodes, relations, and properties
+- **Best for**: Programmatic generation, API integration, exact schema control
+- **Validation**: Strict JSON schema validation during upload
+
+#### Markdown Template
+- **Format**: Human-readable Markdown with structured sections
+- **Best for**: Documentation, collaborative editing, version control
+- **Processing**: Automatically converted to JSON during import
+
+### How to Download Templates
+
+1. **Navigate**: Dashboard → Model Schema → Download Templates
+2. **Choose Format**: 
+   - Click "Download JSON Template" for structured format
+   - Click "Download MD Template" for documentation format
+3. **File Location**: Templates download to your default downloads folder
+
+### Template Structure
+
+#### JSON Template Structure
+```json
+{
+  "version": "1.0",
+  "lastUpdated": "2024-01-01T00:00:00.000Z",
+  "source": "user-uploaded",
+  "nodes": {
+    "NodeName": {
+      "name": "NodeName",
+      "superclassNames": [],
+      "properties": {
+        "id": {
+          "name": "id",
+          "datatype": "string",
+          "values": [],
+          "required": true
+        }
+      },
+      "relationsOut": {
+        "relationName": ["TargetNode"]
+      },
+      "relationsIn": {}
+    }
+  },
+  "relations": {
+    "relationName": {
+      "name": "relationName",
+      "properties": {},
+      "domains": {
+        "SourceNode": ["TargetNode"]
+      }
+    }
+  }
+}
+```
+
+#### Markdown Template Structure
+```markdown
+# Graph Database Schema Template
+
+## NODES
+
+### NodeName
+**Description**: Brief description of what this node represents.
+
+**Properties**:
+- `propertyName` (datatype: string, required: true/false)
+
+**Relations Out**:
+- `relationName` → [TargetNode](./Nodes/TargetNode.md)
+
+## RELATIONS
+
+### relationName
+**Description**: What this relation represents.
+
+**Properties**:
+- `propertyName` (datatype: string, required: true/false)
+
+**Domains**:
+- [SourceNode](./Nodes/SourceNode.md) → [TargetNode](./Nodes/TargetNode.md)
+```
+
+## 2. Uploading Schema Files
+
+### Access Upload Interface
+
+1. **Navigate**: Dashboard → Model Schema → Upload Schema
+2. **URL**: `/dashboard/graph/model?action=upload`
+
+### Supported File Formats
+
+#### JSON Files (.json)
+- **Mime Type**: `application/json`
+- **File Size**: Up to 10MB
+- **Encoding**: UTF-8
+- **Validation**: Strict JSON schema validation
+
+#### Markdown Files (.md, .markdown)
+- **Mime Type**: `text/markdown` or `text/plain`
+- **File Size**: Up to 10MB
+- **Encoding**: UTF-8
+- **Processing**: Automatic conversion to JSON
+
+### Upload Process
+
+1. **Select File**: Click "Choose File" or drag-and-drop
+2. **Validate**: System automatically validates schema structure
+3. **Preview**: Review parsed schema before confirmation
+4. **Create Model**: Assign name and description
+5. **Save**: Model is created and added to your model library
+
+### Validation Rules
+
+#### Required Fields
+- **Nodes**: Must have at least one node definition
+- **Node Properties**: Each node must have `name` and `properties` object
+- **Relations**: Relation definitions must reference existing nodes
+
+#### Data Types
+- **String**: Text values
+- **Integer**: Whole numbers
+- **Float**: Decimal numbers
+- **Boolean**: true/false values
+- **Date**: ISO date strings
+- **Array**: Lists of values
+
+#### Naming Conventions
+- **Node Names**: CamelCase (e.g., `Person`, `Document`)
+- **Relation Names**: camelCase (e.g., `connectsTo`, `belongsTo`)
+- **Property Names**: camelCase (e.g., `firstName`, `createdAt`)
+
+## 3. Model Management
+
+### Browse Models
+
+#### Access Model Library
+- **Path**: `/dashboard/graph/model?view=grid`
+- **Features**:
+  - Grid view with model cards
+  - Search and filter capabilities
+  - Quick access to model actions
+  - Model metadata display
+
+### Model Details View
+
+#### Access Individual Model
+- **Path**: `/dashboard/graph/model/[id]`
+- **Components**: Based on `app/dashboard/graph/model/[id]/page.tsx`
+
+#### Schema Visualization
+- **Component**: `ModelVisualization`
+- **Features**:
+  - Interactive node and relationship display
+  - Zoom and pan capabilities
+  - Node property inspection
+  - Relationship type visualization
+
+### Model Actions
+
+#### Edit Model
+- **Button**: "Edit" in model detail view
+- **Destination**: `/dashboard/graph/model/[id]/edit`
+- **Integration**: Opens Plexus Builder canvas
+- **Functionality**: Visual schema editing
+
+#### Delete Model
+- **Button**: "Delete" with confirmation dialog
+- **Safety**: Requires confirmation before deletion
+- **Irreversible**: Cannot undo model deletion
+
+## 4. Schema Visualization
+
+### ModelVisualization Component
+
+#### Display Features
+- **Nodes**: Rendered as labeled shapes
+- **Relationships**: Rendered as connecting lines
+- **Properties**: Accessible through node interaction
+- **Layout**: Automatic graph layout algorithm
+
+#### Interactive Elements
+- **Node Selection**: Click to view node details
+- **Node Relationship View**: Double-click to show relationships from selected node
+- **Zoom Controls**: Mouse wheel or controls
+- **Pan**: Click and drag to move viewport
+- **Fit to Screen**: Auto-adjust view to show entire graph
+
+### Error Handling
+
+#### Missing Schema Data
+- **Alert**: "No schema data available for this model"
+- **Fallback**: Empty state with database icon
+- **Action**: Suggest editing or re-uploading schema
+
+#### Conversion Errors
+- **MD to JSON**: Automatic conversion with error handling
+- **Validation**: Schema structure validation
+- **User Feedback**: Toast notifications for errors
+
+## 5. Integration with Plexus Builder
+
+### Edit Workflow
+1. **Access**: Click "Edit" in model detail view
+2. **Redirect**: Navigate to Plexus Builder canvas
+3. **Load Schema**: Current schema loaded into visual editor
+4. **Modify**: Make changes using visual tools
+5. **Save**: Updates model with new schema
+
+### Canvas Features
+- **Visual Node Creation**: Drag-and-drop node creation
+- **Relationship Drawing**: Click-and-drag relationship creation
+- **Property Editing**: Inline property configuration
+- **Real-time Validation**: Immediate schema validation
+- **Export Options**: Save as JSON or Markdown
+
+## 6. Best Practices
+
+### Schema Design
+- **Start Simple**: Begin with essential nodes and relationships
+- **Iterative Development**: Add complexity gradually
+- **Consistent Naming**: Use established naming conventions
+- **Documentation**: Include descriptions for all elements
+
+### File Management
+- **Version Control**: Keep schema files in Git
+- **Backup**: Regular backups of important schemas
+- **Template Usage**: Start from official templates
+- **Validation**: Validate schemas before upload
+
+### Performance Considerations
+- **Large Schemas**: Consider splitting complex models
+- **File Size**: Keep files under 10MB for better performance
+- **Optimization**: Remove unused nodes and relationships
+- **Caching**: System caches parsed schemas for faster access
+
+## 7. Troubleshooting
+
+### Common Upload Issues
+
+#### File Format Errors
+**Problem**: "Invalid file format" message
+**Solution**: 
+- Ensure file is valid JSON or Markdown
+- Check file extension (.json or .md)
+- Verify UTF-8 encoding
+
+#### Schema Validation Errors
+**Problem**: "Schema validation failed" message
+**Solution**:
+- Review required fields in template
+- Check node and relationship references
+- Validate data type specifications
+
+#### Large File Issues
+**Problem**: Upload timeout or failure
+**Solution**:
+- Reduce file size under 10MB
+- Split large schemas into multiple files
+- Check network connectivity
+
+### Visualization Issues
+
+#### Missing Graph Display
+**Problem**: Empty visualization area
+**Solution**:
+- Check if schema data exists
+- Verify schema normalization
+- Refresh the page
+
+#### Layout Problems
+**Problem**: Overlapping nodes or poor layout
+**Solution**:
+- Clear browser cache
+- Try zooming in/out
+- Report complex layout issues
+
+### Conversion Issues
+
+#### Markdown to JSON Errors
+**Problem**: "Failed to convert Markdown schema"
+**Solution**:
+- Use JSON template instead
+- Check Markdown syntax
+- Verify required sections exist
+
+---
+
+*Related: [Dashboard Guide](./dashboard), [Plexus Builder Guide](./plexus-builder), [Roles and Permissions](./roles-and-permissions)*

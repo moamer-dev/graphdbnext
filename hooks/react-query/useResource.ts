@@ -193,7 +193,7 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
   }
 
   // Hook: Create
-  function useCreate (options?: { onSuccess?: (data: T) => void }) {
+  function useCreate (options?: { onSuccess?: (data: T) => void; redirect?: boolean; showToast?: boolean }) {
     const queryClient = useQueryClient()
     const router = useRouter()
 
@@ -218,10 +218,11 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
           queryClient.setQueryData(config.queryKeys.detail(item.id), data)
         }
         
-        toast.success(`${config.resourceName} created successfully`)
+        if (options?.showToast !== false) {
+          toast.success(`${config.resourceName} created successfully`)
+        }
         
-        // Navigate to the new item if viewPath is configured
-        if (viewPath && item?.id) {
+        if (options?.redirect !== false && viewPath && item?.id) {
           router.push(`${viewPath}/${item.id}`)
         }
         
@@ -236,7 +237,7 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
   }
 
   // Hook: Update
-  function useUpdate () {
+  function useUpdate (options?: { showToast?: boolean }) {
     const queryClient = useQueryClient()
 
     return useMutation({
@@ -258,7 +259,9 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
         // Invalidate lists to ensure consistency
         queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
         
-        toast.success(`${config.resourceName} updated successfully`)
+        if (options?.showToast !== false) {
+          toast.success(`${config.resourceName} updated successfully`)
+        }
       },
       onError: (error: Error) => {
         toast.error(error.message || `Failed to update ${config.resourceName}`)

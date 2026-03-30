@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Eye, Edit, Trash2, Calendar, User } from 'lucide-react'
+import { MoreHorizontal, Eye, Edit, Trash2, Calendar, User, FileText, GitBranch } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import type { Model } from '@/resources/ModelResource'
 
@@ -89,6 +89,16 @@ export function ModelCard ({ model, onView, onEdit, onDelete }: ModelCardProps) 
             <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 border-border/50 bg-muted/30">
               v{model.version}
             </Badge>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground/70">
+            <div className="flex items-center gap-1">
+              <FileText className="h-3 w-3 opacity-60" />
+              <span>{model.noteCount || 0} notes</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <GitBranch className="h-3 w-3 opacity-60" />
+              <span>{model.relationCount || 0} relations</span>
+            </div>
           </div>
           <div className="space-y-0.5 text-[11px] text-muted-foreground/70">
             <div className="flex items-center gap-1.5">

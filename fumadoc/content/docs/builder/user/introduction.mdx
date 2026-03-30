@@ -1,0 +1,38 @@
+---
+title: Introduction to Visual Modeling
+description: How to use the Plexus Builder canvas to design your graph schema
+---
+
+# Introduction to Visual Modeling
+
+The **Plexus Builder** provides a distraction-free, visual environment for designing graph databases. Whether you're modeling a simple network or a complex research workflow, the builder makes it intuitive.
+
+## The Canvas
+
+The central area is your **Canvas**. This is where you draw your graph model.
+
+- **Creating Nodes**: Drag a node type from the **Palette** (left sidebar) onto the canvas.
+- **Connecting Nodes**: Hover over a node to see its connection handles. Click and drag to another node to create a relationship.
+- **Selection**: Click any node or relationship to open its configuration in the **Inspector** (right sidebar).
+
+## The Palette (Left Sidebar)
+
+The palette contains all the building blocks for your graph:
+
+- **Schema Nodes**: Scientific entities like `Person`, `Place`, or `Event`.
+- **Workflow Tools**: Logic controls like `If/Else` or `Fetch API`.
+- **Automation Actions**: Tasks like `Set Property` or `Create Node`.
+
+## The Inspector (Right Sidebar)
+
+When an item is selected on the canvas, the inspector allows you to tune its behavior:
+
+- **General Metadata**: Change labels, icons, and colors.
+- **Configuration Schema**: Define how this node or action should process your data (e.g., mapping XML attributes to database properties).
+- **Execution Rules**: Toggle logic branches or set mandatory constraints.
+
+## Best Practices
+
+1.  **Start with the Core**: Map your primary entities first (e.g., the main subject of your XML).
+2.  **Iterative Design**: Use the **Generate** button to preview how your current schema transforms your XML data.
+3.  **Use Groups**: Keep complex workflows organized by using the `Action Group` container to cluster related logic.

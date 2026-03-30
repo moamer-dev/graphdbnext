@@ -1,0 +1,956 @@
+---
+title: Design Patterns
+description: Common design patterns and architectural patterns used in Plexus Builder
+---
+
+# Design Patterns
+
+Plexus Builder employs several design patterns to maintain code quality, scalability, and maintainability. This document outlines the key patterns used throughout the codebase.
+
+## Architectural Patterns
+
+### 1. Registry Pattern
+
+The Registry pattern provides a centralized location for registering and retrieving workflow components.
+
+```typescript
+// Real Registry Implementation from registry/workflowRegistry.ts
+import { ActionDefinition, ToolDefinition, CategoryMetadata } from './types'
+import { Boxes } from 'lucide-react'
+
+class WorkflowRegistry {
+  private actions: Map<string, ActionDefinition> = new Map()
+  private tools: Map<string, ToolDefinition> = new Map()
+  private actionCategories: Map<string, CategoryMetadata> = new Map()
+  private toolCategories: Map<string, CategoryMetadata> = new Map()
+
+  registerAction(definition: ActionDefinition) {
+    this.actions.set(definition.id, definition)
+  }
+
+  registerTool(definition: ToolDefinition) {
+    this.tools.set(definition.id, definition)
+  }
+
+  registerActionCategory(category: CategoryMetadata) {
+    this.actionCategories.set(category.id, category)
+  }
+
+  registerToolCategory(category: CategoryMetadata) {
+    this.toolCategories.set(category.id, category)
+  }
+
+  getAction(id: string): ActionDefinition | undefined {
+    return this.actions.get(id)
+  }
+
+  getTool(id: string): ToolDefinition | undefined {
+    return this.tools.get(id)
+  }
+
+  getAllActions(): ActionDefinition[] {
+    return Array.from(this.actions.values())
+  }
+
+  getAllTools(): ToolDefinition[] {
+    return Array.from(this.tools.values())
+  }
+
+  getActionCategories(): CategoryMetadata[] {
+    const registered = Array.from(this.actionCategories.values())
+    const usedIds = new Set(registered.map(c => c.id))
+    
+    // Add any used but unregistered categories
+    this.getAllActions().forEach(action => {
+      if (action.metadata.category && !usedIds.has(action.metadata.category)) {
+        registered.push({
+          id: action.metadata.category,
+          label: action.metadata.category,
+          icon: Boxes as any
+        })
+        usedIds.add(action.metadata.category)
+      }
+    })
+    
+    return registered.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+  }
+}
+
+// Real Usage from registry/actions/definitions.ts
+import { workflowRegistry } from '../workflowRegistry'
+import { ActionDefinition } from '../types'
+import { Edit } from 'lucide-react'
+import { executeSetPropertyAction } from '../../services/workflow/workflowExecutor/actions/propertyActions'
+
+const registerAction = (def: ActionDefinition) => workflowRegistry.registerAction(def)
+
+// Register categories
+workflowRegistry.registerActionCategory({ 
+  id: 'property_actions', 
+  label: 'Property Actions', 
+  icon: Edit, 
+  color: 'text-amber-600', 
+  bgColor: 'bg-amber-100', 
+  order: 2 
+})
+
+// Set Property Action
+registerAction({
+  id: 'action:set-property',
+  metadata: {
+    label: 'Set Property',
+    description: 'Set node property value',
+    icon: Edit,
+    category: 'property_actions',
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-50',
+    order: 1,
+    hidden: false
+  },
+  executor: executeSetPropertyAction,
+  configSchema: [
+    { 
+      name: 'propertyKey', 
+      label: 'Property Key', 
+      type: 'text', 
+      placeholder: 'e.g., name, title' 
+    }
+  ],
+  defaultConfig: { 
+    propertyKey: ''
+  }
+})
+```
+
+**Benefits:**
+- Centralized component management
+- Dynamic registration and discovery
+- Type-safe component retrieval
+- Easy testing and mocking
+
+### 2. Observer Pattern
+
+Used for state management with Zustand stores.
+
+```typescript
+// Real Store Implementation from stores/modelBuilderStore.ts
+import { create } from 'zustand'
+import type { Node, Relationship, ModelBuilderState } from '../types'
+
+interface ModelBuilderActions {
+  // Node actions
+  addNode: (node: Omit<Node, 'id' | 'position'>) => string
+  updateNode: (id: string, updates: Partial<Node>) => void
+  deleteNode: (id: string) => void
+  setNodePosition: (id: string, position: { x: number; y: number }) => void
+
+  // Relationship actions
+  addRelationship: (relationship: Omit<Relationship, 'id'>) => string
+  updateRelationship: (id: string, updates: Partial<Relationship>) => void
+  deleteRelationship: (id: string) => void
+
+  // Selection
+  selectNode: (id: string | null) => void
+  selectRelationship: (id: string | null) => void
+
+  // Metadata
+  updateMetadata: (metadata: Partial<ModelBuilderState['metadata']>) => void
+
+  // Bulk operations
+  clear: () => void
+  loadState: (state: Partial<ModelBuilderState>) => void
+}
+
+interface ModelBuilderStore extends ModelBuilderState, ModelBuilderActions {}
+
+export const useModelBuilderStore = create<ModelBuilderStore>((set, get) => ({
+  // Initial state
+  nodes: [],
+  relationships: [],
+  relationshipTypes: [],
+  groups: [],
+  selectedNode: null,
+  selectedRelationship: null,
+  selectedOntologyId: null,
+  isSemanticEnabled: false,
+  hideUnconnectedNodes: false,
+  rootNodeId: null,
+  metadata: {
+    name: '',
+    description: '',
+    version: '1.0.0'
+  },
+
+  // Node actions
+  addNode: (node) => {
+    const id = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const newNode = { ...node, id, position: { x: 0, y: 0 } }
+    set((state) => ({ nodes: [...state.nodes, newNode] }))
+    return id
+  },
+
+  updateNode: (id, updates) => set((state) => ({
+    nodes: state.nodes.map(node => node.id === id ? { ...node, ...updates } : node)
+  })),
+
+  deleteNode: (id) => set((state) => ({
+    nodes: state.nodes.filter(node => node.id !== id),
+    relationships: state.relationships.filter(rel => rel.from !== id && rel.to !== id),
+    selectedNode: state.selectedNode === id ? null : state.selectedNode
+  })),
+
+  // Relationship actions
+  addRelationship: (relationship) => {
+    const id = `rel_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const newRelationship = { ...relationship, id }
+    set((state) => ({ relationships: [...state.relationships, newRelationship] }))
+    return id
+  },
+
+  // Selection
+  selectNode: (id) => set({ selectedNode: id }),
+  selectRelationship: (id) => set({ selectedRelationship: id }),
+
+  // Bulk operations
+  clear: () => set({
+    nodes: [],
+    relationships: [],
+    selectedNode: null,
+    selectedRelationship: null,
+    rootNodeId: null
+  })
+}))
+
+// Observer Usage in components
+const Component = () => {
+  const nodes = useModelBuilderStore((state) => state.nodes)
+  const addNode = useModelBuilderStore((state) => state.addNode)
+  
+  return (
+    <div>
+      {nodes.map(node => <NodeComponent key={node.id} node={node} />)}
+      <button onClick={() => addNode({ label: 'New Node', type: 'default', properties: [] })}>
+        Add Node
+      </button>
+    </div>
+  )
+}
+```
+
+**Benefits:**
+- Reactive state updates
+- Decoupled state management
+- Easy subscription management
+- Performance optimizations with shallow comparisons
+
+### 3. Factory Pattern
+
+Used for creating AI models and services.
+
+```typescript
+// Real AI Model Factory from ai/models/factory.ts
+import { ChatOpenAI } from '@langchain/openai'
+import { ChatAnthropic } from '@langchain/anthropic'
+import { ChatMistralAI } from '@langchain/mistralai'
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
+import type { AIModelConfig } from '../config/types'
+
+/**
+ * Creates a LangChain chat model based on the AI model configuration
+ */
+export function createChatModel(config: AIModelConfig): BaseChatModel {
+  // Validate API key for providers that require it (except ollama)
+  if (config.provider !== 'ollama' && (!config.apiKey || config.apiKey.trim() === '')) {
+    throw new Error(`API key is required for ${config.provider} provider. Please configure it in AI settings.`)
+  }
+
+  const modelOptions = {
+    temperature: config.temperature ?? 0.7,
+    maxTokens: config.maxTokens ?? 4000,
+    timeout: 30000,
+    ...config.customConfig,
+  }
+
+  switch (config.provider) {
+    case 'openai': {
+      const modelName = getOpenAIModelName(config.modelName)
+      return new ChatOpenAI({
+        modelName,
+        apiKey: config.apiKey || undefined,
+        configuration: config.baseUrl ? { baseURL: config.baseUrl } : undefined,
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+        timeout: modelOptions.timeout,
+      })
+    }
+
+    case 'anthropic': {
+      const modelName = getAnthropicModelName(config.modelName)
+      return new ChatAnthropic({
+        model: modelName,
+        apiKey: config.apiKey || undefined,
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+      })
+    }
+
+    case 'mistral': {
+      const modelName = getMistralModelName(config.modelName)
+      return new ChatMistralAI({
+        model: modelName,
+        apiKey: config.apiKey || undefined,
+        temperature: modelOptions.temperature,
+        maxTokens: modelOptions.maxTokens,
+      })
+    }
+
+    case 'ollama': {
+      return new ChatOllama({
+        model: config.modelName,
+        baseUrl: config.baseUrl || 'http://localhost:11434',
+        temperature: modelOptions.temperature,
+      })
+    }
+
+    default:
+      throw new Error(`Unsupported AI provider: ${config.provider}`)
+  }
+}
+
+// Real Usage from ai/agents/ResearchAssistantAgent.ts
+import { createChatModel } from '../models/factory'
+import type { AISettings } from '../config/types'
+
+export async function invokeResearchAssistant(
+  model: BaseChatModel,
+  input: {
+    message: string
+    context?: ResearchAssistantContext
+  },
+  settings: AISettings
+): Promise<{
+  response: string
+  toolCalls?: Array<{
+    name: string
+    args: Record<string, any>
+    result?: any
+  }>
+}> {
+  // Use factory-created model
+  const chatModel = model || createChatModel(settings.models.model)
+  
+  // Implementation continues...
+}
+```
+
+**Benefits:**
+- Centralized object creation
+- Easy to add new types
+- Type-safe creation
+- Dependency injection support
+
+## Component Patterns
+
+### 1. Variant Pattern with Class Variance Authority
+
+Used for creating flexible UI components with multiple variants.
+
+```typescript
+// Real Button Component from components/ui/button.tsx
+import * as React from 'react'
+import { Slot } from '@radix-ui/react-slot'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '../../utils/cn'
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline'
+      },
+      size: {
+        default: 'h-9 px-4 py-2',
+        sm: 'h-8 rounded-md px-3 text-xs',
+        lg: 'h-10 rounded-md px-8',
+        icon: 'h-9 w-9'
+      }
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default'
+    }
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button'
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = 'Button'
+
+export { Button, buttonVariants }
+```
+
+**Benefits:**
+- Type-safe variant system
+- Flexible styling options
+- Consistent component API
+- Easy to extend with new variants
+
+### 2. Forward Ref Pattern
+
+Used for passing refs to child components.
+
+```typescript
+// Real Input Component from components/ui/input.tsx
+import * as React from 'react'
+import { cn } from '../../utils/cn'
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = 'Input'
+
+export { Input }
+```
+
+**Benefits:**
+- Proper ref forwarding
+- TypeScript type safety
+- Consistent component structure
+- Better accessibility
+
+### 3. Composable Component Pattern
+
+Used for building complex components from smaller pieces.
+
+```typescript
+// Real Dialog Component from components/ui/dialog.tsx
+import * as React from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { X } from 'lucide-react'
+import { cn } from '../../utils/cn'
+
+const Dialog = DialogPrimitive.Root
+const DialogTrigger = DialogPrimitive.Trigger
+const DialogPortal = DialogPrimitive.Portal
+const DialogClose = DialogPrimitive.Close
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      'fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className
+    )}
+    {...props}
+  />
+))
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+))
+DialogContent.displayName = DialogPrimitive.Content.displayName
+
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col space-y-1.5 text-center sm:text-left',
+      className
+    )}
+    {...props}
+  />
+)
+DialogHeader.displayName = 'DialogHeader'
+
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
+      className
+    )}
+    {...props}
+  />
+)
+DialogFooter.displayName = 'DialogFooter'
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      'text-lg font-semibold leading-none tracking-tight',
+      className
+    )}
+    {...props}
+  />
+))
+DialogTitle.displayName = DialogPrimitive.Title.displayName
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn('text-sm text-muted-foreground', className)}
+    {...props}
+  />
+))
+DialogDescription.displayName = DialogPrimitive.Description.displayName
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+}
+```
+
+**Benefits:**
+- Composable component structure
+- Reusable sub-components
+- Consistent API design
+- Easy to customize and extend
+
+## Data Patterns
+
+### 1. Service Layer Pattern
+
+Used for business logic and data operations.
+
+```typescript
+// Real Workflow Service from services/workflow/workflowService.ts
+import { exportWorkflowConfig, WorkflowConfigExport, ImportedWorkflowConfig } from '../../utils/workflowConfigExport'
+import { useModelBuilderStore } from '../../stores/modelBuilderStore'
+import { useToolCanvasStore } from '../../stores/toolCanvasStore'
+import { useActionCanvasStore } from '../../stores/actionCanvasStore'
+import { Node, Relationship } from '../../types'
+
+/**
+ * Service to handle workflow operations like importing and remapping.
+ */
+export const workflowService = {
+  /**
+   * Gets the current workflow configuration from the stores.
+   */
+  getCurrentWorkflowConfig: (): WorkflowConfigExport | null => {
+    try {
+      const state = useModelBuilderStore.getState()
+      const toolState = useToolCanvasStore.getState()
+      const actionState = useActionCanvasStore.getState()
+
+      const configJson = exportWorkflowConfig(
+        state.nodes,
+        state.relationships,
+        toolState.nodes,
+        toolState.edges,
+        actionState.nodes,
+        actionState.edges,
+        state.rootNodeId
+      )
+      return JSON.parse(configJson) as WorkflowConfigExport
+    } catch (error) {
+      console.error('Error exporting workflow config:', error)
+      return null
+    }
+  },
+
+  /**
+   * Applies an imported workflow config to the stores.
+   */
+  applyWorkflowConfig: (config: ImportedWorkflowConfig, nodes: Node[]) => {
+    const { addRelationship } = useModelBuilderStore.getState()
+    const { addNode: addToolNode, addEdge: addToolEdge } = useToolCanvasStore.getState()
+    const { addNode: addActionNode, addEdge: addActionEdge } = useActionCanvasStore.getState()
+    const { setRootNodeId } = useModelBuilderStore.getState()
+
+    // Apply configuration to stores
+    // Implementation details for applying workflow config
+  }
+}
+```
+
+**Benefits:**
+- Centralized business logic
+- Separation of concerns
+- Testable operations
+- Store abstraction
+
+### 2. Executor Pattern
+
+Used for workflow actions and tools execution.
+
+```typescript
+// Real Tool Executor from services/workflow/workflowExecutor/tools/types.ts
+import type { ToolCanvasNode } from '../../../../stores/toolCanvasStore'
+import type { ExecutionContext } from '../types'
+
+export type ToolExecutionResult =
+  | { result: boolean }
+  | { result: boolean; outputPath: string }
+  | { result: string; outputPath: string }
+
+export type ToolExecutor = (tool: ToolCanvasNode, ctx: ExecutionContext) => Promise<ToolExecutionResult>
+
+// Real Action Executor from services/workflow/workflowExecutor/actions/types.ts
+import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
+import type { ExecutionContext, GraphJsonNode, GraphJsonRelationship } from '../types'
+import type { Relationship } from '../../../../types'
+import type { SchemaJson } from '../../../../types/mappingConfig'
+
+export interface ActionExecutionContext extends ExecutionContext {
+  graphNodes: GraphJsonNode[]
+  graphRels: GraphJsonRelationship[]
+  nodeIdCounter: { value: number }
+  relIdCounter: { value: number }
+  relationships: Relationship[]
+  schemaJson: SchemaJson
+  doc: Document
+  createGraphNode: (builderNode: { label: string; properties?: Array<{ key: string; defaultValue?: unknown }> }, element: Element, id: number, options?: { inheritProperties?: boolean }) => GraphJsonNode
+  createRelationship: (from: GraphJsonNode, to: GraphJsonNode, relType: Relationship, properties?: Record<string, unknown>) => GraphJsonRelationship
+  getApiResponseData: (action: ActionCanvasNode) => unknown
+  evaluateTemplate: (value: string, apiResponseData: unknown) => string
+  applyTransforms: (text: string, transforms: Array<{ type: string; [key: string]: unknown }>) => string
+  findElementById: (doc: Document, id: string) => Element | null
+  actionNodes: ActionCanvasNode[]
+  actionEdgesBySource: Map<string, any[]>
+}
+
+export type ActionExecutor = (action: ActionCanvasNode, ctx: ActionExecutionContext) => void
+```
+
+**Benefits:**
+- Consistent execution interface
+- Type-safe operations
+- Composable operations
+- Easy testing
+
+### 3. Configuration Schema Pattern
+
+Used for dynamic form generation and validation.
+
+```typescript
+// Real Configuration Types from registry/types.ts
+import { LucideIcon } from 'lucide-react'
+
+export type FieldType = 
+  | 'text' 
+  | 'number' 
+  | 'boolean' 
+  | 'select' 
+  | 'multiselect' 
+  | 'properties' // For key-value pairs
+  | 'mappings'   // For attribute mappings
+  | 'transforms' // For text transforms
+  | 'separator'  // For visual grouping
+
+export interface FieldOption {
+  label: string
+  value: string
+}
+
+export interface ConfigField {
+  name: string
+  label: string
+  type: FieldType
+  placeholder?: string
+  description?: string
+  details?: string
+  options?: FieldOption[] // For select/multiselect
+  defaultValue?: any
+  required?: boolean
+  // Conditional rendering
+  dependsOn?: string
+  dependsOnValue?: any
+}
+
+export interface ItemMetadata {
+  label: string
+  description: string
+  icon: LucideIcon
+  category: string
+  color?: string
+  bgColor?: string
+  isApiTool?: boolean
+  order?: number
+  hidden?: boolean
+}
+
+export interface BaseDefinition {
+  id: string
+  metadata: ItemMetadata
+  configSchema: ConfigField[]
+  defaultConfig: Record<string, any>
+}
+```
+
+**Benefits:**
+- Type-safe configuration
+- Dynamic form generation
+- Conditional rendering
+- Extensible field types
+
+## Performance Patterns
+
+### 1. LRU Cache Pattern
+
+Used for performance optimization with intelligent caching.
+
+```typescript
+// Real LRU Cache Implementation from services/tibTerminologyService.ts
+class LRUCache<T> {
+  private cache: Map<string, { value: T; timestamp: number }>
+  private maxSize: number
+  private ttl: number // Time to live in milliseconds
+
+  constructor(maxSize: number = 100, ttlMinutes: number = 30) {
+    this.cache = new Map()
+    this.maxSize = maxSize
+    this.ttl = ttlMinutes * 60 * 1000
+  }
+
+  get(key: string): T | null {
+    const item = this.cache.get(key)
+    if (!item) return null
+
+    // Check if expired
+    if (Date.now() - item.timestamp > this.ttl) {
+      this.cache.delete(key)
+      return null
+    }
+
+    // Move to end (LRU)
+    this.cache.delete(key)
+    this.cache.set(key, item)
+    return item.value
+  }
+
+  set(key: string, value: T): void {
+    // Remove oldest if at capacity
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey)
+      }
+    }
+
+    this.cache.set(key, { value, timestamp: Date.now() })
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+// Usage in TIB Terminology Service
+const ontologiesCache = new LRUCache<TibApiResponse<TibOntology>>(50, 30)
+const classesCache = new LRUCache<TibApiResponse<TibClass>>(100, 30)
+```
+
+**Benefits:**
+- Memory-efficient caching
+- Automatic expiration
+- LRU eviction policy
+- Performance optimization
+
+### 2. Lazy Loading Pattern
+
+Used for code splitting and component loading.
+
+```typescript
+// Real Lazy Loading from components/ModelBuilder.tsx
+import { lazy, Suspense } from 'react'
+import { LoadingSpinner } from '../ui/loading-spinner'
+
+const LazyWorkflowBuilder = lazy(() => import('./workflow/WorkflowBuilder'))
+const LazyModelBuilder = lazy(() => import('./ModelBuilder'))
+
+// Usage with Suspense
+const App = () => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <LazyModelBuilder />
+  </Suspense>
+)
+```
+
+**Benefits:**
+- Reduced bundle size
+- Faster initial load
+- On-demand loading
+- Better user experience
+
+## Security Patterns
+
+### 1. API Key Validation Pattern
+
+Used for secure API integration.
+
+```typescript
+// Real API Key Validation from ai/models/factory.ts
+export function createChatModel(config: AIModelConfig): BaseChatModel {
+  // Validate API key for providers that require it (except ollama)
+  if (config.provider !== 'ollama' && (!config.apiKey || config.apiKey.trim() === '')) {
+    throw new Error(`API key is required for ${config.provider} provider. Please configure it in AI settings.`)
+  }
+
+  // Implementation continues...
+}
+```
+
+**Benefits:**
+- Secure API integration
+- Early validation
+- Clear error messages
+- Prevents unauthorized access
+
+### 2. Type Safety Pattern
+
+Used throughout the codebase for type safety.
+
+```typescript
+// Real Type Safety from types/index.ts
+export interface Node {
+  id: string
+  label: string
+  type: string
+  properties: Property[]
+  position: Position
+  groupId?: string
+}
+
+export interface Property {
+  key: string
+  type: PropertyType
+  required: boolean
+  defaultValue?: unknown
+  description?: string
+}
+
+export type PropertyType = 
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  | 'array'
+  | 'object'
+```
+
+**Benefits:**
+- Compile-time type checking
+- Better IDE support
+- Reduced runtime errors
+- Self-documenting code
+
+## Error Handling Patterns
+
+### 1. Try-Catch with Logging Pattern
+
+Used for robust error handling.
+
+```typescript
+// Real Error Handling from services/workflow/workflowService.ts
+export const workflowService = {
+  getCurrentWorkflowConfig: (): WorkflowConfigExport | null => {
+    try {
+      const state = useModelBuilderStore.getState()
+      const toolState = useToolCanvasStore.getState()
+      const actionState = useActionCanvasStore.getState()
+
+      const configJson = exportWorkflowConfig(
+        state.nodes,
+        state.relationships,
+        toolState.nodes,
+        toolState.edges,
+        actionState.nodes,
+        actionState.edges,
+        state.rootNodeId
+      )
+      return JSON.parse(configJson) as WorkflowConfigExport
+    } catch (error) {
+      console.error('Error exporting workflow config:', error)
+      return null
+    }
+  }
+}
+```
+
+**Benefits:**
+- Graceful error handling
+- Logging for debugging
+- Fallback behavior
+- User-friendly experience
+
+These design patterns provide a solid foundation for building maintainable, scalable, and robust applications in Plexus Builder. All patterns shown are implemented in the actual codebase and demonstrate best practices for TypeScript, React, and modern web development.

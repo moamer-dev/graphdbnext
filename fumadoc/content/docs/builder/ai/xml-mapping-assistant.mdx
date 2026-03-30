@@ -1,0 +1,292 @@
+---
+title: XML Mapping Assistant
+description: AI agent for intelligent XML to graph database mapping suggestions
+---
+
+# XML Mapping Assistant
+
+The XML Mapping Assistant is a specialized AI agent that analyzes XML structures (especially TEI, edXML, and other scholarly formats) and suggests intelligent mappings to graph database schemas. It combines domain expertise with semantic understanding to create optimal XML-to-graph transformations.
+
+## Purpose
+
+The assistant helps users bridge the gap between XML document structures and graph database schemas by providing intelligent, context-aware mapping suggestions that preserve semantic meaning while optimizing for graph database efficiency and research workflow requirements.
+
+## Key Capabilities
+
+### XML Structure Analysis
+- **Element Understanding**: Analyzes XML elements and their semantic meaning
+- **Hierarchy Recognition**: Understands XML element hierarchies and relationships
+- **Attribute Processing**: Evaluates XML attributes and their significance
+- **Content Analysis**: Analyzes text content and its structural role
+
+### Semantic Mapping
+- **Domain-Specific Knowledge**: Specialized expertise in TEI, edXML, and scholarly XML formats
+- **Semantic Node Naming**: Suggests researcher-friendly node names (e.g., "Person" not "persName")
+- **Relationship Inference**: Infers relationships based on XML hierarchy and attributes
+- **Property Type Detection**: Determines appropriate property types from XML content
+
+### Research Domain Expertise
+- **TEI Elements**: Understands TEI elements like `<persName>`, `<placeName>`, `<div>`, `<p>`
+- **Scholarly Patterns**: Recognizes common patterns in scholarly XML documents
+- **Bibliographic Structures**: Handles bibliographic and citation structures
+- **Annotation Processing**: Processes scholarly annotations and references
+
+## Input Requirements
+
+### XML Structure Information
+The assistant requires:
+- **XML Schema**: Sample XML structure or element definitions
+- **Element Inventory**: List of available XML elements and attributes
+- **Hierarchy Information**: Parent-child relationships between elements
+- **Content Samples**: Example content for different element types
+
+### Domain Context
+- **Document Type**: Type of XML document (TEI, edXML, custom, etc.)
+- **Research Domain**: Academic field or research area
+- **Usage Requirements**: Intended use cases and analysis requirements
+- **Target Schema**: Desired graph database schema (if available)
+
+## Output Structure
+
+### Mapping Suggestions
+```typescript
+interface RelationshipSuggestion {
+  targetElement: string
+  relationshipType: string
+}
+
+interface NodeSuggestion {
+  elementName: string
+  nodeLabel: string
+  nodeType: string
+  properties?: string[]
+  relationships?: RelationshipSuggestion[]
+}
+
+interface XmlMappingSuggestion {
+  nodes: NodeSuggestion[]
+  explanation: string
+  confidence?: number
+}
+```
+
+### Mapping Categories
+- **Element-to-Node Mappings**: Direct mapping of XML elements to graph nodes
+- **Attribute-to-Property Mappings**: Mapping of XML attributes to node properties
+- **Relationship Suggestions**: Inferred relationships between mapped nodes
+- **Confidence Scoring**: Confidence levels for mapping suggestions
+
+## Configuration and Usage
+
+### Assistant Initialization
+```typescript
+import { XmlMappingAssistant } from '@plexus/builder/ai/agents'
+
+const assistant = new XmlMappingAssistant({
+  model: chatModel,
+  settings: aiSettings
+})
+```
+
+### Mapping Request
+```typescript
+const mappings = await assistant.suggestMappings({
+  xmlStructure: {
+    elements: ["teiCorpus", "TEI", "teiHeader", "fileDesc", "titleStmt", "title", "author", "text", "body", "div", "p"],
+    attributes: ["xml:id", "type", "n", "corresp", "target"],
+    hierarchy: {
+      "teiCorpus": ["TEI"],
+      "TEI": ["teiHeader", "text"],
+      "teiHeader": ["fileDesc"],
+      "fileDesc": ["titleStmt"],
+      "titleStmt": ["title", "author"],
+      "text": ["body"],
+      "body": ["div"],
+      "div": ["p"]
+    }
+  },
+  domain: "tei_documents",
+  targetSchema: {
+    preferredNodes: ["Document", "Person", "Chapter", "Paragraph"]
+  }
+})
+```
+
+## Integration Points
+
+### XML Import Wizard Integration
+- **Automatic Suggestions**: Provides automatic mapping suggestions during XML import
+- **Interactive Refinement**: Allows users to refine and customize AI suggestions
+- **Validation Integration**: Validates mapping suggestions against XML structure
+- **Template Creation**: Creates mapping templates for common XML formats
+
+### Schema Designer Integration
+- **Schema Alignment**: Aligns mapping suggestions with existing graph schemas
+- **Consistency Checking**: Ensures mapping consistency across the schema
+- **Property Type Inference**: Infers appropriate property types from XML content
+- **Relationship Validation**: Validates suggested relationships
+
+### TIB Terminology Integration
+- **Standard Mapping**: Maps XML elements to standardized terminology concepts
+- **Semantic Consistency**: Ensures mappings align with standard semantic models
+- **Cross-Domain Compatibility**: Maintains compatibility with standard ontologies
+- **Terminology Updates**: Incorporates updates from terminology services
+
+## XML Format Specializations
+
+### TEI Document Processing
+**Common TEI Elements**:
+- `<persName>` → "Person" node with name properties
+- `<placeName>` → "Place" node with location properties
+- `<div>` → "Section" or "Chapter" nodes with type attributes
+- `<p>` → "Paragraph" or "TextContent" nodes
+- `<title>` → "title" property on appropriate nodes
+
+**Relationship Inferences**:
+- Parent-child relationships → "CONTAINS" relationships
+- `<corresp>` attributes → "CORRESPONDS_WITH" relationships
+- `<ref>` elements → "REFERENCES" relationships
+
+### edXML Processing
+**Educational Data Elements**:
+- `<learner>` → "Student" or "Learner" nodes
+- `<assessment>` → "Assessment" nodes
+- `<outcome>` → "Result" or "Outcome" nodes
+- `<institution>` → "Institution" nodes
+
+**Educational Relationships**:
+- Enrollment relationships → "ENROLLED_IN"
+- Assessment relationships → "ASSESSED_BY"
+- Completion relationships → "COMPLETED"
+
+### Custom Scholarly XML
+**Pattern Recognition**:
+- Identifies scholarly document patterns
+- Recognizes citation and reference structures
+- Handles annotation and markup patterns
+- Processes metadata structures
+
+## Best Practices
+
+### Mapping Design
+- **Semantic Clarity**: Use node names that clearly express meaning
+- **Domain Standards**: Follow domain-specific mapping standards
+- **Hierarchy Respect**: Preserve XML hierarchy in relationship design
+- **Property Appropriateness**: Choose property types that match XML content
+
+### XML Processing
+- **Namespace Handling**: Handle XML namespaces appropriately
+- **Attribute Processing**: Process XML attributes systematically
+- **Content Extraction**: Extract text content efficiently
+- **Structure Preservation**: Preserve important XML structure information
+
+### Research Considerations
+- **Scholarly Standards**: Follow scholarly data processing standards
+- **Citation Handling**: Process citations and references appropriately
+- **Annotation Processing**: Handle scholarly annotations correctly
+- **Metadata Integration**: Integrate metadata effectively
+
+## Example Use Cases
+
+### TEI Bibliographic Processing
+**XML Structure**: TEI document with bibliographic information
+**Mapping Suggestions**:
+```typescript
+{
+  elementName: "persName",
+  nodeLabel: "Person",
+  nodeType: "Author",
+  properties: ["name", "role"],
+  relationships: [
+    { targetElement: "titleStmt", relationshipType: "AUTHORED" }
+  ]
+}
+```
+
+### Historical Document Processing
+**XML Structure**: Historical documents with people, places, and events
+**Mapping Suggestions**:
+```typescript
+{
+  elementName: "placeName",
+  nodeLabel: "Place", 
+  nodeType: "Location",
+  properties: ["name", "type"],
+  relationships: [
+    { targetElement: "event", relationshipType: "LOCATION_OF" }
+  ]
+}
+```
+
+### Linguistic Analysis
+**XML Structure**: Linguistic annotations and morphological analysis
+**Mapping Suggestions**:
+```typescript
+{
+  elementName: "w",
+  nodeLabel: "Word",
+  nodeType: "Token",
+  properties: ["text", "lemma", "pos"],
+  relationships: [
+    { targetElement: "s", relationshipType: "PART_OF" }
+  ]
+}
+```
+
+## Advanced Features
+
+### Contextual Analysis
+- **Document Type Recognition**: Identifies document types for specialized mapping
+- **Domain Adaptation**: Adapts mapping suggestions to specific domains
+- **Usage Pattern Analysis**: Analyzes usage patterns for optimization
+- **Quality Assessment**: Assesses mapping quality and completeness
+
+### Learning and Adaptation
+- **Pattern Recognition**: Learns from successful mapping patterns
+- **User Feedback**: Incorporates user feedback to improve suggestions
+- **Domain Specialization**: Adapts to specific domain requirements
+- **Continuous Improvement**: Improves suggestions over time
+
+### Validation and Testing
+- **Mapping Validation**: Validates mapping suggestions against XML structure
+- **Consistency Checking**: Ensures mapping consistency across elements
+- **Completeness Analysis**: Analyzes mapping completeness and coverage
+- **Quality Metrics**: Provides quality metrics for mapping suggestions
+
+## Error Handling and Validation
+
+### Input Validation
+- **XML Structure Validation**: Validates XML structure information
+- **Domain Consistency**: Ensures domain information is consistent
+- **Schema Compatibility**: Validates compatibility with target schemas
+- **Requirement Analysis**: Validates mapping requirements and constraints
+
+### Output Validation
+- **Mapping Completeness**: Ensures all elements are appropriately mapped
+- **Relationship Validity**: Validates suggested relationships
+- **Type Appropriateness**: Validates property type suggestions
+- **Semantic Consistency**: Ensures semantic consistency across mappings
+
+### Error Recovery
+- **Partial Results**: Provides partial results when complete analysis fails
+- **Fallback Suggestions**: Offers alternative mapping suggestions
+- **Error Explanation**: Provides clear explanations of mapping errors
+- **Recovery Guidance**: Offers guidance for resolving mapping issues
+
+## Performance Considerations
+
+### Processing Efficiency
+- **Incremental Processing**: Supports incremental mapping updates
+- **Caching**: Caches common mapping patterns and suggestions
+- **Parallel Analysis**: Processes multiple elements in parallel when possible
+- **Optimization**: Optimizes processing for large XML structures
+
+### Resource Management
+- **Memory Optimization**: Optimizes memory usage for large XML analysis
+- **Context Management**: Efficiently manages context for complex mappings
+- **Model Selection**: Uses appropriate AI models for mapping complexity
+- **Resource Monitoring**: Monitors and optimizes resource usage
+
+---
+
+The XML Mapping Assistant provides intelligent, context-aware XML-to-graph mapping suggestions that help users create optimal transformations from XML documents to graph databases. By combining domain expertise with semantic understanding and research workflow knowledge, the assistant ensures that mappings preserve semantic meaning while optimizing for graph database efficiency and research requirements.

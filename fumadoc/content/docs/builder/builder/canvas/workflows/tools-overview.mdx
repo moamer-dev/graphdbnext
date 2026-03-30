@@ -1,0 +1,202 @@
+---
+title: Tools
+description: User-friendly guide to workflow tools organized by categories
+---
+
+Tools are the control flow and external integration components that orchestrate workflow execution in Plexus Builder. Unlike Actions (which modify the graph), Tools are primarily used for logic branching, execution timing, and external data retrieval.
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { GitBranch, Globe, Clock, Zap } from 'lucide-react';
+
+## Tool Categories
+
+<Cards>
+  <Card
+    icon={<GitBranch className="text-blue-500" />}
+    title="Control Flow"
+    description="Manage execution flow with conditional branching and timing control."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#if-else" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">If / Else</a>
+      <a href="#switch" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Switch</a>
+      <a href="#delay" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors no-underline">Delay</a>
+    </div>
+  </Card>
+  <Card
+    icon={<Globe className="text-green-500" />}
+    title="External Services"
+    description="Connect to external APIs, databases, and web services for data retrieval."
+  >
+    <div className="flex flex-wrap gap-2 mt-3">
+      <a href="#fetch-api" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Fetch API</a>
+      <a href="#http-request" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">HTTP Request</a>
+      <a href="#webhook" className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors no-underline">Webhook</a>
+    </div>
+  </Card>
+</Cards>
+
+## Control Flow Tools
+
+Control flow tools manage the execution flow and branching logic of workflows.
+
+### If / Else
+**Purpose**: Enables conditional branching within the workflow. The tool evaluates a set of logic groups; if they evaluate to true, the workflow follows the "Success" path; otherwise, it follows "Failure".
+
+**When to Use**:
+- Branch workflow based on element properties
+- Filter processing based on conditions
+- Create decision trees in workflows
+
+**Key Features**:
+- **Condition Groups**: Logical containers for rules
+- **Multiple Conditions**: Combine conditions with AND/OR logic
+- **Element Evaluation**: Check XML element properties
+- **Flexible Branching**: Success/Failure path routing
+
+**Configuration Options**:
+- **Condition Group**: Logical container for rules
+  - **Outer Operator** (for multiple groups): `AND` (all groups must be true) or `OR` (at least one group must be true)
+  - **Inner Operator** (for multiple conditions within a group): `AND` (all conditions must match) or `OR` (any condition can match)
+- **Condition Types**:
+  - **Has Children**: Checks if the element has child tags. Can filter by specific names
+  - **Has No Children**: Checks if the element is a leaf node
+  - **Has Ancestor**: Checks if a specific tag exists anywhere above the current element
+  - **Has Parent**: Checks if the immediate parent matches a specific tag
+  - **Has Attribute**: Checks for the presence of an attribute (e.g., `xml:id`)
+  - **Attribute Value Equals**: Checks if an attribute exactly matches a string
+  - **ElementName Equals**: Checks if the current tag name matches a string
+  - **Child Count**: Checks if the number of children falls within a Min/Max range
+  - **Has Text Content**: Checks if the element contains non-empty text
+
+### Switch
+**Purpose**: Routes processing through different workflow paths based on a specific value.
+
+**When to Use**:
+- Multi-way branching based on element attributes
+- Route processing based on element types
+- Create case-based workflow logic
+
+**Key Features**:
+- **Value-Based Routing**: Direct flow based on extracted values
+- **Multiple Cases**: Define multiple branching options
+- **Flexible Sources**: Extract values from attributes, names, or text
+- **Case Labels**: Custom output port naming
+
+**Configuration Options**:
+- **Switch On**: Select the data source for the check
+  - `Attribute Value`: Use a specific XML attribute (requires entering the **Attribute Name**)
+  - `Element Name`: Use the tag name of the current element
+  - `Text Content`: Use the inner text of the element
+- **Cases**: List of branching rules
+  - **Match Value**: The literal string to compare against the source
+  - **Case Label**: The name of the output port on the canvas node (e.g., "Entity", "Property")
+
+### Delay
+**Purpose**: Pauses the workflow execution for a specified amount of time.
+
+**When to Use**:
+- Rate-limiting calls to external APIs
+- Add timing control between processing steps
+- Prevent overwhelming external services
+
+**Key Features**:
+- **Non-Blocking**: Uses `setTimeout` to halt execution chain
+- **Configurable Duration**: Set precise wait times
+- **Rate Limiting**: Control API call frequency
+- **Workflow Pacing**: Add deliberate delays
+
+**Configuration Options**:
+- **Delay (milliseconds)**: The wait duration. Default is `1000` (1 second)
+
+## External Services Tools
+
+External services tools connect to external APIs, databases, and web services for data retrieval and integration.
+
+### Fetch API
+**Purpose**: Retrieves structured metadata from external authority files and research databases.
+
+**When to Use**:
+- Enrich data with authoritative metadata
+- Connect to research databases
+- Retrieve structured information from APIs
+
+**Key Features**:
+- **Multiple Providers**: Support for various authority databases
+- **ID Extraction**: Automatically extract identifiers from XML
+- **Data Normalization**: Standardize API responses
+- **Context Storage**: Store results for later use
+
+**Configuration Options**:
+- **API Provider**: Select from `Wikidata`, `GND`, `VIAF`, `ORCID`, `GeoNames`, `Library of Congress`, or `Custom`
+- **ID Source**: How to find the ID to look up
+  - `XML Attribute`: Pick a specific attribute (e.g., `ref="#Q42"`)
+  - `Element Text Content`: Use the tag's inner text
+  - `XPath Expression`: Use a specific path (e.g., `./ancestor::person/@id`)
+- **API Key**: Required for providers like GeoNames or Europeana
+- **Store in Context Key**: Custom name for the data in the context (default is the provider name). Accessible in later actions via `{{ $json["provider_name"] }}`
+- **Request Timeout**: Maximum wait time in milliseconds
+
+### HTTP Request
+**Purpose**: Makes a generic HTTP/HTTPS request to any external endpoint.
+
+**When to Use**:
+- Connect to custom REST APIs
+- Send data to external services
+- Retrieve data from web services
+
+**Key Features**:
+- **Multiple Methods**: Support for GET, POST, PUT, DELETE, PATCH
+- **Authentication**: Multiple auth methods supported
+- **Custom Headers**: Full request customization
+- **Response Handling**: Complete response data preservation
+
+**Configuration Options**:
+- **Method**: `GET`, `POST`, `PUT`, etc.
+- **URL**: The fully qualified endpoint address
+- **Authentication**: Supports `None`, `Bearer Token`, `Basic Auth`, `API Key (Header)`, or `Custom Header`
+- **Headers & Query Params**: Key-value editor for request customization
+- **Body Type**: `json`, `text`, `form-data`, or `x-www-form-urlencoded`
+- **Payload**: The data sent with `POST`/`PUT` requests (supports template tags)
+
+### Webhook
+**Purpose**: Sends an outbound notification to an external system (e.g., Slack, Discord, or a custom microservice).
+
+**When to Use**:
+- Send notifications to external systems
+- Trigger events in other applications
+- Integrate with communication platforms
+
+**Key Features**:
+- **Fire and Forget**: Asynchronous notification support
+- **Custom Payloads**: Flexible data formatting
+- **Multiple Methods**: POST or PUT support
+- **Event Data**: Include workflow context in notifications
+
+**Configuration Options**:
+- **Webhook URL**: The destination listener
+- **Method**: `POST` or `PUT`
+- **Payload**: JSON object representing the event data. Often includes metadata from the current processing state
+
+## Best Practices
+
+### Tool Selection
+- **Start Simple**: Begin with basic control flow tools
+- **Plan Logic**: Design decision trees before implementation
+- **Test Conditions**: Validate branching logic thoroughly
+- **Handle Errors**: Plan for failed external service calls
+
+### External Service Integration
+- **Rate Limiting**: Use Delay tools to prevent API overload
+- **Authentication**: Secure credential management
+- **Error Handling**: Implement retry logic for failed requests
+- **Data Validation**: Verify external data before use
+
+### Performance Optimization
+- **Conditional Logic**: Use efficient condition evaluation
+- **Caching**: Store frequently accessed external data
+- **Async Operations**: Use non-blocking requests where possible
+- **Timeout Management**: Set appropriate timeouts for external calls
+
+---
+
+Tools provide powerful workflow orchestration capabilities, enabling complex data processing pipelines with external service integration and robust error handling. Choose the right tools for your specific requirements and build efficient, maintainable workflows.

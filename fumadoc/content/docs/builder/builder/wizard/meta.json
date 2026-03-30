@@ -1,0 +1,8 @@
+{
+  "title": "Wizard",
+  "collapsible": true,
+  "defaultOpen": false,
+  "pages": [
+    "wizard-overview"
+  ]
+}

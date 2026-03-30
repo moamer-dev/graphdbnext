@@ -1,6 +1,6 @@
 import { IGraphDatabaseService } from './IGraphDatabaseService'
-import { MemgraphAdapter } from './MemgraphAdapter'
-import { Neo4jAdapter } from './Neo4jAdapter'
+import { MemgraphAdapter } from '../../../adapters/MemgraphAdapter'
+import { Neo4jAdapter } from '../../../adapters/Neo4jAdapter'
 
 export type GraphDatabaseType = 'memgraph' | 'neo4j'
 

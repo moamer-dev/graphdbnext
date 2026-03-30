@@ -1,0 +1,532 @@
+---
+title: Create Model Schema
+description: Visual guide to creating graph model schemas using the Plexus Builder canvas
+---
+
+# Create Model Schema
+
+This guide shows you how to create new graph model schemas using the visual Plexus Builder canvas. Design your graph models interactively with nodes, relationships, and properties without writing code.
+
+> [!IMPORTANT]
+> Schema creation focuses on defining the structure of your graph model (nodes and relationships). For generating actual graph data from XML, see our [Graph Generation Guide](./generate-graph).
+
+## Getting Started
+
+### Access the Model Builder
+
+1. **Navigate**: Dashboard → Model Schema → Create Model
+2. **URL**: `/dashboard/graph/model/new`
+3. **Requirements**: Model Builder module must be enabled in Settings
+
+> [!NOTE]
+> If you see "Model Builder module is not enabled," contact your administrator to enable it in Settings → Modules.
+
+### Initial Setup
+
+When you first open the model builder, you'll see:
+
+- **Model Name Field**: Give your model a descriptive name
+- **Visual Canvas**: The main workspace for designing your schema
+- **Header Toolbar**: Semantic mode, tools, and AI options
+- **Side Panels**: Node palette and property editors
+
+## Header Toolbar Features
+
+### Semantic Mode
+
+Enable semantic mode to work with ontologies and standardized vocabularies:
+
+#### Enabling Semantic Mode
+- **Toggle**: Click the "Semantic" switch in the header
+- **Ontology Selection**: Choose from available ontologies
+- **Benefits**: Access predefined classes and properties
+
+#### TIB Terminology Service Integration
+- **Service**: Uses TIB terminology service at https://terminology.tib.eu/ts
+- **Standardized Vocabularies**: Access to professional ontologies and taxonomies
+- **Research-Grade**: High-quality terminology for scientific and technical domains
+- **Interoperability**: Ensures compatibility with external systems and standards
+
+#### Semantic Capabilities
+- **Class Selection**: Choose from standardized ontology classes
+- **Property Mapping**: Map properties to ontology attributes
+- **Validation**: Ensure compliance with semantic standards
+- **Interoperability**: Create models compatible with other systems
+
+### Tools Menu
+
+Access various tools and utilities from the dropdown menu:
+
+#### Import/Export Options
+- **Import Schema**: Upload existing schema files
+- **Import Workflow**: Load workflow configurations
+- **Export JSON**: Download model as JSON
+- **Export Markdown**: Export as documentation
+- **Export RDF/TTL**: Export for semantic web use
+
+#### Templates
+- **Download Node Template**: Get node structure template
+- **Download Relationship Template**: Get relationship template
+
+#### Utilities
+- **Clear Workflow**: Reset current workflow
+- **Show/Hide Toolbar**: Toggle interface elements
+- **Credentials**: Configure API credentials
+
+### AI Agents Panel
+
+Access AI-powered assistance for model design:
+
+#### Available AI Features
+- **Schema Design**: AI suggestions for model structure
+- **Property Recommendations**: Smart property suggestions
+- **Relationship Insights**: AI-recommended relationships
+- **Workflow Generation**: Automated workflow creation
+
+#### Using AI Agents
+1. **Open Panel**: Click AI agents icon in header
+2. **Select Feature**: Choose the AI assistance type
+3. **Provide Context**: Describe your requirements
+4. **Apply Suggestions**: Review and apply AI recommendations
+
+### XML Upload and Generation
+
+Upload XML files to automatically generate graph models:
+
+#### XML Upload Process
+1. **Upload XML**: Click upload button or drag XML file
+2. **Parse Content**: System analyzes XML structure
+3. **Generate Graph**: Automatic graph model creation
+4. **Review Results**: Examine and refine generated model
+
+#### XML Panel Features
+- **File Upload**: Drag-and-drop or click to upload
+- **Content Preview**: View uploaded XML content
+- **Generation Options**: Configure generation settings
+- **Real-time Updates**: See changes as you modify settings
+
+### Workflow Selection and Management
+
+#### Workflow Selector
+- **Location**: Header toolbar next to model name
+- **Purpose**: Choose and manage different workflow configurations
+- **Available Workflows**: Select from existing workflow templates
+- **Current Workflow**: Shows active workflow name and status
+
+#### Workflow Features
+- **Workflow Persistence**: Save and load workflow configurations
+- **Template Library**: Access pre-built workflow templates
+- **Custom Workflows**: Create and modify custom workflows
+- **Workflow Status**: Visual indicators for workflow state
+
+## Tools and Actions Palette
+
+### Understanding Tools and Actions as Workflow Nodes
+
+Tools and Actions are not just UI elements - they are **executable nodes** that become part of your graph generation workflow. When you add tools and actions to your canvas, you're building a workflow that will be executed to process XML data and generate your graph.
+
+### Tools Palette
+
+Tools are executable nodes that perform specific operations during graph generation:
+
+#### Tool Categories
+- **Search Functionality**: Find specific tools quickly
+- **Category Organization**: Tools grouped by function
+
+#### Available Tools
+- **Data Processing**: Tools for transforming and processing XML data
+- **Node Creation**: Tools that create graph nodes from XML elements
+- **Relationship Building**: Tools that establish connections between nodes
+- **Data Validation**: Tools for validating data and schema compliance
+
+#### Tool Execution
+- **Workflow Integration**: Tools become nodes in your execution workflow
+- **Sequential Processing**: Tools execute in sequence as defined by connections
+- **Data Flow**: Output from one tool becomes input for the next
+- **Error Handling**: Tools can handle errors and exceptions during processing
+
+### Actions Palette (Workflow Actions)
+
+Actions are executable nodes that control the flow and behavior of your graph generation:
+
+#### Action Categories
+- **Search Actions**: Find specific workflow actions
+- **Category Filter**: Filter actions by category
+
+#### Workflow Actions
+- **Control Flow**: Actions that control execution flow (conditions, loops)
+- **Data Operations**: Actions for data manipulation and transformation
+- **Validation Actions**: Actions for schema validation and checking
+- **Export Actions**: Actions for exporting results and generating output
+
+#### Action Execution
+- **Conditional Logic**: Actions can make decisions based on data
+- **Branching**: Create different execution paths based on conditions
+- **Integration**: Actions integrate with external services and APIs
+- **State Management**: Actions can maintain and modify workflow state
+
+### Building Workflow Graphs
+
+#### Creating Executable Workflows
+1. **Add Tools**: Drag tools from the Tools palette to the canvas
+2. **Add Actions**: Drag actions from the Actions palette to the canvas
+3. **Connect Nodes**: Create connections between tools and actions
+4. **Configure Nodes**: Set parameters and properties for each node
+5. **Define Flow**: Establish the execution order with connections
+
+#### Workflow Execution Process
+- **Start Node**: Execution begins from designated root nodes
+- **XML Processing**: Tools and actions process XML data sequentially
+- **Graph Generation**: Nodes and relationships are created as the workflow executes
+- **Result Output**: Final graph structure is generated based on workflow execution
+
+#### Execution Context
+- **XML Document**: Tools and actions have access to the XML being processed
+- **Graph Context**: Current state of the graph being generated
+- **Data Flow**: Data passes between connected nodes
+- **Error Context**: Errors are handled and propagated through the workflow
+
+### Workflow Integration
+
+#### Combining Tools and Actions
+- **Tool-Action Sequences**: Combine data processing with control flow
+- **Conditional Processing**: Use actions to control when tools execute
+- **Data Transformation**: Tools transform data, actions control the flow
+- **Error Handling**: Actions can handle errors from tool execution
+
+#### Workflow Execution Features
+- **Run Workflow**: Execute the complete workflow from start to finish
+- **Step-by-Step Debugging**: Execute workflow step by step for debugging
+- **Error Recovery**: Handle and recover from execution errors
+- **Result Validation**: Validate generated graph against expected results
+
+## Model Creation Workflow
+
+### 1. Name Your Model
+
+Start by giving your model a meaningful name:
+
+- **Field Location**: Top of the page
+- **Requirements**: 
+  - Must be unique among your models
+  - Should describe the model's purpose
+  - Examples: "Social Network", "Product Catalog", "Research Data"
+
+### 2. Design Your Schema on Canvas
+
+The visual canvas is where you'll build your graph model:
+
+#### Adding Nodes
+- **Tool**: Select "Add Node" from the toolbar
+- **Action**: Click anywhere on the canvas to place a node
+- **Result**: A new node appears ready for customization
+
+#### Creating Relationships
+- **Tool**: Select "Add Relationship" from the toolbar
+- **Action**: Click and drag from one node to another
+- **Result**: A relationship line connects the two nodes
+
+#### Editing Properties
+- **Action**: Click any node or relationship
+- **Result**: Properties panel opens for customization. (Make sure to enable "Editor" mode in the toolbar)
+- **Options**: Add properties, set data types, define requirements
+
+### 3. Configure Node Properties
+
+Each node in your graph represents a type of entity:
+
+#### Basic Properties
+- **Node Name**: The identifier for this node type
+- **Properties**: Attributes that nodes of this type will have
+
+#### Property Types
+- **Text**: For names, descriptions, and other text data
+- **Number**: For counts, measurements, and numeric values
+- **Date**: For timestamps and dates
+- **Boolean**: For true/false values
+- **List**: For multiple values of the same type
+
+#### Required vs Optional
+- **Required**: Must have a value for every node instance
+- **Optional**: Can be left empty for some node instances
+
+### 4. Configure Relationships
+
+Relationships define how nodes are connected:
+
+#### Relationship Properties
+- **Relationship Name**: Descriptive name for the connection
+- **Direction**: Whether it's one-way or bidirectional
+- **Cardinality**: The number of relationships (e.g., one-to-many, many-to-many)
+
+#### Relationship Examples
+- **Person** → [WRITES] → **Document**
+- **Product** → [BELONGS_TO] → **Category**
+- **User** → [FOLLOWS] → **User**
+
+### 5. Save Your Model
+
+Once you're satisfied with your design:
+
+#### Save Process
+1. **Click Save**: Located in the top toolbar
+2. **Validation**: System checks your schema for completeness
+3. **Confirmation**: Model is saved to your library
+4. **Redirect**: You're taken to the model detail view
+
+#### Auto-Save
+- **Changes Detected**: System tracks unsaved changes
+- **Warning**: Alerts you if you try to leave without saving
+- **Recovery**: Helps prevent losing your work
+
+## Canvas Features
+
+### Navigation
+- **Zoom**: Use mouse wheel or zoom controls
+- **Pan**: Click and drag to move around the canvas
+- **Fit to Screen**: Auto-adjust view to show entire model
+
+### Selection and Editing
+- **Single Click**: Select nodes or relationships
+- **Editor Mode**: When enabled, clicking an element opens its properties panel
+- **Delete**: Remove selected items with Delete key
+
+## Model Builder Interface
+
+### Toolbar Options
+
+#### Primary Tools
+- **Add Node**: Create new node types
+- **Add Relationship**: Connect nodes together
+- **Select Tool**: Move and select elements
+- **Text Tool**: Add labels and annotations
+
+#### View Options
+- **Zoom In/Out**: Adjust canvas zoom level
+- **Fit to View**: Show entire model
+- **Grid Toggle**: Show/hide alignment grid
+- **Fullscreen**: Expand canvas to full screen
+
+### Properties Panel
+
+When you select an element, the properties panel shows:
+
+#### Node Properties
+- **Basic Info**: Name, description, type
+- **Attributes**: List of properties with types
+- **Validation**: Required fields and constraints
+- **Style**: Visual appearance options
+
+#### Relationship Properties
+- **Connection Info**: Source and target nodes
+- **Attributes**: Relationship-specific properties
+- **Cardinality**: One-to-one, one-to-many, etc.
+- **Direction**: Relationship direction rules
+
+## Node Management
+
+### Creating Nodes
+
+#### Using the Node Palette
+- **Access**: Left sidebar node palette
+- **Categories**: Browse node categories and types
+- **Quick Search**: Find specific node types quickly
+
+#### Node Configuration
+- **Basic Properties**: Name, description, type
+- **Semantic Properties**: Map to ontology classes (if semantic mode enabled)
+- **Custom Properties**: Add specific attributes
+- **Validation Rules**: Set required fields and constraints
+
+### Node Properties
+
+#### Standard Properties
+- **Text**: Names, descriptions, identifiers
+- **Number**: Counts, measurements, quantities
+- **Date**: Timestamps, dates, durations
+- **Boolean**: True/false flags
+- **List**: Multiple values of same type
+
+#### Semantic Properties (Semantic Mode)
+- **Ontology Classes**: Select from predefined classes
+- **Standard Attributes**: Use ontology-defined properties
+- **Type Constraints**: Respect ontology type definitions
+- **Relationship Rules**: Follow ontology relationship patterns
+
+### Node Organization
+
+#### Groups
+- **Create Groups**: Organize nodes into functional groups
+- **Add to Groups**: Drag nodes to existing groups or create new ones
+- **Group Management**: Rename and organize groups as needed
+- **Visual Organization**: Groups help structure complex models
+
+#### Root Nodes
+- **Mark as Root**: Designate nodes as starting points for graph traversal
+- **XML Traversal**: Root nodes determine where XML processing begins
+- **Graph Execution**: Executor starts traversing from root nodes
+- **Configuration**: Set root status in node configuration panel
+
+## Relationship Management
+
+### Creating Relationships
+
+#### Visual Connection
+- **Connection Tool**: Select relationship tool from toolbar
+- **Relationship Type**: Choose relationship category
+- **Directionality**: Set one-way or bidirectional connections
+
+#### Relationship Configuration
+- **Name**: Descriptive relationship name
+- **Cardinality**: One-to-one, one-to-many, many-to-many
+- **Constraints**: Validation rules for relationships
+
+### Semantic Relationships
+
+#### Ontology-Based Relationships
+- **Standard Relations**: Use ontology-defined relationship types
+- **Property Mapping**: Map to ontology relationship properties
+- **Domain/Range**: Respect ontology domain and range constraints
+- **Inheritance**: Use ontology inheritance hierarchies
+
+#### Relationship Validation
+- **Type Checking**: Ensure relationships follow ontology rules
+- **Consistency**: Maintain consistency with semantic standards
+- **Compatibility**: Verify compatibility with selected ontologies
+
+## Canvas Workflow
+
+### Canvas Navigation
+
+#### Movement and Zoom
+- **Pan**: Click and drag to move around canvas
+- **Zoom**: Mouse wheel or zoom controls
+- **Fit to Screen**: Auto-adjust view to show entire model
+- **Focus Elements**: Zoom to specific nodes or areas
+
+#### Selection and Editing
+- **Single Selection**: Click to select elements
+
+### Visual Organization
+
+#### Layout Tools
+- **Auto Layout**: Automatic arrangement of nodes
+- **Grid Snap**: Align elements to grid
+- **Hierarchical Layout**: Arrange in tree structures
+- **Force-Directed**: Physics-based layout
+
+#### Styling Options
+- **Node Colors**: Different colors for node types
+- **Relationship Styles**: Different line styles
+- **Labels**: Show/hide element labels
+- **Icons**: Use icons for visual clarity
+
+## AI-Powered Features
+
+### Schema Design Assistant
+
+#### AI Suggestions
+- **Node Recommendations**: Suggest relevant node types
+- **Property Suggestions**: Recommend useful properties
+- **Relationship Insights**: Suggest potential connections
+- **Best Practices**: Provide design recommendations
+
+#### Interactive Assistance
+- **Real-time Suggestions**: Get suggestions as you work
+- **Context-Aware**: AI understands your model context
+- **Learning**: Improves suggestions based on usage **"soon"**
+- **Feedback Loop**: Learn from your acceptance/rejection **"soon"**
+
+## Best Practices
+
+### Planning Your Model
+
+#### Design Principles
+- **Start Simple**: Begin with essential elements
+- **Iterative Development**: Add complexity gradually
+- **Real-World Mapping**: Model should reflect actual data
+- **Future Growth**: Consider expansion possibilities
+
+#### Semantic Modeling
+- **Standard Compliance**: Follow ontology standards
+- **Interoperability**: Ensure compatibility with other systems
+- **Documentation**: Document semantic choices
+- **Validation**: Regular semantic validation
+
+### Naming and Organization
+
+#### Consistent Naming
+- **Nodes**: Use descriptive, consistent names
+- **Relationships**: Use verb-based names
+- **Properties**: Use camelCase conventions
+- **Categories**: Logical categorization
+
+#### Model Organization
+- **Modular Design**: Break large models into modules
+- **Clear Hierarchies**: Organize in logical hierarchies
+- **Documentation**: Add descriptions and examples
+- **Version Control**: Track model changes
+
+## Common Workflows
+
+### Creating a Semantic Model
+1. **Enable Semantic Mode**: Toggle semantic switch
+2. **Select Ontology**: Choose appropriate ontology
+3. **Add Nodes**: Use ontology classes
+4. **Configure Properties**: Map to ontology attributes
+5. **Create Relationships**: Use ontology relationships
+6. **Validate**: Check semantic compliance
+
+### Creating a Basic Model
+1. **Start Canvas**: Create initial nodes
+2. **Add Properties**: Configure node properties
+3. **Create Relationships**: Connect nodes with relationships
+4. **Configure Relationships**: Set relationship properties
+5. **Organize**: Group related nodes
+6. **Save**: Store your model
+
+## Troubleshooting
+
+### Common Issues
+
+#### Canvas Problems
+- **Module Loading**: Ensure Model Builder is enabled
+- **Browser Support**: Use a modern browser
+- **Performance**: Large models may be slow
+- **Memory**: Browser memory limitations
+
+#### Semantic Mode Issues
+- **Ontology Loading**: Ensure ontology is properly loaded
+- **Class Selection**: Check if classes are available
+- **Property Mapping**: Verify property compatibility
+- **Validation Errors**: Review semantic validation messages
+
+#### AI Features Not Working
+- **API Configuration**: Check AI credentials
+- **Network Connection**: Ensure internet connectivity
+- **Service Availability**: Verify AI service status
+- **Permissions**: Check AI feature permissions
+
+### Performance Optimization
+
+#### Large Models
+- **Modular Design**: Split into smaller models
+- **Lazy Loading**: Load components as needed
+- **Canvas Optimization**: Optimize canvas rendering
+- **Memory Management**: Monitor browser memory
+
+## Next Steps
+
+After creating your model schema:
+
+1. **Test Validation**: Run model validation checks
+2. **Generate Graph**: Use XML data to generate actual graph
+3. **Export Options**: Export schema in desired format
+4. **Documentation**: Generate model documentation
+
+> [!IMPORTANT]
+> To generate actual graph data from your schema using XML files, tools, and actions, see our [Graph Generation Guide](./generate-graph).
+
+---
+
+*Related: [Generate Graph](./generate-graph), [Model Schema Import](./model-schema-import), [Dashboard Guide](./dashboard), [Getting Started](./getting-started)*

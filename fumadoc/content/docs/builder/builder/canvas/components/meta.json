@@ -1,0 +1,14 @@
+{
+  "title": "Components",
+  "collapsible": true,
+  "defaultOpen": false,
+  "pages": [
+    "model-builder",
+    "node-editor",
+    "relationship-editor",
+    "tool-editor",
+    "action-editor",
+    "canvas",
+    "sidebars"
+  ]
+}

@@ -136,7 +136,9 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     cancelWorkflowChange,
     triggerSaveInternal,
     setFocusNodeFn,
-    setFocusRelationshipFn
+    setFocusRelationshipFn,
+    isWorkflowVisible,
+    setIsWorkflowVisible
   } = useModelBuilderInternal(props, ref)
 
   return (
@@ -165,6 +167,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         onSave={onSave || onSaveModel ? triggerSaveInternal : undefined}
         hasWorkflowItems={toolNodes.length > 0 || actionNodes.length > 0}
         onClearWorkflow={() => setClearWorkflowDialogOpen(true)}
+        isWorkflowVisible={isWorkflowVisible || false}
+        setIsWorkflowVisible={setIsWorkflowVisible}
         xmlUploadInputRef={ui.fileInputRef}
         onUploadXml={handleUploadXml}
         xmlFile={ui.xmlFile}
@@ -182,6 +186,7 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         showToolbar={showToolbar}
         setShowToolbar={setShowToolbar}
         onOpenCredentials={() => ui.setCredentialsDialogOpen(true)}
+        isNewModel={isNewModel}
       />
 
       <div className="flex h-[calc(100%-56px)] relative">
@@ -209,7 +214,7 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
             <ModelBuilderCanvas
               className="h-full"
               sidebarOpen={ui.sidebarOpen}
-              onToggleSidebar={() => ui.setSidebarOpen(!ui.sidebarOpen)}
+              onToggleSidebar={(open) => ui.setSidebarOpen(open !== undefined ? open : !ui.sidebarOpen)}
               onRegisterFocusApi={setFocusNodeFn}
               onRegisterFocusRelationshipApi={setFocusRelationshipFn}
               onSwitchTab={setLeftTab}

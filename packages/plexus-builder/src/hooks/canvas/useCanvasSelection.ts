@@ -14,11 +14,15 @@ import {
 interface UseCanvasSelectionProps {
   isUpdatingSelectionRef: React.MutableRefObject<boolean>
   onSwitchTab?: (tab: 'nodes' | 'relationships' | 'tools' | 'actions') => void
+  onToggleSidebar?: (open: boolean) => void
+  sidebarOpen?: boolean
 }
 
 export function useCanvasSelection({
   isUpdatingSelectionRef,
-  onSwitchTab
+  onSwitchTab,
+  onToggleSidebar,
+  sidebarOpen
 }: UseCanvasSelectionProps) {
   const {
     selectNode,
@@ -37,6 +41,11 @@ export function useCanvasSelection({
     const isTool = isToolNodeId(node.id)
     const isAction = isActionNodeId(node.id)
     const isMain = isMainNodeId(node.id)
+
+    // Enable sidebar on node click
+    if (!sidebarOpen) {
+      onToggleSidebar?.(true)
+    }
 
     // Ignore if already selected
     if (isMain && node.id === selectedNode) return
@@ -80,7 +89,7 @@ export function useCanvasSelection({
     setTimeout(() => {
       isUpdatingSelectionRef.current = false
     }, 100)
-  }, [selectNode, selectWfNode, selectRelationship, selectToolNode, selectActionNode, selectedNode, selectedWfNodeId, selectedToolNodeId, selectedActionNodeId, onSwitchTab, isUpdatingSelectionRef])
+  }, [selectNode, selectWfNode, selectRelationship, selectToolNode, selectActionNode, selectedNode, selectedWfNodeId, selectedToolNodeId, selectedActionNodeId, onSwitchTab, onToggleSidebar, sidebarOpen, isUpdatingSelectionRef])
 
   const onEdgeClick = useCallback((_e: React.MouseEvent, edge: Edge) => {
     if (edge.id.includes('__attach') || edge.id.startsWith('wfn_')) {
@@ -89,6 +98,11 @@ export function useCanvasSelection({
 
     const isRelationshipEdge = storeRelationships.some((r) => r.id === edge.id)
     if (isRelationshipEdge) {
+      // Enable sidebar on edge click
+      if (!sidebarOpen) {
+        onToggleSidebar?.(true)
+      }
+      
       if (edge.id === selectedRelationship) return
       
       isUpdatingSelectionRef.current = true
@@ -99,9 +113,14 @@ export function useCanvasSelection({
         isUpdatingSelectionRef.current = false
       }, 100)
     }
-  }, [selectRelationship, selectWfNode, selectedRelationship, storeRelationships, onSwitchTab, isUpdatingSelectionRef])
+  }, [selectRelationship, selectWfNode, selectedRelationship, storeRelationships, onSwitchTab, onToggleSidebar, sidebarOpen, isUpdatingSelectionRef])
 
   const onPaneClick = useCallback(() => {
+    // Disable sidebar on pane click
+    if (sidebarOpen) {
+      onToggleSidebar?.(false)
+    }
+    
     isUpdatingSelectionRef.current = true
     selectRelationship(null)
     selectNode(null)
@@ -109,7 +128,7 @@ export function useCanvasSelection({
     setTimeout(() => {
       isUpdatingSelectionRef.current = false
     }, 100)
-  }, [selectRelationship, selectNode, selectWfNode, isUpdatingSelectionRef])
+  }, [selectRelationship, selectNode, selectWfNode, onToggleSidebar, sidebarOpen, isUpdatingSelectionRef])
 
   const onSelectionChange = useCallback((params: { nodes: Node[], edges: Edge[] }) => {
     if (isUpdatingSelectionRef.current) return
@@ -123,6 +142,9 @@ export function useCanvasSelection({
       const shouldProcessEdge = isRelationshipEdge && (firstEdge.id === selectedRelationship || !selectedNode)
       
       if (shouldProcessEdge && firstEdge.id !== selectedRelationship) {
+        if (!sidebarOpen) {
+          onToggleSidebar?.(true)
+        }
         isUpdatingSelectionRef.current = true
         selectRelationship(firstEdge.id)
         selectWfNode(null)
@@ -139,6 +161,9 @@ export function useCanvasSelection({
       if (!isWorkflowNodeId(firstNode.id) && firstNode.id === selectedNode) return
       if (isWorkflowNodeId(firstNode.id) && firstNode.id === selectedWfNodeId) return
 
+      if (!sidebarOpen) {
+        onToggleSidebar?.(true)
+      }
       isUpdatingSelectionRef.current = true
       if (isWorkflowNodeId(firstNode.id)) {
         selectWfNode(firstNode.id)
@@ -152,7 +177,7 @@ export function useCanvasSelection({
       }
       setTimeout(() => { isUpdatingSelectionRef.current = false }, 100)
     }
-  }, [selectNode, selectRelationship, selectWfNode, selectedNode, selectedWfNodeId, selectedRelationship, storeRelationships, onSwitchTab, isUpdatingSelectionRef])
+  }, [selectNode, selectRelationship, selectWfNode, selectedNode, selectedWfNodeId, selectedRelationship, storeRelationships, onSwitchTab, onToggleSidebar, sidebarOpen, isUpdatingSelectionRef])
 
   return {
     onNodeClick,

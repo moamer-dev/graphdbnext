@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { PlayCircle, Loader2, ClipboardList, Download, Database, ChevronDown, Sparkles } from 'lucide-react'
+import { PlayCircle, Loader2, ClipboardList, Download, Database, ChevronDown, Sparkles, AlertCircle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,7 @@ import {
 import type { Node } from '../../types'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { exportDataToTtl, exportDataToRdf } from '../../utils/rdfExportUtils'
+import { useSemanticValidation } from '../../hooks/semantic/useSemanticValidation'
 
 interface RunWorkflowDialogProps {
   open: boolean
@@ -64,6 +65,7 @@ export function RunWorkflowDialog({
   onPushToDB
 }: RunWorkflowDialogProps) {
   const [isPushing, setIsPushing] = useState(false)
+  const { report, isSemanticEnabled } = useSemanticValidation()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,7 +77,20 @@ export function RunWorkflowDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {isSemanticEnabled && !report.overallValid && (
+            <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+              <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold">Semantic Validation Incomplete</p>
+                <p className="text-xs leading-relaxed opacity-90">
+                  The semantic layer is enabled but not fully mapped. 
+                  Building the graph now will result in missing or incorrect semantic metadata.
+                </p>
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
+
             <Label>XML file</Label>
             {xmlFileFromWizard ? (
               <div className="p-3 bg-muted/50 rounded-lg border border-muted">

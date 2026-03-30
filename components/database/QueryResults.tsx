@@ -629,6 +629,31 @@ export function QueryResults({ results, loading, currentQuery, onRefresh }: Quer
                 ) : (
                   <>
                     <DropdownMenuItem
+                      onClick={() => exportToCSV(filteredResults, `query-results-${Date.now()}.csv`)}
+                      disabled={exporting}
+                    >
+                      <FileText className="h-3 w-3 mr-2" />
+                      Export to CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => exportToJSON(filteredResults, `query-results-${Date.now()}.json`)}
+                      disabled={exporting}
+                    >
+                      <FileText className="h-3 w-3 mr-2" />
+                      Export to JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        const visualizationService = new GraphVisualizationService()
+                        const graphData = visualizationService.extractGraphData(filteredResults)
+                        await exportToGraphML(graphData.nodes, graphData.edges, `query-results-${Date.now()}.graphml`)
+                      }}
+                      disabled={exporting}
+                    >
+                      <Network className="h-3 w-3 mr-2" />
+                      Export to GraphML
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={async () => {
                         const svgElement = graphContainerRef.current?.querySelector('svg')
                         if (svgElement) {

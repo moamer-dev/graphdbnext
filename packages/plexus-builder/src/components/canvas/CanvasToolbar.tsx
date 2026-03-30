@@ -88,35 +88,37 @@ export function CanvasToolbar({
   return (
     <TooltipProvider>
       <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10 flex flex-col items-center gap-2 bg-background/95 backdrop-blur-sm border border-border/40 rounded-lg p-1.5 shadow-lg">
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
-                  <Layout className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>Organize Layout</p>
-            </TooltipContent>
-          </Tooltip>
-          <DropdownMenuContent side="left" align="start">
-            <DropdownMenuItem onClick={() => handleOrganize('hierarchical')}>
-              Hierarchical
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleOrganize('grid')}>
-              Grid
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleOrganize('circular')}>
-              Circular
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex h-8 w-8 items-center justify-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                  >
+                    <Layout className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="left" align="start">
+                  <DropdownMenuItem onClick={() => handleOrganize('hierarchical')}>
+                    Hierarchical
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleOrganize('grid')}>
+                    Grid
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleOrganize('circular')}>
+                    Circular
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>Organize Layout</p>
+          </TooltipContent>
+        </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>

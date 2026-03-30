@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme inline {
+  --font-sans: "Inter", var(--font-sans), sans-serif;
+  --font-serif: "EB Garamond", var(--font-serif), serif;
+  
+  /* Primary HSL Values */
+  --color-primary-amber: #f59e0b;
+
+  /* Fumadocs V16 Theme Overrides */
+  --color-fd-background: hsl(0 0% 100%);
+  --color-fd-foreground: hsl(0 0% 0.1%);
+  --color-fd-primary: hsl(38 92% 50%);
+  --color-fd-primary-foreground: hsl(0 0% 100%);
+  --color-fd-accent: hsla(0 0% 50% / 5%);
+  --color-fd-accent-foreground: hsl(0 0% 20%);
+}
+
+:root {
+  --fd-background: 0 0% 100%;
+  --fd-foreground: 0 0% 0.1%;
+  --fd-muted: 0 0% 98%;
+  --fd-primary: 38 92% 50%;
+  --fd-primary-foreground: 0 0% 100%;
+}
+
+.dark {
+  --fd-background: 0 0% 4%; /* Keep dark theme as is */
+  --fd-primary: 38 92% 50%;
+  --fd-primary-foreground: 0 0% 0%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Specific component overrides for Sidebar and TOC */
+#nd-sidebar, .fd-sidebar {
+  --color-fd-primary: hsl(38 92% 50%) !important;
+  --fd-primary: 38 92% 50% !important;
+}
+
+/* Active navigation items */
+.fd-sidebar-item[data-active="true"], 
+#nd-sidebar [data-active="true"] {
+  @apply !text-amber-600 dark:!text-amber-500 !font-bold;
+}
+
+/* Unified Amber Hover for all sidebar items */
+.fd-sidebar-item:hover, 
+#nd-sidebar a:hover {
+  @apply !text-amber-600 dark:!text-amber-500;
+}
+
+/* Ensure active items are also amber by default */
+.fd-sidebar-item[data-active="true"], 
+#nd-sidebar [data-active="true"] {
+  @apply !text-amber-600 dark:!text-amber-500 !font-bold;
+}
+
+/* 
+ * TAILWIND V4 BORDER RESET
+ */
+*, ::before, ::after {
+  border-color: #f1f5f9; 
+}
+
+.dark *, .dark ::before, .dark ::after {
+  border-color: #1e293b;
+}
+
+hr {
+  opacity: 0.2;
+}

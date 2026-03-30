@@ -31,6 +31,8 @@ export const ToolNode = memo(({ data, selected }: NodeProps<ToolNodeData>) => {
   const outputs = data.outputs ?? [{ id: 'output', label: 'Output' }]
   const isIfElse = data.type === 'tool:if'
   
+  const isSwitch = data.type === 'tool:switch'
+  
   // Get icon and color
   const { Icon: ToolIcon, color: iconColor } = data.icon 
     ? { Icon: data.icon, color: data.iconColor || 'text-gray-600' }
@@ -38,16 +40,15 @@ export const ToolNode = memo(({ data, selected }: NodeProps<ToolNodeData>) => {
 
   return (
     <div
-      className={`relative rounded border transition-all bg-white ${
+      className={`relative rounded border transition-all bg-white min-w-[100px] ${
         selected 
           ? 'border-gray-400 border-2 shadow-md' 
           : 'border-gray-300 hover:border-gray-400'
-      }`}
+      } ${isSwitch ? 'flex flex-col pb-1.5' : 'h-[36px]'}`}
       onClick={() => {
-        // Don't stop propagation - let ReactFlow handle the click
-        console.log('[tool-node] click', { label: data.label, type: data.type })
+        // ReactFlow handles selection
       }}
-      style={{ minWidth: 100, padding: '6px 24px 6px 10px' }}
+      style={{ padding: isSwitch ? '6px 0 0 0' : '6px 24px 35px 10px' }}
     >
       {/* Input handles - rectangular grey ports on left */}
       {Array.from({ length: inputs }).map((_, index) => {
@@ -72,15 +73,15 @@ export const ToolNode = memo(({ data, selected }: NodeProps<ToolNodeData>) => {
         )
       })}
 
-      {/* Main content - icon and label in horizontal layout */}
-      <div className="flex items-center gap-1.5 pr-4">
+      {/* Main content - Header section / Tool Identity */}
+      <div className={isSwitch ? "flex items-center gap-1.5 px-2.5 pb-1 pr-7" : "flex items-center gap-1.5 pr-4"}>
         {ToolIcon && (
           <ToolIcon className={`h-3 w-3 ${iconColor} shrink-0`} />
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-[11px] font-medium text-gray-900 truncate">{data.label}</div>
+          <div className={`text-[11px] font-bold text-gray-900 truncate ${isSwitch ? 'leading-tight' : ''}`}>{data.label}</div>
           {data.subtitle && (
-            <div className="text-[9px] text-gray-500 mt-0.5 truncate">{data.subtitle}</div>
+            <div className="text-[9px] text-gray-500 mt-0.5 truncate leading-none">{data.subtitle}</div>
           )}
         </div>
       </div>
@@ -97,44 +98,75 @@ export const ToolNode = memo(({ data, selected }: NodeProps<ToolNodeData>) => {
         <X className="h-2.5 w-2.5" />
       </button>
 
-      {/* Output handles - circular ports on right with labels */}
-      {outputs.map((output, index) => {
-        const totalOutputs = outputs.length
-        const topPosition = totalOutputs === 1 ? '50%' : `${(index + 1) * (100 / (totalOutputs + 1))}%`
-        const isIfElseOutput = isIfElse && (output.id === 'true' || output.id === 'false')
-        const color = isIfElseOutput
-          ? output.id === 'true'
-            ? '#10b981' // green for true
-            : '#ef4444' // red for false
-          : '#6b7280' // grey for regular outputs
-
-        return (
-          <div key={output.id} className="absolute right-0" style={{ top: topPosition, transform: 'translateY(-50%)' }}>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id={output.id}
-              style={{
-                top: '50%',
-                background: color,
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                border: '1px solid white',
-                right: -4
-              }}
-              title={output.label}
-            />
-            <div className="absolute right-1.5 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <span className="text-[8px] font-medium text-gray-600 whitespace-nowrap">
-                -{output.label.toLowerCase()}-
+      {/* Outputs section */}
+      {isSwitch ? (
+        /* Flexible rows for Switch */
+        <div className="mt-1 flex flex-col gap-1 border-t border-gray-100 pt-1.5 pb-1">
+          {outputs.map((output) => (
+            <div key={output.id} className="relative flex items-center justify-end h-5 px-2">
+              <span className="text-[8px] font-semibold text-gray-500 whitespace-nowrap uppercase tracking-tighter opacity-80 mr-1.5">
+                {output.label}
               </span>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={output.id}
+                style={{
+                  top: '50%',
+                  background: '#6b7280',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  border: '1px solid white',
+                  right: -4,
+                  transform: 'translateY(-50%)'
+                }}
+                title={output.label}
+              />
             </div>
-          </div>
-        )
-      })}
+          ))}
+        </div>
+      ) : (
+        /* Original compact handles for other tools */
+        outputs.map((output, index) => {
+          const totalOutputs = outputs.length
+          const topPosition = totalOutputs === 1 ? '50%' : `${(index + 1) * (100 / (totalOutputs + 1))}%`
+          const isIfElseOutput = isIfElse && (output.id === 'true' || output.id === 'false')
+          const color = isIfElseOutput
+            ? output.id === 'true'
+              ? '#10b981' // green for true
+              : '#ef4444' // red for false
+            : '#6b7280' // grey for regular outputs
+
+          return (
+            <div key={output.id} className="absolute right-0" style={{ top: topPosition, transform: 'translateY(-50%)' }}>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={output.id}
+                style={{
+                  top: '50%',
+                  background: color,
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  border: '1px solid white',
+                  right: -4
+                }}
+                title={output.label}
+              />
+              <div className="absolute right-1.5 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <span className="text-[8px] font-medium text-gray-600 whitespace-nowrap">
+                  -{output.label.toLowerCase()}-
+                </span>
+              </div>
+            </div>
+          )
+        })
+      )}
     </div>
   )
+
 })
 
 ToolNode.displayName = 'ToolNode'

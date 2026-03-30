@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 import { useNodeEditor } from '../../hooks/editor/useNodeEditor'
 import {
@@ -11,7 +12,8 @@ import {
 } from '../ui/select'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
-import { Eye, EyeOff, Crosshair, X } from 'lucide-react'
+import { cn } from '../../utils/cn'
+import { Eye, EyeOff, Crosshair, X, ChevronDown, ChevronRight, Hash, Trash2, AlertCircle } from 'lucide-react'
 import { CollapsibleSection } from '../shared/CollapsibleSection'
 import { NodePropertySuggestionPanel } from '../ai/NodePropertySuggestionPanel'
 // OntologyCombobox moved to ModelBuilder toolbar
@@ -42,11 +44,15 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
 
   const node = selectedNode ? nodes.find((n: Node) => n.id === selectedNode) || null : null
 
-  if (node) {
-    console.log('[NodeEditor] Selected node:', { nodeId: node.id, nodeType: node.type, hasData: !!node.data, data: node.data, semantic: (node.data as any)?.semantic })
-  }
-
   const editor = useNodeEditor({ node })
+  const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set([0]))
+ 
+  const toggleExpand = (index: number) => {
+    const next = new Set(expandedIndices)
+    if (next.has(index)) next.delete(index)
+    else next.add(index)
+    setExpandedIndices(next)
+  }
 
   if (!node) {
     return (
@@ -313,120 +319,213 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
               </div>
             </div>
           )}
-          <NodePropertySuggestionPanel
-            node={node}
-            onApply={(propertiesToAdd) => {
-              // Merge with existing properties, avoiding duplicates
-              const existingKeys = new Set(editor.properties.map(p => p.key.toLowerCase()))
-              const newProperties = propertiesToAdd.filter(p => !existingKeys.has(p.key.toLowerCase()))
-
-              // Batch update all new properties at once
-              if (newProperties.length > 0) {
-                const updatedProperties = [
-                  ...editor.properties,
-                  ...newProperties.map(p => ({
-                    key: p.key,
-                    type: p.type,
-                    required: p.required ?? false,
-                    description: p.description,
-                  }))
-                ]
-                editor.setProperties(updatedProperties)
-              }
-            }}
-          />
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium">Properties</label>
-              <button
-                onClick={editor.handleAddProperty}
-                className="text-xs text-primary hover:underline"
-              >
-                + Add
-              </button>
-            </div>
-            <div className="max-h-80 overflow-y-auto space-y-2">
-              {editor.properties.map((prop, index) => (
-                <div key={index} className="space-y-2 p-2 border rounded">
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      value={prop.key}
-                      onChange={(e) => editor.handleUpdateProperty(index, { key: e.target.value })}
-                      placeholder="Property name"
-                      className="flex-1 px-2 py-1 text-xs border rounded"
+            <CollapsibleSection
+              title="Properties"
+              defaultOpen={true}
+              icon={Hash}
+              className="border-t pt-4 mt-4"
+              headerClassName="mb-1"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-muted/50 mb-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Configured Fields</span>
+                  <div className="flex items-center gap-2">
+                    <NodePropertySuggestionPanel
+                      node={node}
+                      onApply={(p) => {
+                        const existingKeys = new Set(editor.properties.map(p => p.key.toLowerCase()))
+                        const newProperties = p.filter(p => !existingKeys.has(p.key.toLowerCase()))
+                        if (newProperties.length > 0) {
+                          const updatedProperties = [
+                            ...editor.properties,
+                            ...newProperties.map(p => ({
+                              key: p.key,
+                              type: p.type,
+                              required: p.required ?? false,
+                              description: p.description,
+                            }))
+                          ]
+                          editor.setProperties(updatedProperties)
+                          // Expand newly added properties
+                          const newIndices = new Set(expandedIndices)
+                          for (let i = editor.properties.length; i < updatedProperties.length; i++) {
+                            newIndices.add(i)
+                          }
+                          setExpandedIndices(newIndices)
+                        }
+                      }}
+                      onRemove={(keys) => {
+                        const keysArray = Array.isArray(keys) ? keys.map(k => k.toLowerCase()) : [keys.toLowerCase()];
+                        const updatedProperties = editor.properties.filter(p => !keysArray.includes(p.key.toLowerCase()))
+                        editor.setProperties(updatedProperties)
+                      }}
                     />
                     <button
-                      onClick={() => editor.handleDeleteProperty(index)}
-                      className="text-red-500 hover:text-red-700 text-xs shrink-0"
+                      onClick={() => {
+                        editor.handleAddProperty()
+                        setExpandedIndices(prev => new Set([...prev, editor.properties.length]))
+                      }}
+                      className="text-[11px] text-primary hover:underline font-medium"
                     >
-                      ×
+                      + Add
                     </button>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <select
-                      value={prop.type}
-                      onChange={(e) => editor.handleUpdateProperty(index, { type: e.target.value as Property['type'] })}
-                      className="flex-1 px-2 py-1 text-xs border rounded"
-                    >
-                      <option value="string">String</option>
-                      <option value="number">Number</option>
-                      <option value="boolean">Boolean</option>
-                      <option value="date">Date</option>
-                      <option value="array">Array</option>
-                      <option value="object">Object</option>
-                    </select>
-                    <label className="flex items-center gap-1 text-xs whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={prop.required}
-                        onChange={(e) => editor.handleUpdateProperty(index, { required: e.target.checked })}
-                      />
-                      Required
-                    </label>
-                  </div>
-                  {/* Property-level semantic annotation */}
-                  {isSemanticEnabled && (selectedOntologyId || (node.data as any)?.semantic?.ontologyId) && prop.key && (
-                    <div className="pt-2 border-t">
-                      <label className="text-xs text-muted-foreground mb-1 block">Semantic Property</label>
-                      <SemanticPropertySelect
-                        ontologyId={selectedOntologyId || (node.data as any).semantic.ontologyId}
-                        value={(node.data as any)?.propertySemantics?.[prop.key]?.propertyIri}
-                        onValueChange={(iri, propertyData) => {
-                          const currentPropertySemantics = (node.data as any)?.propertySemantics || {}
-                          updateNode(node.id, {
-                            data: {
-                              ...node.data,
-                              propertySemantics: {
-                                ...currentPropertySemantics,
-                                [prop.key]: iri ? {
-                                  propertyIri: iri,
-                                  propertyLabel: propertyData?.preferredLabel,
-                                  propertyCurie: propertyData?.curie,
-                                  ontologyId: (node.data as any).semantic.ontologyId
-                                } : undefined
-                              }
-                            }
-                          })
-                        }}
-                        className="h-7"
-                      />
-                      {(node.data as any)?.propertySemantics?.[prop.key]?.propertyCurie && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          <span className="font-mono text-blue-600">
-                            {(node.data as any).propertySemantics[prop.key].propertyCurie}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
-              ))}
-              {editor.properties.length === 0 && (
-                <p className="text-xs text-muted-foreground">No properties defined</p>
-              )}
-            </div>
-          </div>
+ 
+                <div className="space-y-2">
+                  {editor.properties.map((prop, index) => {
+                    const isExpanded = expandedIndices.has(index)
+                    const semanticMapping = (node.data as any)?.propertySemantics?.[prop.key]
+                    const hasSemantic = !!semanticMapping?.propertyIri
+                    const showSemanticWarning = isSemanticEnabled && (selectedOntologyId || (node.data as any)?.semantic?.ontologyId) && !hasSemantic
+
+                    return (
+                      <div key={index} className={cn(
+                        "rounded-lg border bg-muted/5 transition-all overflow-hidden",
+                        isExpanded ? "border-primary/20 bg-primary/5 shadow-sm" : "hover:bg-muted/10 border-transparent",
+                        showSemanticWarning && !isExpanded && "border-amber-500/30 bg-amber-500/5"
+                      )}>
+                        {/* Property Header */}
+                        <div
+                          className="flex items-center gap-2 cursor-pointer group py-2 px-2"
+                          onClick={() => toggleExpand(index)}
+                        >
+                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                          <div className="flex-1 flex items-center justify-between min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={cn(
+                                "text-xs font-medium truncate",
+                                !prop.key && "text-muted-foreground italic"
+                              )}>
+                                {prop.key || "Unnamed property"}
+                              </span>
+                              {showSemanticWarning && !isExpanded && (
+                                <AlertCircle className="h-3 w-3 text-amber-500 shrink-0 animate-pulse" />
+                              )}
+                              {hasSemantic && !isExpanded && (
+                                <span className={cn(
+                                  "text-[9px] font-mono px-1 py-0 rounded",
+                                  isExpanded ? "bg-primary/20 text-primary" : "bg-blue-100 text-blue-700"
+                                )}>
+                                  {semanticMapping?.propertyCurie || "Mapped"}
+                                </span>
+                              )}
+                            </div>
+                            {!isExpanded && (
+                              <span className="text-[10px] bg-muted border rounded px-1.5 py-0.5 text-muted-foreground font-mono">
+                                {prop.type}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              editor.handleDeleteProperty(index)
+                            }}
+                            className="text-muted-foreground hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+ 
+                        {/* Expanded Content */}
+                        {isExpanded && (
+                          <div className="p-3 space-y-3 pt-0 border-t border-primary/10">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-medium text-muted-foreground uppercase opacity-70">Field Name</label>
+                              <input
+                                type="text"
+                                value={prop.key}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => editor.handleUpdateProperty(index, { key: e.target.value })}
+                                placeholder="e.g. email, age, full_name"
+                                className="w-full px-2 py-1.5 text-xs bg-background border rounded focus-visible:ring-1 focus-visible:ring-primary outline-none transition-shadow"
+                              />
+                            </div>
+ 
+                            <div className="flex gap-3 items-end">
+                              <div className="flex-1 space-y-1">
+                                <label className="text-[10px] font-medium text-muted-foreground uppercase opacity-70">Data Type</label>
+                                <Select
+                                  value={prop.type}
+                                  onValueChange={(val) => editor.handleUpdateProperty(index, { type: val as Property['type'] })}
+                                >
+                                  <SelectTrigger className="h-8 text-xs bg-background focus:bg-background transition-colors w-full">
+                                    <SelectValue placeholder="Type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="string" className="text-xs">String</SelectItem>
+                                    <SelectItem value="number" className="text-xs">Number</SelectItem>
+                                    <SelectItem value="boolean" className="text-xs">Boolean</SelectItem>
+                                    <SelectItem value="date" className="text-xs">Date</SelectItem>
+                                    <SelectItem value="array" className="text-xs">Array</SelectItem>
+                                    <SelectItem value="object" className="text-xs">Object</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+ 
+                              <label className="flex items-center gap-1.5 text-xs h-8 pb-0.5 cursor-pointer">
+                                <Checkbox
+                                  checked={prop.required}
+                                  onCheckedChange={(checked) => editor.handleUpdateProperty(index, { required: checked === true })}
+                                />
+                                <span className="font-medium text-muted-foreground">Required</span>
+                              </label>
+                            </div>
+ 
+                            {/* Property-level semantic annotation */}
+                            {isSemanticEnabled && (selectedOntologyId || (node.data as any)?.semantic?.ontologyId) && prop.key && (
+                              <div className="pt-2 border-t border-primary/10 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[10px] font-medium text-muted-foreground uppercase opacity-70">Semantic Mapping</label>
+                                </div>
+                                <SemanticPropertySelect
+                                  ontologyId={selectedOntologyId || (node.data as any)?.semantic?.ontologyId}
+                                  value={(node.data as any)?.propertySemantics?.[prop.key]?.propertyIri}
+                                  onValueChange={(iri, propertyData) => {
+                                    const currentPropertySemantics = (node.data as any)?.propertySemantics || {}
+                                    updateNode(node.id, {
+                                      data: {
+                                        ...node.data,
+                                        propertySemantics: {
+                                          ...currentPropertySemantics,
+                                          [prop.key]: iri ? {
+                                            propertyIri: iri,
+                                            propertyLabel: propertyData?.preferredLabel,
+                                            propertyCurie: propertyData?.curie,
+                                            ontologyId: (node.data as any)?.semantic?.ontologyId
+                                          } : undefined
+                                        }
+                                      }
+                                    })
+                                  }}
+                                  className="h-8"
+                                />
+                                {(node.data as any)?.propertySemantics?.[prop.key]?.propertyCurie && (
+                                  <p className="text-[10px] flex items-center gap-1">
+                                    <span className="text-muted-foreground">Curie:</span>
+                                    <span className="font-mono text-blue-600 bg-blue-50 px-1 rounded">
+                                      {(node.data as any).propertySemantics[prop.key].propertyCurie}
+                                    </span>
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+ 
+                {editor.properties.length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/5">
+                    <p className="text-xs text-muted-foreground font-medium">No properties defined yet</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">Add them manually or use AI suggestions</p>
+                  </div>
+                )}
+              </div>
+            </CollapsibleSection>
 
 
 

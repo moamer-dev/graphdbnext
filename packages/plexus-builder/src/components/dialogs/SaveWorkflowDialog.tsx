@@ -9,6 +9,13 @@ import {
   DialogTitle,
   DialogFooter
 } from '../ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -249,10 +256,9 @@ export function SaveWorkflowDialog({
               {action === 'update' && existingWorkflows.length > 0 && (
                 <div className="space-y-2">
                   <Label>Select workflow to update</Label>
-                  <select
+                  <Select
                     value={selectedWorkflowId || ''}
-                    onChange={(e) => {
-                      const workflowId = e.target.value
+                    onValueChange={(workflowId) => {
                       setSelectedWorkflowId(workflowId)
                       const workflow = existingWorkflows.find(w => w.id === workflowId)
                       if (workflow) {
@@ -261,14 +267,18 @@ export function SaveWorkflowDialog({
                       }
                     }}
                     disabled={saving}
-                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
                   >
-                    {existingWorkflows.map((workflow) => (
-                      <option key={workflow.id} value={workflow.id}>
-                        {workflow.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-9 text-sm">
+                      <SelectValue placeholder="Select workflow..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingWorkflows.map((workflow) => (
+                        <SelectItem key={workflow.id} value={workflow.id}>
+                          {workflow.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 

@@ -1,0 +1,277 @@
+---
+title: Frequently Asked Questions
+description: Common questions and answers about Plexus Platform
+icon: MessageCircleQuestion
+---
+
+# Frequently Asked Questions
+
+Find answers to common questions about Plexus Platform.
+
+## General Questions
+
+### What is Plexus Platform?
+
+Plexus Platform is a comprehensive graph database management system that provides tools for creating model schemas, generating graphs from XML data, managing databases, analyzing graph data, and querying with multiple interfaces including AI-powered natural language processing.
+
+### Who is Plexus Platform for?
+
+Plexus Platform is designed for:
+- **Data Engineers**: Working with XML data and graph generation
+- **Database Administrators**: Managing graph databases (Memgraph, Neo4j)
+- **Data Scientists**: Analyzing graph patterns and relationships
+- **Business Analysts**: Exploring connected data through visual interfaces
+- **Developers**: Building graph-based applications
+
+### What graph databases are supported?
+
+Plexus Platform supports:
+- **Memgraph**: High-performance graph database
+- **Neo4j**: Industry-standard graph database
+- **Automatic Detection**: System detects your configured database type
+
+## Model Schema and Graph Generation
+
+### What is the difference between schema creation and graph generation?
+
+- **Schema Creation**: Defines the structure of your graph model (nodes, relationships, properties) without requiring XML data or executable workflows
+- **Graph Generation**: Processes actual XML data using your schema, tools, and actions to generate real graph instances
+
+### How do I create a model schema?
+
+You can create model schemas using:
+- **Visual Plexus Builder**: Interactive canvas with drag-and-drop interface
+- **Semantic Mode**: Ontology-based modeling using TIB terminology service
+- **XML Import Wizard**: Step-by-step XML import with automatic schema generation
+- **Direct Import**: Upload existing schema files
+
+### What are tools and actions in graph generation?
+
+- **Tools**: Executable nodes that perform data processing operations (XML parsing, node creation, relationship building)
+- **Actions**: Executable nodes that control workflow flow (conditions, loops, data operations)
+- **Workflows**: Connected sequences of tools and actions that process XML data to generate graphs
+
+### What is required for graph generation?
+
+Graph generation requires:
+- **XML Data**: Source XML file to process
+- **Model Schema**: Defines the graph structure
+- **Tools**: Data processing and transformation tools
+- **Actions**: Workflow control and execution actions
+- **Root Node**: Starting point for XML traversal
+
+### Can I use AI to help with schema creation?
+
+Yes, Plexus Platform offers AI-powered features:
+- **AI Agents Panel**: Provides suggestions for schema design
+- **Semantic Mode**: Integrates with ontology services for standardized modeling
+- **Workflow Generation**: AI-assisted workflow creation
+- **Recommendations**: Smart suggestions based on your data patterns
+
+## XML Processing and Import
+
+### What is the XML Import Wizard?
+
+The XML Import Wizard is a step-by-step tool for importing XML data:
+1. **Upload**: Select and upload XML files
+2. **Analyze**: Automatic XML structure analysis
+3. **Configure Mapping**: Map XML elements to graph nodes and relationships
+4. **Configure Rules**: Set validation and transformation rules
+5. **Review**: Review and finalize the import
+
+### Can I use semantic mode with XML import?
+
+Yes, the XML Import Wizard includes:
+- **Semantic Toggle**: Enable ontology-based mapping
+- **TIB Terminology Service**: Access standardized terminology
+- **Import/Export**: Save and load mapping configurations
+- **Validation**: Semantic validation of mappings
+
+### What XML formats are supported?
+
+- **Standard XML**: Well-formed XML documents
+- **Complex Structures**: Nested XML elements and attributes
+- **Large Files**: Optimized for handling large XML datasets
+- **Validation**: XML schema validation support
+
+## Database Management
+
+### How do I manage my graph database?
+
+The Database Management interface provides:
+- **System Status**: Connection monitoring and statistics
+- **Data Explorer**: Browse and manage nodes and relationships
+- **Quick Import**: JSON file upload for data import
+- **Node/Relationship Management**: Create, edit, and delete graph elements
+
+### What database operations can I perform?
+
+- **Node Management**: Create, view, edit, and delete nodes
+- **Relationship Management**: Create, view, edit, and delete relationships
+- **Bulk Operations**: Select and manage multiple elements
+- **Search and Filtering**: Find specific nodes and relationships
+- **Property Management**: Edit node and relationship properties
+
+### Can I import data directly to the database?
+
+Yes, through:
+- **Quick Import**: JSON file upload with validation
+- **Data Import**: Various format support
+- **Conflict Resolution**: Handle data conflicts during import
+- **Incremental Import**: Add to existing data
+
+## Graph Analytics
+
+### What analytics are available?
+
+The Graph Analytics Dashboard provides:
+- **Overview Tab**: Top node labels and relationship types
+- **Node Distribution**: Complete node label analysis with percentages
+- **Relationship Distribution**: Complete relationship type analysis
+- **Degree Centrality**: Node connectivity and importance analysis
+
+### How do I access graph analytics?
+
+Navigate to: Dashboard → Database → Analytics
+- **Real-time Data**: Analytics update with current database state
+- **Interactive Tabs**: Switch between different analysis views
+- **Visual Indicators**: Charts and progress bars for data visualization
+
+### What insights can I gain from analytics?
+
+- **Node Distribution**: Understand the composition of your graph
+- **Relationship Patterns**: Analyze connection types and frequencies
+- **Centrality Metrics**: Identify important and highly connected nodes
+- **Data Quality**: Assess completeness and consistency of your data
+
+## Querying and Visualization
+
+### What query methods are available?
+
+Plexus Platform offers four query methods:
+- **Query Library**: Pre-built, categorized queries for common patterns
+- **Visual Query Builder**: Drag-and-drop interface for building queries without code
+- **Cypher Editor**: Advanced code editor with syntax highlighting and validation
+- **AI Query Agent**: Natural language interface for conversational querying
+
+### How does the AI Query Agent work?
+
+The AI Query Agent allows you to:
+- **Ask Questions**: Type questions in natural language
+- **Query Generation**: AI converts questions to Cypher queries
+- **Execute Queries**: Run AI-generated queries and see results
+- **Discuss Results**: Analyze results with AI assistance
+
+### Can I visualize query results?
+
+Yes, query results can be displayed as:
+- **Tabular View**: Spreadsheet-like format with sorting and filtering
+- **Graph Visualization**: Interactive D3.js-powered graph representation
+- **Node Interaction**: Click nodes to view details and edit properties
+- **Relationship Expansion**: Double-click nodes to reveal direct relationships
+
+### What can I do in the graph visualization?
+
+- **Navigate**: Zoom, pan, and fullscreen modes
+- **Select Nodes**: Click nodes to open detailed fact sheets
+- **Edit Properties**: Modify node and relationship properties
+- **Create Elements**: Add new nodes and relationships
+- **Export Results**: Export as CSV, JSON, GraphML, or images
+
+## Technical Questions
+
+### What query languages are supported?
+
+- **Cypher**: Primary query language for Neo4j and Memgraph
+- **Visual Builder**: No-code query construction
+- **Natural Language**: AI-powered conversational queries
+- **Library Queries**: Pre-built query templates
+
+### How does Plexus handle large datasets?
+
+Plexus includes performance optimizations:
+- **Progressive Loading**: Load data as needed
+- **Pagination**: Handle large result sets efficiently
+- **Lazy Loading**: Load relationships on demand
+- **Memory Management**: Optimized resource usage
+- **Query Optimization**: Efficient query execution
+
+### Can I customize the visualization?
+
+Yes, visualization options include:
+- **Multiple Layouts**: Force-directed, hierarchical, circular
+- **Color Coding**: Custom colors for node types and labels
+- **Filtering**: Show/hide nodes and relationships by type
+- **Graph Analytics**: Visual centrality and clustering indicators
+
+## Troubleshooting
+
+### Why isn't my graph generating from XML?
+
+Common issues:
+- **Missing Root Node**: Ensure you've designated a root node in your schema
+- **Tool Configuration**: Check that tools are properly configured
+- **XML Structure**: Verify XML matches your schema expectations
+- **Workflow Connections**: Ensure tools and actions are properly connected
+
+### Why can't I see my query results as a graph?
+
+Check the following:
+- **Result Format**: Query must return nodes and relationships
+- **Graph Data**: Results should contain graph-compatible data
+- **Visualization Toggle**: Ensure graph view is selected
+- **Data Size**: Very large datasets may need filtering
+
+### How do I optimize query performance?
+
+Best practices:
+- **Use Indexes**: Leverage database indexes for common queries
+- **Limit Results**: Use LIMIT clauses for large result sets
+- **Specific Queries**: Be specific in WHERE conditions
+- **Query Planning**: Use EXPLAIN to analyze query plans
+
+### Why is my graph visualization slow?
+
+Performance tips:
+- **Filter Data**: Use filters to reduce displayed nodes
+- **Progressive Loading**: Let data load progressively
+- **Browser Resources**: Ensure sufficient browser memory
+- **Simplify Layout**: Use simpler layouts for large graphs
+
+## Getting Started
+
+### How do I start using Plexus Platform?
+
+1. **Set Up Database**: Configure your graph database connection
+2. **Create Schema**: Use the visual builder or XML import
+3. **Generate Graph**: Process XML data with tools and actions
+4. **Explore Data**: Use database management and analytics
+5. **Query Data**: Use library, builder, editor, or AI agent
+
+### What are the recommended workflows?
+
+- **For Beginners**: Start with Query Library and Visual Builder
+- **For Data Import**: Use XML Import Wizard with semantic mode
+- **For Analysis**: Use Graph Analytics Dashboard
+- **For Advanced Users**: Use Cypher Editor and AI Agent
+
+### Where can I learn more?
+
+- **Documentation**: Comprehensive guides for each feature
+- **Tutorials**: Step-by-step walkthroughs
+- **Examples**: Sample schemas and queries
+- **Community**: User forums and discussions
+
+## Still Have Questions?
+
+If you didn't find an answer to your question:
+
+1. **Check Documentation**: Explore our comprehensive user guides
+2. **Search the Community**: Find answers in user discussions
+3. **Contact Support**: Get help from our support team
+4. **Try the Interface**: Many questions are answered by exploring the interface
+5. **Join Community**: Connect with other Plexus Platform users
+
+---
+
+*Related: [Getting Started](./user/getting-started), [Model Schema Creation](./user/create-model-schema), [Graph Generation](./user/generate-graph), [Database Management](./user/database-management), [Graph Analytics](./user/graph-analytics), [Query Interface](./user/querying)*

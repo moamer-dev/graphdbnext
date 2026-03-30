@@ -1,0 +1,834 @@
+---
+title: Workflow System
+description: Comprehensive guide to the workflow engine and XML processing system
+---
+
+# Workflow System
+
+The Plexus Platform workflow system is a powerful engine for processing XML data and generating graph instances. It combines visual workflow design with executable components to transform structured data into graph representations.
+
+## Workflow Architecture
+
+<Mermaid chart="
+graph TB
+    subgraph &quot;Workflow Engine&quot;
+        A[Workflow Definition] --> B[Tool Registry]
+        A --> C[Action Registry]
+        B --> D[Tool Executor]
+        C --> D
+        D --> E[Execution Context]
+        E --> F[Graph Generator]
+    end
+    
+    subgraph &quot;Data Flow&quot;
+        G[XML Input] --> H[XML Parser]
+        H --> I[Root Node Selector]
+        I --> D
+        F --> J[Graph Database]
+    end
+    
+    subgraph &quot;Components&quot;
+        K[Data Processing Tools] --> B
+        L[Node Creation Tools] --> B
+        M[Relationship Tools] --> B
+        N[Control Flow Actions] --> C
+        O[Data Operations Actions] --> C
+        P[Validation Actions] --> C
+    end
+    
+    subgraph &quot;Integration&quot;
+        Q[Plexus Builder] --> A
+        R[Model Schema] --> E
+        S[AI Assistant] --> A
+    end
+" />
+
+## Core Workflow Components
+
+### Workflow Definition
+
+#### Workflow Structure
+```typescript
+export interface WorkflowDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  version: string;
+  
+  // Workflow components
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  
+  // Configuration
+  settings: WorkflowSettings;
+  
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+}
+
+export interface WorkflowNode {
+  id: string;
+  type: 'tool' | 'action';
+  category: string;
+  name: string;
+  position: { x: number; y: number };
+  
+  // Configuration
+  config: Record<string, any>;
+  defaultConfig: Record<string, any>;
+  
+  // Schema
+  configSchema: ConfigField[];
+  
+  // Execution
+  executor?: string;
+  metadata: ItemMetadata;
+}
+
+export interface WorkflowEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: 'data' | 'control';
+  condition?: string;
+}
+```
+
+#### Workflow Settings
+```typescript
+export interface WorkflowSettings {
+  // Execution settings
+  maxExecutionTime: number; // in seconds
+  retryAttempts: number;
+  retryDelay: number; // in milliseconds
+  
+  // Data settings
+  batchSize: number;
+  memoryLimit: number; // in MB
+  
+  // Error handling
+  errorHandling: 'stop' | 'continue' | 'retry';
+  logLevel: 'debug' | 'info' | 'warn' | 'error';
+}
+```
+
+### Tool Registry
+
+#### Tool Definition
+```typescript
+export interface ToolDefinition extends BaseDefinition {
+  // Tool-specific properties
+  inputTypes: string[];
+  outputTypes: string[];
+  category: string;
+  
+  // Execution
+  executor: (context: ExecutionContext, config: any) => Promise<ToolResult>;
+}
+
+export interface ToolResult {
+  success: boolean;
+  data?: any;
+  error?: string;
+  metadata?: Record<string, any>;
+}
+```
+
+#### Built-in Tools
+```typescript
+export class XMLParserTool implements ToolDefinition {
+  id = 'xml-parser';
+  name = 'XML Parser';
+  category = 'data-processing';
+  description = 'Parse XML documents and extract data';
+  
+  configSchema: ConfigField[] = [
+    {
+      name: 'xpath',
+      type: 'string',
+      label: 'XPath Expression',
+      required: true,
+      description: 'XPath expression to select nodes',
+    },
+    {
+      name: 'namespaces',
+      type: 'object',
+      label: 'Namespaces',
+      required: false,
+      description: 'XML namespace mappings',
+    },
+  ];
+  
+  defaultConfig = {
+    xpath: '/',
+    namespaces: {},
+  };
+  
+  async executor(context: ExecutionContext, config: any): Promise<ToolResult> {
+    try {
+      const xmlDocument = context.getXMLDocument();
+      xpath = config.xpath;
+      
+      const result = await this.parseXML(xmlDocument, config);
+      
+      return {
+        success: true,
+        data: result,
+        metadata: {
+          nodesProcessed: result.length,
+          processingTime: Date.now() - context.startTime,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+  
+  private async parseXML(xmlDocument: Document, config: any): Promise<any[]> {
+    const xpath = config.xpath;
+    const namespaces = config.namespaces || {};
+    
+    // Implementation for XML parsing
+    const nodes = xmlDocument.evaluate(
+      xpath,
+      xmlDocument,
+      this.createNSResolver(namespaces),
+      XPathResult.ANY_TYPE,
+      null
+    );
+    
+    const results = [];
+    let node = nodes.iterateNext();
+    
+    while (node) {
+      results.push(this.extractNodeData(node));
+      node = nodes.iterateNext();
+    }
+    
+    return results;
+  }
+}
+```
+
+### Action Registry
+
+#### Action Definition
+```typescript
+export interface ActionDefinition extends BaseDefinition {
+  // Action-specific properties
+  inputTypes: string[];
+  outputTypes: string[];
+  category: string;
+  
+  // Execution
+  executor: (context: ExecutionContext, config: any) => Promise<ActionResult>;
+}
+
+export interface ActionResult {
+  success: boolean;
+  nextNodes?: string[];
+  data?: any;
+  error?: string;
+}
+```
+
+#### Built-in Actions
+```typescript
+export class ConditionalAction implements ActionDefinition {
+  id = 'conditional';
+  name = 'Conditional';
+  category = 'control-flow';
+  description = 'Execute different paths based on conditions';
+  
+  configSchema: ConfigField[] = [
+    {
+      name: 'condition',
+      type: 'string',
+      label: 'Condition',
+      required: true,
+      description: 'JavaScript expression for condition',
+    },
+    {
+      name: 'truePath',
+      type: 'string',
+      label: 'True Path',
+      required: true,
+      description: 'Node ID for true condition',
+    },
+    {
+      name: 'falsePath',
+      type: 'string',
+      label: 'False Path',
+      required: true,
+      description: 'Node ID for false condition',
+    },
+  ];
+  
+  defaultConfig = {
+    condition: 'true',
+    truePath: '',
+    falsePath: '',
+  };
+  
+  async executor(context: ExecutionContext, config: any): Promise<ActionResult> {
+    try {
+      const condition = this.evaluateCondition(config.condition, context);
+      
+      return {
+        success: true,
+        nextNodes: [condition ? config.truePath : config.falsePath],
+        data: { conditionResult: condition },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+  
+  private evaluateCondition(condition: string, context: ExecutionContext): boolean {
+    // Safe JavaScript evaluation
+    const func = new Function('context', `with(context) { return ${condition}; }`);
+    return func(context);
+  }
+}
+```
+
+## Workflow Execution Engine
+
+### Execution Context
+
+#### Context Implementation
+```typescript
+export class ExecutionContext {
+  private xmlDocument: Document;
+  private graphData: GraphData;
+  private variables: Map<string, any> = new Map();
+  private startTime: number;
+  
+  constructor(
+    private workflow: WorkflowDefinition,
+    private modelSchema: ModelSchema,
+    xmlContent: string
+  ) {
+    this.xmlDocument = this.parseXML(xmlContent);
+    this.graphData = { nodes: [], edges: [] };
+    this.startTime = Date.now();
+  }
+  
+  // XML access
+  getXMLDocument(): Document {
+    return this.xmlDocument;
+  }
+  
+  // Graph data access
+  getGraphData(): GraphData {
+    return this.graphData;
+  }
+  
+  addNode(node: GraphNode): void {
+    this.graphData.nodes.push(node);
+  }
+  
+  addEdge(edge: GraphEdge): void {
+    this.graphData.edges.push(edge);
+  }
+  
+  // Variable management
+  setVariable(name: string, value: any): void {
+    this.variables.set(name, value);
+  }
+  
+  getVariable(name: string): any {
+    return this.variables.get(name);
+  }
+  
+  // Schema access
+  getModelSchema(): ModelSchema {
+    return this.modelSchema;
+  }
+  
+  // Metadata
+  getExecutionTime(): number {
+    return Date.now() - this.startTime;
+  }
+}
+```
+
+### Workflow Executor
+
+#### Executor Implementation
+```typescript
+export class WorkflowExecutor {
+  private toolRegistry: ToolRegistry;
+  private actionRegistry: ActionRegistry;
+  
+  constructor() {
+    this.toolRegistry = new ToolRegistry();
+    this.actionRegistry = new ActionRegistry();
+    this.registerBuiltInComponents();
+  }
+  
+  async execute(workflow: WorkflowDefinition, xmlContent: string): Promise<ExecutionResult> {
+    const context = new ExecutionContext(workflow, workflow.modelSchema, xmlContent);
+    
+    try {
+      // Find root nodes
+      const rootNodes = this.findRootNodes(workflow);
+      
+      // Execute workflow
+      await this.executeNodes(rootNodes, context);
+      
+      return {
+        success: true,
+        graphData: context.getGraphData(),
+        executionTime: context.getExecutionTime(),
+        nodesProcessed: context.getGraphData().nodes.length,
+        edgesCreated: context.getGraphData().edges.length,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        executionTime: context.getExecutionTime(),
+      };
+    }
+  }
+  
+  private async executeNodes(nodeIds: string[], context: ExecutionContext): Promise<void> {
+    for (const nodeId of nodeIds) {
+      const node = context.getWorkflowNode(nodeId);
+      if (!node) continue;
+      
+      await this.executeNode(node, context);
+      
+      // Find next nodes
+      const nextNodes = this.findNextNodes(nodeId, context);
+      await this.executeNodes(nextNodes, context);
+    }
+  }
+  
+  private async executeNode(node: WorkflowNode, context: ExecutionContext): Promise<void> {
+    if (node.type === 'tool') {
+      await this.executeTool(node, context);
+    } else if (node.type === 'action') {
+      await this.executeAction(node, context);
+    }
+  }
+  
+  private async executeTool(node: WorkflowNode, context: ExecutionContext): Promise<void> {
+    const tool = this.toolRegistry.getTool(node.category, node.name);
+    if (!tool) throw new Error(`Tool not found: ${node.category}.${node.name}`);
+    
+    const result = await tool.executor(context, node.config);
+    
+    if (!result.success) {
+      throw new Error(`Tool execution failed: ${result.error}`);
+    }
+    
+    // Store result in context
+    context.setVariable(`tool_${node.id}_result`, result.data);
+  }
+  
+  private async executeAction(node: WorkflowNode, context: ExecutionContext): Promise<void> {
+    const action = this.actionRegistry.getAction(node.category, node.name);
+    if (!action) throw new Error(`Action not found: ${node.category}.${node.name}`);
+    
+    const result = await action.executor(context, node.config);
+    
+    if (!result.success) {
+      throw new Error(`Action execution failed: ${result.error}`);
+    }
+    
+    // Store result in context
+    if (result.data) {
+      context.setVariable(`action_${node.id}_result`, result.data);
+    }
+  }
+}
+```
+
+## XML Processing Pipeline
+
+### XML Parser
+
+#### Advanced XML Processing
+```typescript
+export class XMLProcessor {
+  private parser: DOMParser;
+  private serializer: XMLSerializer;
+  
+  constructor() {
+    this.parser = new DOMParser();
+    this.serializer = new XMLSerializer();
+  }
+  
+  parse(xmlContent: string): ParsedXML {
+    const document = this.parser.parseFromString(xmlContent, 'text/xml');
+    
+    // Check for parsing errors
+    const parseError = document.querySelector('parsererror');
+    if (parseError) {
+      throw new Error(`XML parsing error: ${parseError.textContent}`);
+    }
+    
+    return {
+      document,
+      root: document.documentElement,
+      elements: this.extractElements(document),
+      attributes: this.extractAttributes(document),
+      hierarchy: this.buildHierarchy(document),
+    };
+  }
+  
+  private extractElements(document: Document): ElementInfo[] {
+    const elements: ElementInfo[] = [];
+    const walker = document.createTreeWalker(
+      document.documentElement,
+      NodeFilter.SHOW_ELEMENT
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+      const element = node as Element;
+      elements.push({
+        tagName: element.tagName,
+        attributes: this.getElementAttributes(element),
+        textContent: element.textContent?.trim() || '',
+        children: Array.from(element.children).map(child => child.tagName),
+        parent: element.parentElement?.tagName,
+      });
+    }
+    
+    return elements;
+  }
+  
+  private extractAttributes(document: Document): AttributeInfo[] {
+    const attributes: AttributeInfo[] = [];
+    const walker = document.createTreeWalker(
+      document.documentElement,
+      NodeFilter.SHOW_ELEMENT
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+      const element = node as Element;
+      const attrs = element.attributes;
+      
+      for (let i = 0; i < attrs.length; i++) {
+        const attr = attrs[i];
+        attributes.push({
+          name: attr.name,
+          value: attr.value,
+          element: element.tagName,
+        });
+      }
+    }
+    
+    return attributes;
+  }
+  
+  private buildHierarchy(document: Document): HierarchyInfo {
+    const root = document.documentElement;
+    const hierarchy = this.buildNodeHierarchy(root);
+    
+    return {
+      root: root.tagName,
+      depth: this.calculateDepth(root),
+      nodeCount: this.countNodes(root),
+      hierarchy,
+    };
+  }
+  
+  private buildNodeHierarchy(node: Element, depth = 0): NodeHierarchy {
+    return {
+      tagName: node.tagName,
+      depth,
+      children: Array.from(node.children).map(child => 
+        this.buildNodeHierarchy(child, depth + 1)
+      ),
+    };
+  }
+}
+```
+
+### Graph Generation
+
+#### Graph Builder
+```typescript
+export class GraphBuilder {
+  private schema: ModelSchema;
+  
+  constructor(schema: ModelSchema) {
+    this.schema = schema;
+  }
+  
+  buildFromXML(xmlData: ParsedXML, context: ExecutionContext): GraphData {
+    const graphData: GraphData = { nodes: [], edges: [] };
+    
+    // Find root node in schema
+    const rootNode = this.findRootNode();
+    if (!rootNode) {
+      throw new Error('No root node defined in schema');
+    }
+    
+    // Process XML starting from root
+    const rootElements = xmlData.elements.filter(el => el.tagName === rootNode.xmlElement);
+    
+    for (const rootElement of rootElements) {
+      const node = this.createNode(rootNode, rootElement);
+      graphData.nodes.push(node);
+      
+      // Process children
+      this.processChildren(node, rootElement, graphData, context);
+    }
+    
+    return graphData;
+  }
+  
+  private createNode(nodeSchema: NodeSchema, element: ElementInfo): GraphNode {
+    const node: GraphNode = {
+      id: this.generateNodeId(nodeSchema, element),
+      labels: [nodeSchema.name],
+      properties: {
+        xmlElement: element.tagName,
+        textContent: element.textContent,
+        ...this.extractProperties(nodeSchema, element),
+      },
+    };
+    
+    return node;
+  }
+  
+  private processChildren(
+    parentNode: GraphNode,
+    parentElement: ElementInfo,
+    graphData: GraphData,
+    context: ExecutionContext
+  ): void {
+    for (const childElementName of parentElement.children) {
+      const childElements = xmlData.elements.filter(el => 
+        el.tagName === childElementName && 
+        this.isChildOf(el, parentElement)
+      );
+      
+      for (const childElement of childElements) {
+        const relationshipSchema = this.findRelationship(parentNode.labels[0], childElementName);
+        
+        if (relationshipSchema) {
+          const childNode = this.createChildNode(relationshipSchema.target, childElement);
+          graphData.nodes.push(childNode);
+          
+          const edge = this.createEdge(parentNode, childNode, relationshipSchema);
+          graphData.edges.push(edge);
+          
+          // Recursively process children
+          this.processChildren(childNode, childElement, graphData, context);
+        }
+      }
+    }
+  }
+  
+  private createEdge(source: GraphNode, target: GraphNode, schema: RelationshipSchema): GraphEdge {
+    return {
+      id: this.generateEdgeId(source, target, schema),
+      source: source.id,
+      target: target.id,
+      type: schema.name,
+      properties: {
+        ...schema.defaultProperties,
+      },
+    };
+  }
+}
+```
+
+## Integration with Plexus Builder
+
+### Adapter Pattern
+
+#### Builder Integration
+```typescript
+export class ModelBuilderAdapter {
+  private workflowExecutor: WorkflowExecutor;
+  private xmlProcessor: XMLProcessor;
+  
+  constructor(private aiSettings: AISettings) {
+    this.workflowExecutor = new WorkflowExecutor();
+    this.xmlProcessor = new XMLProcessor();
+  }
+  
+  async executeWorkflow(workflow: WorkflowDefinition, xmlContent: string): Promise<ExecutionResult> {
+    try {
+      // Parse XML
+      const xmlData = this.xmlProcessor.parse(xmlContent);
+      
+      // Execute workflow
+      const result = await this.workflowExecutor.execute(workflow, xmlContent);
+      
+      return result;
+    } catch (error) {
+      console.error('Workflow execution error:', error);
+      throw error;
+    }
+  }
+  
+  async validateWorkflow(workflow: WorkflowDefinition): Promise<ValidationResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    
+    // Validate workflow structure
+    this.validateWorkflowStructure(workflow, errors, warnings);
+    
+    // Validate nodes
+    this.validateNodes(workflow, errors, warnings);
+    
+    // Validate connections
+    this.validateConnections(workflow, errors, warnings);
+    
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+  
+  private validateWorkflowStructure(workflow: WorkflowDefinition, errors: string[], warnings: string[]): void {
+    if (!workflow.nodes || workflow.nodes.length === 0) {
+      errors.push('Workflow must have at least one node');
+    }
+    
+    if (!workflow.edges || workflow.edges.length === 0) {
+      warnings.push('Workflow has no connections');
+    }
+    
+    // Check for root nodes
+    const rootNodes = this.findRootNodes(workflow);
+    if (rootNodes.length === 0) {
+      errors.push('Workflow must have at least one root node');
+    }
+  }
+}
+```
+
+## Performance Optimization
+
+### Parallel Processing
+
+#### Parallel Execution
+```typescript
+export class ParallelWorkflowExecutor extends WorkflowExecutor {
+  async execute(workflow: WorkflowDefinition, xmlContent: string): Promise<ExecutionResult> {
+    const context = new ExecutionContext(workflow, workflow.modelSchema, xmlContent);
+    
+    try {
+      // Identify parallel execution paths
+      const executionPaths = this.analyzeExecutionPaths(workflow);
+      
+      // Execute parallel paths
+      const results = await Promise.all(
+        executionPaths.map(path => this.executePath(path, context))
+      );
+      
+      // Merge results
+      const mergedResult = this.mergeResults(results);
+      
+      return mergedResult;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        executionTime: context.getExecutionTime(),
+      };
+    }
+  }
+  
+  private analyzeExecutionPaths(workflow: WorkflowDefinition): ExecutionPath[] {
+    // Analyze workflow graph to identify independent paths
+    const paths: ExecutionPath[] = [];
+    const visited = new Set<string>();
+    
+    const rootNodes = this.findRootNodes(workflow);
+    
+    for (const rootNode of rootNodes) {
+      const path = this.buildExecutionPath(rootNode, workflow, visited);
+      if (path.nodes.length > 0) {
+        paths.push(path);
+      }
+    }
+    
+    return paths;
+  }
+}
+```
+
+### Memory Management
+
+#### Memory Optimization
+```typescript
+export class MemoryOptimizedExecutor extends WorkflowExecutor {
+  private memoryLimit: number;
+  private batchSize: number;
+  
+  constructor(memoryLimit = 1024 * 1024 * 1024, batchSize = 1000) { // 1GB default
+    super();
+    this.memoryLimit = memoryLimit;
+    this.batchSize = batchSize;
+  }
+  
+  async execute(workflow: WorkflowDefinition, xmlContent: string): Promise<ExecutionResult> {
+    const context = new ExecutionContext(workflow, workflow.modelSchema, xmlContent);
+    
+    try {
+      // Process in batches to manage memory
+      const batches = this.createBatches(xmlContent);
+      const results: ExecutionResult[] = [];
+      
+      for (const batch of batches) {
+        const batchResult = await this.executeBatch(workflow, batch);
+        results.push(batchResult);
+        
+        // Check memory usage
+        if (this.getMemoryUsage() > this.memoryLimit) {
+          this.garbageCollect();
+        }
+      }
+      
+      return this.mergeResults(results);
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        executionTime: context.getExecutionTime(),
+      };
+    }
+  }
+  
+  private createBatches(xmlContent: string): string[] {
+    // Split XML content into manageable batches
+    const batches: string[] = [];
+    const batchSize = this.batchSize;
+    
+    for (let i = 0; i < xmlContent.length; i += batchSize) {
+      batches.push(xmlContent.slice(i, i + batchSize));
+    }
+    
+    return batches;
+  }
+  
+  private garbageCollect(): void {
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+    }
+  }
+}
+```
+
+This workflow system provides a robust, scalable, and flexible foundation for XML processing and graph generation, with comprehensive error handling, performance optimization, and integration capabilities.
