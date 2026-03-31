@@ -148,21 +148,13 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
   }
 
   // 3. Relationship Creation
-  const relConfig = action.config.relationship as {
-    mode: 'standalone' | 'connected' | 'deferred'
-    type: string
-    targetNodeId?: string
-    targetNodeLabel?: string
-    direction?: 'outgoing' | 'incoming'
-  } | undefined
-
-  const relMode = relConfig?.mode || 'connected'
-  const relType = relConfig?.type || (action.config.parentRelationship as string) || 'contains'
-  const direction = relConfig?.direction || 'outgoing'
-
+  const relMode = (action.config.relationshipMode as string) || 'connected'
+  let relType = ctx.evaluateTemplate((action.config.relationshipType as string) || 'contains', apiResponseData)
+  
   if (relMode === 'standalone') {
     // Do nothing
   } else if (relMode === 'connected' && originNode) {
+    const direction = (action.config.relationshipDirection as string) || 'outgoing'
     const startNode = direction === 'outgoing' ? originNode : graphNode
     const endNode = direction === 'outgoing' ? graphNode : originNode
 
@@ -176,15 +168,33 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
     }
     ctx.graphRels.push(rel)
   } else if (relMode === 'deferred') {
-    const targetId = relConfig?.targetNodeId ? ctx.evaluateTemplate(relConfig.targetNodeId, apiResponseData) : undefined
+    const lookupKey = action.config.lookupProperty as string
+    const lookupValue = action.config.lookupValue ? ctx.evaluateTemplate(action.config.lookupValue as string, apiResponseData) : undefined
+    const targetLabel = action.config.targetNodeLabel as string
+    const targetId = action.config.targetNodeId ? ctx.evaluateTemplate(action.config.targetNodeId as string, apiResponseData) : undefined
+    const direction = (action.config.relationshipDirection as string) || 'outgoing'
     
-    if (targetId) {
+    if (lookupKey && lookupValue) {
       ctx.deferredRelationships.push({
         from: graphNode,
         to: null,
         type: relType,
         properties: {},
-        targetId: targetId
+        targetLookup: {
+          label: targetLabel,
+          propertyKey: lookupKey,
+          propertyValue: lookupValue
+        },
+        direction: direction as any
+      })
+    } else if (targetId) {
+      ctx.deferredRelationships.push({
+        from: graphNode,
+        to: null,
+        type: relType,
+        properties: {},
+        targetId: targetId,
+        direction: direction as any
       })
     }
   }

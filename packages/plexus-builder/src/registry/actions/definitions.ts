@@ -556,9 +556,71 @@ registerAction({
     { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },
     { name: 'inheritProperties', label: 'Inherit all XML Attributes', type: 'boolean', defaultValue: true, description: 'Automatically add all XML attributes of this element to the graph node properties' },
     { name: 'properties', label: 'Properties Mapping', type: 'mappings' },
-    { name: 'relationships', label: 'Relationships', type: 'properties' }
+    { name: 'separator_rel', label: 'Relationship Settings', type: 'separator' },
+    { 
+      name: 'relationshipType', 
+      label: 'Relationship Type', 
+      type: 'text', 
+      defaultValue: 'contains',
+      placeholder: 'e.g. contains, refersTo, hasAttribute' 
+    },
+    { 
+      name: 'relationshipMode', 
+      label: 'Relationship Mode', 
+      type: 'select',
+      options: [
+        { label: 'Connect to Parent (Direct)', value: 'connected' },
+        { label: 'Lookup Target (Deferred)', value: 'deferred' },
+        { label: 'No Relationship (Standalone)', value: 'standalone' }
+      ],
+      defaultValue: 'connected'
+    },
+    { 
+      name: 'targetNodeLabel', 
+      label: 'Target Node Label', 
+      type: 'text', 
+      dependsOn: 'relationshipMode', 
+      dependsOnValue: 'deferred',
+      placeholder: 'Label of the node to find' 
+    },
+    { 
+      name: 'lookupProperty', 
+      label: 'Lookup Property Key', 
+      type: 'text', 
+      dependsOn: 'relationshipMode', 
+      dependsOnValue: 'deferred',
+      placeholder: 'e.g. id, uri, name' 
+    },
+    { 
+      name: 'lookupValue', 
+      label: 'Lookup Property Value', 
+      type: 'template', 
+      dependsOn: 'relationshipMode', 
+      dependsOnValue: 'deferred',
+      placeholder: 'e.g. @id or {{ $json.target }}' 
+    },
+    { 
+      name: 'relationshipDirection', 
+      label: 'Relationship Direction', 
+      type: 'select',
+      options: [
+        { label: 'Out: Created → Target (Parent/Lookup)', value: 'outgoing' },
+        { label: 'In: Target (Parent/Lookup) → Created', value: 'incoming' }
+      ],
+      defaultValue: 'outgoing'
+    }
   ],
-  defaultConfig: { nodeLabel: '', properties: [], relationships: [] }
+  defaultConfig: { 
+    nodeLabel: '', 
+    properties: [], 
+    inheritProperties: true, 
+    relationshipType: 'contains', 
+    relationshipMode: 'connected',
+    relationshipDirection: 'outgoing',
+    targetNodeLabel: '',
+    lookupProperty: '',
+    lookupValue: ''
+  }
 })
 
 // 22. Create Reference
