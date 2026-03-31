@@ -65,7 +65,7 @@ export interface ExecutionContext {
   childrenRange?: { start?: number; end?: number; limit?: number; offset?: number }
   apiData?: Record<string, unknown>
   deferredOperations: Array<{
-    type: 'update-relationship' | 'delete-relationship' | 'reverse-relationship' | 'update-node' | 'delete-node' | 'clone-node' | 'merge-nodes'
+    type: 'update-relationship' | 'delete-relationship' | 'reverse-relationship' | 'update-node' | 'delete-node' | 'clone-node' | 'merge-nodes' | 'set-property' | 'copy-property' | 'merge-properties' | 'split-property' | 'format-property' | 'extract-and-compute-property'
     contextNode: GraphJsonNode | null
     parentNode: GraphJsonNode | null
     config: any

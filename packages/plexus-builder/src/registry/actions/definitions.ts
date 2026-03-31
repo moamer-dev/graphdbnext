@@ -195,11 +195,44 @@ registerAction({
   },
   executor: executeUpdateNodeAction,
   configSchema: [
-    { name: 'nodeId', label: 'Node ID (Optional)', type: 'text', description: 'Defaults to current node' },
+    { 
+      name: 'targetMode', 
+      label: 'Target Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { 
+      name: 'targetLabel', 
+      label: 'Lookup Target Label', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. Person, Place'
+    },
+    { 
+      name: 'lookupProperty', 
+      label: 'Lookup Property Key', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. id, uri'
+    },
+    { 
+      name: 'lookupValue', 
+      label: 'Lookup Property Value', 
+      type: 'template', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. @id or {{ $json.id }}' 
+    },
     { name: 'properties', label: 'Properties to Update', type: 'properties' }
   ],
-  defaultConfig: { nodeId: '', properties: [] }
-})
+  defaultConfig: { targetMode: 'current', properties: [], targetLabel: '', lookupProperty: '', lookupValue: '' }
+}),
 
 // 11. Delete Node
 registerAction({
@@ -216,10 +249,43 @@ registerAction({
   },
   executor: executeDeleteNodeAction,
   configSchema: [
-    { name: 'nodeId', label: 'Node ID (Optional)', type: 'text' },
-    { name: 'condition', label: 'Condition', type: 'text', placeholder: 'e.g. {{ $json.type == "test" }}' }
+    { 
+      name: 'targetMode', 
+      label: 'Target Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { 
+      name: 'targetLabel', 
+      label: 'Lookup Target Label', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. Word, Element'
+    },
+    { 
+      name: 'lookupProperty', 
+      label: 'Lookup Property Key', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. id, uri'
+    },
+    { 
+      name: 'lookupValue', 
+      label: 'Lookup Property Value', 
+      type: 'template', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. @id or {{ $json.id }}' 
+    },
+    { name: 'condition', label: 'Delete Condition (Optional)', type: 'text', placeholder: 'e.g. {{ $json.type == "test" }}' }
   ],
-  defaultConfig: { nodeId: '', condition: '' }
+  defaultConfig: { targetMode: 'current', condition: '', targetLabel: '', lookupProperty: '', lookupValue: '' }
 })
 
 // 12. Create Reference Chain
@@ -255,6 +321,19 @@ registerAction({
   },
   executor: executeFormatPropertyAction,
   configSchema: [
+    { 
+      name: 'targetMode', 
+      label: 'Target Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'targetLabel', label: 'Lookup Target Label', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupProperty', label: 'Lookup Property Key', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupValue', label: 'Lookup Property Value', type: 'template', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
     { name: 'propertyKey', label: 'Property to Format', type: 'text' },
     { 
       name: 'formatType', 
@@ -269,8 +348,8 @@ registerAction({
     },
     { name: 'formatOption', label: 'Format Pattern', type: 'text', placeholder: 'e.g. YYYY-MM-DD' }
   ],
-  defaultConfig: { propertyKey: '', formatType: 'string', formatOption: '' }
-})
+  defaultConfig: { targetMode: 'current', propertyKey: '', formatType: 'string', formatOption: '' }
+}),
 
 // 14. Create Token Nodes
 registerAction({
@@ -378,7 +457,7 @@ registerAction({
   id: 'action:copy-property',
   metadata: {
     label: 'Copy Property',
-    description: 'Copy property from one node to another',
+    description: 'Copy property between nodes',
     icon: Copy,
     category: 'property_actions',
     color: 'text-violet-600',
@@ -386,12 +465,42 @@ registerAction({
   },
   executor: executeCopyPropertyAction,
   configSchema: [
-    { name: 'sourceProperty', label: 'Source Property', type: 'text' },
-    { name: 'targetProperty', label: 'Target Property', type: 'text' },
-    { name: 'sourceNodeId', label: 'Source Node ID (Optional)', type: 'text' }
+    { name: 'sep1', label: 'SOURCE (From)', type: 'separator' },
+    { 
+      name: 'sourceAlias', 
+      label: 'Source Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Source by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'sourceLabel', label: 'Lookup Source Label', type: 'text', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
+    { name: 'sourceLookupProperty', label: 'Lookup Source Property Key', type: 'text', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
+    { name: 'sourceLookupValue', label: 'Lookup Source Property Value', type: 'template', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
+    { name: 'sourceProperty', label: 'Source Property Key', type: 'text' },
+    
+    { name: 'sep2', label: 'TARGET (To)', type: 'separator' },
+    { 
+      name: 'targetMode', 
+      label: 'Target Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'targetLabel', label: 'Lookup Target Label', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupProperty', label: 'Lookup Target Property Key', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupValue', label: 'Lookup Target Property Value', type: 'template', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'targetProperty', label: 'Target Property Key', type: 'text' }
   ],
-  defaultConfig: { sourceProperty: '', targetProperty: '', sourceNodeId: '' }
-})
+  defaultConfig: { sourceAlias: 'current', targetMode: 'current', sourceProperty: '', targetProperty: '' }
+}),
 
 // 8. Update Relationship
 registerAction({
@@ -406,12 +515,44 @@ registerAction({
   },
   executor: executeUpdateRelationshipAction,
   configSchema: [
-    { name: 'relationshipType', label: 'Relationship Type', type: 'text' },
+    { name: 'sep1', label: 'Relationship Filter', type: 'separator' },
+    { name: 'relationshipType', label: 'Target Relationship Type', type: 'text' },
+    { 
+      name: 'fromAlias', 
+      label: 'From Node (Source)', 
+      type: 'select',
+      options: [
+        { label: 'Current Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Node', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'fromLabel', label: 'From Lookup Label', type: 'text', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    { name: 'fromProperty', label: 'From Lookup Prop Key', type: 'text', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    { name: 'fromValue', label: 'From Lookup Prop Val', type: 'template', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    
+    { 
+      name: 'toAlias', 
+      label: 'To Node (Target)', 
+      type: 'select',
+      options: [
+        { label: 'Current Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Node', value: 'lookup' }
+      ],
+      defaultValue: 'parent'
+    },
+    { name: 'toLabel', label: 'To Lookup Label', type: 'text', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    { name: 'toProperty', label: 'To Lookup Prop Key', type: 'text', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    { name: 'toValue', label: 'To Lookup Prop Val', type: 'template', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    
+    { name: 'sep2', label: 'Updates', type: 'separator' },
     { name: 'newRelationshipType', label: 'New Relationship Type (Optional)', type: 'text' },
     { name: 'properties', label: 'Properties to Update', type: 'properties' }
   ],
-  defaultConfig: { relationshipType: '', newRelationshipType: '', properties: [] }
-})
+  defaultConfig: { fromAlias: 'current', toAlias: 'parent', relationshipType: '', newRelationshipType: '', properties: [] }
+}),
 
 // 9. Extract & Compute Property
 registerAction({
@@ -426,11 +567,24 @@ registerAction({
   },
   executor: executeExtractAndComputePropertyAction,
   configSchema: [
+    { 
+      name: 'targetMode', 
+      label: 'Target Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'targetLabel', label: 'Lookup Target Label', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupProperty', label: 'Lookup Property Key', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupValue', label: 'Lookup Property Value', type: 'template', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
     { name: 'propertyKey', label: 'Target Property Key', type: 'text' },
-    { name: 'expression', label: 'Expression', type: 'text', placeholder: 'e.g. {{ $json.val * 2 }}' }
+    { name: 'expression', label: 'Compute Expression', type: 'text', placeholder: 'e.g. {{ $json.val * 2 }}' }
   ],
-  defaultConfig: { propertyKey: '', expression: '' }
-})
+  defaultConfig: { targetMode: 'current', propertyKey: '', expression: '' }
+}),
 
 // 10. Create Node with Lookup
 registerAction({
@@ -466,12 +620,25 @@ registerAction({
   },
   executor: executeMergePropertiesAction,
   configSchema: [
-    { name: 'targetProperty', label: 'Target Property', type: 'text' },
+    { 
+      name: 'targetMode', 
+      label: 'Target Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'targetLabel', label: 'Lookup Target Label', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupProperty', label: 'Lookup Property Key', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupValue', label: 'Lookup Property Value', type: 'template', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'targetProperty', label: 'Target Property Key', type: 'text' },
     { name: 'sourceProperties', label: 'Source Properties (Comma separated)', type: 'text' },
     { name: 'separator', label: 'Separator', type: 'text', defaultValue: ' ' }
   ],
-  defaultConfig: { targetProperty: '', sourceProperties: '', separator: ' ' }
-})
+  defaultConfig: { targetMode: 'current', targetProperty: '', sourceProperties: '', separator: ' ' }
+}),
 
 // 12. Split Property
 registerAction({
@@ -486,19 +653,32 @@ registerAction({
   },
   executor: executeSplitPropertyAction,
   configSchema: [
-    { name: 'sourceProperty', label: 'Source Property', type: 'text' },
+    { 
+      name: 'targetMode', 
+      label: 'Target Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'targetLabel', label: 'Lookup Target Label', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupProperty', label: 'Lookup Property Key', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupValue', label: 'Lookup Property Value', type: 'template', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'sourceProperty', label: 'Source Property Key', type: 'text' },
     { name: 'separator', label: 'Separator/Pattern', type: 'text', defaultValue: ',' },
     { name: 'targetProperties', label: 'Target Properties (Comma separated)', type: 'text' }
   ],
-  defaultConfig: { sourceProperty: '', separator: ',', targetProperties: '' }
-})
+  defaultConfig: { targetMode: 'current', sourceProperty: '', separator: ',', targetProperties: '' }
+}),
 
 // 13. Clone Node
 registerAction({
   id: 'action:clone-node',
   metadata: {
     label: 'Clone Node',
-    description: 'Clone node with modifications',
+    description: 'Clone node with transformations and modifications',
     icon: Copy,
     category: 'node_actions',
     color: 'text-green-600',
@@ -506,19 +686,52 @@ registerAction({
   },
   executor: executeCloneNodeAction,
   configSchema: [
-    { name: 'nodeId', label: 'Source Node ID (Optional)', type: 'text' },
-    { name: 'newLabel', label: 'New Label (Optional)', type: 'text' },
-    { name: 'propertiesToOverride', label: 'Properties to Override', type: 'properties' }
+    { 
+      name: 'targetMode', 
+      label: 'Source Node Mode', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Source by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { 
+      name: 'targetLabel', 
+      label: 'Source Node Label', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. MasterData'
+    },
+    { 
+      name: 'lookupProperty', 
+      label: 'Source Property Key', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. id, uri'
+    },
+    { 
+      name: 'lookupValue', 
+      label: 'Source Property Value', 
+      type: 'template', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. {{ $json.templateId }}' 
+    },
+    { name: 'newLabel', label: 'Override New Label (Optional)', type: 'template' },
+    { name: 'modifications', label: 'Properties to Override/Add', type: 'properties' }
   ],
-  defaultConfig: { nodeId: '', newLabel: '', propertiesToOverride: [] }
-})
+  defaultConfig: { targetMode: 'current', targetLabel: '', lookupProperty: '', lookupValue: '', newLabel: '', modifications: [] }
+}),
 
 // 14. Merge Nodes
 registerAction({
   id: 'action:merge-nodes',
   metadata: {
     label: 'Merge Nodes',
-    description: 'Merge duplicate nodes',
+    description: 'Merge duplicate or related nodes',
     icon: Merge,
     category: 'node_actions',
     color: 'text-purple-600',
@@ -526,10 +739,90 @@ registerAction({
   },
   executor: executeMergeNodesAction,
   configSchema: [
-    { name: 'nodeLabel', label: 'Node Label', type: 'text' },
-    { name: 'mergeCriteria', label: 'Merge Criteria Property', type: 'text', defaultValue: 'id' }
+    { name: 'sep1', label: 'Primary Node (The Merger)', type: 'separator' },
+    { 
+      name: 'targetMode', 
+      label: 'Merge INTO (Target)', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Lookup Target by Criteria', value: 'lookup' },
+        { label: 'Parent Node', value: 'parent' }
+      ],
+      defaultValue: 'lookup'
+    },
+    { 
+      name: 'targetLabel', 
+      label: 'Lookup Target Label', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. MasterEntity'
+    },
+    { 
+      name: 'lookupProperty', 
+      label: 'Lookup Property Key', 
+      type: 'text', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. id, uri'
+    },
+    { 
+      name: 'lookupValue', 
+      label: 'Lookup Property Value', 
+      type: 'template', 
+      dependsOn: 'targetMode', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. {{ $json.id }}' 
+    },
+    { name: 'sep2', label: 'Secondary Nodes (The Merged)', type: 'separator' },
+    { 
+      name: 'sourceAlias', 
+      label: 'Merge FROM (Source)', 
+      type: 'select',
+      options: [
+        { label: 'Current Context Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Source by Criteria', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { 
+      name: 'sourceLabel', 
+      label: 'Lookup Source Label', 
+      type: 'text', 
+      dependsOn: 'sourceAlias', 
+      dependsOnValue: 'lookup'
+    },
+    { 
+      name: 'sourceLookupProperty', 
+      label: 'Lookup Source Property Key', 
+      type: 'text', 
+      dependsOn: 'sourceAlias', 
+      dependsOnValue: 'lookup'
+    },
+    { 
+      name: 'sourceLookupValue', 
+      label: 'Lookup Source Property Value', 
+      type: 'template', 
+      dependsOn: 'sourceAlias', 
+      dependsOnValue: 'lookup',
+      placeholder: 'e.g. {{ $json.duplicate_id }}'
+    },
+    { name: 'sep3', label: 'Merge Strategy', type: 'separator' },
+    { 
+      name: 'mergeStrategy', 
+      label: 'Conflict Strategy', 
+      type: 'select',
+      options: [
+        { label: 'Union (Combine all data)', value: 'union' },
+        { label: 'Target Wins (Keep Primary data)', value: 'preferTarget' },
+        { label: 'Source Wins (Prefer New data)', value: 'preferSource' }
+      ],
+      defaultValue: 'preferSource'
+    }
   ],
-  defaultConfig: { nodeLabel: '', mergeCriteria: 'id' }
+  defaultConfig: { targetMode: 'lookup', sourceAlias: 'current', mergeStrategy: 'preferSource' }
 })
 
 // 21. Create Node Complete
@@ -658,7 +951,7 @@ registerAction({
   id: 'action:delete-relationship',
   metadata: {
     label: 'Delete Relationship',
-    description: 'Remove an existing relationship',
+    description: 'Remove existing relationships conditionally',
     icon: Trash2,
     category: 'relationship_actions',
     color: 'text-red-600',
@@ -666,17 +959,50 @@ registerAction({
   },
   executor: executeDeleteRelationshipAction,
   configSchema: [
-    { name: 'relationshipType', label: 'Relationship Type', type: 'text' }
+    { name: 'sep1', label: 'Source/Target Filter', type: 'separator' },
+    { name: 'relationshipType', label: 'Relationship Type', type: 'text' },
+    { 
+      name: 'fromAlias', 
+      label: 'From Node (Source)', 
+      type: 'select',
+      options: [
+        { label: 'Current Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Node', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'fromLabel', label: 'From Lookup Label', type: 'text', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    { name: 'fromProperty', label: 'From Lookup Prop Key', type: 'text', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    { name: 'fromValue', label: 'From Lookup Prop Val', type: 'template', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    
+    { 
+      name: 'toAlias', 
+      label: 'To Node (Target)', 
+      type: 'select',
+      options: [
+        { label: 'Current Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Node', value: 'lookup' }
+      ],
+      defaultValue: 'parent'
+    },
+    { name: 'toLabel', label: 'To Lookup Label', type: 'text', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    { name: 'toProperty', label: 'To Lookup Prop Key', type: 'text', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    { name: 'toValue', label: 'To Lookup Prop Val', type: 'template', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    
+    { name: 'sep2', label: 'Properties Filter', type: 'separator' },
+    { name: 'propertyMatch', label: 'Matching Properties (Optional)', type: 'properties' }
   ],
-  defaultConfig: { relationshipType: '' }
-})
+  defaultConfig: { fromAlias: 'current', toAlias: 'parent', relationshipType: '', propertyMatch: [] }
+}),
 
 // 24. Reverse Relationship
 registerAction({
   id: 'action:reverse-relationship',
   metadata: {
     label: 'Reverse Relationship',
-    description: 'Reverse the direction of a relationship',
+    description: 'Reverse the direction of specified relationships',
     icon: RotateCcw,
     category: 'relationship_actions',
     color: 'text-blue-600',
@@ -684,9 +1010,39 @@ registerAction({
   },
   executor: executeReverseRelationshipAction,
   configSchema: [
-    { name: 'relationshipType', label: 'Relationship Type', type: 'text' }
+    { name: 'sep1', label: 'Source/Target Filter', type: 'separator' },
+    { name: 'relationshipType', label: 'Relationship Type', type: 'text' },
+    { 
+      name: 'fromAlias', 
+      label: 'From Node', 
+      type: 'select',
+      options: [
+        { label: 'Current Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Node', value: 'lookup' }
+      ],
+      defaultValue: 'current'
+    },
+    { name: 'fromLabel', label: 'From Lookup Label', type: 'text', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    { name: 'fromProperty', label: 'From Lookup Prop Key', type: 'text', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    { name: 'fromValue', label: 'From Lookup Prop Val', type: 'template', dependsOn: 'fromAlias', dependsOnValue: 'lookup' },
+    
+    { 
+      name: 'toAlias', 
+      label: 'To Node', 
+      type: 'select',
+      options: [
+        { label: 'Current Node', value: 'current' },
+        { label: 'Parent Node', value: 'parent' },
+        { label: 'Lookup Node', value: 'lookup' }
+      ],
+      defaultValue: 'parent'
+    },
+    { name: 'toLabel', label: 'To Lookup Label', type: 'text', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    { name: 'toProperty', label: 'To Lookup Prop Key', type: 'text', dependsOn: 'toAlias', dependsOnValue: 'lookup' },
+    { name: 'toValue', label: 'To Lookup Prop Val', type: 'template', dependsOn: 'toAlias', dependsOnValue: 'lookup' }
   ],
-  defaultConfig: { relationshipType: '' }
+  defaultConfig: { fromAlias: 'current', toAlias: 'parent', relationshipType: '' }
 })
 
 // 26. Defer Relationship

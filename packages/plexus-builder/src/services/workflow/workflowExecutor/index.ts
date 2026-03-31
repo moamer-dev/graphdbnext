@@ -558,8 +558,8 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
     }
 
     if (type === 'update-relationship' || type === 'delete-relationship' || type === 'reverse-relationship') {
-      const fromNodes = resolveNodes(config.fromAlias || 'current', config.fromLookup)
-      const toNodes = resolveNodes(config.toAlias || 'parent', config.toLookup)
+      const fromNodes = resolveNodes(config.fromAlias || 'current', { label: config.fromLabel, propertyKey: config.fromProperty, propertyValue: config.fromValue })
+      const toNodes = resolveNodes(config.toAlias || 'parent', { label: config.toLabel, propertyKey: config.toProperty, propertyValue: config.toValue })
       const relTypeLabel = evaluateTemplate(config.relationshipType || '', apiData)
 
       if (fromNodes.length === 0 || toNodes.length === 0) return
@@ -603,9 +603,105 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
           rel.end = temp
         })
       }
+    } else if (type === 'set-property' || type === 'format-property' || type === 'split-property' || type === 'merge-properties' || type === 'extract-and-compute-property') {
+      const targetNodes = resolveNodes(
+        config.targetMode || 'current',
+        { 
+          label: config.targetLabel, 
+          propertyKey: config.lookupProperty, 
+          propertyValue: config.lookupValue 
+        }
+      )
+
+      targetNodes.forEach(node => {
+        if (type === 'set-property') {
+          const key = evaluateTemplate(config.propertyKey || '', apiData)
+          const value = evaluateTemplate(config.propertyValue || '', apiData)
+          if (key) node.properties[key] = value
+        } else if (type === 'format-property') {
+          const propertyKey = evaluateTemplate(config.propertyKey || '', apiData)
+          const format = config.formatType || 'string'
+          const formatOption = evaluateTemplate(config.formatOption || '', apiData)
+          
+          const value = node.properties[propertyKey]
+          if (value !== undefined) {
+             let formatted = String(value)
+             if (format === 'date') {
+               const d = new Date(String(value))
+               if (!isNaN(d.getTime())) formatted = formatOption ? d.toLocaleDateString(formatOption) : d.toISOString()
+             } else if (format === 'number') {
+               const n = parseFloat(String(value))
+               if (!isNaN(n)) formatted = formatOption ? n.toLocaleString(formatOption) : String(n)
+             }
+             node.properties[propertyKey] = formatted
+          }
+        } else if (type === 'split-property') {
+           const sourceProperty = evaluateTemplate(config.sourceProperty || '', apiData)
+           const separator = evaluateTemplate(config.separator || ',', apiData)
+           const targetProps = String(config.targetProperties || '').split(',').map(p => p.trim()).filter(Boolean)
+           
+           const val = String(node.properties[sourceProperty] || '')
+           if (val) {
+             const parts = val.split(separator)
+             targetProps.forEach((p, i) => {
+               if (parts[i] !== undefined) node.properties[p] = parts[i].trim()
+             })
+           }
+        } else if (type === 'merge-properties') {
+           const targetProperty = evaluateTemplate(config.targetProperty || '', apiData)
+           const sources = String(config.sourceProperties || '').split(',').map(s => s.trim()).filter(Boolean)
+           const separator = config.separator || ' '
+           
+           const vals = sources.map(s => node.properties[s]).filter(v => v !== undefined)
+           if (targetProperty) node.properties[targetProperty] = vals.join(separator)
+        } else if (type === 'extract-and-compute-property') {
+           const key = evaluateTemplate(config.propertyKey || '', apiData)
+           const expr = config.expression || ''
+           if (key && expr) {
+             node.properties[key] = evaluateTemplate(expr, apiData)
+           }
+        }
+      })
+    } else if (type === 'copy-property') {
+       const sourceNodes = resolveNodes(
+         config.sourceAlias || 'current',
+         { 
+           label: config.sourceLabel, 
+           propertyKey: config.sourceLookupProperty, 
+           propertyValue: config.sourceLookupValue 
+         }
+       )
+       const targetNodes = resolveNodes(
+         config.targetMode || 'current',
+         { 
+           label: config.targetLabel, 
+           propertyKey: config.lookupProperty, 
+           propertyValue: config.lookupValue 
+         }
+       )
+       
+       if (sourceNodes.length > 0 && targetNodes.length > 0) {
+         const sourceProp = evaluateTemplate(config.sourceProperty || '', apiData)
+         const targetProp = evaluateTemplate(config.targetProperty || '', apiData)
+         
+         if (sourceProp && targetProp) {
+           targetNodes.forEach(target => {
+             const val = sourceNodes[0].properties[sourceProp] // Use first matching source
+             if (val !== undefined) target.properties[targetProp] = val
+           })
+         }
+       }
     } else {
-      // Node operations
-      const targetNodes = resolveNodes(config.targetAlias || 'current', config.targetLookup)
+      // Defer to existing node operations (update, delete, clone, merge)
+      const targetNodes = resolveNodes(
+        config.targetMode || 'current',
+        { 
+          label: config.targetLabel, 
+          propertyKey: config.lookupProperty, 
+          propertyValue: config.lookupValue 
+        }
+      )
+      
       if (targetNodes.length === 0) return
 
       if (type === 'update-node') {
@@ -616,100 +712,113 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
           properties.forEach(({ key, value }) => {
             node.properties[key] = evaluateTemplate(value, apiData)
           })
-          if (labels.length > 0) {
+          if (labels && labels.length > 0) {
             node.labels = labels.map(l => evaluateTemplate(l, apiData))
           }
         })
       } else if (type === 'delete-node') {
-        const condition = config.condition as any || {}
-        const propertyMatch = condition.propertyMatch as Array<{ key: string, value: string }> || []
+        const condition = config.condition as string || ''
 
         targetNodes.forEach(node => {
           let shouldDelete = true
-          propertyMatch.forEach(({ key, value }) => {
-            if (String(node.properties[key] || '') !== String(evaluateTemplate(value, apiData))) {
+          
+          if (condition) {
+            const evaluated = evaluateTemplate(condition, apiData)
+            // If condition evaluates to "false" (string), don't delete
+            if (String(evaluated).toLowerCase() === 'false') {
               shouldDelete = false
             }
-          })
+          }
+          
           if (shouldDelete) {
             nodesToRemove.add(node.id)
           }
         })
-      } else if (type === 'clone-node') {
+      }
+ else if (type === 'clone-node') {
         const modifications = config.modifications as Array<{ key: string, value: string }> || []
         const newLabels = config.newLabels as string[] || []
 
-        targetNodes.forEach(node => {
-          const clonedNode: GraphJsonNode = {
-            id: nodeIdCounter.value++,
-            type: 'node',
-            labels: newLabels.length > 0 ? newLabels.map(l => evaluateTemplate(l, apiData)) : [...node.labels],
-            properties: { ...node.properties }
-          }
-          modifications.forEach(({ key, value }) => {
-            clonedNode.properties[key] = evaluateTemplate(value, apiData)
-          })
-          graphNodes.push(clonedNode)
-
-          if (config.relationshipType) {
-            const relTypeLabel = evaluateTemplate(config.relationshipType, apiData)
-            const direction = config.relationshipDirection || 'outgoing'
-            const relTargetAlias = config.relationshipTargetAlias || 'original'
-            
-            let relTargetNodes: GraphJsonNode[] = []
-            if (relTargetAlias === 'original') {
-              relTargetNodes = [node]
-            } else {
-              relTargetNodes = resolveNodes(relTargetAlias, config.relationshipTargetLookup)
-            }
-
-            if (relTargetNodes.length > 0 && relTypeLabel) {
-              relTargetNodes.forEach(rn => {
-                const startNode = direction === 'incoming' ? rn : clonedNode
-                const endNode = direction === 'incoming' ? clonedNode : rn
-                graphRels.push({
-                  id: relIdCounter.value++,
-                  type: 'relationship',
-                  label: relTypeLabel,
-                  start: startNode.id,
-                  end: endNode.id,
-                  properties: {}
-                })
-              })
-            }
-          }
-        })
-      } else if (type === 'merge-nodes') {
-        // Merge targetNodes into a single node or merge another set into targetNodes
-        const mergeStrategy = config.mergeStrategy || 'union'
-        const sourceNodes = resolveNodes(config.sourceAlias || 'parent', config.sourceLookup)
+      targetNodes.forEach(node => {
+        const clonedNode: GraphJsonNode = {
+          id: nodeIdCounter.value++,
+          type: 'node',
+          labels: config.newLabel ? [evaluateTemplate(config.newLabel, apiData)] : [...node.labels],
+          properties: { ...node.properties }
+        }
         
-        if (sourceNodes.length === 0) return
-
-        targetNodes.forEach(target => {
-          sourceNodes.forEach(source => {
-            if (source.id === target.id) return
-            
-            if (mergeStrategy === 'union') {
-              target.labels = Array.from(new Set([...target.labels, ...source.labels]))
-              target.properties = { ...target.properties, ...source.properties }
-            } else if (mergeStrategy === 'preferSource') {
-              target.properties = { ...target.properties, ...source.properties }
-            } else {
-              // preferTarget: already correct as source props don't overwrite
-              target.properties = { ...source.properties, ...target.properties }
-            }
-
-            // Move relationships
-            graphRels.forEach(rel => {
-              if (rel.start === source.id) rel.start = target.id
-              if (rel.end === source.id) rel.end = target.id
-            })
-
-            nodesToRemove.add(source.id)
-          })
+        const modifications = config.modifications as Array<{ key: string, value: string }> || []
+        modifications.forEach(({ key, value }) => {
+          clonedNode.properties[key] = evaluateTemplate(value, apiData)
         })
-      }
+        graphNodes.push(clonedNode)
+
+        if (config.relationshipType) {
+          const relTypeLabel = evaluateTemplate(config.relationshipType, apiData)
+          const direction = config.relationshipDirection || 'outgoing'
+          const relTargetAlias = config.relationshipTargetAlias || 'original'
+          
+          let relTargetNodes: GraphJsonNode[] = []
+          if (relTargetAlias === 'original') {
+            relTargetNodes = [node]
+          } else {
+            relTargetNodes = resolveNodes(relTargetAlias, config.relationshipTargetLookup)
+          }
+
+          if (relTargetNodes.length > 0 && relTypeLabel) {
+            relTargetNodes.forEach(rn => {
+              const startNode = direction === 'incoming' ? rn : clonedNode
+              const endNode = direction === 'incoming' ? clonedNode : rn
+              graphRels.push({
+                id: relIdCounter.value++,
+                type: 'relationship',
+                label: relTypeLabel,
+                start: startNode.id,
+                end: endNode.id,
+                properties: {}
+              })
+            })
+          }
+        }
+      })
+    } else if (type === 'merge-nodes') {
+      // Merge sourceNodes into targetNodes
+      const mergeStrategy = config.mergeStrategy || 'union'
+      const sourceNodes = resolveNodes(
+        config.sourceAlias || 'current',
+        { 
+          label: config.sourceLabel, 
+          propertyKey: config.sourceLookupProperty, 
+          propertyValue: config.sourceLookupValue 
+        }
+      )
+      
+      if (sourceNodes.length === 0) return
+
+      targetNodes.forEach(target => {
+        sourceNodes.forEach(source => {
+          if (source.id === target.id) return
+          
+          if (mergeStrategy === 'union') {
+            target.labels = Array.from(new Set([...target.labels, ...source.labels]))
+            target.properties = { ...target.properties, ...source.properties }
+          } else if (mergeStrategy === 'preferSource') {
+            target.properties = { ...target.properties, ...source.properties }
+          } else {
+            // preferTarget
+            target.properties = { ...source.properties, ...target.properties }
+          }
+
+          // Move relationships
+          graphRels.forEach(rel => {
+            if (rel.start === source.id) rel.start = target.id
+            if (rel.end === source.id) rel.end = target.id
+          })
+
+          nodesToRemove.add(source.id)
+        })
+      })
+    }
     }
   })
 
