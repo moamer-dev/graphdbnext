@@ -6,9 +6,10 @@ export function evaluateTemplate(value: string, apiResponseData: unknown, xmlEle
   try {
     let result = String(value)
 
-    // 1. Handle JSON expressions: {{ $json.path }} or {{ $json[0] }}
-    if (apiResponseData && result.includes('{{ $json')) {
-      result = replaceExpressions(result, { json: apiResponseData })
+    // 1. Handle JSON expressions: {{ $json.path }} or {{ $key.path }}
+    if (apiResponseData && result.includes('{{ $')) {
+      const context = typeof apiResponseData === 'object' && apiResponseData !== null ? (apiResponseData as any) : {}
+      result = replaceExpressions(result, context)
     }
 
     // 2. Handle XML attributes inside templates: {{ @attr }}

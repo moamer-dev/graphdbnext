@@ -14,17 +14,20 @@ export interface JsonPathContext {
 export function parseJsonPath(expression: string): string[] | null {
   // Remove template syntax {{ }}
   const cleaned = expression.replace(/^\{\{\s*/, '').replace(/\s*\}\}$/, '').trim()
-  
-  // Check if it's a $json expression (can start with . or [)
-  if (!cleaned.startsWith('$json')) {
+
+  // Check if it's a context expression (starts with $)
+  if (!cleaned.startsWith('$')) {
     return null
   }
   
-  // Extract path and handle leading dot if present
-  let path = cleaned.substring(5) // Remove "$json"
-  if (path.startsWith('.')) {
-    path = path.substring(1)
+  // Find the end of the root variable (e.g. $json. or $httpResponse.)
+  const contextMatch = cleaned.match(/^\$([a-zA-Z0-9_]+)(\.|$)/)
+  if (!contextMatch) {
+    return null
   }
+  
+  const rootKey = contextMatch[1]
+  const path = cleaned.substring(rootKey.length + 1).replace(/^\./, '') 
   
   if (!path) {
     return [''] // Root path
@@ -132,32 +135,39 @@ export function evaluateExpression(expression: string, context: JsonPathContext)
   return evaluateJsonPath(context.json, path)
 }
 
-/**
- * Replace all template expressions in a string
- */
 export function replaceExpressions(template: string, context: JsonPathContext): string {
-  // Match {{ $json.path }} or {{ $json[0].path }} patterns
-  const regex = /\{\{\s*\$json(?:\.?)(\[?[^}]+)\s*\}\}/g
+  // Match {{ $key.path }} or {{ $json[0].path }} patterns
+  const regex = /\{\{\s*\$([a-zA-Z0-9_]+)(?:\.?)(\[?[^}]+)\s*\}\}/g
   
-  return template.replace(regex, (match, pathStr) => {
-    const path = parseJsonPath(`$json.${pathStr}`)
-    if (!path) {
-      return match
+  return template.replace(regex, (match, rootKey, pathStr) => {
+    // 1. Try resolving using the explicit root key (e.g. $httpResponse)
+    if (context[rootKey]) {
+      const path = parseJsonPath(`$${rootKey}.${pathStr}`)
+      if (path) {
+        const value = evaluateJsonPath(context[rootKey], path)
+        if (value !== undefined) return formatResult(value, match)
+      }
     }
     
-    const value = evaluateJsonPath(context.json, path)
-    
-    // Convert value to string
-    if (value === null || value === undefined) {
-      return ''
+    // 2. Fallback for $json: look in all context keys
+    if (rootKey === 'json') {
+      for (const key in context) {
+        const path = parseJsonPath(`$${key}.${pathStr}`)
+        if (path) {
+          const value = evaluateJsonPath(context[key], path)
+          if (value !== undefined) return formatResult(value, match)
+        }
+      }
     }
-    
-    if (typeof value === 'object') {
-      return JSON.stringify(value)
-    }
-    
-    return String(value)
+
+    return match
   })
+}
+
+function formatResult(value: any, match: string): string {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
 }
 
 /**

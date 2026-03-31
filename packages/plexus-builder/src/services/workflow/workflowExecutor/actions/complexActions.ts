@@ -32,11 +32,7 @@ export function executeExtractAndNormalizeAttributesAction(action: ActionCanvasN
     if (attrValue === null || attrValue === '') {
       const defaultValue = mapping.defaultValue !== undefined ? mapping.defaultValue : null
       if (defaultValue !== null) {
-        attrValue = defaultValue
-        if (attrValue.includes('{{ $json.')) {
-          const evaluated = evaluateExpression(attrValue, { json: apiResponseData })
-          attrValue = String(evaluated || attrValue)
-        }
+        attrValue = ctx.evaluateTemplate(defaultValue, apiResponseData)
       }
     }
 

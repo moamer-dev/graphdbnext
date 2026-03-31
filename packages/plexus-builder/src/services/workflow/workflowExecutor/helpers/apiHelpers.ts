@@ -12,11 +12,8 @@ export function createGetApiResponseData(
     action: ActionCanvasNode,
     ctx: ExecutionContext
   ): unknown {
-    if (ctx.apiData) {
-      const apiDataKeys = Object.keys(ctx.apiData)
-      if (apiDataKeys.length > 0) {
-        return ctx.apiData[apiDataKeys[0]]
-      }
+    if (ctx.apiData && Object.keys(ctx.apiData).length > 0) {
+      return ctx.apiData
     }
     
     const incomingEdges = actionEdges.filter(edge => edge.target === action.id)
