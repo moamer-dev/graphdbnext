@@ -194,13 +194,13 @@ export function SchemaForm({
             {properties.map((prop, idx) => (
               <div key={idx} className="flex gap-2 items-start group">
                 <div className="grid grid-cols-2 gap-2 flex-1">
-                  <Input
-                    placeholder="Key"
-                    className="h-7 text-[10px] bg-background"
+                  <JsonFieldSelector
+                    data={apiResponse}
                     value={prop.key}
-                    onChange={(e) => {
+                    placeholder="Key (or {{ exp }})"
+                    onChange={(val) => {
                       const next = [...properties]
-                      next[idx] = { ...next[idx], key: e.target.value }
+                      next[idx] = { ...next[idx], key: val }
                       onChange(field.name, next)
                     }}
                   />
@@ -300,15 +300,15 @@ export function SchemaForm({
                         {/* THE KEY: What it's called in the graph */}
                         <div className="space-y-1.5">
                           <Label className="text-[10px] font-bold text-primary uppercase tracking-tight">Property Name (Key)</Label>
-                          <Input
-                            placeholder="e.g., name, age, identifier"
-                            className="h-8 text-xs bg-background border-primary/20 focus:border-primary transition-all"
+                          <JsonFieldSelector
+                            data={apiResponse}
                             value={mapping.propertyKey}
-                            onChange={(e) => {
+                            onChange={(val) => {
                               const next = [...mappings]
-                              next[idx] = { ...next[idx], propertyKey: e.target.value }
+                              next[idx] = { ...next[idx], propertyKey: val }
                               onChange(field.name, next)
                             }}
+                            placeholder="e.g., name, age, or {{ $json.key }}"
                           />
                           <p className="text-[9px] text-muted-foreground italic">The name of the property as it will appear in your graph database.</p>
                         </div>

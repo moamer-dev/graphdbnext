@@ -51,6 +51,12 @@ export function TransformEditor({ transforms, onTransformsChange }: TransformEdi
               <SelectItem value="lowercase">Lowercase</SelectItem>
               <SelectItem value="uppercase">Uppercase</SelectItem>
               <SelectItem value="trim">Trim Whitespace</SelectItem>
+              <SelectItem value="date">Date Only (YYYY-MM-DD)</SelectItem>
+              <SelectItem value="datetime">Date & Time (YYYY-MM-DD HH:mm)</SelectItem>
+              <SelectItem value="year">Year Only (YYYY)</SelectItem>
+              <SelectItem value="timestamp">UNIX Timestamp</SelectItem>
+              <SelectItem value="number">Number (0-9)</SelectItem>
+              <SelectItem value="boolean">Boolean (True/False)</SelectItem>
               <SelectItem value="slugify">Slugify (douglas-adams)</SelectItem>
               <SelectItem value="pascalcase">PascalCase (DouglasAdams)</SelectItem>
               <SelectItem value="camelcase">camelCase (douglasAdams)</SelectItem>

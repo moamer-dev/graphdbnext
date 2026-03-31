@@ -1,5 +1,5 @@
 export interface Transform {
-  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex' | 'slugify' | 'pascalcase' | 'camelcase' | 'snakecase'
+  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex' | 'slugify' | 'pascalcase' | 'camelcase' | 'snakecase' | 'date' | 'datetime' | 'year' | 'timestamp' | 'number' | 'boolean'
   [key: string]: unknown
   replaceFrom?: string
   replaceTo?: string
@@ -10,7 +10,49 @@ export interface Transform {
 export function applyTransforms(text: string, transforms: Transform[]): string {
   let result = text
   transforms.forEach(transform => {
+    if (!result) return
     switch (transform.type) {
+      case 'date': {
+        const d = new Date(result)
+        if (!isNaN(d.getTime())) {
+          result = d.toISOString().split('T')[0]
+        }
+        break
+      }
+      case 'datetime': {
+        const d = new Date(result)
+        if (!isNaN(d.getTime())) {
+          result = d.toISOString().replace('T', ' ').split('.')[0].slice(0, 16)
+        }
+        break
+      }
+      case 'year': {
+        const d = new Date(result)
+        if (!isNaN(d.getTime())) {
+          result = d.getFullYear().toString()
+        }
+        break
+      }
+      case 'timestamp': {
+        const d = new Date(result)
+        if (!isNaN(d.getTime())) {
+          result = Math.floor(d.getTime() / 1000).toString()
+        }
+        break
+      }
+      case 'number': {
+        const num = parseFloat(result.replace(/[^0-9.-]/g, ''))
+        if (!isNaN(num)) {
+          result = num.toString()
+        }
+        break
+      }
+      case 'boolean': {
+        const val = result.toLowerCase().trim()
+        const isTrue = val === 'true' || val === '1' || val === 'yes' || val === 'on'
+        result = isTrue ? 'true' : 'false'
+        break
+      }
       case 'lowercase':
         result = result.toLowerCase()
         break
