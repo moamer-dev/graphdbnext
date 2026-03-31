@@ -7,6 +7,7 @@ export type FieldType =
   | 'boolean' 
   | 'select' 
   | 'credential' // For selecting stored credentials
+  | 'credentials' // Alias for plural
   | 'multiselect' 
   | 'properties' // For key-value pairs
   | 'mappings'   // For attribute mappings

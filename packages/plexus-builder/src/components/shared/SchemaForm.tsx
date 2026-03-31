@@ -17,6 +17,7 @@ import { Plus, Trash2, X, Settings2, ChevronDown, ChevronRight, Info, Lightbulb 
 import { ConfigField } from '../../registry/types'
 import { JsonFieldSelector } from '../viewer/JsonFieldSelector'
 import { TransformEditor } from '../sidebars/ActionConfigurationSidebar/TransformEditor'
+import { useCredentialsStore } from '../../stores/credentialsStore'
 import { HelpTooltip } from './HelpTooltip'
 import { cn } from '../../utils/cn'
 
@@ -25,7 +26,7 @@ interface SchemaFormProps {
   config: Record<string, any>
   onChange: (name: string, value: any) => void
   apiResponse?: unknown
-  getCredentialsByType?: (type: string) => Array<{ id: string; name: string }>
+  getCredentialsByType?: (type: string) => Array<{ id: string; name: string; type: string }>
   getCredential?: (id: string) => { id: string; name: string } | undefined
 }
 
@@ -404,6 +405,42 @@ export function SchemaForm({
         )
       }
 
+      case 'credential':
+      case 'credentials':
+        const validTypes = ['orcid', 'geonames', 'europeana', 'getty', 'apiKey', 'bearer', 'basic', 'custom']
+        const depValue = field.dependsOn ? config[field.dependsOn] : null
+        const isDepValidType = typeof depValue === 'string' && validTypes.includes(depValue)
+        
+        const typeFilter = field.credentialType || (isDepValidType ? depValue : null)
+        const allCredentials = getCredentialsByType ? (typeFilter ? getCredentialsByType(typeFilter as any) : useCredentialsStore.getState().credentials) : []
+        
+        return (
+          <div key={field.name} className="space-y-1.5">
+            {renderLabel(field)}
+            <Select
+              value={value || ''}
+              onValueChange={(val) => onChange(field.name, val)}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder={field.placeholder || "Select credential"} />
+              </SelectTrigger>
+              <SelectContent>
+                {allCredentials.map((cred) => (
+                  <SelectItem key={cred.id} value={cred.id} className="text-xs">
+                    <span className="flex items-center gap-2">
+                       <span className="opacity-50 text-[10px] uppercase font-bold">{cred.type}</span>
+                       <span>{cred.name}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+                {allCredentials.length === 0 && (
+                  <div className="p-2 text-[10px] text-muted-foreground text-center">No {typeFilter || ''} credentials found</div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        )
+      
       case 'separator':
         return <div key={field.name} className="hr border-t my-2" />
 
