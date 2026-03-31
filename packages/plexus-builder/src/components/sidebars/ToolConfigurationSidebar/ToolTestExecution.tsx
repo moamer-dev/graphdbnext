@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
@@ -10,11 +11,14 @@ import {
   SelectTrigger,
   SelectValue
 } from '../../ui/select'
-import { Play, CheckCircle2, XCircle, Eye, Loader2 } from 'lucide-react'
+import { Play, CheckCircle2, XCircle, Eye, Loader2, Database, Info } from 'lucide-react'
 import { ResponseHistory } from '../../shared/ResponseHistory'
 import { ApiResponseModal } from '../../dialogs/ApiResponseModal'
 import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
 import { toast } from '../../../utils/toast'
+import { useDataSourcesStore } from '../../../stores/dataSourcesStore'
+import { cn } from '../../../utils/cn'
+import { ConfirmDialog } from '../../shared/ConfirmDialog'
 
 interface TestResult {
   success: boolean
@@ -87,6 +91,7 @@ export function ToolTestExecution({
   onInstanceSelect,
   loadingRealData = false
 }: ToolTestExecutionProps) {
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const isConditionTest = toolNodeType === 'tool:if' || toolNodeType === 'tool:switch'
   const isApiTest = showApiResponse
   
@@ -212,8 +217,110 @@ export function ToolTestExecution({
             {/* Response Data section for API tests */}
             {showApiResponse && (
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
-                <div className="mb-2">
-                  <Label className="text-xs font-medium">Response Data</Label>
+                <div className="space-y-3 mb-3 bg-white/50 dark:bg-black/20 p-2 rounded-md border border-green-200/50 dark:border-green-800/30">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Store Output As</Label>
+                    <span className="text-[9px] text-green-600 dark:text-green-400 font-medium italic">Name your data source below</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder="Alias (e.g. wikiData)"
+                        className={cn(
+                          "h-8 text-xs bg-white dark:bg-muted/30 focus:ring-1 focus:ring-primary/20",
+                          (() => {
+                            const alias = (toolNode?.config.outputAlias as string) || ''
+                            if (!alias) return ""
+                            const id = alias.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+                            const existing = useDataSourcesStore.getState().getSource(id)
+                            return existing && existing.toolId !== toolNode?.id ? "border-amber-500 pr-8" : ""
+                          })()
+                        )}
+                        value={(toolNode?.config.outputAlias as string) || ''}
+                        onChange={(e) => {
+                          if (toolNode && onUpdateToolNode) {
+                            onUpdateToolNode(toolNode.id, {
+                              config: {
+                                ...toolNode.config,
+                                outputAlias: e.target.value
+                              }
+                            })
+                          }
+                        }}
+                      />
+                      <div className="absolute right-2.5 top-2.5 flex items-center gap-1">
+                        {(() => {
+                          const alias = (toolNode?.config.outputAlias as string) || ''
+                          if (!alias) return <Database className="h-3 w-3 text-muted-foreground/40" />
+                          const id = alias.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+                          const existing = useDataSourcesStore.getState().getSource(id)
+                          if (existing && existing.toolId !== toolNode?.id) {
+                            return <XCircle className="h-3 w-3 text-amber-500" />
+                          }
+                          return <Database className="h-3 w-3 text-muted-foreground/40" />
+                        })()}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-8 text-xs px-3 bg-primary hover:bg-primary/90 text-white font-medium"
+                      onClick={() => {
+                        const alias = toolNode?.config.outputAlias as string
+                        if (toolNode && alias && alias.trim() && executedApiResponse) {
+                          const id = alias.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+                          const existing = useDataSourcesStore.getState().getSource(id)
+                          
+                          if (existing && existing.toolId !== toolNode.id) {
+                            setConfirmDialogOpen(true)
+                            return
+                          }
+                          
+                          useDataSourcesStore.getState().setSource(alias, executedApiResponse, toolNode.id)
+                          toast.success(`Saved to data sources as "${alias}"`)
+                        } else {
+                          toast.error('Enter a unique Output Alias first')
+                        }
+                      }}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                  <ConfirmDialog
+                    open={confirmDialogOpen}
+                    onOpenChange={setConfirmDialogOpen}
+                    title="Overwrite Data Source?"
+                    description={`A data source named "${(toolNode?.config.outputAlias as string) || ''}" already exists. Are you sure you want to replace it?`}
+                    confirmText="Replace"
+                    variant="destructive"
+                    onConfirm={() => {
+                      const alias = toolNode?.config.outputAlias as string
+                      if (toolNode && alias && executedApiResponse) {
+                        useDataSourcesStore.getState().setSource(alias, executedApiResponse, toolNode.id)
+                        toast.success(`Saved to data sources as "${alias}"`)
+                      }
+                      setConfirmDialogOpen(false)
+                    }}
+                  />
+                  {(() => {
+                    const alias = (toolNode?.config.outputAlias as string) || ''
+                    if (!alias) return null
+                    const id = alias.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+                    const existing = useDataSourcesStore.getState().getSource(id)
+                    if (existing && existing.toolId !== toolNode?.id) {
+                      return <p className="text-[9px] text-amber-600 dark:text-amber-400 font-medium px-1 flex items-center gap-1">
+                        <Info className="h-2.5 w-2.5" /> This name is already used by another tool. Saving will overwrite it.
+                      </p>
+                    }
+                    return null
+                  })()}
+                  <p className="text-[9px] text-muted-foreground leading-tight px-1">
+                    This alias will be used in expressions like <code className="text-primary bg-primary/5 px-1 rounded">{'{{ $alias.field }}'}</code>
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs font-medium">Response Viewer</Label>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   {responseHistory.length > 0 && onResponseHistoryChange && (

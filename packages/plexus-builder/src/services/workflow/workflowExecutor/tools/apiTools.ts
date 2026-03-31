@@ -14,7 +14,7 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
   const customEndpoint = tool.config.customEndpoint as string | undefined
   const customHeaders = tool.config.customHeaders as Record<string, string> | undefined
   const timeout = (tool.config.timeout as number) || 10000
-  const storeInContext = (tool.config.storeInContext as string) || provider
+  const outputAlias = (tool.config.outputAlias as string) || provider
 
   const id = extractIdFromElement(ctx.xmlElement, idSource, idAttribute, idXpath)
 
@@ -43,7 +43,7 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
 
     if (response.success && response.data) {
       if (ctx.apiData) {
-        ctx.apiData[storeInContext] = response.data
+        ctx.apiData[outputAlias] = response.data
       }
     } else {
       console.warn(`[Fetch API Tool] API request failed: ${response.error}`)
@@ -71,7 +71,7 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
   const body = tool.config.body as string | undefined
   const bodyType = (tool.config.bodyType as 'json' | 'text' | 'form-data' | 'x-www-form-urlencoded') || 'json'
   const timeout = (tool.config.timeout as number) || 10000
-  const storeInContext = (tool.config.storeInContext as string) || 'httpResponse'
+  const outputAlias = (tool.config.outputAlias as string) || 'httpResponse'
 
   if (!url || url.trim() === '') {
     console.warn('[HTTP Tool] No URL configured')
@@ -170,11 +170,11 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
     if (ctx.apiData) {
       if (Array.isArray(responseData)) {
         // Direct storage for arrays to preserve Array.isArray(val)
-        ctx.apiData[storeInContext] = responseData
+        ctx.apiData[outputAlias] = responseData
       } else if (typeof responseData === 'object' && responseData !== null) {
         // Store data directly for easy template access
         // include metadata under a special key if it's an object
-        ctx.apiData[storeInContext] = {
+        ctx.apiData[outputAlias] = {
           ...(responseData as any),
           _httpMeta: {
             status: response.status,
@@ -183,14 +183,14 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
           }
         }
       } else {
-        ctx.apiData[storeInContext] = responseData
+        ctx.apiData[outputAlias] = responseData
       }
     }
   } catch (error) {
     clearTimeout(timeoutId)
     console.error('[HTTP Tool] Error:', error)
     if (ctx.apiData) {
-      ctx.apiData[storeInContext] = {
+      ctx.apiData[outputAlias] = {
         error: error instanceof Error ? error.message : 'Unknown error'
       }
     }

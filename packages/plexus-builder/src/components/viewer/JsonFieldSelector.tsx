@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Copy, Brackets, Check, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Brackets, Check, Loader2, Database } from 'lucide-react'
 import { Button } from '../ui/button'
 import { cn } from '../../utils/cn'
 import { getAvailablePaths, evaluateJsonPath, parseJsonPath } from '../../utils/jsonPathExpression'
+import { DataSourcePickerModal } from '../dialogs/DataSourcePickerModal'
 
 interface JsonFieldSelectorProps {
   data: unknown
@@ -108,6 +109,7 @@ export function JsonFieldSelector({
   className
 }: JsonFieldSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isDataSourceModalOpen, setIsDataSourceModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [deferredFilteredPaths, setDeferredFilteredPaths] = useState<string[]>([])
@@ -168,7 +170,7 @@ export function JsonFieldSelector({
           value={currentValue}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full h-8 pl-2 pr-9 text-xs border rounded bg-background focus:ring-1 focus:ring-primary/30 transition-all"
+          className="w-full h-8 pl-2 pr-16 text-xs border rounded bg-background focus:ring-1 focus:ring-primary/30 transition-all font-mono"
         />
         <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
           {!!data && (
@@ -177,19 +179,41 @@ export function JsonFieldSelector({
               variant="ghost"
               size="sm"
               className={cn(
-                "h-6 px-1.5 text-[10px] hover:bg-primary/10 transition-colors",
+                "h-6 px-1.2 text-[10px] hover:bg-primary/10 transition-colors",
                 isOpen && "text-primary bg-primary/10",
                 isExpression && "text-blue-600 font-bold"
               )}
               onClick={() => setIsOpen(!isOpen)}
-              title="Browse JSON data"
+              title="Browse Local Tool JSON"
             >
-              <Brackets className="h-3 w-3 mr-1" />
-              {isExpression ? 'Exp' : 'JSON'}
+              <Brackets className="h-3.5 w-3.5" />
             </Button>
           )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-6 px-1.2 text-[10px] hover:bg-primary/10 transition-colors",
+              isDataSourceModalOpen && "text-primary bg-primary/10",
+              currentValue.includes('{{ $') && !currentValue.includes('{{ $json.') && "text-primary font-bold"
+            )}
+            onClick={() => setIsDataSourceModalOpen(true)}
+            title="Browse Named Data Sources"
+          >
+            <Database className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
+
+      <DataSourcePickerModal
+        open={isDataSourceModalOpen}
+        onOpenChange={setIsDataSourceModalOpen}
+        onSelect={(expression) => {
+          onChange(expression)
+          setIsDataSourceModalOpen(false)
+        }}
+      />
       
       {isOpen && (
         <div className="border rounded-lg bg-background shadow-lg max-h-64 overflow-y-auto mt-1 z-50">

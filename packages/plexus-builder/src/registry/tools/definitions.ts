@@ -163,16 +163,9 @@ registerTool({
       dependsOnValue: ['POST', 'PUT', 'PATCH'],
       placeholder: '{"key": "value"}'
     },
-    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 },
-    { 
-      name: 'storeInContext', 
-      label: 'Store in Context Key', 
-      type: 'text', 
-      defaultValue: 'httpResponse',
-      details: 'Specify a name (key) to store the API response in the workflow context. You can then use this data in subsequent actions using templates, like {{myKey.property}}.'
-    }
+    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 }
   ],
-  defaultConfig: { method: 'GET', url: '', useCredential: false, authType: 'none', headers: [], queryParams: [], storeInContext: 'httpResponse', timeout: 10000 }
+  defaultConfig: { method: 'GET', url: '', useCredential: false, authType: 'none', headers: [], queryParams: [], outputAlias: 'httpResponse', timeout: 10000 }
 })
 
 // 4. Fetch API (Wikidata, ORCID, GND, etc.)
@@ -248,21 +241,14 @@ registerTool({
     },
     { name: 'idAttribute', label: 'Attribute Name', type: 'text', dependsOn: 'idSource', dependsOnValue: 'attribute', placeholder: 'e.g. wiki:id' },
     { name: 'idXpath', label: 'XPath Expression', type: 'text', dependsOn: 'idSource', dependsOnValue: 'xpath', placeholder: 'e.g. ./@id' },
-    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 },
-    { 
-      name: 'storeInContext', 
-      label: 'Store in Context Key', 
-      type: 'text', 
-      placeholder: 'e.g. userData',
-      details: 'Specify a name (key) to store the API response in the workflow context. You can then use this data in subsequent actions using templates, like {{userData.name}}.'
-    }
+    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 }
   ],
   defaultConfig: { 
     apiProvider: 'wikidata', 
     idSource: 'attribute', 
     idAttribute: 'wiki:id', 
     timeout: 10000,
-    storeInContext: ''
+    outputAlias: ''
   }
 })
 
