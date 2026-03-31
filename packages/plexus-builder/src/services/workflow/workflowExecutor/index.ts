@@ -54,6 +54,9 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
     mustResolve?: boolean
   }> = []
   const deferredOperations: ExecutionContext['deferredOperations'] = []
+  
+  // GLOBAL API DATA STORE
+  const apiData: Record<string, unknown> = {}
 
   const labelToNodes = buildLabelMap(nodes)
   const nodeIdToNode = new Map(nodes.map(n => [n.id, n]))
@@ -185,6 +188,7 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
           deferredRelationships,
           deferredOperations,
           skipped: false,
+          apiData,
           findRelationship: findRelType
         }
 
@@ -293,7 +297,13 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
           }
         }
 
-        // 3. Run Actions connected directly to the Builder Node
+        // 3. Run Tools connected to the Builder Node (Run these FIRST so actions have data)
+        const attachedTools = toolNodesByTarget.get(builderNode.id) || []
+        for (const tool of attachedTools) {
+          await processToolRecursive(tool, ctx)
+        }
+
+        // 4. Run Actions connected directly to the Builder Node
         const attachedActions = actionEdgesBySource.get(builderNode.id) || []
         for (const edge of attachedActions) {
           const actionNode = actionNodes.find(a => a.id === edge.target)
@@ -304,12 +314,6 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
             if (actionCtx.skipChildren !== undefined) ctx.skipChildren = actionCtx.skipChildren
             if (actionCtx.skipChildrenTags !== undefined) ctx.skipChildrenTags = actionCtx.skipChildrenTags
           }
-        }
-
-        // 4. Run Tools connected to the Builder Node
-        const attachedTools = toolNodesByTarget.get(builderNode.id) || []
-        for (const tool of attachedTools) {
-          await processToolRecursive(tool, ctx)
         }
 
         if (ctx.skipped || elementSkipped) {

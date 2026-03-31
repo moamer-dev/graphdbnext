@@ -121,7 +121,12 @@ export function JsonFieldSelector({
     if (!isOpen) return
 
     if (!searchQuery) {
-      setDeferredFilteredPaths(paths.filter(path => (!path.includes('.') && !path.includes('[')) || path === '[]'))
+      setDeferredFilteredPaths(paths.filter(path => {
+        // Show root properties OR first-level array items (e.g. [0])
+        const isRootProperty = !path.includes('.') && !path.includes('[')
+        const isFirstLevelArrayItem = /^\[\d+\]$/.test(path)
+        return isRootProperty || isFirstLevelArrayItem || path === '[]'
+      }))
       setIsSearching(false)
       return
     }
@@ -140,7 +145,9 @@ export function JsonFieldSelector({
   }, [searchQuery, paths, isOpen])
 
   const handleSelectPath = (path: string) => {
-    const expression = `{{ $json.${path} }}`
+    // Array indices [0] don't need a dot after $json
+    const separator = path.startsWith('[') ? '' : '.'
+    const expression = `{{ $json${separator}${path} }}`
     onChange(expression)
     setIsOpen(false)
     setSearchQuery('')

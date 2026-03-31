@@ -55,8 +55,6 @@ export const executeFetchApiTool: ToolExecutor = async (tool: ToolCanvasNode, ct
   return ({ result: true })
 }
 
-
-
 export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: ExecutionContext) => {
   const method = (tool.config.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH') || 'GET'
   const url = (tool.config.url as string) || ''
@@ -68,8 +66,6 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
   const bearerToken = tool.config.bearerToken as string | undefined
   const basicUsername = tool.config.basicUsername as string | undefined
   const basicPassword = tool.config.basicPassword as string | undefined
-  const customHeaderName = tool.config.customHeaderName as string | undefined
-  const customHeaderValue = tool.config.customHeaderValue as string | undefined
   const headers = (tool.config.headers as Array<{ key: string; value: string }>) || []
   const queryParams = (tool.config.queryParams as Array<{ key: string; value: string }>) || []
   const body = tool.config.body as string | undefined
@@ -172,11 +168,22 @@ export const executeHttpTool: ToolExecutor = async (tool: ToolCanvasNode, ctx: E
     }
 
     if (ctx.apiData) {
-      ctx.apiData[storeInContext] = {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        data: responseData
+      if (Array.isArray(responseData)) {
+        // Direct storage for arrays to preserve Array.isArray(val)
+        ctx.apiData[storeInContext] = responseData
+      } else if (typeof responseData === 'object' && responseData !== null) {
+        // Store data directly for easy template access
+        // include metadata under a special key if it's an object
+        ctx.apiData[storeInContext] = {
+          ...(responseData as any),
+          _httpMeta: {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+          }
+        }
+      } else {
+        ctx.apiData[storeInContext] = responseData
       }
     }
   } catch (error) {

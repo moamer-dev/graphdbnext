@@ -24,10 +24,6 @@ export function createGetApiResponseData(
       const sourceTool = toolNodes.find(t => t.id === edge.source)
       if (sourceTool && (
         sourceTool.type === 'tool:fetch-api' ||
-        sourceTool.type === 'tool:fetch-orcid' ||
-        sourceTool.type === 'tool:fetch-geonames' ||
-        sourceTool.type === 'tool:fetch-europeana' ||
-        sourceTool.type === 'tool:fetch-getty' ||
         sourceTool.type === 'tool:http'
       )) {
         const apiResponseData = sourceTool.config?.executedResponse as unknown
@@ -48,10 +44,6 @@ export function createGetApiResponseData(
         const sourceTool = toolNodes.find(t => t.id === edge.source)
         if (sourceTool && (
           sourceTool.type === 'tool:fetch-api' ||
-          sourceTool.type === 'tool:fetch-orcid' ||
-          sourceTool.type === 'tool:fetch-geonames' ||
-          sourceTool.type === 'tool:fetch-europeana' ||
-          sourceTool.type === 'tool:fetch-getty' ||
           sourceTool.type === 'tool:http'
         )) {
           const apiResponseData = sourceTool.config?.executedResponse as unknown

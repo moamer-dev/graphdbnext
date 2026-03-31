@@ -6,8 +6,8 @@ export function evaluateTemplate(value: string, apiResponseData: unknown, xmlEle
   try {
     let result = String(value)
 
-    // 1. Handle JSON expressions: {{ $json.path }}
-    if (apiResponseData && result.includes('{{ $json.')) {
+    // 1. Handle JSON expressions: {{ $json.path }} or {{ $json[0] }}
+    if (apiResponseData && result.includes('{{ $json')) {
       result = replaceExpressions(result, { json: apiResponseData })
     }
 

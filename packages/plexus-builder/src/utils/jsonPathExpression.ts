@@ -15,13 +15,16 @@ export function parseJsonPath(expression: string): string[] | null {
   // Remove template syntax {{ }}
   const cleaned = expression.replace(/^\{\{\s*/, '').replace(/\s*\}\}$/, '').trim()
   
-  // Check if it's a $json expression
-  if (!cleaned.startsWith('$json.')) {
+  // Check if it's a $json expression (can start with . or [)
+  if (!cleaned.startsWith('$json')) {
     return null
   }
   
-  // Extract the path after $json.
-  const path = cleaned.substring(6) // Remove "$json."
+  // Extract path and handle leading dot if present
+  let path = cleaned.substring(5) // Remove "$json"
+  if (path.startsWith('.')) {
+    path = path.substring(1)
+  }
   
   if (!path) {
     return [''] // Root path
@@ -99,10 +102,16 @@ export function evaluateJsonPath(data: unknown, path: string[]): unknown {
       }
       
       if (Array.isArray(current)) {
-        return undefined
+        // Also support numeric keys as indices (e.g. $json.0.title)
+        const index = parseInt(part, 10)
+        if (!isNaN(index) && String(index) === part) {
+          current = current[index]
+        } else {
+          return undefined
+        }
+      } else {
+        current = (current as Record<string, unknown>)[part]
       }
-      
-      current = (current as Record<string, unknown>)[part]
     }
   }
   
@@ -127,8 +136,8 @@ export function evaluateExpression(expression: string, context: JsonPathContext)
  * Replace all template expressions in a string
  */
 export function replaceExpressions(template: string, context: JsonPathContext): string {
-  // Match {{ $json.path }} patterns
-  const regex = /\{\{\s*\$json\.([^}]+)\s*\}\}/g
+  // Match {{ $json.path }} or {{ $json[0].path }} patterns
+  const regex = /\{\{\s*\$json(?:\.?)(\[?[^}]+)\s*\}\}/g
   
   return template.replace(regex, (match, pathStr) => {
     const path = parseJsonPath(`$json.${pathStr}`)

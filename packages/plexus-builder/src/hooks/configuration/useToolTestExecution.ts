@@ -353,11 +353,21 @@ export function useToolTestExecution(toolNodeId: string | null) {
         const cred = getCredential(credId)
         return cred ? { data: cred.data } : undefined
       })
-      setTestResult({
-        success: response.success,
-        output: response.success ? 'Success' : 'Failed',
-        details: response.success ? 'Success' : response.error
-      })
+      if (response.success && response.data) {
+        setExecutedApiResponse(response.data)
+        if (toolNode) {
+          updateToolNode(toolNode.id, {
+            config: { ...toolNode.config, executedResponse: response.data, executedTestId: testId }
+          })
+        }
+        setTestResult({ success: true, output: 'Success', details: `Successfully fetched data for ID: ${testId}` })
+      } else {
+        setTestResult({
+          success: false,
+          output: 'Failed',
+          details: response.error || 'API Error'
+        })
+      }
     } finally {
       setIsExecuting(false)
     }
@@ -370,14 +380,61 @@ export function useToolTestExecution(toolNodeId: string | null) {
     }
     setIsExecuting(true)
     try {
-      const response = await fetch(httpConfig.url, { method: httpConfig.method })
-      setTestResult({ success: response.ok, output: response.ok ? 'Success' : 'Failed' })
-    } catch {
-      setTestResult({ success: false, output: 'Error' })
+      const response = await fetch(httpConfig.url, { 
+        method: httpConfig.method || 'GET',
+        headers: (httpConfig.headers || []).reduce((acc: any, h: any) => {
+          if (h.key && h.value) acc[h.key] = h.value
+          return acc
+        }, {})
+      })
+      
+      const contentType = response.headers.get('content-type')
+      let data: any = null
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        data = await response.text()
+        try {
+          // Try to parse text as JSON anyway, just in case
+          data = JSON.parse(data)
+        } catch {
+          // Keep as text
+        }
+      }
+
+      if (response.ok) {
+        setExecutedApiResponse(data)
+        if (toolNode) {
+          updateToolNode(toolNode.id, {
+            config: { ...toolNode.config, executedResponse: data }
+          })
+        }
+        setTestResult({ 
+          success: true, 
+          output: 'Success', 
+          details: `Successfully fetched data from ${httpConfig.url}` 
+        })
+        toast.success('HTTP request successful')
+      } else {
+        setTestResult({ 
+          success: false, 
+          output: 'Failed', 
+          details: `HTTP Error: ${response.status} ${response.statusText}` 
+        })
+        toast.error(`HTTP Error: ${response.status}`)
+      }
+    } catch (error) {
+      setTestResult({ 
+        success: false, 
+        output: 'Error', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      })
+      toast.error('HTTP request failed')
     } finally {
       setIsExecuting(false)
     }
-  }, [setIsExecuting, setTestResult])
+  }, [toolNode, updateToolNode, setExecutedApiResponse, setIsExecuting, setTestResult])
 
   return {
     testResult,
