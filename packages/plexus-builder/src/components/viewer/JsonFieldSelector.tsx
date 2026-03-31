@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronRight, Copy, Brackets, Check } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { ChevronDown, ChevronRight, Copy, Brackets, Check, Loader2 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { cn } from '../../utils/cn'
 import { getAvailablePaths, evaluateJsonPath, parseJsonPath } from '../../utils/jsonPathExpression'
-import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 
 interface JsonFieldSelectorProps {
   data: unknown
@@ -110,19 +109,35 @@ export function JsonFieldSelector({
 }: JsonFieldSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const paths = useMemo(() => getAvailablePaths(data), [data])
+  const [isSearching, setIsSearching] = useState(false)
+  const [deferredFilteredPaths, setDeferredFilteredPaths] = useState<string[]>([])
   
-  // Choose which paths to show based on search state
-  const filteredPaths = useMemo(() => {
-    if (searchQuery) {
-      return paths.filter(path => 
+  const paths = useMemo(() => {
+    if (!data) return []
+    return getAvailablePaths(data)
+  }, [data])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    if (!searchQuery) {
+      setDeferredFilteredPaths(paths.filter(path => (!path.includes('.') && !path.includes('[')) || path === '[]'))
+      setIsSearching(false)
+      return
+    }
+
+    setIsSearching(true)
+    const timer = setTimeout(() => {
+      const results = paths.filter(path => 
         path.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    }
-    // No search: Only show Top Level fields (no dots or brackets)
-    // and special root path '[]' if it exists.
-    return paths.filter(path => (!path.includes('.') && !path.includes('[')) || path === '[]')
-  }, [paths, searchQuery])
+      // Limit to first 200 results for performance
+      setDeferredFilteredPaths(results.slice(0, 200))
+      setIsSearching(false)
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, paths, isOpen])
 
   const handleSelectPath = (path: string) => {
     const expression = `{{ $json.${path} }}`
@@ -195,12 +210,17 @@ export function JsonFieldSelector({
             </div>
           </div>
           <div className="p-2 space-y-0.5">
-            {filteredPaths.length === 0 ? (
+            {isSearching ? (
+              <div className="py-8 flex flex-col items-center justify-center gap-2 text-muted-foreground animate-in fade-in duration-300">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <span className="text-[10px] font-medium">Filtering paths...</span>
+              </div>
+            ) : deferredFilteredPaths.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-4 italic">
                 No fields found matching "{searchQuery}"
               </div>
             ) : (
-              filteredPaths.map((path) => {
+              deferredFilteredPaths.map((path) => {
                 const pathParts = parseJsonPath(`$json.${path}`) || []
                 const fieldValue = evaluateJsonPath(data, pathParts)
                 return (
@@ -214,6 +234,11 @@ export function JsonFieldSelector({
                   />
                 )
               })
+            )}
+            {searchQuery && !isSearching && deferredFilteredPaths.length === 200 && (
+              <div className="text-[9px] text-muted-foreground text-center pt-2 border-t mt-2">
+                Showing top 200 matches. Refine your search for more.
+              </div>
             )}
           </div>
         </div>

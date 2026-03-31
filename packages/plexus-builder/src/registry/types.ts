@@ -11,6 +11,7 @@ export type FieldType =
   | 'properties' // For key-value pairs
   | 'mappings'   // For attribute mappings
   | 'transforms' // For text transforms
+  | 'template'   // For expression-based templates (with JSON selector)
   | 'separator'  // For visual grouping
 
 export interface FieldOption {

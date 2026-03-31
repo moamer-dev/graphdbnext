@@ -550,8 +550,8 @@ registerAction({
     { 
       name: 'nodeLabel', 
       label: 'Node Label', 
-      type: 'text',
-      placeholder: 'e.g. Person, Place'
+      type: 'template',
+      placeholder: 'e.g. Person, Place or {{ $json.type }}'
     },
     { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },
     { name: 'inheritProperties', label: 'Inherit all XML Attributes', type: 'boolean', defaultValue: true, description: 'Automatically add all XML attributes of this element to the graph node properties' },
@@ -579,9 +579,9 @@ registerAction({
     { name: 'annotationPath', label: 'Reference Attribute', type: 'text', description: 'Attribute containing target IDs (e.g. target, ref, corresp)', placeholder: 'target' },
     { 
       name: 'nodeLabel', 
-      label: 'Override Node Label', 
-      type: 'text',
-      placeholder: 'e.g. Reference',
+      label: 'Override Parent Node Label', 
+      type: 'template',
+      placeholder: 'e.g. Reference or {{ $json.category }}',
       description: 'Optional: Override the label of the node being created'
     },
     { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },

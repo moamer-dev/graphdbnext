@@ -91,6 +91,19 @@ export function SchemaForm({
           </div>
         )
 
+      case 'template':
+        return (
+          <div key={field.name} className="space-y-1.5">
+            {renderLabel(field)}
+            <JsonFieldSelector
+              data={apiResponse}
+              value={value || ''}
+              onChange={(val) => onChange(field.name, val)}
+              placeholder={field.placeholder || "e.g. {{ $json.name }} or @id"}
+            />
+          </div>
+        )
+
       case 'textarea':
         return (
           <div key={field.name} className="space-y-1.5">
@@ -283,9 +296,26 @@ export function SchemaForm({
                     </div>
                     
                     {!isCollapsed && (
-                      <div className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                        <div className="space-y-1.5 pt-1">
-                          <Label className="text-[10px] font-semibold text-foreground/70">Source Value</Label>
+                      <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-top-1 duration-200 bg-muted/5 p-3 rounded-md border border-muted/20">
+                        {/* THE KEY: What it's called in the graph */}
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-bold text-primary uppercase tracking-tight">Property Name (Key)</Label>
+                          <Input
+                            placeholder="e.g., name, age, identifier"
+                            className="h-8 text-xs bg-background border-primary/20 focus:border-primary transition-all"
+                            value={mapping.propertyKey}
+                            onChange={(e) => {
+                              const next = [...mappings]
+                              next[idx] = { ...next[idx], propertyKey: e.target.value }
+                              onChange(field.name, next)
+                            }}
+                          />
+                          <p className="text-[9px] text-muted-foreground italic">The name of the property as it will appear in your graph database.</p>
+                        </div>
+
+                        {/* THE VALUE: Where it comes from */}
+                        <div className="space-y-1.5 border-t border-muted pt-3">
+                          <Label className="text-[10px] font-bold text-primary uppercase tracking-tight">Source Data (Value)</Label>
                           <JsonFieldSelector
                             data={apiResponse}
                             value={mapping.attributeName}
@@ -294,21 +324,9 @@ export function SchemaForm({
                               next[idx] = { ...next[idx], attributeName: val }
                               onChange(field.name, next)
                             }}
-                            placeholder="e.g. {{ $json.name }} or @id"
+                            placeholder="@id, static, or [] JSON]"
                           />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-[10px] font-semibold text-foreground/70">Target Property</Label>
-                          <Input
-                            placeholder="e.g. name, value, identifier"
-                            className="h-8 text-xs bg-background"
-                            value={mapping.propertyKey}
-                            onChange={(e) => {
-                              const next = [...mappings]
-                              next[idx] = { ...next[idx], propertyKey: e.target.value }
-                              onChange(field.name, next)
-                            }}
-                          />
+                          <p className="text-[9px] text-muted-foreground italic">The source value extracted from your XML attributes, JSON, or a static literal.</p>
                         </div>
                       </div>
                     )}
