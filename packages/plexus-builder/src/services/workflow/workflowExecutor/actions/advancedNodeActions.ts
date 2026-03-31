@@ -15,7 +15,12 @@ export function executeCreateTextNodeAction(action: ActionCanvasNode, ctx: Actio
     inheritProperties: action.config.inheritProperties as boolean
   })
   
-  const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+  let nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+  
+  if (action.config.labelTransforms && Array.isArray(action.config.labelTransforms)) {
+    nodeLabel = ctx.applyTransforms(nodeLabel, action.config.labelTransforms)
+  }
+
   if (nodeLabel) {
     textNode.labels = [nodeLabel]
   }

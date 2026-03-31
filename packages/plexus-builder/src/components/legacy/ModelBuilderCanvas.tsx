@@ -131,7 +131,7 @@ const labelFromType = (type: string) => {
   if (type === 'action:create-token-nodes') return 'Create Token Nodes'
   if (type === 'action:create-node-complete') return 'Create Node'
   if (type === 'action:extract-and-normalize-attributes') return 'Extract & Normalize Attributes'
-  if (type === 'action:create-annotation-nodes') return 'Create Annotation Nodes'
+  if (type === 'action:create-reference') return 'Create Annotation Nodes'
   if (type === 'action:create-reference-chain') return 'Create Reference Chain'
   if (type === 'action:merge-children-text') return 'Merge Children Text'
   if (type === 'action:extract-and-compute-property') return 'Extract & Compute Property'

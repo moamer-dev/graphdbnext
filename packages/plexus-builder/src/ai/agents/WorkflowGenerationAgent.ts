@@ -15,7 +15,7 @@ Your role is to generate workflows that process XML data and transform it into g
 
 CRITICAL: Always prefer specialized actions over generic ones. For example:
 - Use "action:create-token-nodes" to tokenize text and create token nodes with relationships
-- Use "action:create-annotation-nodes" for annotation processing
+- Use "action:create-reference" for annotation processing
 - Use "action:create-reference-chain" for reference processing
 - Use "action:create-node-complete" for standard node creation
 - Use "action:create-text-node" for text-only nodes
@@ -237,7 +237,7 @@ NODE ACTIONS:
 - action:create-node-complete - Standard node creation with property mapping and optional relationship
 - action:create-text-node - Create node specifically for normalized text content
 - action:create-token-nodes - Tokenize text and create token nodes with relationships
-- action:create-annotation-nodes - Create annotation nodes from references
+- action:create-reference - Create annotation nodes from references
 - action:create-node-with-lookup - Fetch existing node or create if missing (Upsert)
 - action:update-node, action:delete-node, action:clone-node, action:merge-nodes
 
@@ -259,7 +259,7 @@ WORKFLOW & CONTROL:
 - action:merge-children-text - Flatten nested XML text into a single property
 
 ADVANCED ACTIONS:
-- action:create-annotation-nodes - Create annotation nodes from references
+- action:create-reference - Create annotation nodes from references
 - action:create-reference-chain - Create chain of reference relationships
 
 COMMON PATTERNS:
@@ -311,7 +311,7 @@ IMPORTANT RULES:
 1. For tokenization: Always use "action:create-token-nodes" instead of action:create-node-complete + action:create-relationship
 2. For conditional checks: Use "tool:if" with appropriate condition groups (e.g. HasAttribute).
 3. Connect tool:if "true" output to actions that should execute when condition is met
-4. Use specialized actions (action:create-token-nodes, action:create-annotation-nodes, etc.) instead of generic actions when they match your use case
+4. Use specialized actions (action:create-token-nodes, action:create-reference, etc.) instead of generic actions when they match your use case
 5. Use appropriate positions (spread horizontally: 100px apart, vertically: 150px apart)
 7. Use semantic labels for nodes
 

@@ -98,7 +98,7 @@ export function ToolConfigurationSidebar({
     createTestElement: rawCreateTestElement
   } = useToolTestExecution(toolNodeId)
 
-  const conditionBuilder = useToolConditionBuilder()
+  const conditionBuilder = useToolConditionBuilder(handleUpdateConfig)
 
   // XML Sampling logic
   const attachedElementName = attachedNode?.label || attachedNode?.type || ''

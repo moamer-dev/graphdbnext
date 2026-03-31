@@ -1,5 +1,6 @@
 export interface Transform {
-  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'
+  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex' | 'slugify' | 'pascalcase' | 'camelcase' | 'snakecase'
+  [key: string]: unknown
   replaceFrom?: string
   replaceTo?: string
   regexPattern?: string
@@ -18,6 +19,30 @@ export function applyTransforms(text: string, transforms: Transform[]): string {
         break
       case 'trim':
         result = result.trim()
+        break
+      case 'slugify':
+        result = result.toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+        break
+      case 'pascalcase':
+        result = result
+          .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .replace(/^(.)/, (m, chr) => chr.toUpperCase())
+        break
+      case 'camelcase':
+        result = result
+          .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .replace(/^(.)/, (m, chr) => chr.toLowerCase())
+        break
+      case 'snakecase':
+        result = result
+          .replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+          .replace(/[^a-zA-Z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
         break
       case 'replace': {
         const replaceFrom = transform.replaceFrom || ''

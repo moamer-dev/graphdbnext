@@ -7,6 +7,7 @@ export interface GraphJsonNode {
   id: number
   type: 'node'
   labels: string[]
+  builderLabel?: string
   properties: Record<string, unknown>
 }
 

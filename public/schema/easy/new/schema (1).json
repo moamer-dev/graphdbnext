@@ -1,8 +1,9 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-03-02T16:52:57.667Z",
-  "source": "test_model",
+  "lastUpdated": "2026-03-31T06:23:19.528Z",
+  "source": "Model Builder",
   "selectedOntologyId": "s4bldg",
+  "rootNodeLabel": "Text",
   "nodes": {
     "P": {
       "name": "P",
@@ -143,7 +144,7 @@
         ]
       },
       "relationsIn": {
-        "HAS_NOTE": [
+        "HAS_NOTES": [
           "Text"
         ]
       }
@@ -153,7 +154,7 @@
       "superclassNames": [],
       "properties": {},
       "relationsOut": {
-        "HAS_NOTE": [
+        "HAS_NOTES": [
           "Note"
         ],
         "HAS_STRUCTURE": [
@@ -345,8 +346,8 @@
         ]
       }
     },
-    "HAS_NOTE": {
-      "name": "HAS_NOTE",
+    "HAS_NOTES": {
+      "name": "HAS_NOTES",
       "properties": {},
       "domains": {
         "Text": [

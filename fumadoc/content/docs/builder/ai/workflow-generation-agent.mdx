@@ -27,7 +27,7 @@ The agent automates the creation of data transformation workflows by analyzing X
 
 ### Specialized Action Preference
 - **Token Node Creation**: Uses `action:create-token-nodes` for text tokenization
-- **Annotation Processing**: Uses `action:create-annotation-nodes` for scholarly annotations
+- **Annotation Processing**: Uses `action:create-reference` for scholarly annotations
 - **Reference Handling**: Uses `action:create-reference-chain` for reference processing
 - **Deferred Creation**: Uses `action:create-node-with-lookup` for complex node creation
 
@@ -179,7 +179,7 @@ const workflow = await agent.generateWorkflow({
 ```typescript
 // For scholarly annotations
 {
-  type: "action:create-annotation-nodes",
+  type: "action:create-reference",
   config: {
     referenceAttribute: "target",
     relationshipLabel: "ANNOTATES"
@@ -243,7 +243,7 @@ const workflow = await agent.generateWorkflow({
 2. **Create Document Nodes**: Use `action:create-node-complete` for TEI documents
 3. **Process Headers**: Extract metadata using `action:set-property`
 4. **Process Text Content**: Use `action:create-token-nodes` for text analysis
-5. **Handle Annotations**: Use `action:create-annotation-nodes` for scholarly annotations
+5. **Handle Annotations**: Use `action:create-reference` for scholarly annotations
 
 ### Bibliographic Data Processing
 **XML Structure**: Bibliographic records with authors, publications, and citations

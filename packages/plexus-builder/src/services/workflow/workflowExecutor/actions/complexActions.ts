@@ -2,6 +2,7 @@ import type { ActionCanvasNode } from '../../../../stores/actionCanvasStore'
 import type { ActionExecutionContext } from './types'
 import type { GraphJsonNode, GraphJsonRelationship } from '../types'
 import { evaluateExpression } from '../../../../utils/jsonPathExpression'
+import type { Transform } from '../helpers/transformHelpers'
 
 export function executeExtractAndNormalizeAttributesAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
   if (!ctx.currentGraphNode) return
@@ -76,9 +77,15 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
 
   if (isNewNode) {
     const nodeId = ctx.nodeIdCounter.value++
-    graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
+    const inheritProperties = action.config.inheritProperties !== false
+    graphNode = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId, { inheritProperties })
 
-    const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+    let nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+    
+    if (action.config.labelTransforms && Array.isArray(action.config.labelTransforms)) {
+      nodeLabel = ctx.applyTransforms(nodeLabel, action.config.labelTransforms)
+    }
+
     if (nodeLabel) {
       graphNode.labels = [nodeLabel]
     }
@@ -105,66 +112,40 @@ export function executeCreateNodeCompleteAction(action: ActionCanvasNode, ctx: A
   }
 
   // 2. Map Attributes (Properties)
-  const attributeMappings = (action.config.attributeMappings as Array<{
-    attributeName: string
-    propertyKey: string
-    transforms?: Array<{
-      type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'
-      replaceFrom?: string
-      replaceTo?: string
-      regexPattern?: string
-      regexReplacement?: string
-    }>
-    defaultValue?: string
-  }>) || []
+  // Defensively retrieve mappings from either 'properties' or 'attributeMappings'
+  const rawMappings = action.config.properties || action.config.attributeMappings || []
+  const attributeMappings = Array.isArray(rawMappings) ? rawMappings : []
 
-  attributeMappings.forEach(mapping => {
-    let propertyKeyName: string
-    let propertyValue: unknown = null
+  for (const mapping of attributeMappings) {
+    if (!mapping) continue
 
-    // Check if Attribute Name is a template (Source Value)
-    const isAttributeTemplate = mapping.attributeName && mapping.attributeName.includes('{{')
-    // Check if Property Key is a template (Source Value - Legacy/Alternative)
-    const isPropertyTemplate = mapping.propertyKey && mapping.propertyKey.includes('{{ $json.')
-
-    if (isAttributeTemplate) {
-      // Case A: Attribute Name contains template -> Evaluate it as Value, use Property Key as Name
-      propertyValue = ctx.evaluateTemplate(mapping.attributeName, apiResponseData)
-      propertyKeyName = mapping.propertyKey || 'value'
-    } else if (isPropertyTemplate && apiResponseData) {
-      // Case B: Property Key contains template -> Evaluate it as Value, use Attribute Name as Name
-      // (This preserves existing behavior where users might have put the expression in the key field)
-      propertyKeyName = mapping.attributeName || 'value'
-      const evaluated = evaluateExpression(mapping.propertyKey, { json: apiResponseData })
-      propertyValue = evaluated
-    } else if (mapping.attributeName) {
-      // Case C: Standard XML Attribute Lookup
-      propertyKeyName = mapping.propertyKey || mapping.attributeName
-      let attrValue = ctx.xmlElement.getAttribute(mapping.attributeName)
-      if (attrValue === null) {
-        attrValue = mapping.defaultValue || ''
+    // A. Resolve Source Value (The actual content)
+    const sourceVal = mapping.attributeName || mapping.value || ''
+    const valResult: any = ctx.evaluateTemplate(sourceVal, apiResponseData)
+    
+    // B. Resolve Target Key (The name in graph)
+    let targetKey = mapping.propertyKey || mapping.key || ''
+    if (!targetKey && sourceVal) {
+      if (!sourceVal.includes('{{') && !sourceVal.startsWith('@')) {
+        targetKey = sourceVal
+      } else {
+        targetKey = 'value'
       }
-      propertyValue = attrValue
-    } else if (mapping.propertyKey) {
-      // Case D: Only Property Key provided -> Treat as XML Attribute (Edge case)
-      propertyKeyName = mapping.propertyKey
-      let attrValue = ctx.xmlElement.getAttribute(mapping.propertyKey)
-      if (attrValue === null) {
-        attrValue = mapping.defaultValue || ''
-      }
-      propertyValue = attrValue
-    } else {
-      return
     }
 
-    if (propertyKeyName && propertyValue !== null && propertyValue !== undefined) {
-      let finalValue = String(propertyValue)
+    if (targetKey) {
+      targetKey = ctx.evaluateTemplate(targetKey, apiResponseData)
+    }
+
+    // C. Save to graph
+    if (targetKey && targetKey.trim()) {
+      let finalString = valResult !== null && valResult !== undefined ? String(valResult) : (mapping.defaultValue || '')
       if (mapping.transforms && mapping.transforms.length > 0) {
-        finalValue = ctx.applyTransforms(finalValue, mapping.transforms)
+        finalString = ctx.applyTransforms(finalString, mapping.transforms)
       }
-      graphNode!.properties[propertyKeyName] = finalValue
+      graphNode.properties[targetKey] = finalString
     }
-  })
+  }
 
   // 3. Relationship Creation
   const relConfig = action.config.relationship as {
@@ -324,7 +305,12 @@ export function executeCreateNodeWithLookupAction(action: ActionCanvasNode, ctx:
     inheritProperties: action.config.inheritProperties !== false
   })
   
-  const nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+  let nodeLabel = ctx.evaluateTemplate((action.config.nodeLabel as string) || ctx.builderNode.label, apiResponseData)
+  
+  if (action.config.labelTransforms && Array.isArray(action.config.labelTransforms)) {
+    nodeLabel = ctx.applyTransforms(nodeLabel, action.config.labelTransforms)
+  }
+
   if (nodeLabel) {
     graphNode.labels = [nodeLabel]
   }

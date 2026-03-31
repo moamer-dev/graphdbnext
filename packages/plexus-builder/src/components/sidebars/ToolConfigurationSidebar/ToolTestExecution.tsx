@@ -118,34 +118,41 @@ export function ToolTestExecution({
 
         {/* Instance Selection for Testing Context */}
         {attachedNode && (
-          <div className="space-y-2 py-2">
+          <div className="space-y-2 py-3 border-y border-dashed border-muted-foreground/20 bg-muted/5 -mx-4 px-4 my-2">
             <div className="flex items-center justify-between">
-              <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                Select context from: {attachedNode.label}
+              <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                Instance Selection for Testing Context
               </Label>
               {loadingRealData && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </div>
-            {realInstances.length > 0 ? (
-              <Select
-                value={selectedInstanceIndex.toString()}
-                onValueChange={(val) => onInstanceSelect?.(parseInt(val))}
-              >
-                <SelectTrigger className="h-8 text-xs bg-muted/30">
-                  <SelectValue placeholder="Select instance to test" />
-                </SelectTrigger>
-                <SelectContent>
-                  {realInstances.map((instance, idx) => (
-                    <SelectItem key={idx} value={idx.toString()} className="text-xs">
-                      Instance {idx + 1}: {instance.preview}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="text-[10px] text-muted-foreground italic bg-muted/20 p-2 rounded border border-dashed">
-                No real instances found for &quot;{attachedNode.label}&quot; in the uploaded file. Synthetic data will be used.
+            
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">Context: {attachedNode.label}</span>
               </div>
-            )}
+
+              {realInstances.length > 0 ? (
+                <Select
+                  value={selectedInstanceIndex.toString()}
+                  onValueChange={(val) => onInstanceSelect?.(parseInt(val))}
+                >
+                  <SelectTrigger className="h-8 text-xs bg-background border-primary/20">
+                    <SelectValue placeholder="Select instance to test" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {realInstances.map((instance, idx) => (
+                      <SelectItem key={idx} value={idx.toString()} className="text-xs">
+                        Instance {idx + 1}: {instance.preview}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-2 rounded border border-dashed">
+                  No real instances found for &quot;{attachedNode.label}&quot; in the uploaded file. Synthetic data will be used.
+                </div>
+              )}
+            </div>
           </div>
         )}
 

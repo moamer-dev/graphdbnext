@@ -83,7 +83,7 @@ This guide provides a detailed technical reference for all active actions in the
         *   `Chained`: Tokens form a Linked List (Parent -> Token1 -> Token2).
     *   **Next Token Relationship** *(If 'Chained' is selected)*: The label for the link between consecutive tokens (e.g., `NEXT`).
 
-### **4. Create Annotation Nodes** (`action:create-annotation-nodes`)
+### **4. Create Annotation Nodes** (`action:create-reference`)
 *   **Description**: Links elements to external references or identifies relation targets via an attribute.
 *   **Use Case**: Creating a direct reference annotation to a specific element using an ID.
 *   **XML Snippet**:

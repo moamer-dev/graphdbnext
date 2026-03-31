@@ -3,35 +3,49 @@ import type { ActionExecutionContext } from './types'
 import type { GraphJsonNode, GraphJsonRelationship } from '../types'
 
 
-export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
-  if (!ctx.builderNode) return
+export function executeCreateReferenceAction(action: ActionCanvasNode, ctx: ActionExecutionContext): void {
+  // 1. Ensure current node exists
+  // For this action, we expect to be running on a node that was already created for this element
+  const currentNode = ctx.currentGraphNode
+  if (!currentNode) return
 
-  // Ensure current node exists
-  if (!ctx.currentGraphNode) {
-    if (ctx.elementToGraph.has(ctx.xmlElement)) {
-      ctx.currentGraphNode = ctx.elementToGraph.get(ctx.xmlElement)!
-    } else {
-      const nodeId = ctx.nodeIdCounter.value++
-      const node = ctx.createGraphNode(ctx.builderNode, ctx.xmlElement, nodeId)
-      ctx.graphNodes.push(node)
-      ctx.elementToGraph.set(ctx.xmlElement, node)
-      ctx.currentGraphNode = node
+  const apiResponseData = ctx.getApiResponseData(action)
 
-      // Create parent relationship if applicable
-      if (ctx.parentGraphNode) {
-        const relType = ctx.findRelationship(ctx.parentGraphNode.labels[0], node.labels[0])
-        if (relType) {
-          const rel = ctx.createRelationship(ctx.parentGraphNode, node, relType)
-          ctx.graphRels.push(rel)
-        }
-      }
+  // 2. Override Node Label (Optional)
+  if (action.config.nodeLabel) {
+    let nodeLabel = ctx.evaluateTemplate(action.config.nodeLabel as string, apiResponseData)
+    
+    if (action.config.labelTransforms && Array.isArray(action.config.labelTransforms)) {
+      nodeLabel = ctx.applyTransforms(nodeLabel, action.config.labelTransforms)
+    }
+
+    if (nodeLabel) {
+      currentNode.labels = [nodeLabel]
     }
   }
 
+  // 3. Add Additional Properties (Mappings)
+  const rawProperties = (action.config.properties || []) as any[]
+  rawProperties.forEach(mapping => {
+    if (!mapping) return
+    const sourceVal = mapping.attributeName || mapping.value || ''
+    const val = ctx.evaluateTemplate(sourceVal, apiResponseData)
+    
+    let key = mapping.propertyKey || mapping.key || ''
+    if (!key && sourceVal && !sourceVal.includes('{{') && !sourceVal.startsWith('@')) {
+      key = sourceVal
+    } else if (!key) {
+      key = 'value'
+    }
+
+    if (key && val !== null && val !== undefined) {
+      currentNode.properties[key] = String(val)
+    }
+  })
+
+  // 4. Create References to target nodes
   const relationshipType = (action.config.relationshipType as string) || 'annotates'
   const annotationPath = (action.config.annotationPath as string) || ''
-
-  const currentNode = ctx.currentGraphNode
 
   // Strictly Handle Reference Linking
   let attrValue: string | null = null
@@ -48,20 +62,24 @@ export function executeCreateAnnotationNodesAction(action: ActionCanvasNode, ctx
   }
 
   if (attrValue) {
-    const cleanId = attrValue.replace(/^#/, '').split(' ')[0]
-    const targetElement = ctx.findElementById(ctx.doc, cleanId)
+    // Support multiple space-separated IDs like target="#w1 #w2"
+    const ids = attrValue.trim().split(/\s+/).map(id => id.replace(/^#/, '')).filter(Boolean)
+    
+    ids.forEach(cleanId => {
+      const targetElement = ctx.findElementById(ctx.doc, cleanId)
 
-    // Always defer to handle multiple matches (e.g., inherited IDs on child nodes)
-    // and to ensure all nodes are created before linking.
-    ctx.deferredRelationships.push({
-      from: currentNode,
-      to: null,
-      type: relationshipType,
-      properties: {},
-      targetId: cleanId,
-      targetElement: targetElement || undefined,
-      direction: 'outgoing',
-      mustResolve: true
+      // Always defer to handle multiple matches (e.g., inherited IDs on child nodes)
+      // and to ensure all nodes are created before linking.
+      ctx.deferredRelationships.push({
+        from: currentNode,
+        to: null,
+        type: relationshipType,
+        properties: {},
+        targetId: cleanId,
+        targetElement: targetElement || undefined,
+        direction: 'outgoing',
+        mustResolve: true
+      })
     })
   }
 }

@@ -34,6 +34,7 @@ export function createGraphNode(
     id,
     type: 'node',
     labels,
+    builderLabel: builderNode.label,
     properties
   }
 }

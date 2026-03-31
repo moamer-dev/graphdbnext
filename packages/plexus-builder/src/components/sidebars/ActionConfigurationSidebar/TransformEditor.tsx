@@ -40,7 +40,7 @@ export function TransformEditor({ transforms, onTransformsChange }: TransformEdi
             value={transform.type}
             onValueChange={(value) => {
               const updated = [...transforms]
-              updated[index] = { ...updated[index], type: value as 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex' } as TextTransform
+              updated[index] = { ...updated[index], type: value as any } as TextTransform
               onTransformsChange(updated)
             }}
           >
@@ -51,6 +51,10 @@ export function TransformEditor({ transforms, onTransformsChange }: TransformEdi
               <SelectItem value="lowercase">Lowercase</SelectItem>
               <SelectItem value="uppercase">Uppercase</SelectItem>
               <SelectItem value="trim">Trim Whitespace</SelectItem>
+              <SelectItem value="slugify">Slugify (douglas-adams)</SelectItem>
+              <SelectItem value="pascalcase">PascalCase (DouglasAdams)</SelectItem>
+              <SelectItem value="camelcase">camelCase (douglasAdams)</SelectItem>
+              <SelectItem value="snakecase">snake_case (douglas_adams)</SelectItem>
               <SelectItem value="replace">Replace Text</SelectItem>
               <SelectItem value="regex">Regex Replace</SelectItem>
             </SelectContent>

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronDown, ChevronRight, Copy } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { ChevronDown, ChevronRight, Copy, Brackets, Check } from 'lucide-react'
 import { Button } from '../ui/button'
 import { cn } from '../../utils/cn'
 import { getAvailablePaths, evaluateJsonPath, parseJsonPath } from '../../utils/jsonPathExpression'
+import { useModelBuilderStore } from '../../stores/modelBuilderStore'
 
 interface JsonFieldSelectorProps {
   data: unknown
@@ -20,19 +21,21 @@ function JsonFieldOption({
   value, 
   data, 
   level = 0,
-  onSelect 
+  onSelect,
+  disableRecursion = false
 }: { 
   path: string
   value: unknown
   data: unknown
   level?: number
   onSelect: (path: string) => void
+  disableRecursion?: boolean
 }) {
   const [isExpanded, setIsExpanded] = useState(level < 2)
   const pathParts = parseJsonPath(`$json.${path}`) || []
   const displayValue = evaluateJsonPath(data, pathParts)
 
-  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value) && !disableRecursion) {
     const entries = Object.entries(value as Record<string, unknown>)
     return (
       <div className="ml-2">
@@ -45,7 +48,7 @@ function JsonFieldOption({
           ) : (
             <ChevronRight className="h-3 w-3" />
           )}
-          <span className="font-medium text-blue-600 dark:text-blue-400">{path.split('.').pop()}</span>
+          <span className="font-medium text-blue-600 dark:text-blue-400">{path.split('.').pop() || path}</span>
           <span className="text-gray-500 text-[10px]">({entries.length} keys)</span>
         </button>
         {isExpanded && (
@@ -85,7 +88,7 @@ function JsonFieldOption({
       title={isSelectable ? `Click to use: {{ $json.${path} }}` : 'Complex object - expand to select nested fields'}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="font-medium text-blue-600 dark:text-blue-400 truncate">{path.split('.').pop()}</span>
+        <span className="font-medium text-blue-600 dark:text-blue-400 truncate">{disableRecursion ? path : (path.split('.').pop() || path)}</span>
         {isSelectable && (
           <span className="text-gray-500 text-[10px] truncate">= {displayText}</span>
         )}
@@ -107,10 +110,19 @@ export function JsonFieldSelector({
 }: JsonFieldSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const paths = getAvailablePaths(data)
-  const filteredPaths = paths.filter(path => 
-    path.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const paths = useMemo(() => getAvailablePaths(data), [data])
+  
+  // Choose which paths to show based on search state
+  const filteredPaths = useMemo(() => {
+    if (searchQuery) {
+      return paths.filter(path => 
+        path.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    // No search: Only show Top Level fields (no dots or brackets)
+    // and special root path '[]' if it exists.
+    return paths.filter(path => (!path.includes('.') && !path.includes('[')) || path === '[]')
+  }, [paths, searchQuery])
 
   const handleSelectPath = (path: string) => {
     const expression = `{{ $json.${path} }}`
@@ -124,47 +136,68 @@ export function JsonFieldSelector({
 
   return (
     <div className={cn("space-y-2", className)}>
-      {label && <label className="text-xs font-medium">{label}</label>}
-      <div className="relative">
+      <div className="flex items-center justify-between mb-1">
+        {label && <label className="text-xs font-medium">{label}</label>}
+      </div>
+      
+      <div className="relative group">
         <input
           type="text"
           value={currentValue}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full h-8 px-2 text-xs border rounded bg-background"
+          className="w-full h-8 pl-2 pr-9 text-xs border rounded bg-background focus:ring-1 focus:ring-primary/30 transition-all"
         />
-        {isExpression && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+          {!!data && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-5 px-1 text-[10px]"
-              onClick={() => setIsOpen(true)}
+              className={cn(
+                "h-6 px-1.5 text-[10px] hover:bg-primary/10 transition-colors",
+                isOpen && "text-primary bg-primary/10",
+                isExpression && "text-blue-600 font-bold"
+              )}
+              onClick={() => setIsOpen(!isOpen)}
+              title="Browse JSON data"
             >
-              Browse
+              <Brackets className="h-3 w-3 mr-1" />
+              {isExpression ? 'Exp' : 'JSON'}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       
       {isOpen && (
-        <div className="border rounded-lg bg-background shadow-lg max-h-64 overflow-y-auto">
+        <div className="border rounded-lg bg-background shadow-lg max-h-64 overflow-y-auto mt-1 z-50">
           <div className="p-2 border-b sticky top-0 bg-background z-10">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search fields..."
-              className="w-full h-7 px-2 text-xs border rounded"
+              className="w-full h-7 px-2 text-xs border rounded bg-muted/30 focus:bg-background"
               autoFocus
             />
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">
+                {searchQuery ? 'Search Results' : 'Root Fields'}
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsOpen(false)}
+                className="h-4 px-1 text-[9px] hover:bg-destructive/10 hover:text-destructive"
+              >
+                Close
+              </Button>
+            </div>
           </div>
           <div className="p-2 space-y-0.5">
             {filteredPaths.length === 0 ? (
-              <div className="text-xs text-muted-foreground text-center py-4">
-                No fields found
+              <div className="text-xs text-muted-foreground text-center py-4 italic">
+                No fields found matching "{searchQuery}"
               </div>
             ) : (
               filteredPaths.map((path) => {
@@ -177,6 +210,7 @@ export function JsonFieldSelector({
                     value={fieldValue}
                     data={data}
                     onSelect={handleSelectPath}
+                    disableRecursion={!!searchQuery}
                   />
                 )
               })
@@ -187,4 +221,3 @@ export function JsonFieldSelector({
     </div>
   )
 }
-

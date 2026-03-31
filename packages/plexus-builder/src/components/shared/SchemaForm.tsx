@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useState } from 'react'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { Label } from '../ui/label'
@@ -12,11 +13,12 @@ import {
   SelectValue
 } from '../ui/select'
 import { Button } from '../ui/button'
-import { Plus, Trash2, X, Settings2 } from 'lucide-react'
+import { Plus, Trash2, X, Settings2, ChevronDown, ChevronRight, Info, Lightbulb } from 'lucide-react'
 import { ConfigField } from '../../registry/types'
 import { JsonFieldSelector } from '../viewer/JsonFieldSelector'
 import { TransformEditor } from '../sidebars/ActionConfigurationSidebar/TransformEditor'
 import { HelpTooltip } from './HelpTooltip'
+import { cn } from '../../utils/cn'
 
 interface SchemaFormProps {
   schema: ConfigField[]
@@ -35,6 +37,18 @@ export function SchemaForm({
   getCredentialsByType,
   getCredential
 }: SchemaFormProps) {
+  const [collapsedMappings, setCollapsedMappings] = useState<Record<string, Record<number, boolean>>>({})
+
+  const toggleMapping = (fieldName: string, idx: number) => {
+    setCollapsedMappings(prev => ({
+      ...prev,
+      [fieldName]: {
+        ...(prev[fieldName] || {}),
+        [idx]: !(prev[fieldName]?.[idx] ?? false)
+      }
+    }))
+  }
+
   const renderLabel = (field: ConfigField) => {
     return (
       <div className="flex items-center gap-1.5 mb-1.5">
@@ -60,146 +74,134 @@ export function SchemaForm({
       }
     }
 
-    const value = config[field.name] ?? field.defaultValue
+    const value = config[field.name]
 
     switch (field.type) {
       case 'text':
+        return (
+          <div key={field.name} className="space-y-1.5">
+            {renderLabel(field)}
+            <Input
+              type="text"
+              placeholder={field.placeholder}
+              value={value || ''}
+              onChange={(e) => onChange(field.name, e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+        )
+
       case 'textarea':
+        return (
+          <div key={field.name} className="space-y-1.5">
+            {renderLabel(field)}
+            <Textarea
+              placeholder={field.placeholder}
+              value={value || ''}
+              onChange={(e) => onChange(field.name, e.target.value)}
+              className="min-h-[80px] text-xs resize-none"
+            />
+          </div>
+        )
+
       case 'number':
         return (
-          <div key={field.name} className="space-y-1">
+          <div key={field.name} className="space-y-1.5">
             {renderLabel(field)}
-            {apiResponse && (field.type === 'text' || field.type === 'textarea') ? (
-              <JsonFieldSelector
-                data={apiResponse}
-                value={value || ''}
-                onChange={(val) => onChange(field.name, val)}
-                placeholder={field.placeholder || "Enter value or select from JSON..."}
-                label=""
-              />
-            ) : field.type === 'textarea' ? (
-              <Textarea
-                placeholder={field.placeholder}
-                className="min-h-[120px] text-xs font-mono bg-muted/20 focus:bg-background transition-colors"
-                value={value || ''}
-                onChange={(e) => onChange(field.name, e.target.value)}
-              />
-            ) : (
-              <Input
-                type={field.type}
-                placeholder={field.placeholder}
-                className="h-8 text-xs bg-muted/20 focus:bg-background transition-colors"
-                value={value || ''}
-                onChange={(e) => onChange(field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
-              />
-            )}
-            {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
+            <Input
+              type="number"
+              placeholder={field.placeholder}
+              value={value || ''}
+              onChange={(e) => onChange(field.name, parseFloat(e.target.value))}
+              className="h-8 text-xs"
+            />
           </div>
         )
 
       case 'boolean':
         return (
-          <div key={field.name} className="flex items-center space-x-2.5 py-1.5 px-1 hover:bg-muted/30 rounded-md transition-colors">
+          <div key={field.name} className="flex items-center space-x-2 py-1">
             <Checkbox
               id={field.name}
-              checked={!!value}
+              checked={value || false}
               onCheckedChange={(checked) => onChange(field.name, checked)}
             />
-            <div className="flex items-center gap-1.5">
-              <Label htmlFor={field.name} className="text-xs font-medium cursor-pointer">
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor={field.name}
+                className="text-xs font-semibold text-foreground/80 cursor-pointer"
+              >
                 {field.label}
               </Label>
-              {field.details && (
-                <HelpTooltip content={field.details} />
+              {field.description && (
+                <p className="text-[10px] text-muted-foreground">{field.description}</p>
               )}
             </div>
+            {field.details && <HelpTooltip content={field.details} />}
           </div>
         )
 
       case 'select':
         return (
-          <div key={field.name} className="space-y-1">
+          <div key={field.name} className="space-y-1.5">
             {renderLabel(field)}
-            <Select value={value || ''} onValueChange={(val) => onChange(field.name, val)}>
-              <SelectTrigger className="h-8 text-xs bg-muted/20 focus:bg-background transition-colors">
-                <SelectValue placeholder={field.placeholder || "Select..."} />
+            <Select
+              value={value || ''}
+              onValueChange={(val) => onChange(field.name, val)}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder={field.placeholder || "Select option"} />
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
                     {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
           </div>
         )
 
-      case 'credential': {
-        const providerType = field.credentialType || (field.dependsOn ? config[field.dependsOn] : '')
-        const credentials = getCredentialsByType ? getCredentialsByType(providerType) : []
-        const currentCred = getCredential && value ? getCredential(value) : null
-
-        return (
-          <div key={field.name} className="space-y-1">
-            {renderLabel(field)}
-            <Select value={value || ''} onValueChange={(val) => onChange(field.name, val)}>
-              <SelectTrigger className="h-8 text-xs bg-muted/20 border-muted-foreground/20 focus:bg-background transition-colors">
-                <SelectValue placeholder={field.placeholder || `Select ${providerType} credential...`} />
-              </SelectTrigger>
-              <SelectContent>
-                {credentials.map((cred) => (
-                  <SelectItem key={cred.id} value={cred.id}>
-                    {cred.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {field.description && <p className="text-[10px] text-muted-foreground italic px-1">{field.description}</p>}
-            {currentCred && <p className="text-[10px] text-primary italic px-1">Active: {currentCred.name}</p>}
-            {!credentials.length && <p className="text-[10px] text-destructive italic px-1">No credentials found for {providerType}.</p>}
-          </div>
-        )
-      }
-
-      case 'properties': {
+      case 'properties':
         const properties = (value || []) as Array<{ key: string; value: string }>
         return (
           <div key={field.name} className="space-y-2 pt-2 border-t mt-2">
             <div className="flex items-center justify-between">
               {renderLabel(field)}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => onChange(field.name, [...properties, { key: '', value: '' }])}
-                className="h-6 px-2 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary"
+                className="h-5 px-1.5 text-[9px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
               >
-                <Plus className="h-3 w-3 mr-1" /> Add
+                <Plus className="h-2 w-2 mr-1" /> Add
               </Button>
             </div>
             {properties.map((prop, idx) => (
               <div key={idx} className="flex gap-2 items-start group">
-                <Input
-                  placeholder="Key"
-                  className="h-7 text-[10px] flex-1"
-                  value={prop.key}
-                  onChange={(e) => {
-                    const next = [...properties]
-                    next[idx] = { ...next[idx], key: e.target.value }
-                    onChange(field.name, next)
-                  }}
-                />
-                <Input
-                  placeholder="Value"
-                  className="h-7 text-[10px] flex-1"
-                  value={prop.value}
-                  onChange={(e) => {
-                    const next = [...properties]
-                    next[idx] = { ...next[idx], value: e.target.value }
-                    onChange(field.name, next)
-                  }}
-                />
+                <div className="grid grid-cols-2 gap-2 flex-1">
+                  <Input
+                    placeholder="Key"
+                    className="h-7 text-[10px] bg-background"
+                    value={prop.key}
+                    onChange={(e) => {
+                      const next = [...properties]
+                      next[idx] = { ...next[idx], key: e.target.value }
+                      onChange(field.name, next)
+                    }}
+                  />
+                  <JsonFieldSelector
+                    data={apiResponse}
+                    value={prop.value}
+                    onChange={(val) => {
+                      const next = [...properties]
+                      next[idx] = { ...next[idx], value: val }
+                      onChange(field.name, next)
+                    }}
+                    placeholder="Value (or {{ exp }})"
+                  />
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -215,111 +217,144 @@ export function SchemaForm({
             )}
           </div>
         )
-      }
 
       case 'mappings': {
         const mappings = (value || []) as Array<{ attributeName: string; propertyKey: string; defaultValue?: string; transforms: any[] }>
         return (
           <div key={field.name} className="space-y-4 pt-2 border-t mt-2">
             <div className="flex items-center justify-between">
-              {renderLabel(field)}
+              <div className="flex flex-col">
+                {renderLabel(field)}
+                <span className="text-[10px] text-muted-foreground -mt-1 tracking-tight">Map external data to graph properties</span>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onChange(field.name, [...mappings, { attributeName: '', propertyKey: '', transforms: [] }])}
+                onClick={() => {
+                  onChange(field.name, [{ attributeName: '', propertyKey: '', transforms: [] }, ...mappings])
+                }}
                 className="h-6 px-2 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
               >
-                <Plus className="h-3 w-3 mr-1" /> Add Mapping
+                <Plus className="h-3 w-3 mr-1" /> Add Property
               </Button>
             </div>
+
+            <div className="bg-primary/5 border border-primary/10 rounded-md p-2 flex items-start gap-2">
+              <Lightbulb className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+              <div className="text-[10px] leading-tight text-foreground/70">
+                <p><strong className="text-primary">Tip:</strong> Use <code className="bg-primary/10 px-1 rounded text-primary">@attr</code> for XML attributes, <code className="bg-primary/10 px-1 rounded text-primary">static value</code> for text, or <code className="bg-primary/10 px-1 rounded text-primary">{"{{ $json.path }}"}</code> for JSON extraction.</p>
+              </div>
+            </div>
+
             <div className="space-y-3">
-              {mappings.map((mapping, idx) => (
-                <div key={idx} className="p-2 border rounded space-y-2 relative group-mapping">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-muted-foreground">Mapping {idx + 1}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onChange(field.name, mappings.filter((_, i) => i !== idx))}
-                      className="h-5 w-5 p-0 text-destructive"
+              {mappings.map((mapping, idx) => {
+                const isCollapsed = collapsedMappings[field.name]?.[idx] ?? false
+                return (
+                  <div key={idx} className={cn(
+                    "border rounded-lg bg-muted/10 transition-all duration-200 overflow-hidden",
+                    !isCollapsed ? "p-3 space-y-3" : "p-2"
+                  )}>
+                    <div 
+                      className="flex items-center justify-between cursor-pointer group"
+                      onClick={() => toggleMapping(field.name, idx)}
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Source Attribute</Label>
-                      <Input
-                        placeholder="e.g. name"
-                        className="h-7 text-xs"
-                        value={mapping.attributeName}
-                        onChange={(e) => {
-                          const next = [...mappings]
-                          next[idx] = { ...next[idx], attributeName: e.target.value }
-                          onChange(field.name, next)
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Target Property</Label>
-                      <Input
-                        placeholder="e.g. personName"
-                        className="h-7 text-xs"
-                        value={mapping.propertyKey}
-                        onChange={(e) => {
-                          const next = [...mappings]
-                          next[idx] = { ...next[idx], propertyKey: e.target.value }
-                          onChange(field.name, next)
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Default Value (Optional)</Label>
-                    <Input
-                      placeholder="e.g. Unknown"
-                      className="h-7 text-xs"
-                      value={mapping.defaultValue || ''}
-                      onChange={(e) => {
-                        const next = [...mappings]
-                        next[idx] = { ...next[idx], defaultValue: e.target.value }
-                        onChange(field.name, next)
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-1 border-t pt-2 mt-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1">
-                        <Settings2 className="h-3 w-3 text-muted-foreground" />
-                        <Label className="text-[10px]">Transformations</Label>
+                      <div className="flex items-center gap-2">
+                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Entry {idx + 1}</span>
+                          {isCollapsed && mapping.propertyKey && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium border border-primary/10">
+                              {mapping.propertyKey}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          const next = [...mappings]
-                          next[idx] = { ...next[idx], transforms: [...(next[idx].transforms || []), { type: 'lowercase' }] }
-                          onChange(field.name, next)
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onChange(field.name, mappings.filter((_, i) => i !== idx))
                         }}
-                        className="h-5 px-1.5 text-[9px]"
+                        className="h-5 w-5 p-0 text-destructive hover:bg-destructive/10"
                       >
-                        <Plus className="h-2 w-2 mr-1" /> Add
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
-                    <TransformEditor
-                      transforms={mapping.transforms || []}
-                      onTransformsChange={(ts) => {
-                        const next = [...mappings]
-                        next[idx] = { ...next[idx], transforms: ts }
-                        onChange(field.name, next)
-                      }}
-                    />
+                    
+                    {!isCollapsed && (
+                      <div className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="space-y-1.5 pt-1">
+                          <Label className="text-[10px] font-semibold text-foreground/70">Source Value</Label>
+                          <JsonFieldSelector
+                            data={apiResponse}
+                            value={mapping.attributeName}
+                            onChange={(val) => {
+                              const next = [...mappings]
+                              next[idx] = { ...next[idx], attributeName: val }
+                              onChange(field.name, next)
+                            }}
+                            placeholder="e.g. {{ $json.name }} or @id"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-semibold text-foreground/70">Target Property</Label>
+                          <Input
+                            placeholder="e.g. name, value, identifier"
+                            className="h-8 text-xs bg-background"
+                            value={mapping.propertyKey}
+                            onChange={(e) => {
+                              const next = [...mappings]
+                              next[idx] = { ...next[idx], propertyKey: e.target.value }
+                              onChange(field.name, next)
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {!isCollapsed && (
+                      <div className="space-y-1.5 border-t pt-3 mt-1 animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <Settings2 className="h-3.5 w-3.5 text-primary/70" />
+                            <Label className="text-[10px] font-bold">Property Transformations</Label>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const next = [...mappings]
+                              next[idx] = { ...next[idx], transforms: [...(next[idx].transforms || []), { type: 'trim' }] }
+                              onChange(field.name, next)
+                            }}
+                            className="h-5 px-1.5 text-[9px] hover:bg-primary/5 text-primary"
+                          >
+                            <Plus className="h-2 w-2 mr-1" /> Add Transform
+                          </Button>
+                        </div>
+                        {mapping.transforms && mapping.transforms.length > 0 ? (
+                          <TransformEditor
+                            transforms={mapping.transforms}
+                            onTransformsChange={(ts) => {
+                              const next = [...mappings]
+                              next[idx] = { ...next[idx], transforms: ts }
+                              onChange(field.name, next)
+                            }}
+                          />
+                        ) : (
+                          <p className="text-[9px] text-muted-foreground italic pl-5">No transforms added</p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             {mappings.length === 0 && (
-              <p className="text-[10px] text-muted-foreground italic text-center py-2">No mappings defined.</p>
+              <p className="text-[10px] text-muted-foreground italic text-center py-4 border border-dashed rounded-lg">
+                Click "Add Property" to start mapping XML/JSON data to nodes.
+              </p>
             )}
           </div>
         )

@@ -1,7 +1,9 @@
 {
   "version": 1,
   "type": "workflow-config",
-  "createdAt": "2026-03-02T16:53:17.604Z",
+  "createdAt": "2026-03-31T06:23:22.259Z",
+  "metadata": {},
+  "rootNodeLabel": "Text",
   "relationships": [],
   "tools": [
     {
@@ -11,9 +13,14 @@
       "config": {
         "switchCases": [
           {
+            "id": "case_1774867237821_aasb",
+            "label": "Case 6",
+            "value": ""
+          },
+          {
             "id": "case_1768057215743_erx1",
-            "label": "test",
-            "value": "test"
+            "label": "world",
+            "value": "world"
           },
           {
             "id": "case_1768057224818_rhy6",
@@ -21,21 +28,28 @@
             "value": "hello"
           }
         ],
+        "switchCaseInputs": {
+          "case_1768057215743_erx1": "world"
+        },
         "switchAttributeName": "lemma"
       },
       "position": {
-        "x": 284.3194954399028,
-        "y": 37.02123898701626
+        "x": 278.32669322059644,
+        "y": 9.054828630253553
       },
       "inputs": 1,
       "outputs": [
         {
           "id": "case_1768057215743_erx1",
-          "label": "test"
+          "label": "world"
         },
         {
           "id": "case_1768057224818_rhy6",
           "label": "hello"
+        },
+        {
+          "id": "default",
+          "label": "Default"
         }
       ]
     },
@@ -65,8 +79,8 @@
         ]
       },
       "position": {
-        "x": 28.99025196487526,
-        "y": -52.03327671791459
+        "x": -179.1111111111111,
+        "y": 194.93189964157705
       },
       "inputs": 1,
       "outputs": [
@@ -85,8 +99,10 @@
       "label": "Fetch API",
       "targetNodeLabel": "",
       "config": {
+        "apiProvider": "wikidata",
         "idAttribute": "xml:id",
         "executedTestId": "q42",
+        "storeInContext": "personName",
         "executedResponse": {
           "id": "Q42",
           "ns": 0,
@@ -3838,7 +3854,7 @@
                           "globe": "http://www.wikidata.org/entity/Q2",
                           "altitude": null,
                           "latitude": 51.56652777777778,
-                          "longitude": -0.1454444444444444,
+                          "longitude": -0.14544444444444443,
                           "precision": 0.00002777777777777778
                         }
                       }
@@ -10402,44 +10418,6 @@
                       "P854"
                     ]
                   }
-                ]
-              }
-            ],
-            "P1343": [
-              {
-                "id": "Q42$FD398E71-8597-4D36-949A-D905ACD24DAC",
-                "rank": "normal",
-                "type": "statement",
-                "mainsnak": {
-                  "hash": "0d5652504d25c7e82ccab455e6a39aa951dc836c",
-                  "datatype": "wikibase-item",
-                  "property": "P1343",
-                  "snaktype": "value",
-                  "datavalue": {
-                    "type": "wikibase-entityid",
-                    "value": {
-                      "id": "Q67311526",
-                      "numeric-id": 67311526,
-                      "entity-type": "item"
-                    }
-                  }
-                },
-                "qualifiers": {
-                  "P2699": [
-                    {
-                      "hash": "7323ac66bb04e87904ef6fdbd462bc1210b77263",
-                      "datatype": "url",
-                      "property": "P2699",
-                      "snaktype": "value",
-                      "datavalue": {
-                        "type": "string",
-                        "value": "https://www.obalkyknih.cz/view_auth?auth_id=jn19990000029"
-                      }
-                    }
-                  ]
-                },
-                "qualifiers-order": [
-                  "P2699"
                 ]
               }
             ],
@@ -17951,6 +17929,66 @@
                   }
                 ]
               }
+            ],
+            "P14178": [
+              {
+                "id": "Q42$0F61E079-710F-4E21-B70A-C74C0185B04D",
+                "rank": "normal",
+                "type": "statement",
+                "mainsnak": {
+                  "hash": "a4dc96fcda3c9de1a1de306d785cfd93ac3ae886",
+                  "datatype": "external-id",
+                  "property": "P14178",
+                  "snaktype": "value",
+                  "datavalue": {
+                    "type": "string",
+                    "value": "jn19990000029"
+                  }
+                }
+              }
+            ],
+            "P14225": [
+              {
+                "id": "Q42$1469A6DD-A781-4B01-99E3-D45C4C6AE3E2",
+                "rank": "normal",
+                "type": "statement",
+                "mainsnak": {
+                  "hash": "37fedce732cff3fdc92e2b17f1b087c1b9eac211",
+                  "datatype": "external-id",
+                  "property": "P14225",
+                  "snaktype": "value",
+                  "datavalue": {
+                    "type": "string",
+                    "value": "981005673806809366"
+                  }
+                },
+                "references": [
+                  {
+                    "hash": "37efa197b6644701fcf012d6e15b16920762e19e",
+                    "snaks": {
+                      "P3452": [
+                        {
+                          "hash": "df1c30c5cfbe93ee98d036a5100b353450716586",
+                          "datatype": "wikibase-item",
+                          "property": "P3452",
+                          "snaktype": "value",
+                          "datavalue": {
+                            "type": "wikibase-entityid",
+                            "value": {
+                              "id": "Q138818708",
+                              "numeric-id": 138818708,
+                              "entity-type": "item"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "snaks-order": [
+                      "P3452"
+                    ]
+                  }
+                ]
+              }
             ]
           },
           "labels": {
@@ -18006,6 +18044,10 @@
               "value": "Douglas Adams",
               "language": "es"
             },
+            "eu": {
+              "value": "Douglas Adams",
+              "language": "eu"
+            },
             "fa": {
               "value": "داگلاس آدامز",
               "language": "fa"
@@ -18030,9 +18072,17 @@
               "value": "डग्लस अ‍डम्स",
               "language": "hi"
             },
+            "hr": {
+              "value": "Douglas Adams",
+              "language": "hr"
+            },
             "hy": {
               "value": "Դուգլաս Ադամս",
               "language": "hy"
+            },
+            "iu": {
+              "value": "ᑕᒡᓚᔅ ᐋᑕᒻᔅ",
+              "language": "iu"
             },
             "ja": {
               "value": "ダグラス・アダムズ",
@@ -18359,6 +18409,12 @@
                 "language": "hy"
               }
             ],
+            "iu": [
+              {
+                "value": "Douglas Adams",
+                "language": "iu"
+              }
+            ],
             "ja": [
               {
                 "value": "ダグラス・アダムス",
@@ -18516,8 +18572,8 @@
               }
             ]
           },
-          "modified": "2026-03-01T12:19:55Z",
-          "lastrevid": 2468353046,
+          "modified": "2026-03-28T19:25:06Z",
+          "lastrevid": 2475919341,
           "sitelinks": {
             "afwiki": {
               "url": "https://af.wikipedia.org/wiki/Douglas_Adams",
@@ -19463,6 +19519,10 @@
               "value": "scrittore di fantascienza ed umorista britannico (1952–2001)",
               "language": "it"
             },
+            "iu": {
+              "value": "ᑯᐃᓐ ᓄᓇᖓᓐᓂ ᑭᓪᓕᓯᓂᐊᕐᓂᕐᒧᑦ ᑎᑎᕋᖅᑎ ᐊᒻᒪ ᖁᖓᓐᓇᖅᑐᓕᐅᖅᑎ (1952-2001)",
+              "language": "iu"
+            },
             "ja": {
               "value": "イングランドの作家",
               "language": "ja"
@@ -19779,14 +19839,51 @@
         }
       },
       "position": {
-        "x": 481.0102880658436,
-        "y": 20.65579071134624
+        "x": -160.53551352149475,
+        "y": 747.939669187587
       },
       "inputs": 1,
       "outputs": [
         {
           "id": "output",
           "label": "Output"
+        }
+      ]
+    },
+    {
+      "type": "tool:if",
+      "label": "If / Else",
+      "targetNodeLabel": "W",
+      "config": {
+        "conditionGroups": [
+          {
+            "id": "group_1774871506559_2geh",
+            "conditions": [
+              {
+                "type": "AttributeValueEquals",
+                "value": "test",
+                "attributeName": "lemma",
+                "internalOperator": "OR"
+              }
+            ],
+            "internalOperator": "AND"
+          }
+        ],
+        "selectedConditionType": "ElementNameEquals"
+      },
+      "position": {
+        "x": 175.82747396759464,
+        "y": 669.2028884676922
+      },
+      "inputs": 1,
+      "outputs": [
+        {
+          "id": "true",
+          "label": "True"
+        },
+        {
+          "id": "false",
+          "label": "False"
         }
       ]
     }
@@ -19806,197 +19903,135 @@
     },
     {
       "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
+      "targetToolLabel": "W::tool:if",
       "sourceHandle": "tools",
       "targetHandle": "input-0"
     },
     {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "W",
-      "targetToolLabel": "W::tool:switch",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceNodeLabel": "Note",
-      "targetToolLabel": "Note::tool:if",
-      "sourceHandle": "tools",
-      "targetHandle": "input-0"
-    },
-    {
-      "sourceToolLabel": "W::tool:switch",
+      "sourceToolLabel": "W::tool:if",
       "targetToolLabel": "Fetch API",
-      "sourceHandle": "case_1768057215743_erx1",
+      "sourceHandle": "true",
       "targetHandle": "input-0"
     }
   ],
   "actions": [
     {
-      "type": "action:create-annotation-nodes",
-      "label": "Create Annotation Nodes",
-      "config": {
-        "relationshipType": "annotates",
-        "referenceAttribute": "target"
-      },
-      "position": {
-        "x": 310.4737816437407,
-        "y": -107.0465277188922
-      }
-    },
-    {
       "type": "action:create-node-complete",
-      "label": "Create Person",
+      "label": "Create Persons",
       "config": {
-        "nodeLabel": "Person",
+        "nodeLabel": "{{ $json.labels.en.value }}",
+        "properties": [
+          {
+            "transforms": [],
+            "propertyKey": "itemkey",
+            "attributeName": "{{ $json.type }}"
+          }
+        ],
+        "labelSource": "expression",
         "relationship": {
           "mode": "connected",
           "type": "hasPerson",
-          "direction": "incoming"
+          "direction": "outgoing",
+          "targetNodeLabel": "Verse"
         },
+        "relationships": [],
+        "labelTransforms": [
+          {
+            "type": "pascalcase"
+          }
+        ],
         "attributeMappings": [
           {
             "transforms": [],
             "propertyKey": "{{ $json.labels.ar.value }}",
             "attributeName": "name"
           }
-        ]
+        ],
+        "inheritProperties": false
       },
       "position": {
-        "x": 602.9359935332158,
-        "y": -36.0598177542622
+        "x": -60.78931896862605,
+        "y": 921.4251900989639
+      }
+    },
+    {
+      "type": "action:create-token-nodes",
+      "label": "Create Token Nodes",
+      "config": {
+        "structure": "flat",
+        "transforms": [
+          {
+            "type": "uppercase"
+          }
+        ],
+        "tokenNodeLabel": "character",
+        "parentNodeLabel": "w",
+        "relationshipType": "hasCharacter"
+      },
+      "position": {
+        "x": 576.0680042178734,
+        "y": 69.9954233190193
+      }
+    },
+    {
+      "type": "action:create-text-node",
+      "label": "Create Text Node",
+      "config": {
+        "nodeLabel": "text",
+        "textSource": "textContent",
+        "transforms": [],
+        "propertyKey": "text",
+        "attributeName": "",
+        "propertyMappings": [
+          {
+            "key": "testkey",
+            "value": "{{ $json.labels.ar.value }}"
+          }
+        ],
+        "inheritProperties": false,
+        "parentRelationship": "hasText"
+      },
+      "position": {
+        "x": 519.2758579339974,
+        "y": 146.17181505799377
+      }
+    },
+    {
+      "type": "action:create-reference",
+      "label": "Create Reference",
+      "config": {
+        "nodeLabel": "Reference",
+        "annotationPath": "target"
+      },
+      "position": {
+        "x": -119.17443249701296,
+        "y": -88.82437275985649
       }
     }
   ],
   "actionEdges": [
     {
-      "sourceToolLabel": "Note::tool:if",
-      "targetActionLabel": "Create Annotation Nodes",
-      "sourceHandle": "true",
+      "sourceToolLabel": "Fetch API",
+      "targetActionLabel": "Create Persons",
+      "sourceHandle": "output",
       "targetHandle": "input"
     },
     {
-      "sourceToolLabel": "Fetch API",
-      "targetActionLabel": "Create Person",
-      "sourceHandle": "output",
+      "sourceToolLabel": "W::tool:switch",
+      "targetActionLabel": "Create Text Node",
+      "sourceHandle": "case_1768057224818_rhy6",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "W::tool:switch",
+      "targetActionLabel": "Create Token Nodes",
+      "sourceHandle": "case_1768057215743_erx1",
+      "targetHandle": "input"
+    },
+    {
+      "sourceToolLabel": "Note::tool:if",
+      "targetActionLabel": "Create Reference",
+      "sourceHandle": "true",
       "targetHandle": "input"
     }
   ]

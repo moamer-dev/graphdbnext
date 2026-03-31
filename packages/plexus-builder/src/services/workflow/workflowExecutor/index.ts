@@ -219,7 +219,10 @@ export async function executeWorkflow(options: ExecuteOptions): Promise<GraphJso
           createdForElement = graphNode
 
           if (parentGraphNode) {
-            const relDef = findRelType(parentGraphNode.labels[0], graphNode.labels[0])
+            const fromLabel = parentGraphNode.builderLabel || parentGraphNode.labels[0]
+            const toLabel = graphNode.builderLabel || graphNode.labels[0]
+            const relDef = findRelType(fromLabel, toLabel)
+            
             if (relDef) {
               const rel = createRelationshipWrapper(parentGraphNode, graphNode, relDef)
               graphRels.push(rel)

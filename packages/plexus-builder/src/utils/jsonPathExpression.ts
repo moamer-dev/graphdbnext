@@ -155,32 +155,28 @@ export function replaceExpressions(template: string, context: JsonPathContext): 
  * Get all available paths from a JSON object
  */
 export function getAvailablePaths(data: unknown, prefix = ''): string[] {
-  const paths: string[] = []
+  const pathSet = new Set<string>()
   
-  if (data === null || data === undefined) {
-    return paths
-  }
-  
-  if (Array.isArray(data)) {
-    data.forEach((item, index) => {
-      const itemPaths = getAvailablePaths(item, `${prefix}[${index}]`)
-      paths.push(...itemPaths)
-    })
-    if (data.length > 0) {
-      paths.push(prefix || '[]')
+  function discover(val: unknown, currentPath: string) {
+    if (val === null || val === undefined) return
+    
+    if (currentPath) {
+      pathSet.add(currentPath)
     }
-  } else if (typeof data === 'object') {
-    Object.entries(data).forEach(([key, value]) => {
-      const currentPath = prefix ? `${prefix}.${key}` : key
-      paths.push(currentPath)
-      
-      if (typeof value === 'object' && value !== null) {
-        const nestedPaths = getAvailablePaths(value, currentPath)
-        paths.push(...nestedPaths)
-      }
-    })
+
+    if (Array.isArray(val)) {
+      if (!currentPath) pathSet.add('[]')
+      val.forEach((item, index) => {
+        discover(item, currentPath ? `${currentPath}[${index}]` : `[${index}]`)
+      })
+    } else if (typeof val === 'object') {
+      Object.entries(val).forEach(([key, child]) => {
+        discover(child, currentPath ? `${currentPath}.${key}` : key)
+      })
+    }
   }
-  
-  return paths
+
+  discover(data, prefix)
+  return Array.from(pathSet)
 }
 

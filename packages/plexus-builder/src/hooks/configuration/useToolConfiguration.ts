@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useEffect } from 'react'
 import { useToolCanvasStore } from '../../stores/toolCanvasStore'
 import { useModelBuilderStore } from '../../stores/modelBuilderStore'
+import { useActionCanvasStore } from '../../stores/actionCanvasStore'
 import { useToolConfigurationStore } from '../../stores/toolConfigurationStore'
 import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 import { useCredentialsStore } from '../../stores/credentialsStore'
@@ -12,6 +13,8 @@ export function useToolConfiguration(toolNodeId: string | null) {
   const updateToolNode = useToolCanvasStore((state) => state.updateNode)
   const nodes = useModelBuilderStore((state) => state.nodes)
   const toolCanvasEdges = useToolCanvasStore((state) => state.edges)
+  const actionCanvasNodes = useActionCanvasStore((state) => state.nodes)
+  const actionCanvasEdges = useActionCanvasStore((state) => state.edges)
 
   const toolDefinition = useMemo(() => {
     return toolNode ? workflowRegistry.getTool(toolNode.type) : null
@@ -47,34 +50,55 @@ export function useToolConfiguration(toolNodeId: string | null) {
     let currentId = toolNodeId
     const visited = new Set<string>()
     let depth = 0
-    const MAX_DEPTH = 20
+    const MAX_DEPTH = 30 // Increased depth for complex chains
 
     while (currentId && !visited.has(currentId) && depth < MAX_DEPTH) {
       visited.add(currentId)
       depth++
 
+      // 1. Direct attachment (metadata)
       const currentTool = toolNodes.find(n => n.id === currentId)
       if (currentTool?.targetNodeId) {
         const directNode = nodes.find(n => n.id === currentTool.targetNodeId)
         if (directNode) return directNode
       }
 
-      const edge = toolCanvasEdges.find(e => e.target === currentId)
-      if (!edge) break
+      // 2. Search in tool edges (Node -> Tool or Tool -> Tool)
+      const toolEdge = toolCanvasEdges.find(e => e.target === currentId)
+      if (toolEdge) {
+        const sourceTool = toolNodes.find(n => n.id === toolEdge.source)
+        if (sourceTool) {
+          currentId = toolEdge.source
+          continue
+        }
 
-      const sourceTool = toolNodes.find(n => n.id === edge.source)
-      if (sourceTool) {
-        currentId = edge.source
-        continue
+        const sourceNode = nodes.find(n => n.id === toolEdge.source)
+        if (sourceNode) return sourceNode
       }
 
-      const sourceNode = nodes.find(n => n.id === edge.source)
-      if (sourceNode) return sourceNode
+      // 3. Search in action edges (Tool -> Action or Action -> Action or Action -> Tool)
+      const actionEdge = actionCanvasEdges.find(e => e.target === currentId)
+      if (actionEdge) {
+        const sourceAction = actionCanvasNodes.find(n => n.id === actionEdge.source)
+        if (sourceAction) {
+          currentId = actionEdge.source
+          continue
+        }
+        
+        const sourceTool = toolNodes.find(n => n.id === actionEdge.source)
+        if (sourceTool) {
+          currentId = actionEdge.source
+          continue
+        }
+
+        const sourceNode = nodes.find(n => n.id === actionEdge.source)
+        if (sourceNode) return sourceNode
+      }
 
       break
     }
     return null
-  }, [toolNodeId, toolNodes, toolCanvasEdges, nodes])
+  }, [toolNodeId, toolNodes, toolCanvasEdges, nodes, actionCanvasNodes, actionCanvasEdges])
 
   // Normalized configurations
   const fetchApiConfig = useMemo(() => {

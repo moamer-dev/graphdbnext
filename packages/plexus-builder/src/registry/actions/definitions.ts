@@ -22,7 +22,7 @@ import {
 import { executeSetPropertyAction, executeCopyPropertyAction, executeMergePropertiesAction, executeSplitPropertyAction, executeFormatPropertyAction } from '../../services/workflow/workflowExecutor/actions/propertyActions'
 import { executeCreateRelationshipAction, executeDeferRelationshipAction, executeUpdateRelationshipAction, executeDeleteRelationshipAction, executeReverseRelationshipAction } from '../../services/workflow/workflowExecutor/actions/relationshipActions'
 import { executeCreateTextNodeAction, executeCreateTokenNodesAction } from '../../services/workflow/workflowExecutor/actions/advancedNodeActions'
-import { executeCreateAnnotationNodesAction, executeCreateReferenceChainAction } from '../../services/workflow/workflowExecutor/actions/referenceActions'
+import { executeCreateReferenceAction, executeCreateReferenceChainAction } from '../../services/workflow/workflowExecutor/actions/referenceActions'
 import { executeExtractAndNormalizeAttributesAction, executeCreateNodeCompleteAction, executeMergeChildrenTextAction, executeExtractAndComputePropertyAction, executeCreateNodeWithLookupAction } from '../../services/workflow/workflowExecutor/actions/complexActions'
 import { executeUpdateNodeAction, executeDeleteNodeAction, executeCloneNodeAction, executeMergeNodesAction } from '../../services/workflow/workflowExecutor/actions/nodeManipulationActions'
 import { executeSkipAction } from '../../services/workflow/workflowExecutor/actions/specialActions'
@@ -350,7 +350,13 @@ registerAction({
   },
   executor: executeCreateTextNodeAction,
   configSchema: [
-    { name: 'nodeLabel', label: 'Node Label', type: 'text' },
+    { 
+      name: 'nodeLabel', 
+      label: 'Node Label', 
+      type: 'text',
+      placeholder: 'e.g. Content, Text' 
+    },
+    { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },
     { 
       name: 'textSource', 
       label: 'Text Source', 
@@ -541,32 +547,46 @@ registerAction({
   },
   executor: executeCreateNodeCompleteAction,
   configSchema: [
-    { name: 'nodeLabel', label: 'Node Label', type: 'text' },
+    { 
+      name: 'nodeLabel', 
+      label: 'Node Label', 
+      type: 'text',
+      placeholder: 'e.g. Person, Place'
+    },
+    { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },
+    { name: 'inheritProperties', label: 'Inherit all XML Attributes', type: 'boolean', defaultValue: true, description: 'Automatically add all XML attributes of this element to the graph node properties' },
     { name: 'properties', label: 'Properties Mapping', type: 'mappings' },
     { name: 'relationships', label: 'Relationships', type: 'properties' }
   ],
   defaultConfig: { nodeLabel: '', properties: [], relationships: [] }
 })
 
-// 22. Create Annotation Nodes
+// 22. Create Reference
 registerAction({
-  id: 'action:create-annotation-nodes',
+  id: 'action:create-reference',
   metadata: {
-    label: 'Create Annotation Nodes',
-    description: 'Create individual nodes for specific annotations',
-    icon: FileText,
+    label: 'Create Reference',
+    description: 'Create references from the current node to other nodes via attributes',
+    icon: Link2,
     category: 'node_actions',
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     order: 2,
     hidden: false
   },
-  executor: executeCreateAnnotationNodesAction,
+  executor: executeCreateReferenceAction,
   configSchema: [
-    { name: 'annotationPath', label: 'Annotation ID Path', type: 'text', description: 'Which attribute has the target annotation id/xml:id' },
-    { name: 'nodeLabel', label: 'Node Label', type: 'text' },
+    { name: 'annotationPath', label: 'Reference Attribute', type: 'text', description: 'Attribute containing target IDs (e.g. target, ref, corresp)', placeholder: 'target' },
+    { 
+      name: 'nodeLabel', 
+      label: 'Override Node Label', 
+      type: 'text',
+      placeholder: 'e.g. Reference',
+      description: 'Optional: Override the label of the node being created'
+    },
+    { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },
     { name: 'relationshipType', label: 'Relationship Type', type: 'text', defaultValue: 'annotates', placeholder: 'e.g., annotates, refersTo' },
-    { name: 'properties', label: 'Properties', type: 'mappings' }
+    { name: 'properties', label: 'Additional Properties', type: 'mappings' }
   ],
   defaultConfig: { annotationPath: '', nodeLabel: '', relationshipType: 'annotates', properties: [] }
 })

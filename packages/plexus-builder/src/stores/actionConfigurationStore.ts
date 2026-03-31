@@ -4,7 +4,7 @@ import { create } from 'zustand'
 import type { ActionCanvasNode } from './actionCanvasStore'
 
 export interface TextTransform {
-  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex'
+  type: 'lowercase' | 'uppercase' | 'trim' | 'replace' | 'regex' | 'slugify' | 'pascalcase' | 'camelcase' | 'snakecase'
   replaceFrom?: string
   replaceTo?: string
   regexPattern?: string
