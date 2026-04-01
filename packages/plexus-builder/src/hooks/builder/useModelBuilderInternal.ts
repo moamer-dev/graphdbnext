@@ -13,15 +13,50 @@ import { convertSchemaJsonToBuilder } from '../../utils/schemaConverter'
 import { parseMarkdownSchema, convertMarkdownSchemaToBuilder } from '../../utils/markdownParser'
 import { toast } from '../../utils/toast'
 import { useAIFeature } from '../../ai/config'
+import { useDataSourcesStore, useXmlSources } from '../../stores/dataSourcesStore'
+import { useCredentialsStore } from '../../stores/credentialsStore'
+import { useAiStore } from '../../stores/aiStore'
 
 export function useModelBuilderInternal(props: any, ref: any) {
   const {
     workflowPersistence,
+    dataSourcesPersistence,
+    credentialsPersistence,
+    aiPersistence,
     initialWorkflow,
     onWorkflowChange,
     onSave,
     onSaveModel
   } = props
+
+  // Collaborative Store Synchronization
+  useEffect(() => {
+    const loadSharedData = async () => {
+      try {
+        // Load Data Sources
+        if (dataSourcesPersistence?.onLoad) {
+          const sources = await dataSourcesPersistence.onLoad()
+          if (sources) useDataSourcesStore.getState().setSources(sources)
+        }
+
+        // Load Credentials
+        if (credentialsPersistence?.onLoad) {
+          const credentials = await credentialsPersistence.onLoad()
+          if (credentials) useCredentialsStore.getState().setCredentials(credentials)
+        }
+
+        // Load AI Chat Sessions
+        if (aiPersistence?.onLoadSessions) {
+          const sessions = await aiPersistence.onLoadSessions()
+          if (sessions) useAiStore.getState().setSessions(sessions)
+        }
+      } catch (error) {
+        console.error('Error loading shared workspace data:', error)
+      }
+    }
+
+    loadSharedData()
+  }, [dataSourcesPersistence, credentialsPersistence, aiPersistence])
 
   const ui = useModelBuilderUI()
   const {
@@ -72,6 +107,9 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const [schemaDesignDialogOpen, setSchemaDesignDialogOpen] = useState(false)
   const [schemaDesignMode] = useState<'suggest' | 'optimize' | 'validate'>('suggest')
   const [workflowGenerationDialogOpen, setWorkflowGenerationDialogOpen] = useState(false)
+  const [isPushingXml, setIsPushingXml] = useState(false)
+
+  const workspaceXmls = useXmlSources()
 
   const isSchemaDesignEnabled = useAIFeature('schemaDesignAgent')
   const isWorkflowGenerationEnabled = useAIFeature('workflowGenerationAgent')
@@ -444,6 +482,54 @@ export function useModelBuilderInternal(props: any, ref: any) {
     xmlContent,
     handleRunWorkflow,
     handleUploadXml,
+    onSelectWorkspaceXml: async (xmlSource: any) => {
+        try {
+            // If content is already in the object (small files stored in DB)
+            if (xmlSource.content) {
+                handleUploadXml({ 
+                   target: { files: [new File([xmlSource.content], xmlSource.name, { type: 'text/xml' })] } 
+                } as any)
+                return
+            }
+            
+            // If stored in S3 or Local FS, we might need a fetch (handled by adapter usually, but we check)
+            if (xmlSource.fileUrl) {
+                const response = await fetch(xmlSource.fileUrl)
+                const text = await response.text()
+                handleUploadXml({ 
+                   target: { files: [new File([text], xmlSource.name, { type: 'text/xml' })] } 
+                } as any)
+            }
+        } catch (error) {
+            toast.error('Failed to load workspace XML')
+        }
+    },
+    onPushXmlToWorkspace: async () => {
+        if (!ui.xmlFile || !dataSourcesPersistence?.onSave) return
+        setIsPushingXml(true)
+        try {
+            const content = await ui.xmlFile.text()
+            await dataSourcesPersistence.onSave({
+                name: ui.xmlFile.name,
+                type: 'XML',
+                content: content,
+                size: ui.xmlFile.size
+            })
+            toast.success('XML saved to workspace library')
+            
+            // Re-load data sources to see the new item
+            if (dataSourcesPersistence.onLoad) {
+                const sources = await dataSourcesPersistence.onLoad()
+                if (sources) useDataSourcesStore.getState().setSources(sources)
+            }
+        } catch (err) {
+            toast.error('Failed to save XML to workspace')
+        } finally {
+            setIsPushingXml(false)
+        }
+    },
+    workspaceXmls,
+    isPushingXml,
     leftTab,
     setLeftTab,
     sidebarWidth,

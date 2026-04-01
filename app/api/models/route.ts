@@ -25,7 +25,7 @@ export async function GET (request: NextRequest) {
     const creator = searchParams.get('creator') || undefined
     
     // Build filters from query params - extract all params except pagination/sorting
-    const filters: Record<string, unknown> = { isActive: true }
+    const filters: Record<string, unknown> = {}
     const excludeParams = ['page', 'pageSize', 'sortBy', 'sortOrder', 'search', 'creator']
     
     searchParams.forEach((value, key) => {
@@ -108,5 +108,25 @@ export async function POST (request: NextRequest) {
       { error: 'Failed to create model' },
       { status: 500 }
     )
+  }
+}
+
+export async function DELETE (request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { ids } = await request.json()
+    if (!ids || !Array.isArray(ids)) {
+      return NextResponse.json({ error: 'IDs are required' }, { status: 400 })
+    }
+
+    const result = await modelCrudService.deleteMany(session, ids)
+    return NextResponse.json({ data: result })
+  } catch (error) {
+    console.error('Error bulk deleting models:', error)
+    return NextResponse.json({ error: 'Failed to delete models' }, { status: 500 })
   }
 }

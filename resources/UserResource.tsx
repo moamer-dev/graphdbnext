@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Trash2, Edit } from 'lucide-react'
-import type { TableConfig, BulkAction } from './TableConfig'
+import type { TableConfig, BulkAction, ResourceColumnDef } from './TableConfig'
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -10,7 +9,7 @@ export interface User {
   id: string
   email: string
   name: string | null
-  role: 'USER' | 'ADMIN'
+  role: string
   createdAt: string
   updatedAt: string
   emailVerified: string | null
@@ -40,44 +39,62 @@ export class UserResource {
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,
-    onDelete: (id: string) => Promise<void>
+    onDelete: (id: string) => Promise<void>,
+    _onManageMembers?: (id: string) => void
   ): TableConfig<User> {
-    const columns: ColumnDef<User>[] = [
-      columnHelper.accessor('email', {
-        header: 'Email',
-        cell: (info) => {
-          const email = info.getValue()
-          const userId = info.row.original.id
-          return (
-            <Button
-              variant="link"
-              className="h-auto p-0 font-medium text-left justify-start hover:cursor-pointer"
-              onClick={() => onView(userId)}
-            >
-              {email}
-            </Button>
+    const columns: ResourceColumnDef<User>[] = [
+      {
+        ...columnHelper.accessor('email', {
+          header: 'Email',
+          cell: (info) => {
+            const email = info.getValue()
+            const userId = info.row.original.id
+            return (
+              <Button
+                variant="link"
+                className="h-auto p-0 font-medium text-left justify-start hover:cursor-pointer"
+                onClick={() => onView(userId)}
+              >
+                {email}
+              </Button>
+            )
+          }
+        }),
+        searchable: true,
+        sortable: true
+      } as ResourceColumnDef<User>,
+      {
+        ...columnHelper.accessor('name', {
+          header: 'Name',
+          cell: (info) => (
+            <div className="text-muted-foreground">
+              {info.getValue() || '-'}
+            </div>
           )
-        }
-      }) as ColumnDef<User>,
-      columnHelper.accessor('name', {
-        header: 'Name',
-        cell: (info) => (
-          <div className="text-muted-foreground">
-            {info.getValue() || '-'}
-          </div>
-        )
-      }) as ColumnDef<User>,
-      columnHelper.accessor('role', {
-        header: 'Role',
-        cell: (info) => {
-          const role = info.getValue()
-          return (
-            <Badge variant={role === 'ADMIN' ? 'default' : 'secondary'}>
-              {role}
-            </Badge>
-          )
-        }
-      }) as ColumnDef<User>,
+        }),
+        searchable: true,
+        sortable: true
+      } as ResourceColumnDef<User>,
+      {
+        ...columnHelper.accessor('role', {
+          header: 'Role',
+          cell: (info) => {
+            const role = info.getValue()
+            return (
+              <Badge variant={role === 'ADMIN' ? 'default' : 'secondary'}>
+                {role}
+              </Badge>
+            )
+          }
+        }),
+        sortable: true,
+        filterable: true,
+        filterType: 'select',
+        filterOptions: [
+          { label: 'Admin', value: 'ADMIN' },
+          { label: 'User', value: 'USER' }
+        ]
+      } as ResourceColumnDef<User>,
       columnHelper.accessor('emailVerified', {
         header: 'Verified',
         cell: (info) => {
@@ -89,28 +106,20 @@ export class UserResource {
             </Badge>
           )
         }
-      }) as ColumnDef<User>,
-      columnHelper.accessor('createdAt', {
-        header: 'Created',
-        cell: (info) => (
-          <div className="text-sm text-muted-foreground">
-            {new Date(info.getValue()).toLocaleDateString()}
-          </div>
-        )
-      }) as ColumnDef<User>
-    ]
-
-    const bulkActions: BulkAction<User>[] = [
+      }) as ResourceColumnDef<User>,
       {
-        label: 'Delete Selected',
-        icon: Trash2,
-        action: async (selectedRows) => {
-          await Promise.all(selectedRows.map(row => onDelete(row.id)))
-        },
-        variant: 'destructive',
-        requiresConfirmation: true,
-        confirmationMessage: 'Are you sure you want to delete the selected user(s)? This action cannot be undone.'
-      }
+        ...columnHelper.accessor('createdAt', {
+          header: 'Created',
+          cell: (info) => (
+            <div className="text-sm text-muted-foreground">
+              {new Date(info.getValue()).toLocaleDateString()}
+            </div>
+          )
+        }),
+        sortable: true,
+        filterable: true,
+        filterType: 'date'
+      } as ResourceColumnDef<User>
     ]
 
     const rowActions = [
@@ -134,25 +143,6 @@ export class UserResource {
       name: 'users',
       resourceName: UserResource.RESOURCE_NAME,
       columns,
-      filters: [
-        {
-          key: 'search',
-          label: 'Search',
-          type: 'text',
-          placeholder: 'Search by email or name...'
-        },
-        {
-          key: 'role',
-          label: 'Role',
-          type: 'select',
-          options: [
-            { label: 'Admin', value: 'ADMIN' },
-            { label: 'User', value: 'USER' }
-          ]
-        }
-      ],
-      sortableColumns: ['role', 'createdAt'],
-      bulkActions,
       rowActions,
       enableRowSelection: true,
       defaultPageSize: 10,
@@ -170,7 +160,7 @@ export class UserResource {
         }
 
         Object.entries(filterParams || {}).forEach(([key, value]) => {
-          if (value) {
+          if (value !== undefined && value !== null && value !== '') {
             if (key === 'search') {
               // For search, we'll pass it as a general search parameter
               params.append('search', String(value))

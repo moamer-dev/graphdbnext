@@ -31,9 +31,31 @@ export interface WorkflowPersistence {
   onLoadWorkflow?: (id: string) => Promise<{ id: string; name: string; description?: string; config: unknown }>
 }
 
+export interface DataSourcesPersistence {
+  onLoad?: () => Promise<any[]>
+  onSave?: (source: any) => Promise<void>
+  onDelete?: (id: string) => Promise<void>
+}
+
+export interface CredentialsPersistence {
+  onLoad?: () => Promise<any[]>
+  onSave?: (credential: any) => Promise<void>
+  onDelete?: (id: string) => Promise<void>
+}
+
+export interface AIPersistence {
+  onLoadSessions?: () => Promise<any[]>
+  onCreateSession?: (session: any) => Promise<{ id: string }>
+  onLoadMessages?: (sessionId: string) => Promise<any[]>
+  onSaveMessage?: (sessionId: string, message: any) => Promise<void>
+}
+
 export interface ModelBuilderProps {
   className?: string
   workflowPersistence?: WorkflowPersistence
+  dataSourcesPersistence?: DataSourcesPersistence
+  credentialsPersistence?: CredentialsPersistence
+  aiPersistence?: AIPersistence
   initialWorkflow?: { id: string; name: string; description?: string; config: unknown }
   currentWorkflowName?: string
   availableWorkflows?: Array<{ id: string; name: string; description?: string; version: string; createdAt: string; updatedAt: string }>
@@ -138,7 +160,11 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     setFocusNodeFn,
     setFocusRelationshipFn,
     isWorkflowVisible,
-    setIsWorkflowVisible
+    setIsWorkflowVisible,
+    workspaceXmls,
+    onSelectWorkspaceXml,
+    onPushXmlToWorkspace,
+    isPushingXml
   } = useModelBuilderInternal(props, ref)
 
   return (
@@ -187,6 +213,11 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         setShowToolbar={setShowToolbar}
         onOpenCredentials={() => ui.setCredentialsDialogOpen(true)}
         isNewModel={isNewModel}
+        // Collaborative Workspace Assets
+        workspaceXmls={workspaceXmls}
+        onSelectWorkspaceXml={onSelectWorkspaceXml}
+        onPushXmlToWorkspace={onPushXmlToWorkspace}
+        isPushingXml={isPushingXml}
       />
 
       <div className="flex h-[calc(100%-56px)] relative">

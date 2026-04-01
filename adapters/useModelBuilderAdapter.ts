@@ -5,6 +5,9 @@ import {
 import type {
   AISettings,
   WorkflowPersistence,
+  DataSourcesPersistence,
+  CredentialsPersistence,
+  AIPersistence,
   ModelBuilderRef
 } from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
@@ -16,6 +19,9 @@ export interface UseModelBuilderAdapterProps {
   onSave?: (data: { schemaJson: unknown; schemaMd: string; name: string; description?: string }) => Promise<Model | void>
   builderRef?: React.RefObject<ModelBuilderRef | null>
   workflowPersistence?: WorkflowPersistence
+  dataSourcesPersistence?: DataSourcesPersistence
+  credentialsPersistence?: CredentialsPersistence
+  aiPersistence?: AIPersistence
   onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
 
@@ -24,6 +30,9 @@ export function useModelBuilderAdapter({
   onSave,
   builderRef,
   workflowPersistence,
+  dataSourcesPersistence: passedDataSourcesPersistence,
+  credentialsPersistence: passedCredentialsPersistence,
+  aiPersistence: passedAiPersistence,
   onPushToDB: passedOnPushToDB
 }: UseModelBuilderAdapterProps) {
   const loadedRef = useRef(false)
@@ -35,19 +44,18 @@ export function useModelBuilderAdapter({
   const persistedWorkflowKey = model?.id ? `plexus-builder:selected-workflow:${model.id}` : null
   const hasLoadedInitialWorkflowRef = useRef(false)
 
+  // Default workspace context (linked to Model's workspace in a real app)
+  const workspaceId = model?.id || 'default'
+
   // Default workflow persistence using app's API
   const defaultPersistence = useMemo<WorkflowPersistence>(() => {
-    const modelId = model?.id || 'new'
     return {
-      modelId,
+      modelId: model?.id || 'new',
       onSaveWorkflow: async (workflow) => {
         const response = await fetch('/api/workflows', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            modelId: model?.id,
-            ...workflow
-          })
+          body: JSON.stringify({ modelId: model?.id, ...workflow })
         })
         if (!response.ok) throw new Error('Failed to save workflow')
         const data = await response.json()
@@ -78,7 +86,79 @@ export function useModelBuilderAdapter({
     }
   }, [model?.id])
 
+  // Default DataSources persistence
+  const defaultDataSourcesPersistence = useMemo<DataSourcesPersistence>(() => ({
+    onLoad: async () => {
+      const resp = await fetch(`/api/data-sources?workspaceId=${workspaceId}`)
+      if (!resp.ok) return []
+      const data = await resp.json()
+      return data.dataSources
+    },
+    onSave: async (source) => {
+      await fetch('/api/data-sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...source, workspaceId })
+      })
+    },
+    onDelete: async (id) => {
+      await fetch(`/api/data-sources/${id}`, { method: 'DELETE' })
+    }
+  }), [workspaceId])
+
+  // Default Credentials persistence
+  const defaultCredentialsPersistence = useMemo<CredentialsPersistence>(() => ({
+    onLoad: async () => {
+      const resp = await fetch(`/api/credentials?workspaceId=${workspaceId}`)
+      if (!resp.ok) return []
+      const data = await resp.json()
+      return data.credentials
+    },
+    onSave: async (cred) => {
+      await fetch('/api/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...cred, workspaceId })
+      })
+    }
+  }), [workspaceId])
+
+  // Default AI persistence
+  const defaultAiPersistence = useMemo<AIPersistence>(() => ({
+    onLoadSessions: async () => {
+      const resp = await fetch(`/api/ai/sessions?workspaceId=${workspaceId}`)
+      if (!resp.ok) return []
+      const data = await resp.json()
+      return data.sessions
+    },
+    onCreateSession: async (session) => {
+      const resp = await fetch('/api/ai/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...session, workspaceId })
+      })
+      const data = await resp.json()
+      return { id: data.session.id }
+    },
+    onLoadMessages: async (sessionId) => {
+      const resp = await fetch(`/api/ai/messages?sessionId=${sessionId}`)
+      if (!resp.ok) return []
+      const data = await resp.json()
+      return data.messages
+    },
+    onSaveMessage: async (sessionId, message) => {
+      await fetch('/api/ai/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...message, sessionId })
+      })
+    }
+  }), [workspaceId])
+
   const effectivePersistence = workflowPersistence || defaultPersistence
+  const effectiveDataSourcesPersistence = passedDataSourcesPersistence || defaultDataSourcesPersistence
+  const effectiveCredentialsPersistence = passedCredentialsPersistence || defaultCredentialsPersistence
+  const effectiveAiPersistence = passedAiPersistence || defaultAiPersistence
 
   // Load app's AI settings from database API
   useEffect(() => {
@@ -240,6 +320,9 @@ export function useModelBuilderAdapter({
     existingWorkflows,
     currentWorkflow,
     effectivePersistence,
+    effectiveDataSourcesPersistence,
+    effectiveCredentialsPersistence,
+    effectiveAiPersistence,
     handleWorkflowChange,
     handleSaveModel,
     onPushToDB: handlePushToDB,

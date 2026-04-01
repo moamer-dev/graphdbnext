@@ -36,6 +36,11 @@ export interface CrudServiceConfig {
   formatData?: (data: unknown[]) => unknown[]
   // Optional: Custom access control
   checkAccess?: (session: Session | null) => void | Promise<void>
+  /**
+   * Optional name of the user relation to include for admins
+   * Default: 'user'
+   */
+  userRelationName?: string
 }
 
 export function createCrudService<T extends { id: string }>(
@@ -47,7 +52,8 @@ export function createCrudService<T extends { id: string }>(
     includeUserForAdmin: config.includeUserForAdmin ?? false,
     defaultPageSize: config.defaultPageSize || 10,
     sortableFields: config.sortableFields || [],
-    searchableFields: config.searchableFields || []
+    searchableFields: config.searchableFields || [],
+    userRelationName: config.userRelationName || 'user'
   }
 
   class GenericCrudService extends CrudService<T> {

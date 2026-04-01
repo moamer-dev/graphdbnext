@@ -5,7 +5,7 @@ import { Switch } from './ui/switch'
 import { OntologyCombobox } from './wizard/XmlImportWizard/components/OntologyCombobox'
 import { Button } from './ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem } from './ui/dropdown-menu'
-import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck } from 'lucide-react'
+import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck, Globe, FileJson, Share2, MoreHorizontal, ChevronRight } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { SemanticValidationDialog } from './semantic/SemanticValidationDialog'
 
@@ -55,6 +55,11 @@ interface ModelBuilderHeaderProps {
   setShowToolbar: (val: boolean) => void
   onOpenCredentials: () => void
   isNewModel?: boolean
+  // New Workspace Props
+  workspaceXmls?: any[]
+  onSelectWorkspaceXml?: (xmlSource: any) => void
+  onPushXmlToWorkspace?: () => void
+  isPushingXml?: boolean
 }
 
 export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
@@ -101,7 +106,11 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   showToolbar,
   setShowToolbar,
   onOpenCredentials,
-  isNewModel = false
+  isNewModel = false,
+  workspaceXmls = [],
+  onSelectWorkspaceXml,
+  onPushXmlToWorkspace,
+  isPushingXml = false
 }) => {
   const [semanticValidationOpen, setSemanticValidationOpen] = React.useState(false)
 
@@ -312,16 +321,66 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
           onChange={onUploadXml}
         />
         <div className="flex items-center rounded-md border bg-background p-0.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => xmlUploadInputRef.current?.click()}
-            className="h-7 text-[10px] px-2"
-            title={xmlFile ? `Current XML: ${xmlFile.name}` : "Upload XML file"}
-          >
-            <FileUp className="h-3.5 w-3.5 lg:mr-1" />
-            <span className="hidden lg:inline">{xmlFile ? 'Change' : 'XML'}</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[10px] px-2"
+                title={xmlFile ? `Current XML: ${xmlFile.name}` : "Manage structural definitions"}
+              >
+                <FileUp className="h-3.5 w-3.5 lg:mr-1" />
+                <span className="hidden lg:inline">{xmlFile ? 'Change XML' : 'XML Library'}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">Local Operations</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => xmlUploadInputRef.current?.click()}>
+                <Upload className="h-3.5 w-3.5 mr-2" />
+                Upload from Computer
+              </DropdownMenuItem>
+              
+              {xmlFile && onPushXmlToWorkspace && (
+                <DropdownMenuItem 
+                  onSelect={onPushXmlToWorkspace} 
+                  disabled={isPushingXml}
+                  className="text-primary font-medium"
+                >
+                  <Share2 className="h-3.5 w-3.5 mr-2" />
+                  {isPushingXml ? 'Pushing to Workspace...' : 'Push to Workspace'}
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold flex items-center justify-between">
+                Workspace Library
+                <Globe className="h-3 w-3" />
+              </DropdownMenuLabel>
+              
+              {workspaceXmls.length === 0 ? (
+                <div className="p-4 text-center">
+                  <p className="text-[10px] text-muted-foreground italic">No shared XMLs in this workspace</p>
+                </div>
+              ) : (
+                <div className="max-h-[200px] overflow-y-auto pt-1">
+                  {workspaceXmls.map((xml) => (
+                    <DropdownMenuItem 
+                      key={xml.id} 
+                      onSelect={() => onSelectWorkspaceXml?.(xml)}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FileJson className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        <span className="truncate">{xml.name}</span>
+                      </div>
+                      {xmlFile?.name === xml.name && <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0 ml-2" />}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="w-px h-4 bg-border mx-0.5" />
           <Button
             variant="default"

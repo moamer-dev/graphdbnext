@@ -3,20 +3,21 @@ import { isAdmin } from '@/utils/rbac'
 import type { User } from '@/resources/UserResource'
 import type { Model } from '@/resources/ModelResource'
 import type { SavedQuery } from '@/resources/SavedQueryResource'
+import type { Team } from '@/resources/TeamResource'
+import type { Project } from '@/resources/ProjectResource'
+import type { Workspace } from '@/resources/WorkspaceResource'
 import type { Session } from 'next-auth'
 
 /**
  * User CRUD Service
- * Only admins can access users.
  */
 export const userCrudService = createCrudService<User>({
   modelName: 'user' as any,
-  userIdField: 'id', // Users don't have userId, use id for RBAC
+  userIdField: 'id',
   includeUserForAdmin: false,
   defaultPageSize: 10,
   sortableFields: ['email', 'name', 'role', 'createdAt'],
   searchableFields: ['email', 'name'],
-  // Exclude password from responses
   selectFields: {
     id: true,
     email: true,
@@ -26,7 +27,6 @@ export const userCrudService = createCrudService<User>({
     createdAt: true,
     updatedAt: true
   },
-  // Format dates to strings
   formatData: (data: unknown[]) => {
     return data.map((item) => {
       const record = item as Record<string, unknown>
@@ -38,7 +38,6 @@ export const userCrudService = createCrudService<User>({
       }
     })
   },
-  // Only admins can access users
   checkAccess: async (session: Session | null) => {
     if (!isAdmin(session)) {
       throw new Error('Unauthorized: Only admins can access users')
@@ -48,8 +47,6 @@ export const userCrudService = createCrudService<User>({
 
 /**
  * Model CRUD Service
- * Admins see all models, users see only their own.
- * Includes user relation for admins.
  */
 export const modelCrudService = createCrudService<Model>({
   modelName: 'model' as any,
@@ -57,8 +54,7 @@ export const modelCrudService = createCrudService<Model>({
   includeUserForAdmin: true,
   defaultPageSize: 10,
   sortableFields: ['name', 'version', 'createdAt', 'updatedAt'],
-  searchableFields: ['name', 'description', 'version'],
-  // Model-specific field selection
+  searchableFields: ['name', 'description', 'version', 'user.name', 'user.email'],
   selectFields: {
     id: true,
     name: true,
@@ -71,14 +67,11 @@ export const modelCrudService = createCrudService<Model>({
     schemaJson: true,
     schemaMd: true
   },
-  // Format Date objects to strings and calculate counts
   formatData: (data: unknown[]) => {
     return data.map((item) => {
       const record = item as Record<string, unknown>
       let noteCount = 0
       let relationCount = 0
-      
-      // Calculate counts from schemaJson if available
       if (record.schemaJson && typeof record.schemaJson === 'object') {
         const schema = record.schemaJson as Record<string, unknown>
         if (schema.nodes && typeof schema.nodes === 'object') {
@@ -88,7 +81,6 @@ export const modelCrudService = createCrudService<Model>({
           relationCount = Object.keys(schema.relations).length
         }
       }
-      
       return {
         ...record,
         noteCount,
@@ -102,7 +94,6 @@ export const modelCrudService = createCrudService<Model>({
 
 /**
  * SavedQuery CRUD Service
- * Users see only their own queries.
  */
 export const savedQueryCrudService = createCrudService<SavedQuery>({
   modelName: 'savedQuery' as any,
@@ -133,6 +124,103 @@ export const savedQueryCrudService = createCrudService<SavedQuery>({
         createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : record.createdAt,
         updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : record.updatedAt,
         executedAt: record.executedAt instanceof Date ? record.executedAt.toISOString() : record.executedAt
+      }
+    })
+  }
+})
+
+/**
+ * Team CRUD Service
+ */
+export const teamCrudService = createCrudService<Team>({
+  modelName: 'team' as any,
+  userIdField: 'creatorId',
+  userRelationName: 'creator',
+  includeUserForAdmin: true,
+  defaultPageSize: 10,
+  sortableFields: ['name', 'isActive', 'createdAt', 'updatedAt'],
+  searchableFields: ['name', 'description'],
+  selectFields: {
+    id: true,
+    name: true,
+    description: true,
+    isActive: true,
+    createdAt: true,
+    updatedAt: true,
+    creatorId: true
+  },
+  formatData: (data: unknown[]) => {
+    return data.map((item) => {
+      const record = item as Record<string, unknown>
+      return {
+        ...record,
+        createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : record.createdAt,
+        updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : record.updatedAt
+      }
+    })
+  }
+})
+
+/**
+ * Project CRUD Service
+ */
+export const projectCrudService = createCrudService<Project>({
+  modelName: 'project' as any,
+  userIdField: 'creatorId',
+  userRelationName: 'creator',
+  includeUserForAdmin: true,
+  defaultPageSize: 10,
+  sortableFields: ['name', 'isActive', 'createdAt', 'updatedAt'],
+  searchableFields: ['name', 'description'],
+  selectFields: {
+    id: true,
+    name: true,
+    description: true,
+    isActive: true,
+    teamId: true,
+    createdAt: true,
+    updatedAt: true,
+    creatorId: true
+  },
+  formatData: (data: unknown[]) => {
+    return data.map((item) => {
+      const record = item as Record<string, unknown>
+      return {
+        ...record,
+        createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : record.createdAt,
+        updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : record.updatedAt
+      }
+    })
+  }
+})
+
+/**
+ * Workspace CRUD Service
+ */
+export const workspaceCrudService = createCrudService<Workspace>({
+  modelName: 'workspace' as any,
+  userIdField: 'creatorId',
+  userRelationName: 'creator',
+  includeUserForAdmin: true,
+  defaultPageSize: 10,
+  sortableFields: ['name', 'isActive', 'createdAt', 'updatedAt'],
+  searchableFields: ['name', 'description'],
+  selectFields: {
+    id: true,
+    name: true,
+    description: true,
+    isActive: true,
+    createdAt: true,
+    updatedAt: true,
+    creatorId: true
+  },
+  formatData: (data: unknown[]) => {
+    return data.map((item) => {
+      const record = item as Record<string, unknown>
+      return {
+        ...record,
+        createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : record.createdAt,
+        updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : record.updatedAt
       }
     })
   }

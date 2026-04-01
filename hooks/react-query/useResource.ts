@@ -1,8 +1,7 @@
-'use client'
-
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTenantStore } from '@/stores/tenantStore'
 
 /**
  * Generic Resource Hook Factory
@@ -27,6 +26,7 @@ export interface ResourceConfig {
   basePath: string
   viewPath?: string
   listPath?: string
+  workspaceScoped?: boolean
   queryKeys: {
     lists: () => readonly unknown[]
     detail: (id: string) => readonly unknown[]
@@ -145,7 +145,7 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
   // Update item
   async function updateItem (id: string, data: Partial<T>): Promise<SingleResourceResponse<T>> {
     const response = await fetch(`${config.basePath}/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -171,13 +171,40 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
       throw new Error(error.error || `Failed to delete ${config.resourceName.toLowerCase()}`)
     }
   }
+  
+  // Bulk delete items
+  async function bulkDeleteItem (ids: string[]): Promise<void> {
+    const response = await fetch(config.basePath, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ids })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: `Failed to delete selected ${config.resourceName.toLowerCase()}s` }))
+      throw new Error(error.error || `Failed to delete selected ${config.resourceName.toLowerCase()}s`)
+    }
+  }
 
   // Hook: Fetch list
   function useList (params: FetchParams) {
+    const { activeWorkspaceId } = useTenantStore()
+    
+    // Inject workspaceId filter if scoped
+    const effectiveParams = {
+        ...params,
+        filters: {
+            ...params.filters,
+            ...(config.workspaceScoped && activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {})
+        }
+    }
+
     return useQuery({
-      queryKey: config.queryKeys.paginated(params),
-      queryFn: () => fetchList(params),
-      staleTime: 1000 * 60 * 2, // 2 minutes for list data
+      queryKey: config.queryKeys.paginated(effectiveParams),
+      queryFn: () => fetchList(effectiveParams),
+      staleTime: 0, // Disable caching for now to ensure visibility
       placeholderData: keepPreviousData // Keep previous data while fetching new data to prevent flickering
     })
   }
@@ -202,11 +229,13 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
       onSuccess: (data) => {
         // Handle different response formats
         let item: T | undefined
-        if ('data' in data) {
+        if (data && typeof data === 'object' && 'data' in data) {
           item = (data as SingleResourceResponse<T>).data
-        } else {
+        } else if (data && typeof data === 'object' && config.resourceName.toLowerCase() in data) {
           const dataRecord = data as unknown as Record<string, T>
           item = dataRecord[config.resourceName.toLowerCase()]
+        } else if (data && typeof data === 'object' && 'id' in data) {
+          item = data as unknown as T
         }
         
         // Invalidate and refetch lists (this will invalidate all paginated queries too)
@@ -237,7 +266,7 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
   }
 
   // Hook: Update
-  function useUpdate (options?: { showToast?: boolean }) {
+  function useUpdate (options?: { onSuccess?: (data: T) => void; showToast?: boolean }) {
     const queryClient = useQueryClient()
 
     return useMutation({
@@ -261,6 +290,10 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
         
         if (options?.showToast !== false) {
           toast.success(`${config.resourceName} updated successfully`)
+        }
+
+        if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+            options?.onSuccess?.(responseData.data as T)
         }
       },
       onError: (error: Error) => {
@@ -296,6 +329,30 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
       }
     })
   }
+  // Hook: Bulk Delete
+  function useBulkDelete (options?: { onSuccess?: () => void }) {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+      mutationFn: bulkDeleteItem,
+      onSuccess: (_, ids) => {
+        // Remove all deleted items from cache
+        ids.forEach(id => {
+          queryClient.removeQueries({ queryKey: config.queryKeys.detail(id) })
+        })
+        
+        // Invalidate lists to refetch
+        queryClient.invalidateQueries({ queryKey: config.queryKeys.lists() })
+        
+        toast.success(`${ids.length} ${config.resourceName.toLowerCase()}${ids.length > 1 ? 's' : ''} deleted successfully`)
+        
+        options?.onSuccess?.()
+      },
+      onError: (error: Error) => {
+        toast.error(error.message || `Failed to delete selected items`)
+      }
+    })
+  }
 
   return {
     useList,
@@ -303,12 +360,14 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
     useCreate,
     useUpdate,
     useDelete,
+    useBulkDelete,
     // Export fetch functions for direct use if needed
     fetchList,
     fetchSingle,
     createItem,
     updateItem,
-    deleteItem
+    deleteItem,
+    bulkDeleteItem
   }
 }
 

@@ -25,18 +25,18 @@ const prismaConfig: {
 
 // If using Prisma Accelerate, use accelerateUrl
 if (dbUrl.startsWith('prisma+')) {
+  console.log('Using Prisma Accelerate')
   prismaConfig.accelerateUrl = dbUrl
 } else {
   // For direct PostgreSQL connections, use the pg adapter
-  // According to Prisma docs: https://www.prisma.io/docs/orm/overview/databases/postgresql
   const connectionString = dbUrl.replace(/^prisma\+/, '')
   try {
     const adapter = new PrismaPg({ connectionString })
     prismaConfig.adapter = adapter
-    console.log('Prisma adapter initialized with PostgreSQL connection')
+    console.log('Prisma adapter initialized for:', connectionString.substring(0, 20) + '...')
   } catch (error) {
-    console.error('Failed to create Prisma adapter:', error)
-    throw error
+    console.error('CRITICAL: Failed to create Prisma adapter:', error)
+    // If adapter fails, we might still want to try native if possible, but Prisma 7 might not allow it without adapter if configured.
   }
 }
 

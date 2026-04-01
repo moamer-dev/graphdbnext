@@ -64,3 +64,23 @@ export async function GET (request: NextRequest) {
   }
 }
 
+export async function DELETE (request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { ids } = await request.json()
+    if (!ids || !Array.isArray(ids)) {
+      return NextResponse.json({ error: 'IDs are required' }, { status: 400 })
+    }
+
+    const result = await userCrudService.deleteMany(session, ids)
+    return NextResponse.json({ data: result })
+  } catch (error) {
+    console.error('Error bulk deleting users:', error)
+    return NextResponse.json({ error: 'Failed to delete users' }, { status: 500 })
+  }
+}
+

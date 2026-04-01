@@ -1,15 +1,17 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Trash2, Edit } from 'lucide-react'
-import type { TableConfig, BulkAction } from './TableConfig'
+import type { TableConfig, BulkAction, ResourceColumnDef } from './TableConfig'
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 export interface Model {
   id: string
   name: string
   description: string | null
   version: string
+  isActive: boolean
   createdAt: string
   updatedAt: string
   userId?: string
@@ -51,39 +53,50 @@ export class ModelResource {
     onView: (id: string) => void,
     onEdit: (id: string) => void,
     onDelete: (id: string) => Promise<void>,
-    isAdmin: boolean
+    _onManageMembers?: (id: string) => void,
+    isAdmin?: boolean
   ): TableConfig<Model> {
-    const columns: ColumnDef<Model>[] = [
-      columnHelper.accessor('name', {
-        header: 'Name',
-        cell: (info) => {
-          const name = info.getValue()
-          const modelId = info.row.original.id
-          return (
-            <Button
-              variant="link"
-              className="h-auto p-0 font-medium text-left justify-start hover:cursor-pointer"
-              onClick={() => onView(modelId)}
-            >
-              {name}
-            </Button>
+    const columns: ResourceColumnDef<Model>[] = [
+      {
+        ...columnHelper.accessor('name', {
+          header: 'Name',
+          cell: (info) => {
+            const name = info.getValue()
+            const modelId = info.row.original.id
+            return (
+              <Button
+                variant="link"
+                className="h-auto p-0 font-medium text-left justify-start hover:cursor-pointer"
+                onClick={() => onView(modelId)}
+              >
+                {name}
+              </Button>
+            )
+          }
+        }),
+        searchable: false,
+        sortable: true
+      } as ResourceColumnDef<Model>,
+      {
+        ...columnHelper.accessor('description', {
+          header: 'Description',
+          cell: (info) => (
+            <div className="max-w-[300px] truncate text-muted-foreground">
+              {info.getValue() || '-'}
+            </div>
           )
-        }
-      }) as ColumnDef<Model>,
-      columnHelper.accessor('description', {
-        header: 'Description',
-        cell: (info) => (
-          <div className="max-w-[300px] truncate text-muted-foreground">
-            {info.getValue() || '-'}
-          </div>
-        )
-      }) as ColumnDef<Model>,
-      columnHelper.accessor('version', {
-        header: 'Version',
-        cell: (info) => (
-          <div className="text-sm">{info.getValue()}</div>
-        )
-      }) as ColumnDef<Model>,
+        }),
+        searchable: true
+      } as ResourceColumnDef<Model>,
+      {
+        ...columnHelper.accessor('version', {
+          header: 'Version',
+          cell: (info) => (
+            <div className="text-sm">{info.getValue()}</div>
+          )
+        }),
+        searchable: true
+      } as ResourceColumnDef<Model>,
       ...(isAdmin
         ? [
             columnHelper.accessor('user', {
@@ -104,65 +117,57 @@ export class ModelResource {
                   </Button>
                 )
               }
-            }) as ColumnDef<Model>
+            }) as ResourceColumnDef<Model>
           ]
         : []),
-      columnHelper.accessor('createdAt', {
-        header: 'Created',
-        cell: (info) => {
-          const date = new Date(info.getValue())
-          return (
-            <div className="text-sm text-muted-foreground">
-              {date.toLocaleDateString()}
-            </div>
-          )
-        }
-      }) as ColumnDef<Model>,
-      columnHelper.accessor('updatedAt', {
-        header: 'Updated',
-        cell: (info) => {
-          const date = new Date(info.getValue())
-          return (
-            <div className="text-sm text-muted-foreground">
-              {date.toLocaleDateString()}
-            </div>
-          )
-        }
-      }) as ColumnDef<Model>
-    ]
-
-    const filters = [
       {
-        key: 'search',
-        label: 'Search',
-        type: 'text' as const,
-        placeholder: 'Search by name, description, or version...'
-      },
-      ...(isAdmin
-        ? [
-            {
-              key: 'creator',
-              label: 'Creator',
-              type: 'text' as const,
-              placeholder: 'Creator name or Email...'
-            }
-          ]
-        : [])
-    ]
-
-    const bulkActions: BulkAction<Model>[] = [
+        ...columnHelper.accessor('isActive', {
+          header: 'Status',
+          cell: (info) => (
+            <Badge variant={info.getValue() ? 'default' : 'secondary'}>
+              {info.getValue() ? 'Active' : 'Inactive'}
+            </Badge>
+          )
+        }),
+        filterable: true,
+        filterType: 'select',
+        filterOptions: [
+          { label: 'Active', value: true },
+          { label: 'Inactive', value: false }
+        ]
+      } as ResourceColumnDef<Model>,
       {
-        label: 'Delete Selected',
-        icon: Trash2,
-        variant: 'destructive',
-        requiresConfirmation: true,
-        confirmationMessage: 'Are you sure you want to delete the selected models?',
-        action: async (selectedRows) => {
-          for (const row of selectedRows) {
-            await onDelete(row.id)
+        ...columnHelper.accessor('createdAt', {
+          header: 'Created',
+          cell: (info) => {
+            const date = new Date(info.getValue())
+            return (
+              <div className="text-sm text-muted-foreground">
+                {date.toLocaleDateString()}
+              </div>
+            )
           }
-        }
-      }
+        }),
+        sortable: true,
+        filterable: true,
+        filterType: 'date'
+      } as ResourceColumnDef<Model>,
+      {
+        ...columnHelper.accessor('updatedAt', {
+          header: 'Updated',
+          cell: (info) => {
+            const date = new Date(info.getValue())
+            return (
+              <div className="text-sm text-muted-foreground">
+                {date.toLocaleDateString()}
+              </div>
+            )
+          }
+        }),
+        sortable: true,
+        filterable: true,
+        filterType: 'date'
+      } as ResourceColumnDef<Model>
     ]
 
     const rowActions = [
@@ -196,9 +201,6 @@ export class ModelResource {
       name: 'models',
       resourceName: 'Model',
       columns,
-      filters,
-      sortableColumns: ['createdAt', 'updatedAt'],
-      bulkActions,
       rowActions,
       enableRowSelection: true,
       defaultPageSize: 10,
@@ -216,13 +218,10 @@ export class ModelResource {
         }
 
         Object.entries(filterParams || {}).forEach(([key, value]) => {
-          if (value) {
+          if (value !== undefined && value !== null && value !== '') {
             if (key === 'search') {
               // For search, we'll pass it as a general search parameter
               params.append('search', String(value))
-            } else if (key === 'creator') {
-              // For creator filter, pass it as a separate parameter
-              params.append('creator', String(value))
             } else {
               params.append(key, String(value))
             }
@@ -255,6 +254,6 @@ export function createModelTableConfig (
   onDelete: (id: string) => Promise<void>,
   isAdmin: boolean
 ): TableConfig<Model> {
-  return ModelResource.createTableConfig(onView, onEdit, onDelete, isAdmin)
+  return ModelResource.createTableConfig(onView, onEdit, onDelete, undefined, isAdmin)
 }
 

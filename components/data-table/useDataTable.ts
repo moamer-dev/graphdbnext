@@ -12,13 +12,17 @@ interface UseDataTableParams<T> {
   externalData?: T[]
   externalTotal?: number
   externalLoading?: boolean
+  useExternal?: boolean
+  filters?: Record<string, unknown>
 }
 
 export function useDataTable<T extends { id: string }>({ 
   config,
   externalData,
   externalTotal,
-  externalLoading
+  externalLoading,
+  useExternal: forceExternal,
+  filters: initialFilters = {}
 }: UseDataTableParams<T>) {
   const [data, setData] = useState<T[]>([])
   const [total, setTotal] = useState(0)
@@ -28,10 +32,26 @@ export function useDataTable<T extends { id: string }>({
   const [pageSize, setPageSize] = useState(config.defaultPageSize || 10)
   const [sortBy, setSortBy] = useState<string | undefined>()
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | undefined>()
-  const [filters, setFilters] = useState<Record<string, unknown>>({})
+  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters)
+
+  // Sync internal filters with initialFilters if they change externally
+  useEffect(() => {
+    const stringifiedInitial = JSON.stringify(initialFilters)
+    const currentStringified = JSON.stringify(filters)
+    
+    if (stringifiedInitial !== currentStringified) {
+      setFilters(prev => {
+        const newFilters = { ...prev, ...initialFilters }
+        if (JSON.stringify(newFilters) !== currentStringified) {
+            return newFilters
+        }
+        return prev
+      })
+    }
+  }, [initialFilters])
 
   // Use external data if provided (React Query)
-  const useExternalData = externalData !== undefined
+  const useExternalData = forceExternal || externalData !== undefined
 
   // Store config.fetchData in a ref to avoid dependency issues
   const fetchDataFnRef = useRef(config.fetchData)

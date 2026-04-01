@@ -17,7 +17,13 @@ export async function proxy (request: NextRequest) {
   const isProtectedRoute = pathname.startsWith('/dashboard')
 
   // Admin-only routes - require authentication and admin role
-  const isAdminRoute = pathname.startsWith('/dashboard/admin') || pathname.startsWith('/dashboard/settings')
+  // We exempt settings paths that are used for resource management (Teams, Projects, Workspaces)
+  const isResourceManagement = pathname.startsWith('/dashboard/settings/teams') || 
+                               pathname.startsWith('/dashboard/settings/projects') || 
+                               pathname.startsWith('/dashboard/settings/workspaces')
+  
+  const isAdminRoute = pathname.startsWith('/dashboard/admin') || 
+                       (pathname.startsWith('/dashboard/settings') && !isResourceManagement)
 
   // If accessing admin route, check authentication and admin role first
   if (isAdminRoute) {

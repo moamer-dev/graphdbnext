@@ -12,17 +12,6 @@ import type { ResourceResponse } from '@/hooks/react-query/useResource'
  * 
  * Combines useDataTable with React Query data fetching.
  * Works with any resource that has a TableConfig.
- * 
- * Usage:
- * ```typescript
- * const { config, data, total, loading } = useResourceTable({
- *   resource: UserResource,
- *   useList: useUsers.useList,
- *   onView: (id) => router.push(`/users/${id}`),
- *   onEdit: (id) => router.push(`/users/${id}/edit`),
- *   onDelete: async (id) => await deleteUser.mutateAsync(id)
- * })
- * ```
  */
 interface UseResourceTableOptions<T extends { id: string }> {
   resource: {
@@ -30,7 +19,6 @@ interface UseResourceTableOptions<T extends { id: string }> {
       onView: (id: string) => void,
       onEdit: (id: string) => void,
       onDelete: (id: string) => Promise<void>,
-       
       ...args: any[]
     ) => TableConfig<T>
     LIST_PATH: string
@@ -46,105 +34,118 @@ interface UseResourceTableOptions<T extends { id: string }> {
   useDelete: (options?: { redirect?: boolean }) => {
     mutateAsync: (id: string) => Promise<void>
   }
+  useBulkDelete: (options?: { onSuccess?: () => void }) => {
+    mutateAsync: (ids: string[]) => Promise<void>
+  }
   isAdmin?: boolean
-  // Additional args to pass to createTableConfig (e.g., isAdmin)
+  initialFilters?: Record<string, unknown>
   tableConfigArgs?: unknown[]
+  onView?: (id: string) => void
+  onEdit?: (id: string) => void
+  onManageMembers?: (id: string) => void
 }
 
 export function useResourceTable<T extends { id: string }>(
   options: UseResourceTableOptions<T>
 ) {
   const router = useRouter()
-  const { resource, useList, useDelete, isAdmin, tableConfigArgs = [] } = options
-
-  // Delete mutation
+  const { resource, useList, useDelete, useBulkDelete, isAdmin, initialFilters = {}, tableConfigArgs = [], onView: onViewOverride, onEdit: onEditOverride, onManageMembers: onManageMembersOverride } = options
   const deleteMutation = useDelete({ redirect: false })
+  const bulkDeleteMutation = useBulkDelete({ onSuccess: () => {} })
 
-  // Handlers
-  const handleDelete = useCallback(
-    async (id: string) => {
-      await deleteMutation.mutateAsync(id)
-    },
-    [deleteMutation]
-  )
+  const handleDelete = useCallback(async (id: string) => {
+    await deleteMutation.mutateAsync(id)
+  }, [deleteMutation])
 
-  const handleView = useCallback(
-    (id: string) => {
+  const handleBulkDelete = useCallback(async (selectedRows: T[]) => {
+    const ids = selectedRows.map(row => row.id)
+    await bulkDeleteMutation.mutateAsync(ids)
+  }, [bulkDeleteMutation])
+
+  const handleView = useCallback((id: string) => {
+    if (onViewOverride) {
+      onViewOverride(id)
+    } else {
       router.push(`${resource.VIEW_PATH}/${id}`)
-    },
-    [router, resource]
-  )
+    }
+  }, [router, resource, onViewOverride])
 
-  const handleEdit = useCallback(
-    (id: string) => {
+  const handleEdit = useCallback((id: string) => {
+    if (onEditOverride) {
+      onEditOverride(id)
+    } else {
       router.push(`${resource.VIEW_PATH}/${id}/edit`)
-    },
-    [router, resource]
+    }
+  }, [router, resource, onEditOverride])
+
+  const handleManageMembers = useCallback((id: string) => {
+    if (onManageMembersOverride) {
+      onManageMembersOverride(id)
+    } else {
+      router.push(`${resource.LIST_PATH}/${id}/members`)
+    }
+  }, [router, resource, onManageMembersOverride])
+
+  // Memoize initialFilters to prevent infinite loops from object literals in page components
+  const memoizedInitialFilters = useMemo(() => initialFilters, [JSON.stringify(initialFilters)])
+
+  const config = useMemo(() =>
+    resource.createTableConfig(
+      handleView,
+      handleEdit,
+      handleDelete,
+      handleManageMembers,
+      ...(isAdmin !== undefined ? [isAdmin, ...tableConfigArgs] : tableConfigArgs)
+    ),
+    [resource, handleView, handleEdit, handleDelete, handleManageMembers, isAdmin, tableConfigArgs]
   )
 
-  // Table configuration
-  const config = useMemo(
-    () =>
-      resource.createTableConfig(
-        handleView,
-        handleEdit,
-        handleDelete,
-        ...(isAdmin !== undefined ? [isAdmin, ...tableConfigArgs] : tableConfigArgs)
-      ),
-    [resource, handleView, handleEdit, handleDelete, isAdmin, tableConfigArgs]
-  )
+  // 1b. Inject bulk delete action if selection is enabled
+  const finalConfig = useMemo(() => {
+    if (!config.enableRowSelection) return config
 
-  // Table state (for pagination, sorting, filtering)
-  const tableState = useDataTable({ config })
+    return {
+      ...config,
+      bulkActions: [
+        ...(config.bulkActions || []),
+        {
+          label: 'Delete Selected',
+          variant: 'destructive' as const,
+          requiresConfirmation: true,
+          action: (rows: T[]) => handleBulkDelete(rows)
+        }
+      ]
+    }
+  }, [config, handleBulkDelete])
 
-  // Memoize query params to ensure React Query detects changes
+  // 1. Initialize table state (Manages page, pageSize, sorting, filters)
+  const tableState = useDataTable({ 
+    config,
+    useExternal: true,
+    filters: memoizedInitialFilters
+  })
+
+  // 2. Derive query params from table state
   const queryParams = useMemo(() => ({
     page: tableState.page,
     pageSize: tableState.pageSize,
     sortBy: tableState.sortBy,
     sortOrder: tableState.sortOrder,
-    filters: tableState.filters
-  }), [tableState.page, tableState.pageSize, tableState.sortBy, tableState.sortOrder, tableState.filters])
+    filters: {
+        ...(!isAdmin ? memoizedInitialFilters : {}),
+        ...tableState.filters
+    }
+  }), [tableState.page, tableState.pageSize, tableState.sortBy, tableState.sortOrder, tableState.filters, memoizedInitialFilters, isAdmin])
 
-  // Fetch data with React Query using table state
+  // 3. Fetch data using React Query
   const queryResult = useList(queryParams)
 
-  // Handlers for DataTable controlled props
-  const handlePageChange = useCallback((newPage: number) => {
-    tableState.setPage(newPage)
-  }, [tableState])
-
-  const handlePageSizeChange = useCallback((newPageSize: number) => {
-    tableState.setPageSize(newPageSize)
-  }, [tableState])
-
-  const handleSortChange = useCallback((newSortBy?: string, newSortOrder?: 'asc' | 'desc') => {
-    if (newSortBy) {
-      tableState.updateSorting(newSortBy, newSortOrder)
-    } else {
-      // Clear sorting
-      tableState.updateSorting('', undefined)
-    }
-  }, [tableState])
-
-  const handleFiltersChange = useCallback((newFilters: Record<string, unknown>) => {
-    tableState.updateFilters(newFilters)
-  }, [tableState])
-
-  // Extract data and total from response
-  // useResource.useList returns UseQueryResult<ResourceResponse<T>, Error>
-  // where ResourceResponse<T> is { data: T[], total: number }
-  const data = useMemo(() => {
-    if (!queryResult.data) return []
-    return queryResult.data.data || []
-  }, [queryResult.data])
-
-  const total = useMemo(() => {
-    return queryResult.data?.total || 0
-  }, [queryResult.data])
+  // 4. Return combined state
+  const data = useMemo(() => queryResult.data?.data || [], [queryResult.data])
+  const total = useMemo(() => queryResult.data?.total || 0, [queryResult.data])
 
   return {
-    config,
+    config: finalConfig,
     data,
     total,
     loading: queryResult.isLoading,
@@ -153,10 +154,9 @@ export function useResourceTable<T extends { id: string }>(
     sortBy: tableState.sortBy,
     sortOrder: tableState.sortOrder,
     filters: tableState.filters,
-    onPageChange: handlePageChange,
-    onPageSizeChange: handlePageSizeChange,
-    onSortChange: handleSortChange,
-    onFiltersChange: handleFiltersChange
+    onPageChange: tableState.setPage,
+    onPageSizeChange: tableState.setPageSize,
+    onSortChange: tableState.updateSorting,
+    onFiltersChange: tableState.updateFilters
   }
 }
-

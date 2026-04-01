@@ -68,6 +68,7 @@ function ModelsPageContent() {
     resource: ModelResource,
     useList: resourceHooks.models.useList,
     useDelete: resourceHooks.models.useDelete,
+    useBulkDelete: resourceHooks.models.useBulkDelete,
     isAdmin
   })
   const { uploadModel, uploading } = useModelUpload()

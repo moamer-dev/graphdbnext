@@ -16,6 +16,7 @@ export default function AdminQueriesPage () {
 
   // Use generic hooks directly
   const { 
+    config,
     data, 
     total, 
     loading,
@@ -32,13 +33,11 @@ export default function AdminQueriesPage () {
     resource: SavedQueryResource,
     useList: resourceHooks.queries.useList,
     useDelete: resourceHooks.queries.useDelete,
+    useBulkDelete: resourceHooks.queries.useBulkDelete,
     isAdmin
   })
 
-  // Delete mutation
-  const deleteMutation = resourceHooks.queries.useDelete({ redirect: false })
-
-  // Override the view handler to open modal instead of navigating
+  // Modal handlers
   const handleView = useCallback((id: string) => {
     const query = data.find(q => q.id === id)
     if (query) {
@@ -47,22 +46,18 @@ export default function AdminQueriesPage () {
     }
   }, [data])
 
-  const handleDelete = useCallback(async (id: string) => {
-    await deleteMutation.mutateAsync(id)
-  }, [deleteMutation])
-
   const handleEdit = useCallback((id: string) => {
     window.location.href = `${SavedQueryResource.VIEW_PATH}/${id}/edit`
   }, [])
 
-  // Create custom table config with modal view handler
-  const tableConfig = useMemo(() => {
-    return SavedQueryResource.createTableConfig(
-      handleView,
-      handleEdit,
-      handleDelete
+  // Override config with modal handlers
+  const tableConfig = useMemo(() => ({
+    ...config,
+    rowActions: (config.rowActions || []).map(a => 
+      a.label === 'View' ? { ...a, action: (row: any) => handleView(row.id) } :
+      a.label === 'Edit' ? { ...a, action: (row: any) => handleEdit(row.id) } : a
     )
-  }, [handleView, handleEdit, handleDelete])
+  }), [config, handleView, handleEdit])
 
   return (
     <div className="space-y-4 mt-4">

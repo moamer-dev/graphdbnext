@@ -26,6 +26,7 @@ export default function UsersPage () {
     resource: UserResource,
     useList: resourceHooks.users.useList,
     useDelete: resourceHooks.users.useDelete,
+    useBulkDelete: resourceHooks.users.useBulkDelete,
     isAdmin
   })
 

@@ -50,8 +50,8 @@ export async function GET (
   }
 }
 
-// PUT /api/users/[id] - Update a user (admins only)
-export async function PUT (
+// PATCH /api/users/[id] - Update a user (admins only)
+export async function PATCH (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {

@@ -7,6 +7,7 @@ declare module 'next-auth' {
       email: string
       name?: string | null
       role: string
+      permissions?: { resource: string, action: string }[]
     }
   }
 
@@ -15,6 +16,7 @@ declare module 'next-auth' {
     email: string
     name?: string | null
     role: string
+    permissions?: { resource: string, action: string }[]
   }
 }
 
@@ -23,6 +25,7 @@ declare module 'next-auth/jwt' {
     id: string
     role: string
     updatedAt: string
+    permissions?: { resource: string, action: string }[]
   }
 }
 

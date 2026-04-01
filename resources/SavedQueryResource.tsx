@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Trash2, Edit } from 'lucide-react'
-import type { TableConfig, BulkAction } from './TableConfig'
+import type { TableConfig, BulkAction, ResourceColumnDef } from './TableConfig'
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 
@@ -32,74 +31,82 @@ export class SavedQueryResource {
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,
-    onDelete: (id: string) => Promise<void>
+    onDelete: (id: string) => Promise<void>,
+    _onManageMembers?: (id: string) => void
   ): TableConfig<SavedQuery> {
-    const columns: ColumnDef<SavedQuery>[] = [
-      columnHelper.accessor('name', {
-        header: 'Name',
-        cell: (info) => (
-          <div className="font-medium">{info.getValue()}</div>
-        )
-      }) as ColumnDef<SavedQuery>,
-      columnHelper.accessor('description', {
-        header: 'Description',
-        cell: (info) => (
-          <div className="max-w-[300px] truncate text-muted-foreground">
-            {info.getValue() || '-'}
-          </div>
-        )
-      }) as ColumnDef<SavedQuery>,
-      columnHelper.accessor('category', {
-        header: 'Category',
-        cell: (info) => {
-          const category = info.getValue()
-          return category ? (
-            <Badge variant="outline">{category}</Badge>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )
-        }
-      }) as ColumnDef<SavedQuery>,
-      columnHelper.accessor('source', {
-        header: 'Source',
-        cell: (info) => {
-          const source = info.getValue()
-          return (
-            <Badge variant="secondary" className="text-xs">
-              {source}
-            </Badge>
-          )
-        }
-      }) as ColumnDef<SavedQuery>,
-      columnHelper.accessor('executionCount', {
-        header: 'Executions',
-        cell: (info) => (
-          <div className="text-sm text-muted-foreground">
-            {info.getValue() || 0}
-          </div>
-        )
-      }) as ColumnDef<SavedQuery>,
-      columnHelper.accessor('createdAt', {
-        header: 'Created',
-        cell: (info) => (
-          <div className="text-sm text-muted-foreground">
-            {new Date(info.getValue()).toLocaleDateString()}
-          </div>
-        )
-      }) as ColumnDef<SavedQuery>
-    ]
-
-    const bulkActions: BulkAction<SavedQuery>[] = [
+    const columns: ResourceColumnDef<SavedQuery>[] = [
       {
-        label: 'Delete Selected',
-        icon: Trash2,
-        action: async (selectedRows) => {
-          await Promise.all(selectedRows.map(row => onDelete(row.id)))
-        },
-        variant: 'destructive',
-        requiresConfirmation: true,
-        confirmationMessage: 'Are you sure you want to delete the selected queries? This action cannot be undone.'
-      }
+        ...columnHelper.accessor('name', {
+          header: 'Name',
+          cell: (info) => (
+            <div className="font-medium">{info.getValue()}</div>
+          )
+        }),
+        searchable: true,
+        sortable: true
+      } as ResourceColumnDef<SavedQuery>,
+      {
+        ...columnHelper.accessor('description', {
+          header: 'Description',
+          cell: (info) => (
+            <div className="max-w-[300px] truncate text-muted-foreground">
+              {info.getValue() || '-'}
+            </div>
+          )
+        }),
+        searchable: true
+      } as ResourceColumnDef<SavedQuery>,
+      {
+        ...columnHelper.accessor('category', {
+          header: 'Category',
+          cell: (info) => {
+            const category = info.getValue()
+            return category ? (
+              <Badge variant="outline">{category}</Badge>
+            ) : (
+              <span className="text-muted-foreground">-</span>
+            )
+          }
+        }),
+        searchable: true,
+        sortable: true
+      } as ResourceColumnDef<SavedQuery>,
+      {
+        ...columnHelper.accessor('source', {
+          header: 'Source',
+          cell: (info) => {
+            const source = info.getValue()
+            return (
+              <Badge variant="secondary" className="text-xs">
+                {source}
+              </Badge>
+            )
+          }
+        }),
+        sortable: true
+      } as ResourceColumnDef<SavedQuery>,
+      {
+        ...columnHelper.accessor('executionCount', {
+          header: 'Executions',
+          cell: (info) => (
+            <div className="text-sm text-muted-foreground">
+              {info.getValue() || 0}
+            </div>
+          )
+        }),
+        sortable: true
+      } as ResourceColumnDef<SavedQuery>,
+      {
+        ...columnHelper.accessor('createdAt', {
+          header: 'Created',
+          cell: (info) => (
+            <div className="text-sm text-muted-foreground">
+              {new Date(info.getValue()).toLocaleDateString()}
+            </div>
+          )
+        }),
+        sortable: true
+      } as ResourceColumnDef<SavedQuery>
     ]
 
     const rowActions = [
@@ -131,12 +138,6 @@ export class SavedQueryResource {
       columns,
       filters: [
         {
-          key: 'name',
-          label: 'Name',
-          type: 'text',
-          placeholder: 'Search by name...'
-        },
-        {
           key: 'category',
           label: 'Category',
           type: 'text',
@@ -154,8 +155,6 @@ export class SavedQueryResource {
           ]
         }
       ],
-      sortableColumns: ['name', 'category', 'source', 'executionCount', 'createdAt'],
-      bulkActions,
       rowActions,
       enableRowSelection: true,
       defaultPageSize: 10,

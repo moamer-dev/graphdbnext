@@ -276,7 +276,12 @@ export function ToolTestExecution({
                             return
                           }
                           
-                          useDataSourcesStore.getState().setSource(alias, executedApiResponse, toolNode.id)
+                          useDataSourcesStore.getState().setSource({
+                            name: alias,
+                            type: 'API_RESPONSE',
+                            data: executedApiResponse,
+                            toolId: toolNode.id
+                          })
                           toast.success(`Saved to data sources as "${alias}"`)
                         } else {
                           toast.error('Enter a unique Output Alias first')
@@ -296,7 +301,12 @@ export function ToolTestExecution({
                     onConfirm={() => {
                       const alias = toolNode?.config.outputAlias as string
                       if (toolNode && alias && executedApiResponse) {
-                        useDataSourcesStore.getState().setSource(alias, executedApiResponse, toolNode.id)
+                        useDataSourcesStore.getState().setSource({
+                          name: alias,
+                          type: 'API_RESPONSE',
+                          data: executedApiResponse,
+                          toolId: toolNode.id
+                        })
                         toast.success(`Saved to data sources as "${alias}"`)
                       }
                       setConfirmDialogOpen(false)

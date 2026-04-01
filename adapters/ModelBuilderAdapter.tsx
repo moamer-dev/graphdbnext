@@ -6,6 +6,9 @@ import {
 } from '@plexus/builder'
 import type {
   WorkflowPersistence,
+  DataSourcesPersistence,
+  CredentialsPersistence,
+  AIPersistence,
   ModelBuilderRef
 } from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
@@ -17,6 +20,9 @@ export interface ModelBuilderAdapterProps {
   className?: string
   builderRef?: React.RefObject<ModelBuilderRef | null>
   workflowPersistence?: WorkflowPersistence
+  dataSourcesPersistence?: DataSourcesPersistence
+  credentialsPersistence?: CredentialsPersistence
+  aiPersistence?: AIPersistence
   onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
 
@@ -30,6 +36,9 @@ export function ModelBuilderAdapter({
   className,
   builderRef,
   workflowPersistence,
+  dataSourcesPersistence,
+  credentialsPersistence,
+  aiPersistence,
   onPushToDB
 }: ModelBuilderAdapterProps) {
   const {
@@ -37,6 +46,9 @@ export function ModelBuilderAdapter({
     existingWorkflows,
     currentWorkflow,
     effectivePersistence,
+    effectiveDataSourcesPersistence,
+    effectiveCredentialsPersistence,
+    effectiveAiPersistence,
     handleWorkflowChange,
     handleSaveModel,
     onPushToDB: adapterOnPushToDB,
@@ -46,6 +58,9 @@ export function ModelBuilderAdapter({
     onSave,
     builderRef,
     workflowPersistence,
+    dataSourcesPersistence,
+    credentialsPersistence,
+    aiPersistence,
     onPushToDB
   })
 
@@ -68,6 +83,9 @@ export function ModelBuilderAdapter({
           currentWorkflowName={currentWorkflow?.name}
           availableWorkflows={existingWorkflows}
           workflowPersistence={effectivePersistence}
+          dataSourcesPersistence={effectiveDataSourcesPersistence}
+          credentialsPersistence={effectiveCredentialsPersistence}
+          aiPersistence={effectiveAiPersistence}
           className="h-full"
           onWorkflowChange={handleWorkflowChange}
           onSaveModel={handleSaveModel}

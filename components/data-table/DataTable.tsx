@@ -1,17 +1,17 @@
 'use client'
 
-import * as React from 'react'
+import React from 'react'
 import {
-  useReactTable,
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
-  type ColumnDef,
-  type SortingState,
-  type ColumnFiltersState,
-  type VisibilityState
+  useReactTable,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -19,38 +19,57 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, ChevronUp, MoreHorizontal, ArrowUpDown, Eye, EyeOff } from 'lucide-react'
-import type { TableConfig, BulkAction } from '@/resources/TableConfig'
-import { ConfirmDialog } from '@/components/confirm-dialog'
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  MoreHorizontal, 
+  ArrowUpDown, 
+  Search,
+  Settings2,
+  Trash2,
+  AlertCircle
+} from 'lucide-react'
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Switch } from "@/components/ui/switch"
 import { cn } from '@/utils'
+import type { TableConfig, BulkAction } from '@/resources/TableConfig'
 
 interface DataTableProps<T> {
   config: TableConfig<T>
   data: T[]
   total: number
-  loading?: boolean
-  page?: number
-  pageSize?: number
+  page: number
+  pageSize: number
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   filters?: Record<string, unknown>
@@ -58,61 +77,44 @@ interface DataTableProps<T> {
   onPageSizeChange?: (pageSize: number) => void
   onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void
   onFiltersChange?: (filters: Record<string, unknown>) => void
-  initialColumnVisibility?: VisibilityState
 }
 
-export function DataTable<T extends { id: string }>({
+export function DataTable<T>({
   config,
   data,
   total,
-  loading = false,
-  page: externalPage,
-  pageSize: externalPageSize,
-  sortBy: externalSortBy,
-  sortOrder: externalSortOrder,
-  filters: externalFilters,
+  page,
+  pageSize,
+  sortBy,
+  sortOrder,
+  filters: filterValues = {},
   onPageChange,
   onPageSizeChange,
   onSortChange,
   onFiltersChange,
-  initialColumnVisibility
 }: DataTableProps<T>) {
-  // Use external state if provided, otherwise use internal state
-  const [internalPage, setInternalPage] = React.useState(1)
-  const [internalPageSize, setInternalPageSize] = React.useState(config.defaultPageSize || 10)
-  const [internalSortBy, setInternalSortBy] = React.useState<string | undefined>()
-  const [internalSortOrder, setInternalSortOrder] = React.useState<'asc' | 'desc' | undefined>()
-  const [internalFilters, setInternalFilters] = React.useState<Record<string, unknown>>({})
-
-  const page = externalPage ?? internalPage
-  const pageSize = externalPageSize ?? internalPageSize
-  const sortBy = externalSortBy ?? internalSortBy
-  const sortOrder = externalSortOrder ?? internalSortOrder
-  const filterValues = externalFilters ?? internalFilters
-
-  // Convert sortBy/sortOrder to TanStack Table's sorting format
-  const sorting = React.useMemo<SortingState>(() => {
-    if (!sortBy || !sortOrder) return []
-    return [{ id: sortBy, desc: sortOrder === 'desc' }]
-  }, [sortBy, sortOrder])
+  // Local state for table features if not controlled externally
+  const [internalPage, setInternalPage] = React.useState(page)
+  const [internalPageSize, setInternalPageSize] = React.useState(pageSize)
+  const [internalSortBy, setInternalSortBy] = React.useState<string | undefined>(sortBy)
+  const [internalSortOrder, setInternalSortOrder] = React.useState<'asc' | 'desc' | undefined>(sortOrder)
+  const [internalFilters, setInternalFilters] = React.useState<Record<string, unknown>>(filterValues)
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
-    // Load initial visibility from localStorage or use provided initial state
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`column-visibility-${config.name}`)
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch (e) {
-          console.error('Failed to parse column visibility from localStorage:', e)
-        }
-      }
-    }
-    return initialColumnVisibility || {}
-  })
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState('')
+
+  // Sync sorting state
+  const sorting: SortingState = React.useMemo(() => {
+    const sBy = sortBy || internalSortBy
+    const sOrder = sortOrder || internalSortOrder
+    if (sBy) {
+      return [{ id: sBy, desc: sOrder === 'desc' }]
+    }
+    return []
+  }, [sortBy, internalSortBy, sortOrder, internalSortOrder])
+
   const [confirmDialog, setConfirmDialog] = React.useState<{
     open: boolean
     title: string
@@ -121,18 +123,29 @@ export function DataTable<T extends { id: string }>({
     variant?: 'default' | 'destructive'
   } | null>(null)
 
-  // Save column visibility to localStorage whenever it changes
+  // Save/Load column visibility
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`column-visibility-${config.name}`)
+      if (saved) {
+        try {
+          setColumnVisibility(JSON.parse(saved))
+        } catch (e) {
+          console.error('Failed to load column visibility', e)
+        }
+      }
+    }
+  }, [config.name])
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(`column-visibility-${config.name}`, JSON.stringify(columnVisibility))
     }
   }, [columnVisibility, config.name])
 
-  // Add selection column if enabled
+  // Process columns with selection
   const columnsWithSelection = React.useMemo<ColumnDef<T>[]>(() => {
-    if (!config.enableRowSelection) {
-      return config.columns
-    }
+    if (!config.enableRowSelection) return config.columns
 
     return [
       {
@@ -158,11 +171,9 @@ export function DataTable<T extends { id: string }>({
     ]
   }, [config.columns, config.enableRowSelection])
 
-  // Add row actions column if configured
+  // Final columns with actions
   const finalColumns = React.useMemo<ColumnDef<T>[]>(() => {
-    if (!config.rowActions || config.rowActions.length === 0) {
-      return columnsWithSelection
-    }
+    if (!config.rowActions || config.rowActions.length === 0) return columnsWithSelection
 
     return [
       ...columnsWithSelection,
@@ -171,7 +182,6 @@ export function DataTable<T extends { id: string }>({
         header: 'Actions',
         cell: ({ row }) => {
           const item = row.original
-
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -185,35 +195,22 @@ export function DataTable<T extends { id: string }>({
                 <DropdownMenuSeparator />
                 {config.rowActions?.map((action, index) => {
                   const Icon = action.icon
-                  const handleAction = () => {
-                    if (action.requiresConfirmation) {
-                      const message = typeof action.confirmationMessage === 'function'
-                        ? action.confirmationMessage(item)
-                        : action.confirmationMessage || `Are you sure you want to ${action.label.toLowerCase()} this item? This action cannot be undone.`
-                      
-                      setConfirmDialog({
-                        open: true,
-                        title: action.label,
-                        description: message,
-                        variant: action.variant === 'destructive' ? 'destructive' : 'default',
-                        onConfirm: async () => {
-                          try {
-                            await action.action(item)
-                          } catch (error) {
-                            console.error('Row action error:', error)
-                            throw error
-                          }
-                        }
-                      })
-                    } else {
-                      action.action(item)
-                    }
-                  }
-                  
                   return (
                     <DropdownMenuItem
                       key={index}
-                      onClick={handleAction}
+                      onClick={() => {
+                        if (action.requiresConfirmation) {
+                          setConfirmDialog({
+                            open: true,
+                            title: action.label,
+                            description: typeof action.confirmationMessage === 'function' ? action.confirmationMessage(item) : (action.confirmationMessage || 'Are you sure?'),
+                            onConfirm: () => action.action(item),
+                            variant: action.variant === 'destructive' ? 'destructive' : 'default'
+                          })
+                        } else {
+                          action.action(item)
+                        }
+                      }}
                       className={action.variant === 'destructive' ? 'text-destructive focus:text-destructive' : ''}
                     >
                       {Icon && <Icon className="mr-2 h-4 w-4" />}
@@ -232,36 +229,6 @@ export function DataTable<T extends { id: string }>({
   const table = useReactTable({
     data,
     columns: finalColumns,
-    onSortingChange: (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
-      const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue
-      if (newSorting.length === 0) {
-        if (onSortChange) {
-          // Don't call onSortChange with undefined values - just clear internal state
-          setInternalSortBy(undefined)
-          setInternalSortOrder(undefined)
-        } else {
-          setInternalSortBy(undefined)
-          setInternalSortOrder(undefined)
-        }
-      } else {
-        const sort = newSorting[0]
-        if (onSortChange) {
-          onSortChange(sort.id, sort.desc ? 'desc' : 'asc')
-        } else {
-          setInternalSortBy(sort.id)
-          setInternalSortOrder(sort.desc ? 'desc' : 'asc')
-        }
-      }
-    },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: 'includesString',
     state: {
       sorting,
       columnFilters,
@@ -269,6 +236,21 @@ export function DataTable<T extends { id: string }>({
       rowSelection,
       globalFilter
     },
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(sorting) : updater
+      if (newSorting.length > 0) {
+        const sort = newSorting[0]
+        handleSortChange(sort.id)
+      }
+    },
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
     pageCount: Math.ceil(total / pageSize),
     manualSorting: true,
@@ -282,248 +264,235 @@ export function DataTable<T extends { id: string }>({
       setConfirmDialog({
         open: true,
         title: action.label,
-        description: action.confirmationMessage || `Are you sure you want to ${action.label.toLowerCase()} ${selectedRows.length} item(s)? This action cannot be undone.`,
-        variant: action.variant === 'destructive' ? 'destructive' : 'default',
+        description: action.confirmationMessage || `Are you sure you want to perform this action on ${selectedRows.length} items?`,
         onConfirm: async () => {
-          try {
-            await action.action(selectedRows)
-            setRowSelection({})
-          } catch (error) {
-            console.error('Bulk action error:', error)
-            throw error // Re-throw to prevent dialog from closing on error
-          }
-        }
+          await action.action(selectedRows)
+          setRowSelection({})
+        },
+        variant: action.variant === 'destructive' ? 'destructive' : 'default'
       })
-      return
-    }
-
-    try {
+    } else {
       await action.action(selectedRows)
       setRowSelection({})
-    } catch (error) {
-      console.error('Bulk action error:', error)
     }
   }
 
   const handleFilterChange = (key: string, value: unknown) => {
     const newFilters = { ...filterValues }
-    
-    // Remove empty values from filters
     if (value === '' || value === null || value === undefined || value === 'all') {
       delete newFilters[key]
     } else {
       newFilters[key] = value
     }
     
-    if (onFiltersChange) {
-      onFiltersChange(newFilters)
-    } else {
-      setInternalFilters(newFilters)
-    }
-    // Reset to first page when filters change
-    const newPage = 1
-    if (onPageChange) {
-      onPageChange(newPage)
-    } else {
-      setInternalPage(newPage)
-    }
+    if (onFiltersChange) onFiltersChange(newFilters)
+    else setInternalFilters(newFilters)
+    
+    // Reset to page 1
+    if (onPageChange) onPageChange(1)
+    else setInternalPage(1)
   }
 
   const handleSortChange = (columnId: string) => {
-    let newSortBy: string | undefined
-    let newSortOrder: 'asc' | 'desc' | undefined
-
     const currentSort = sorting.find((s) => s.id === columnId)
-    if (currentSort) {
-      if (currentSort.desc) {
-        // Already descending, remove sort
-        newSortBy = undefined
-        newSortOrder = undefined
-      } else {
-        // Currently ascending, switch to descending
-        newSortBy = columnId
-        newSortOrder = 'desc'
-      }
-    } else {
-      // No sort, set to ascending
-      newSortBy = columnId
-      newSortOrder = 'asc'
-    }
+    const newSortOrder = currentSort && !currentSort.desc ? 'desc' : 'asc'
 
-    if (onSortChange) {
-      if (newSortBy && newSortOrder) {
-        onSortChange(newSortBy, newSortOrder)
-      }
-    } else {
-      setInternalSortBy(newSortBy)
+    if (onSortChange) onSortChange(columnId, newSortOrder)
+    else {
+      setInternalSortBy(columnId)
       setInternalSortOrder(newSortOrder)
     }
-    // Reset to first page when sorting changes
-    const newPage = 1
-    if (onPageChange) {
-      onPageChange(newPage)
-    } else {
-      setInternalPage(newPage)
-    }
+    
+    if (onPageChange) onPageChange(1)
+    else setInternalPage(1)
   }
 
   const handlePageChange = (newPage: number) => {
-    if (onPageChange) {
-      onPageChange(newPage)
-    } else {
-      setInternalPage(newPage)
-    }
+    if (onPageChange) onPageChange(newPage)
+    else setInternalPage(newPage)
   }
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    if (onPageSizeChange) {
-      onPageSizeChange(newPageSize)
-    } else {
-      setInternalPageSize(newPageSize)
-    }
-    // Reset to first page when page size changes
-    const newPage = 1
-    if (onPageChange) {
-      onPageChange(newPage)
-    } else {
-      setInternalPage(newPage)
-    }
+  const handlePageSizeChange = (size: number) => {
+    if (onPageSizeChange) onPageSizeChange(size)
+    else setInternalPageSize(size)
+    
+    if (onPageChange) onPageChange(1)
+    else setInternalPage(1)
   }
+
+  const isSearchable = config.columns.some((col: any) => col.searchable)
+
+  const allFilters = React.useMemo(() => {
+    const filters = [...(config.filters || [])]
+    config.columns.forEach((col: any) => {
+      if (col.filterable) {
+        const key = col.id || col.accessorKey
+        if (key && !filters.find((f) => f.key === key)) {
+          filters.push({
+            key,
+            label: typeof col.header === 'string' ? col.header : key,
+            type: col.filterType || 'text',
+            options: col.filterOptions
+          })
+        }
+      }
+    })
+    return filters
+  }, [config.filters, config.columns])
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      {config.filters && config.filters.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          {config.filters.map((filter) => (
-            <div key={filter.key} className="flex items-center gap-2">
-              {filter.type === 'text' && (
-                <Input
-                  placeholder={filter.placeholder || `Filter by ${filter.label}...`}
-                  value={(filterValues[filter.key] as string) || ''}
-                  onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-                  className="h-8 w-[200px]"
-                />
-              )}
-              {filter.type === 'select' && filter.options && (
-                <Select
-                  value={(filterValues[filter.key] as string) || undefined}
-                  onValueChange={(value) => handleFilterChange(filter.key, value === 'all' ? '' : value)}
-                >
-                  <SelectTrigger className="h-8 w-[180px]">
-                    <SelectValue placeholder={filter.placeholder || `Select ${filter.label}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {filter.options
-                      .filter((option) => option.value !== '' && option.value !== 'all')
-                      .map((option) => (
-                        <SelectItem key={String(option.value)} value={String(option.value)}>
-                          {option.label}
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 flex-grow max-w-sm">
+          {isSearchable && (
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                value={(filterValues.search as string) || ''}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+          )}
+        </div>
+
+        {allFilters.length > 0 && (
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            {allFilters.map((filter) => (
+              <div key={filter.key} className="flex items-center gap-2">
+                {filter.type === 'text' && (
+                  <Input
+                    placeholder={filter.placeholder || `Filter ${filter.label}`}
+                    value={(filterValues[filter.key] as string) || ''}
+                    onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+                    className="h-9 w-[180px]"
+                  />
+                )}
+                {filter.type === 'date' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{filter.label}:</span>
+                    <Input
+                      type="date"
+                      value={(filterValues[filter.key] as string) || ''}
+                      onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+                      className="h-9 w-[150px] text-xs"
+                    />
+                  </div>
+                )}
+                {filter.type === 'select' && filter.options && (
+                  <Select
+                    value={(filterValues[filter.key] as string) || undefined}
+                    onValueChange={(value) => handleFilterChange(filter.key, value === 'all' ? '' : value)}
+                  >
+                    <SelectTrigger className="h-9 min-w-[130px]">
+                      <SelectValue placeholder={filter.label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All {filter.label}</SelectItem>
+                      {filter.options.map((opt) => (
+                        <SelectItem key={String(opt.value)} value={String(opt.value)}>
+                          {opt.label}
                         </SelectItem>
                       ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Global search */}
-      <div className="flex items-center justify-between">
-        {/* Bulk actions */}
-        {config.bulkActions && config.bulkActions.length > 0 && selectedRows.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {selectedRows.length} selected
-            </span>
-            {config.bulkActions.map((action, index) => {
-              const Icon = action.icon
-              return (
-                <Button
-                  key={index}
-                  variant={action.variant || 'outline'}
-                  size="sm"
-                  onClick={() => handleBulkAction(action)}
-                >
-                  {Icon && <Icon className="mr-2 h-4 w-4" />}
-                  {action.label}
-                </Button>
-              )
-            })}
+                    </SelectContent>
+                  </Select>
+                )}
+                {filter.type === 'boolean' && (
+                  <div className="flex items-center gap-2 px-2 py-1 h-9 rounded-md border border-input">
+                    <span className="text-xs text-muted-foreground">{filter.label}</span>
+                    <Switch
+                      checked={!!filterValues[filter.key]}
+                      onCheckedChange={(checked) => handleFilterChange(filter.key, checked)}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Table with column visibility */}
-      <div className="space-y-2">
-        {/* Column visibility dropdown - positioned above table on the right */}
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
-                <Eye className="mr-2 h-4 w-4" />
-                Columns
-                <ChevronDown className="ml-2 h-4 w-4" />
+      {/* Table Controls */}
+      <div className="flex items-center justify-end gap-2 px-1">
+        <div className={cn(
+          "flex items-center gap-2 transition-all duration-300 overflow-hidden",
+          selectedRows.length > 0 ? "max-w-md opacity-100" : "max-w-0 opacity-0"
+        )}>
+          {config.bulkActions?.map((action, i) => {
+            const Icon = action.icon
+            return (
+              <Button
+                key={i}
+                variant={action.variant || 'outline'}
+                size="sm"
+                onClick={() => handleBulkAction(action)}
+                className="h-8 shadow-sm transition-transform hover:scale-105 active:scale-95"
+              >
+                {Icon && <Icon className="mr-2 h-4 w-4" />}
+                {action.label} ({selectedRows.length})
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuItem
-                      key={column.id}
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={() => column.toggleVisibility()}
-                    >
-                      <span className="capitalize">
-                        {column.id === 'actions' ? 'Actions' : column.id.replace(/([A-Z])/g, ' $1').trim()}
-                      </span>
-                      {column.getIsVisible() ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </DropdownMenuItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )
+          })}
         </div>
 
-        {/* Table */}
-        <div className="rounded-md border border-border/50 gradient-table overflow-hidden">
-            <Table>
-          <TableHeader>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 ml-auto">
+              <Settings2 className="mr-2 h-4 w-4" />
+              Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[150px]">
+            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Actual Table */}
+      <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-muted/50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="gradient-table-header border-0">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const isSortable = config.sortableColumns?.includes(header.column.id) || false
+                  const sortable = (header.column.columnDef as any).sortable;
                   return (
-                    <TableHead key={header.id} className="text-xs font-semibold text-foreground/90 py-3 px-4">
+                    <TableHead key={header.id} className="py-3 px-4 font-semibold text-xs uppercase tracking-wider">
                       {header.isPlaceholder ? null : (
-                        <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "flex items-center gap-2",
+                            sortable && "cursor-pointer select-none hover:text-foreground transition-colors"
+                          )}
+                          onClick={sortable ? () => handleSortChange(header.column.id) : undefined}
+                        >
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          {isSortable && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => handleSortChange(header.column.id)}
-                            >
-                              {sorting.find((s) => s.id === header.column.id)?.desc ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : sorting.find((s) => s.id === header.column.id) ? (
-                                <ChevronUp className="h-4 w-4" />
+                          {sortable && (
+                            <div className="flex flex-col">
+                              {sorting.find(s => s.id === header.column.id)?.desc ? (
+                                <ChevronDown className="h-3 w-3" />
+                              ) : sorting.find(s => s.id === header.column.id) ? (
+                                <ChevronUp className="h-3 w-3" />
                               ) : (
-                                <ArrowUpDown className="h-4 w-4" />
+                                <ArrowUpDown className="h-3 w-3 opacity-30" />
                               )}
-                            </Button>
+                            </div>
                           )}
                         </div>
                       )}
@@ -533,34 +502,17 @@ export function DataTable<T extends { id: string }>({
               </TableRow>
             ))}
           </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={finalColumns.length} className="h-24 text-center text-muted-foreground/60">
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && 'selected'}
-                      onClick={() => config.onRowClick?.(row.original)}
-                      className={cn(
-                        'gradient-table-row',
-                        config.onRowClick ? 'cursor-pointer' : '',
-                        row.getIsSelected() && 'bg-primary/5'
-                      )}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="py-2.5 px-4 text-sm">
-                      {config.renderCell
-                        ? config.renderCell(
-                            cell.column.id,
-                            cell.getValue(),
-                            row.original
-                          )
-                        : flexRender(cell.column.columnDef.cell, cell.getContext())}
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className="hover:bg-muted/30 transition-colors border-b last:border-0"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="py-3 px-4">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -568,7 +520,10 @@ export function DataTable<T extends { id: string }>({
             ) : (
               <TableRow>
                 <TableCell colSpan={finalColumns.length} className="h-24 text-center">
-                  No results.
+                  <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
+                    <AlertCircle className="h-8 w-8 opacity-20" />
+                    <span>No results found.</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -577,73 +532,73 @@ export function DataTable<T extends { id: string }>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} results
-          </p>
+      <div className="flex items-center justify-between px-2">
+        <div className="text-sm text-muted-foreground">
+          Showing <span className="font-medium">{(page - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(page * pageSize, total)}</span> of <span className="font-medium">{total}</span> results
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(Math.max(1, page - 1))}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <div className="flex items-center gap-1">
-            <span className="text-sm">Page</span>
-            <Input
-              type="number"
-              min={1}
-              max={Math.ceil(total / pageSize)}
-              value={page}
-              onChange={(e) => handlePageChange(Math.max(1, Math.min(Math.ceil(total / pageSize), Number(e.target.value))))}
-              className="h-8 w-16"
-            />
-            <span className="text-sm">of {Math.ceil(total / pageSize)}</span>
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={`${pageSize}`}
+              onValueChange={(value) => handlePageSizeChange(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={pageSize} />
+              </SelectTrigger>
+              <SelectContent align="end">
+                {[10, 20, 30, 40, 50].map((size) => (
+                  <SelectItem key={size} value={`${size}`}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(Math.min(Math.ceil(total / pageSize), page + 1))}
-            disabled={page >= Math.ceil(total / pageSize)}
-          >
-            Next
-          </Button>
-          <Select value={String(pageSize)} onValueChange={(value) => handlePageSizeChange(Number(value))}>
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[10, 20, 30, 50, 100].map((size) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronDown className="h-4 w-4 rotate-90" />
+            </Button>
+            <div className="flex items-center justify-center text-sm font-medium">
+              Page {page} of {Math.ceil(total / pageSize)}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= Math.ceil(total / pageSize)}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronDown className="h-4 w-4 -rotate-90" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Confirmation Dialog */}
-      {confirmDialog && (
-        <ConfirmDialog
-          open={confirmDialog.open}
-          onOpenChange={(open) => {
-            if (!open) {
-              setConfirmDialog(null)
-            }
-          }}
-          onConfirm={confirmDialog.onConfirm}
-          title={confirmDialog.title}
-          description={confirmDialog.description}
-          variant={confirmDialog.variant}
-          confirmLabel={confirmDialog.variant === 'destructive' ? 'Delete' : 'Confirm'}
-        />
-      )}
+      <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDialog?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDialog?.onConfirm}
+              className={confirmDialog?.variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  </div>
   )
 }

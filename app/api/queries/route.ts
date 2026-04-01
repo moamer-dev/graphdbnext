@@ -84,3 +84,23 @@ export async function POST (request: NextRequest) {
   }
 }
 
+export async function DELETE (request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { ids } = await request.json()
+    if (!ids || !Array.isArray(ids)) {
+      return NextResponse.json({ error: 'IDs are required' }, { status: 400 })
+    }
+
+    const result = await savedQueryCrudService.deleteMany(session, ids)
+    return NextResponse.json({ data: result })
+  } catch (error) {
+    console.error('Error bulk deleting queries:', error)
+    return NextResponse.json({ error: 'Failed to delete queries' }, { status: 500 })
+  }
+}
+

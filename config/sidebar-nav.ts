@@ -8,8 +8,12 @@ export interface SidebarNavItem {
     title: string
     url: string
     section?: string
+    resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM'
+    action?: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
   }[]
   adminOnly?: boolean
+  resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM'
+  action?: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
 }
 
 export const sidebarNavItems: SidebarNavItem[] = [
@@ -27,7 +31,8 @@ export const sidebarNavItems: SidebarNavItem[] = [
       {
         title: 'Schema Models',
         url: '/dashboard/graph/model',
-        section: 'schema'
+        section: 'schema',
+        resource: 'MODEL'
       },
       {
         title: 'XML Importer',
@@ -44,7 +49,8 @@ export const sidebarNavItems: SidebarNavItem[] = [
       {
         title: 'Management',
         url: '/dashboard/database',
-        section: 'database'
+        section: 'database',
+        resource: 'MODEL'
       },
       {
         title: 'Queries',
@@ -58,18 +64,6 @@ export const sidebarNavItems: SidebarNavItem[] = [
       }
     ]
   },
-  // {
-  //   title: 'Export',
-  //   url: '/dashboard/html',
-  //   icon: Code,
-  //   items: [
-  //     {
-  //       title: 'HTML Conversion',
-  //       url: '/dashboard/html',
-  //       section: 'html'
-  //     }
-  //   ]
-  // },
   {
     title: 'Admin',
     url: '/dashboard/admin',
@@ -80,6 +74,16 @@ export const sidebarNavItems: SidebarNavItem[] = [
         title: 'Users',
         url: '/dashboard/admin/users',
         section: 'users'
+      },
+      {
+        title: 'Roles & Permissions',
+        url: '/dashboard/admin/roles',
+        section: 'roles'
+      },
+      {
+        title: 'Storage Config',
+        url: '/dashboard/admin/storage',
+        section: 'storage'
       },
       {
         title: 'Saved Queries',
@@ -105,6 +109,24 @@ export const sidebarNavItems: SidebarNavItem[] = [
         section: 'ai'
       }
     ]
+  },
+  {
+    title: 'Teams',
+    url: '/dashboard/settings/teams',
+    icon: Users,
+    resource: 'TEAM'
+  },
+  {
+    title: 'Projects',
+    url: '/dashboard/settings/projects',
+    icon: Users,
+    resource: 'PROJECT'
+  },
+  {
+    title: 'Workspaces',
+    url: '/dashboard/settings/workspaces',
+    icon: Users,
+    resource: 'WORKSPACE'
   }
 ]
 

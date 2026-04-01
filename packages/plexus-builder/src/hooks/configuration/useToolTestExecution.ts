@@ -413,7 +413,7 @@ export function useToolTestExecution(toolNodeId: string | null) {
         setTestResult({ 
           success: true, 
           output: 'Success', 
-          details: `Successfully fetched thr data.` 
+          details: `Successfully fetched the data.` 
         })
         toast.success('HTTP request successful')
       } else {

@@ -19,19 +19,24 @@ export interface BulkAction<T = unknown> {
   confirmationMessage?: string
 }
 
+export type ResourceColumnDef<T = any> = ColumnDef<T> & {
+  searchable?: boolean
+  sortable?: boolean
+  filterable?: boolean
+  filterType?: FilterType
+  filterOptions?: Array<{ label: string; value: string | number | boolean }>
+}
+
 export interface TableConfig<T = unknown> {
   // Table identification
   name: string
   resourceName: string // e.g., "Model", "User", etc.
 
   // Column definitions
-  columns: ColumnDef<T>[]
+  columns: ResourceColumnDef<T>[]
 
   // Filter configuration
   filters?: FilterConfig[]
-
-  // Sortable columns (by key)
-  sortableColumns?: string[]
 
   // Bulk actions
   bulkActions?: BulkAction<T>[]
@@ -70,4 +75,3 @@ export interface TableConfig<T = unknown> {
   // Optional: Enable row selection
   enableRowSelection?: boolean
 }
-

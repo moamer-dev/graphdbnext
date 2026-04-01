@@ -20,6 +20,11 @@ export interface CrudOptions {
    * Useful for converting Date objects to strings, etc.
    */
   formatData?: (data: unknown[]) => unknown[]
+  /**
+   * Optional name of the user relation to include for admins
+   * Default: 'user'
+   */
+  userRelationName?: string
 }
 
 export class CrudService<T extends { id: string } = { id: string }> {
@@ -39,6 +44,7 @@ export class CrudService<T extends { id: string } = { id: string }> {
       searchableFields: options.searchableFields || [],
       selectFields: options.selectFields,
       formatData: options.formatData,
+      userRelationName: options.userRelationName || 'user',
       ...options
     }
   }
@@ -62,21 +68,58 @@ export class CrudService<T extends { id: string } = { id: string }> {
     const sortBy = params.sortBy || 'updatedAt'
     const sortOrder = params.sortOrder || 'desc'
 
+    // Pre-process filters: convert string booleans and dates
+    const processedFilters: Record<string, any> = { ...(params.filters || {}) }
+    Object.keys(processedFilters).forEach(key => {
+      const val = processedFilters[key]
+      if (typeof val === 'string') {
+        // Handle Booleans from URL
+        if (val === 'true') processedFilters[key] = true
+        else if (val === 'false') processedFilters[key] = false
+        // Handle Dates YYYY-MM-DD -> Range for Prisma
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          const date = new Date(val)
+          const nextDay = new Date(date)
+          nextDay.setDate(date.getDate() + 1)
+          processedFilters[key] = {
+            gte: date,
+            lt: nextDay
+          }
+        }
+      }
+    })
+
     // Build where clause with RBAC
     const whereClause: Record<string, unknown> = buildUserWhereClauseWithFilters(
       session,
-      params.filters || {},
+      processedFilters,
       this.options.userIdField
     )
 
-    // Add search across searchable fields
+    // Add search across searchable fields (supports nested fields via dot notation like 'user.email')
     if (params.search && this.options.searchableFields.length > 0) {
-      whereClause.OR = this.options.searchableFields.map((field: string) => ({
-        [field]: {
+      whereClause.OR = this.options.searchableFields.map((field: string) => {
+        const parts = field.split('.')
+        if (parts.length === 1) {
+          return {
+            [field]: {
+              contains: params.search,
+              mode: 'insensitive'
+            }
+          }
+        }
+
+        // Handle nested fields: user.email -> { user: { email: { contains: search, mode: 'insensitive' } } }
+        let nestedObj: any = {
           contains: params.search,
           mode: 'insensitive'
         }
-      }))
+        
+        for (let i = parts.length - 1; i >= 0; i--) {
+          nestedObj = { [parts[i]]: nestedObj }
+        }
+        return nestedObj
+      })
     }
 
     const userIsAdmin = isAdmin(session)
@@ -91,34 +134,35 @@ export class CrudService<T extends { id: string } = { id: string }> {
     // Build select object
     let select: Record<string, unknown> | undefined
 
-    // If selectFields is provided, use it
-    if (this.options.selectFields) {
-      select = { ...this.options.selectFields }
-      
-      // Add user relation for admins if needed
-      if (userIsAdmin && this.options.includeUserForAdmin) {
-        select.user = {
-          select: {
-            id: true,
-            email: true,
-            name: true
+      // If selectFields is provided, use it
+      if (this.options.selectFields) {
+        select = { ...this.options.selectFields }
+        
+        // Add user relation for admins if needed
+        if (userIsAdmin && this.options.includeUserForAdmin && select) {
+          const relation = {
+            select: {
+              id: true,
+              email: true,
+              name: true
+            }
+          }
+          select[this.options.userRelationName] = relation
+          select[this.options.userIdField] = true
+        }
+      } else if (userIsAdmin && this.options.includeUserForAdmin) {
+        // If no selectFields but need user relation, build select
+        select = {
+          [this.options.userIdField]: true,
+          [this.options.userRelationName]: {
+            select: {
+              id: true,
+              email: true,
+              name: true
+            }
           }
         }
-        select[this.options.userIdField] = true
       }
-    } else if (userIsAdmin && this.options.includeUserForAdmin) {
-      // If no selectFields but need user relation, build select
-      select = {
-        [this.options.userIdField]: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true
-          }
-        }
-      }
-    }
 
     // Get paginated results
     const data = await model.findMany({
@@ -161,21 +205,22 @@ export class CrudService<T extends { id: string } = { id: string }> {
       finalSelect = { ...this.options.selectFields }
       
       // Add user relation for admins if needed
-      if (userIsAdmin && this.options.includeUserForAdmin) {
-        finalSelect.user = {
+      if (userIsAdmin && this.options.includeUserForAdmin && finalSelect) {
+        const relation = {
           select: {
             id: true,
             email: true,
             name: true
           }
         }
+        finalSelect[this.options.userRelationName] = relation
         finalSelect[this.options.userIdField] = true
       }
     } else if (userIsAdmin && this.options.includeUserForAdmin) {
       // If no selectFields but need user relation, build select
       finalSelect = {
         [this.options.userIdField]: true,
-        user: {
+        [this.options.userRelationName]: {
           select: {
             id: true,
             email: true,
@@ -283,7 +328,6 @@ export class CrudService<T extends { id: string } = { id: string }> {
       this.options.userIdField
     )
 
-     
     const deleteModel = this.prisma[this.options.modelName] as any
 
     const existing = await deleteModel.findFirst({
@@ -294,18 +338,33 @@ export class CrudService<T extends { id: string } = { id: string }> {
       throw new Error('Record not found')
     }
 
-    // Try soft delete first (if isActive field exists)
-    const hasIsActive = 'isActive' in existing
-    if (hasIsActive) {
-      return await deleteModel.update({
-        where: { id },
-        data: { isActive: false }
-      })
-    }
-
-    // Otherwise hard delete
+    // Hard delete
     return await deleteModel.delete({
       where: { id }
+    })
+  }
+
+  /**
+   * Delete multiple records
+   */
+  async deleteMany (
+    session: Session | null,
+    ids: string[]
+  ) {
+    if (!ids || ids.length === 0) return { count: 0 }
+
+    // Check ownership/access for all IDs
+    const whereClause = buildUserWhereClauseWithFilters(
+      session,
+      { id: { in: ids } },
+      this.options.userIdField
+    )
+
+    const deleteModel = this.prisma[this.options.modelName] as any
+
+    // Hard delete many
+    return await deleteModel.deleteMany({
+      where: whereClause
     })
   }
 }

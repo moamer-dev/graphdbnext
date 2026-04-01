@@ -34,7 +34,7 @@ export function DataSourcePickerModal({
   title = 'Pick from Data Source'
 }: DataSourcePickerModalProps) {
   const { sources, getAllSources } = useDataSourcesStore()
-  const allSources = getAllSources()
+  const allSources = getAllSources({ type: ['JSON', 'API_RESPONSE'] })
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(
     allSources.length > 0 ? allSources[0].id : null
   )

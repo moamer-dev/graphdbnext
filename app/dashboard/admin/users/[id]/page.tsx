@@ -27,6 +27,21 @@ export default function ViewUserPage () {
   const { data: userData, isLoading, error } = resourceHooks.users.useSingle(userId)
   const updateUser = resourceHooks.users.useUpdate()
 
+  // Fetch global roles for the dropdown
+  const [globalRoles, setGlobalRoles] = useState<any[]>([])
+  const [loadingRoles, setLoadingRoles] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/roles?global=true')
+      .then(res => res.json())
+      .then(json => {
+          // Access standardized { data: [...] } structure
+          setGlobalRoles(json.data || [])
+      })
+      .catch(console.error)
+      .finally(() => setLoadingRoles(false))
+  }, [])
+
   // useResource extracts data from API response { user: User } -> { data: User }
   const user = userData?.data as UserType | undefined
 
@@ -48,7 +63,7 @@ export default function ViewUserPage () {
 
   // Local state for form inputs (allows editing)
   const [name, setName] = useState(formState.name)
-  const [role, setRole] = useState<'USER' | 'ADMIN'>(formState.role)
+  const [role, setRole] = useState<string>(formState.role)
   const [emailVerified, setEmailVerified] = useState(formState.emailVerified)
 
   // Update local state when formState changes (user data loads)
@@ -193,23 +208,31 @@ export default function ViewUserPage () {
                   <Shield className="h-4 w-4" />
                   User Role
                 </Label>
-                <Select value={role} onValueChange={(value) => setRole(value as 'USER' | 'ADMIN')}>
+                <Select value={role} onValueChange={(value) => setRole(value)}>
                   <SelectTrigger id="role" className="h-10 text-sm" suppressHydrationWarning>
                     <SelectValue suppressHydrationWarning />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USER">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Standard User
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ADMIN">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        Administrator
-                      </div>
-                    </SelectItem>
+                    {loadingRoles ? (
+                        <div className="p-2 text-xs text-muted-foreground flex items-center gap-2">
+                             <Loader2 className="h-3 w-3 animate-spin"/> Loading roles...
+                        </div>
+                    ) : globalRoles.length > 0 ? (
+                        globalRoles.map((r: any) => (
+                            <SelectItem key={r.id} value={r.name}>
+                                <div className="flex items-center gap-2">
+                                    <Shield className="h-4 w-4" />
+                                    {r.name}
+                                </div>
+                            </SelectItem>
+                        ))
+                    ) : (
+                        // Fallback to basic roles if none in DB
+                        <>
+                            <SelectItem value="USER">Standard User</SelectItem>
+                            <SelectItem value="ADMIN">Administrator</SelectItem>
+                        </>
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">

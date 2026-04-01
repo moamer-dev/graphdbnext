@@ -67,17 +67,34 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role
         token.id = user.id
-        // Fetch fresh user data to get updatedAt
+        // Fetch fresh user data and permissions
         try {
-          const currentUser = await prisma.user.findUnique({
+          const dbUser = await prisma.user.findUnique({
             where: { id: user.id },
-            select: { updatedAt: true }
+            select: { 
+              updatedAt: true,
+              role: true
+            }
           })
-          if (currentUser) {
-            token.updatedAt = currentUser.updatedAt.toISOString()
+          
+          if (dbUser) {
+            token.updatedAt = dbUser.updatedAt.toISOString()
+            
+            // Fetch permissions for the role
+            const role = await prisma.role.findFirst({
+              where: { name: dbUser.role, isActive: true },
+              include: { permissions: { where: { isActive: true } } }
+            })
+            
+            if (role) {
+                token.permissions = role.permissions.map(p => ({
+                    resource: p.resource,
+                    action: p.action
+                }))
+            }
           }
         } catch (error) {
-          console.error('Error fetching user updatedAt:', error)
+          console.error('Error fetching user data/permissions during signin:', error)
         }
       }
       
@@ -94,6 +111,21 @@ export const authOptions: NextAuthOptions = {
             // Update token with current role and timestamp
             token.role = currentUser.role
             token.updatedAt = currentUser.updatedAt.toISOString()
+
+            // Fetch permissions
+            const role = await prisma.role.findFirst({
+              where: { name: currentUser.role, isActive: true },
+              include: { permissions: { where: { isActive: true } } }
+            })
+            
+            if (role) {
+                token.permissions = role.permissions.map(p => ({
+                    resource: p.resource,
+                    action: p.action
+                }))
+            } else {
+                token.permissions = []
+            }
           }
         } catch (error) {
           console.error('Error validating user role in JWT callback:', error)
@@ -106,6 +138,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.role = token.role as string
         session.user.id = token.id as string
+        session.user.permissions = (token.permissions as any[]) || []
       }
       return session
     }

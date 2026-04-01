@@ -1,6 +1,13 @@
 export { ModelBuilder } from './components/ModelBuilder'
 export { XmlImportWizard } from './components/wizard/XmlImportWizard/XmlImportWizard'
-export type { WorkflowPersistence, ModelBuilderProps, ModelBuilderRef } from './components/ModelBuilder'
+export type { 
+  WorkflowPersistence, 
+  DataSourcesPersistence,
+  CredentialsPersistence,
+  AIPersistence,
+  ModelBuilderProps, 
+  ModelBuilderRef 
+} from './components/ModelBuilder'
 
 // Stores
 export { useXmlImportWizardStore } from './stores/xmlImportWizardStore'
