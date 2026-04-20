@@ -36,7 +36,10 @@ const sectionTitles: Record<string, string> = {
   '/dashboard/graph/model': 'Model Visualization',
   '/dashboard/graph/builder': 'Model Builder',
   '/dashboard/admin/users': 'User Management',
-  '/dashboard/admin/queries': 'Saved Queries Management'
+  '/dashboard/admin/queries': 'Saved Queries Management',
+  '/dashboard/admin/settings': 'Platform Settings',
+  '/dashboard/admin/settings/modules': 'Module Management',
+  '/dashboard/admin/settings/ai': 'AI Configuration'
 }
 
 export default function DashboardLayout({
@@ -63,7 +66,13 @@ export default function DashboardLayout({
         item,
         ...(item.items || [])
       ])
-      return allItems.find(item => item.url === path)
+      
+      // Filter for all matches
+      const matches = allItems.filter(item => item.url === path)
+      if (matches.length === 0) return null
+      
+      // Return the one WITH a resource if available, else just the first one
+      return matches.find(m => !!m.resource) || matches[0]
     }
 
     const currentNavItem = findNavItem(pathname)
@@ -75,7 +84,7 @@ export default function DashboardLayout({
       let hasAccess = isAdmin
       if (!hasAccess && hasResource) {
         hasAccess = userPermissions.some((p: any) => 
-          p.resource === currentNavItem.resource && (p.action === 'READ' || p.action === 'MANAGE')
+          p.resource === currentNavItem.resource && (p.action === 'READ' || p.action === 'MANAGE' || p.action === 'ACCESS')
         )
       } else if (!hasAccess && !hasResource && !isAdminOnly) {
         // Public dashboard page or item without specific resource

@@ -13,19 +13,14 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar'
 import { sidebarNavItems } from '@/config/sidebar-nav'
-import { Network } from 'lucide-react'
-
 import { NavWorkspace } from '@/components/nav-workspace'
+import { useModules } from '@/hooks/settings/useModules'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { isModuleEnabled, loading: modulesLoading } = useModules()
   const isAdmin = session?.user?.role === 'ADMIN'
   const userPermissions = (session?.user as any)?.permissions || []
   
@@ -35,17 +30,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     // Check if user has the specific action OR 'MANAGE' on the resource
     return userPermissions.some((p: any) => 
-      p.resource === resource && (p.action === action || p.action === 'MANAGE')
+      p.resource === resource && (p.action === action || p.action === 'MANAGE' || p.action === 'ACCESS')
     )
   }
-  // Filter nav items based on admin status and permissions
+
+  const checkModule = (moduleId?: string) => {
+    if (!moduleId) return true
+    return isModuleEnabled(moduleId)
+  }
+
+  // Filter nav items based on admin status, permissions, and module status
   const filteredNavItems = sidebarNavItems
     .map(item => {
       const newItem = { ...item }
       
       // Filter sub-items if they exist
       if (newItem.items) {
-        newItem.items = newItem.items.filter(sub => hasPermission(sub.resource, sub.action))
+        newItem.items = newItem.items.filter(sub => 
+          hasPermission(sub.resource, sub.action) && checkModule(sub.moduleId)
+        )
       }
       
       return newItem
@@ -56,6 +59,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       
       if (!hasPermission(item.resource, item.action)) {
+        return false
+      }
+
+      if (!checkModule(item.moduleId)) {
         return false
       }
       

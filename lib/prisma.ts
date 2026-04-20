@@ -1,3 +1,4 @@
+import 'server-only'
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
@@ -36,7 +37,14 @@ if (dbUrl.startsWith('prisma+')) {
     console.log('Prisma adapter initialized for:', connectionString.substring(0, 20) + '...')
   } catch (error) {
     console.error('CRITICAL: Failed to create Prisma adapter:', error)
-    // If adapter fails, we might still want to try native if possible, but Prisma 7 might not allow it without adapter if configured.
+  }
+}
+
+if (process.env.NODE_ENV !== 'production') {
+  // Purge stale instance if it doesn't have the new models
+  if (globalForPrisma.prisma && !(globalForPrisma.prisma as any).globalSettings) {
+    console.log('Purging stale PrismaClient instance...')
+    globalForPrisma.prisma = undefined
   }
 }
 

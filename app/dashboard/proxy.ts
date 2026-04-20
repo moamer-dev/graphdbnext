@@ -18,8 +18,7 @@ export async function proxy (request: NextRequest) {
 
 
   
-  const isAdminRoute = pathname.startsWith('/dashboard/admin') || 
-                       (pathname.startsWith('/dashboard/settings'))
+  const isAdminRoute = pathname.startsWith('/dashboard/admin')
 
   // If accessing admin route, check authentication and admin role first
   if (isAdminRoute) {

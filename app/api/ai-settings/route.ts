@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import type { AISettings } from '@plexus/builder'
+import { SettingsService } from '@/services/SettingsService'
 
 // Define default settings locally to avoid import issues
 const DEFAULT_AI_SETTINGS: AISettings = {
@@ -39,14 +40,11 @@ export async function GET() {
       )
     }
 
-    const userSettings = await prisma.userSettings.findUnique({
-      where: { userId: session.user.id },
-      select: { aiSettings: true }
-    })
-
+    const globalSettings = await SettingsService.getGlobalSettings()
+    
     // Return stored settings if they exist and are valid, otherwise return defaults
-    if (userSettings?.aiSettings) {
-      const storedSettings = userSettings.aiSettings as unknown as AISettings
+    if (globalSettings?.ai) {
+      const storedSettings = globalSettings.ai as unknown as AISettings
       // Merge with defaults to ensure all properties exist
       // Note: The spread operator will preserve apiKey from storedSettings.model if it exists
       const settings: AISettings = {
@@ -84,22 +82,18 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+    
+    // Only admins can update AI settings
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden - only admins can change AI settings' },
+        { status: 403 }
+      )
+    }
 
     const settings: AISettings = await request.json()
 
-    // Cast to Prisma Json type for storage
-    const settingsJson = settings as unknown as Prisma.InputJsonValue
-
-    await prisma.userSettings.upsert({
-      where: { userId: session.user.id },
-      create: {
-        userId: session.user.id,
-        aiSettings: settingsJson
-      },
-      update: {
-        aiSettings: settingsJson
-      }
-    })
+    await SettingsService.updateAI(settings)
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
@@ -121,19 +115,16 @@ export async function DELETE() {
         { status: 401 }
       )
     }
+    
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
 
-    // Use upsert to handle case where UserSettings doesn't exist yet
-    // Set to Prisma.JsonNull to clear the settings
-    await prisma.userSettings.upsert({
-      where: { userId: session.user.id },
-      create: {
-        userId: session.user.id,
-        aiSettings: Prisma.JsonNull
-      },
-      update: {
-        aiSettings: Prisma.JsonNull
-      }
-    })
+    // Set to empty object to reset
+    await SettingsService.updateAI({})
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {

@@ -8,7 +8,6 @@
 
 // Isomorphic/Client-Safe Services
 export { ExportService } from './core/ExportService'
-export { moduleService } from './core/ModuleService'
 export { UpdateMutationService } from './core/UpdateMutationService'
 export { GraphVisualizationService, type GraphNode, type GraphEdge, type GraphData } from './graph/GraphVisualizationService'
 export { QueryBuilderService, type QueryNode, type QueryRelationship } from './graph/QueryBuilderService'
@@ -28,5 +27,3 @@ export type { MemgraphService } from './graph/MemgraphService'
 export type { User } from '@/resources/UserResource'
 export type { Model } from '@/resources/ModelResource'
 export type { SavedQuery } from '@/resources/SavedQueryResource'
-export type { CrudService } from './core/CrudService'
-export type { CrudOptions } from './core/CrudService'

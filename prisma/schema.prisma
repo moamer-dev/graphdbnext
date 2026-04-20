@@ -23,23 +23,13 @@ enum StorageType {
   LOCAL_FS
 }
 
-enum PermissionResource {
-  MODEL
-  WORKSPACE
-  PROJECT
-  TEAM
-  DATA_SOURCE
-  CREDENTIAL
-  SAVED_QUERY
-  WORKFLOW
-}
-
 enum PermissionAction {
   CREATE
   READ
   UPDATE
   DELETE
   MANAGE
+  ACCESS
 }
 
 enum PermissionScope {
@@ -145,7 +135,7 @@ model Role {
 model Permission {
   id        String             @id @default(cuid())
   roleId    String
-  resource  PermissionResource
+  resource  String
   action    PermissionAction
   scope     PermissionScope    @default(SELF)
   isActive  Boolean            @default(true)
@@ -383,9 +373,19 @@ model UserSettings {
   id         String   @id @default(cuid())
   userId     String   @unique
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  aiSettings Json?
+  // Personal preferences like theme etc
+  theme      String?   @default("light")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model GlobalSettings {
+  id        String   @id @default("singleton")
+  // Platform-wide configurations
+  modules   Json?    // Enabled/disabled modules
+  ai        Json?    // AI configuration (provider, model, etc)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum InvitationStatus {

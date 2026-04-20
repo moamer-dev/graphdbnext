@@ -90,7 +90,12 @@ export function PermissionTable({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
-                            {actions.map(action => {
+                            {actions
+                                .filter(action => {
+                                    const isSpecial = ['DATABASE', 'QUERY', 'ANALYTICS'].includes(selectedResource)
+                                    return isSpecial ? action === 'ACCESS' : action !== 'ACCESS'
+                                })
+                                .map(action => {
                                 const perm = permissionsBuffer.find(p => 
                                     p.resource === selectedResource && p.action === action && p.isActive
                                 )
@@ -102,35 +107,35 @@ export function PermissionTable({
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center justify-center">
-                                                {action === 'CREATE' ? (
-                                                    <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-lg px-6 border border-border/10">
-                                                        <Checkbox 
-                                                            id={`check-${action}`}
-                                                            checked={!!perm} 
-                                                            onCheckedChange={(checked) => {
-                                                                onPermissionChange(selectedResource, action, checked ? 'ALL' : null)
-                                                            }}
-                                                        />
-                                                        <Label htmlFor={`check-${action}`} className="text-[10px] font-bold uppercase tracking-widest cursor-pointer">
-                                                            {perm ? 'ENABLED' : 'DISABLED'}
-                                                        </Label>
-                                                    </div>
-                                                ) : (
-                                                    <Select 
-                                                        value={perm ? perm.scope : 'NONE'} 
-                                                        onValueChange={(val) => onPermissionChange(selectedResource, action, val === 'NONE' ? null : val)}
-                                                    >
-                                                        <SelectTrigger className={`h-9 min-w-[160px] text-[10px] uppercase font-black tracking-widest border-border/30 bg-background ${perm ? 'text-primary border-primary/20' : 'text-muted-foreground/40'}`}>
-                                                            <SelectValue placeholder="NONE" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="NONE" className="text-[10px] uppercase font-bold">NONE</SelectItem>
-                                                            {scopes.map(s => (
-                                                                <SelectItem key={s} value={s} className="text-[10px] uppercase font-bold">{s}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
+                                {action === 'CREATE' || action === 'ACCESS' || ['DATABASE', 'QUERY', 'ANALYTICS'].includes(selectedResource) ? (
+                                    <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-lg px-6 border border-border/10">
+                                        <Checkbox 
+                                            id={`check-${action}`}
+                                            checked={!!perm} 
+                                            onCheckedChange={(checked) => {
+                                                onPermissionChange(selectedResource, action, checked ? 'ALL' : null)
+                                            }}
+                                        />
+                                        <Label htmlFor={`check-${action}`} className="text-[10px] font-bold uppercase tracking-widest cursor-pointer">
+                                            {perm ? 'ENABLED' : 'DISABLED'}
+                                        </Label>
+                                    </div>
+                                ) : (
+                                    <Select 
+                                        value={perm ? perm.scope : 'NONE'} 
+                                        onValueChange={(val) => onPermissionChange(selectedResource, action, val === 'NONE' ? null : val)}
+                                    >
+                                        <SelectTrigger className={`h-9 min-w-[160px] text-[10px] uppercase font-black tracking-widest border-border/30 bg-background ${perm ? 'text-primary border-primary/20' : 'text-muted-foreground/40'}`}>
+                                            <SelectValue placeholder="NONE" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="NONE" className="text-[10px] uppercase font-bold">NONE</SelectItem>
+                                            {scopes.map(s => (
+                                                <SelectItem key={s} value={s} className="text-[10px] uppercase font-bold">{s}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                                             </div>
                                         </td>
                                     </tr>

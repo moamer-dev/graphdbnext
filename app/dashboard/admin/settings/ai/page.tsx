@@ -170,7 +170,7 @@ export default function AISettingsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => router.push('/dashboard/admin/settings')}
               className="h-7 text-xs hover:bg-muted/40"
             >
               <ArrowLeft className="h-3 w-3 mr-1.5" />
@@ -196,7 +196,7 @@ export default function AISettingsPage() {
         <CardHeader>
           <CardTitle className="text-sm">AI Configuration</CardTitle>
           <CardDescription className="text-xs">
-            Manage AI features, model providers, and individual feature toggles. Settings are saved to your account and sync across devices.
+            Manage AI features, model providers, and individual feature toggles. Settings are applied platform-wide and managed by administrators.
           </CardDescription>
         </CardHeader>
         <CardContent>

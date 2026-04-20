@@ -8,12 +8,14 @@ export interface SidebarNavItem {
     title: string
     url: string
     section?: string
-    resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM' | 'SAVED_QUERY' | 'WORKFLOW' | 'DATA_SOURCE'
-    action?: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
+    moduleId?: string
+    resource?: string
+    action?: string
   }[]
+  moduleId?: string
   adminOnly?: boolean
-  resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM' | 'SAVED_QUERY' | 'WORKFLOW' | 'DATA_SOURCE'
-  action?: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
+  resource?: string
+  action?: string
 }
 
 export const sidebarNavItems: SidebarNavItem[] = [
@@ -27,11 +29,14 @@ export const sidebarNavItems: SidebarNavItem[] = [
     title: 'Plexus',
     url: '/dashboard/graph',
     icon: Network,
+    resource: 'MODEL',
+    action: 'READ',
     items: [
       {
         title: 'Create Model',
         url: '/dashboard/graph/model/new',
-        section: 'create-model'
+        section: 'create-model',
+        moduleId: 'plexus-builder'
       },
       {
         title: 'Schema Models',
@@ -42,7 +47,8 @@ export const sidebarNavItems: SidebarNavItem[] = [
       {
         title: 'XML Importer',
         url: '/dashboard/graph/model/new/from-xml',
-        section: 'xml-importer'
+        section: 'xml-importer',
+        moduleId: 'plexus-builder'
       },
     ]
   },
@@ -50,22 +56,26 @@ export const sidebarNavItems: SidebarNavItem[] = [
     title: 'Database',
     url: '/dashboard/database',
     icon: Database,
+    resource: 'DATABASE',
+    action: 'ACCESS',
     items: [
       {
         title: 'Management',
         url: '/dashboard/database',
         section: 'database',
-        resource: 'MODEL'
+        resource: 'DATABASE'
       },
       {
         title: 'Queries',
         url: '/dashboard/database/queries',
-        section: 'queries'
+        section: 'queries',
+        resource: 'QUERY'
       },
       {
         title: 'Analytics',
         url: '/dashboard/database/analytics',
-        section: 'analytics'
+        section: 'analytics',
+        resource: 'ANALYTICS'
       }
     ]
   },
@@ -99,18 +109,18 @@ export const sidebarNavItems: SidebarNavItem[] = [
   },
   {
     title: 'Settings',
-    url: '/dashboard/settings',
+    url: '/dashboard/admin/settings',
     icon: Settings,
     adminOnly: true,
     items: [
       {
         title: 'Modules',
-        url: '/dashboard/settings/modules',
+        url: '/dashboard/admin/settings/modules',
         section: 'modules'
       },
       {
         title: 'AI Settings',
-        url: '/dashboard/settings/ai',
+        url: '/dashboard/admin/settings/ai',
         section: 'ai'
       }
     ]
@@ -134,4 +144,3 @@ export const sidebarNavItems: SidebarNavItem[] = [
     resource: 'WORKSPACE'
   }
 ]
-

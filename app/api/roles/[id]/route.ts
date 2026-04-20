@@ -12,7 +12,7 @@ const UpdateRoleSchema = z.object({
   permissions: z.array(z.object({
     resource: z.string(),
     action: z.string(),
-    scope: z.string(),
+    scope: z.string().nullable(),
     isActive: z.boolean().optional(),
   })).optional(),
 })

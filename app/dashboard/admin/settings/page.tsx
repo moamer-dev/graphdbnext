@@ -66,13 +66,32 @@ export default function SettingsPage () {
               Modules
             </CardTitle>
             <CardDescription className="text-xs">
-              Enable or disable optional application modules
+              Manage platform-wide optional modules
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/settings/modules">
+            <Link href="/dashboard/admin/settings/modules">
               <Button variant="outline" size="sm" className="w-full text-xs">
                 Manage Modules
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+ 
+        <Card className="border-border/20 bg-muted/10 backdrop-blur-sm hover:bg-muted/20 transition-colors">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              AI Settings
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Configure global AI features and model providers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/admin/settings/ai">
+              <Button variant="outline" size="sm" className="w-full text-xs">
+                Manage AI
               </Button>
             </Link>
           </CardContent>

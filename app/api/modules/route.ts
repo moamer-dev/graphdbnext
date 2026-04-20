@@ -9,21 +9,16 @@ export async function GET () {
   try {
     const session = await getServerSession(authOptions)
 
+    // Auth check - anyone logged in can see module status
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+        return NextResponse.json(
+            { error: 'Unauthorized' },
+            { status: 401 }
+        )
     }
 
-    // Only admins can view module settings
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      )
-    }
-
+    // Sync with DB first to ensure we have latest platform state
+    await moduleService.syncWithDatabase()
     const modules = moduleService.getAllModules()
 
     return NextResponse.json({ modules })
@@ -77,10 +72,10 @@ export async function PUT (request: NextRequest) {
     await moduleService.updateModuleState(moduleId, enabled)
 
     return NextResponse.json({ success: true })
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error updating module:', error)
     return NextResponse.json(
-      { error: 'Failed to update module' },
+      { error: error.message || 'Failed to update module' },
       { status: 500 }
     )
   }

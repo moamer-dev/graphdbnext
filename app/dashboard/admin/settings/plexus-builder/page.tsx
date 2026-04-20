@@ -162,7 +162,7 @@ export default function ModelBuilderSettingsPage() {
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push('/dashboard/settings/modules')}
+                            onClick={() => router.push('/dashboard/admin/settings/modules')}
                             className="h-7 text-xs hover:bg-muted/40"
                         >
                             <ArrowLeft className="h-3 w-3 mr-1.5" />

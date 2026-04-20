@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import type { Module } from '@/modules/types'
+import { useQueryClient } from '@tanstack/react-query'
+import { useModules, MODULES_QUERY_KEY } from '@/hooks/settings/useModules'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -14,8 +15,8 @@ import Link from 'next/link'
 export default function ModulesSettingsPage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [modules, setModules] = useState<Module[]>([])
-  const [loading, setLoading] = useState(true)
+  const { modules, loading, isModuleEnabled } = useModules()
+  const queryClient = useQueryClient()
   const [updating, setUpdating] = useState<string | null>(null)
 
   const isAdmin = session?.user?.role === 'ADMIN'
@@ -23,28 +24,8 @@ export default function ModulesSettingsPage() {
   useEffect(() => {
     if (!isAdmin) {
       router.push('/dashboard')
-      return
     }
-
-    loadModules()
   }, [isAdmin, router])
-
-  const loadModules = async () => {
-    try {
-      const response = await fetch('/api/modules')
-      if (response.ok) {
-        const data = await response.json()
-        setModules(data.modules || [])
-      } else {
-        toast.error('Failed to load modules')
-      }
-    } catch (error) {
-      console.error('Error loading modules:', error)
-      toast.error('Error loading modules')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleToggleModule = async (moduleId: string, enabled: boolean) => {
     setUpdating(moduleId)
@@ -58,10 +39,8 @@ export default function ModulesSettingsPage() {
       })
 
       if (response.ok) {
-        // Update local state
-        setModules(prev => prev.map(m =>
-          m.id === moduleId ? { ...m, enabled } : m
-        ))
+        // Invalidate query to update AppSidebar and other components
+        await queryClient.invalidateQueries({ queryKey: MODULES_QUERY_KEY })
         toast.success(`Module ${enabled ? 'enabled' : 'disabled'} successfully`)
       } else {
         const error = await response.json()
@@ -95,7 +74,7 @@ export default function ModulesSettingsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => router.push('/dashboard/admin/settings')}
               className="h-7 text-xs hover:bg-muted/40"
             >
               <ArrowLeft className="h-3 w-3 mr-1.5" />
@@ -110,7 +89,7 @@ export default function ModulesSettingsPage() {
                 </span>
               </h1>
               <p className="text-xs mt-1.5 text-muted-foreground/70">
-                Enable or disable optional modules
+                Manage platform-wide optional modules
               </p>
             </div>
           </div>
@@ -120,7 +99,7 @@ export default function ModulesSettingsPage() {
       <div className="space-y-4">
         <div className="p-4 bg-muted/20 rounded-lg border border-border/20 backdrop-blur-sm">
           <p className="text-xs text-muted-foreground mb-4">
-            Modules extend the functionality of the application. Enable or disable them based on your needs.
+            Modules extend the functionality of the application. These settings affect the entire platform and all users.
           </p>
 
           <div className="space-y-4">
@@ -145,7 +124,7 @@ export default function ModulesSettingsPage() {
                   </p>
                   {module.id === 'plexus-builder' && module.enabled && (
                     <div className="mt-2 pt-2 border-t border-border/20">
-                      <Link href="/dashboard/settings/plexus-builder">
+                      <Link href="/dashboard/admin/settings/plexus-builder">
                         <Button variant="ghost" size="sm" className="h-7 text-xs gap-2">
                           <Settings className="h-3 w-3" />
                           Configure AI Settings
