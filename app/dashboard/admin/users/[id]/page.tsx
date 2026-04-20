@@ -1,95 +1,52 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { resourceHooks } from '@/hooks/react-query'
-import { UserResource, type User as UserType } from '@/resources/UserResource'
-import { Button } from '@/components/ui/button'
+import { type User as UserType } from '@/resources/UserResource'
+import { RoleResource } from '@/resources/RBACResource'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, ArrowLeft, User, Save, Shield, Mail, Calendar, Clock, Fingerprint } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
-import { useState, useEffect, useMemo } from 'react'
-import { toast } from 'sonner'
-import { signOut, useSession } from 'next-auth/react'
+import { Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useUserEditHandlers } from '../(handlers)/useUserEditHandlers'
+import { UserHeader } from '@/components/admin/users/UserHeader'
+import { UserInfoCard } from '@/components/admin/users/UserInfoCard'
+import { UserResourcesTabs } from '@/components/admin/users/UserResourcesTabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { User, Layout } from 'lucide-react'
+import { useUIStore } from '@/stores/uiStore'
 
 export default function ViewUserPage () {
   const params = useParams()
-  const router = useRouter()
   const userId = params.id as string
-  const { data: session } = useSession()
+  const { userEditTab, setUserEditTab } = useUIStore()
 
-  // React Query hooks
   const { data: userData, isLoading, error } = resourceHooks.users.useSingle(userId)
-  const updateUser = resourceHooks.users.useUpdate()
+  
+  const { data: globalRolesData, isLoading: loadingRoles } = resourceHooks.roles.useList({
+    page: 1,
+    pageSize: 100,
+    sortBy: 'name',
+    sortOrder: 'asc'
+  })
 
-  // Fetch global roles for the dropdown
-  const [globalRoles, setGlobalRoles] = useState<any[]>([])
-  const [loadingRoles, setLoadingRoles] = useState(true)
+  const globalRoles = globalRolesData?.data || []
 
-  useEffect(() => {
-    fetch('/api/admin/roles?global=true')
-      .then(res => res.json())
-      .then(json => {
-          // Access standardized { data: [...] } structure
-          setGlobalRoles(json.data || [])
-      })
-      .catch(console.error)
-      .finally(() => setLoadingRoles(false))
-  }, [])
-
-  // useResource extracts data from API response { user: User } -> { data: User }
   const user = userData?.data as UserType | undefined
-
-  // Derive form state from user data - use this directly for form inputs
-  const formState = useMemo(() => {
-    if (!user) {
-      return {
-        name: '',
-        role: 'USER' as const,
-        emailVerified: false
-      }
-    }
-    return {
-      name: user.name || '',
-      role: user.role,
-      emailVerified: !!user.emailVerified
-    }
-  }, [user])
-
-  // Local state for form inputs (allows editing)
-  const [name, setName] = useState(formState.name)
-  const [role, setRole] = useState<string>(formState.role)
-  const [emailVerified, setEmailVerified] = useState(formState.emailVerified)
-
-  // Update local state when formState changes (user data loads)
-  useEffect(() => {
-    setName(formState.name)
-    setRole(formState.role)
-    setEmailVerified(formState.emailVerified)
-  }, [formState])
-
-  const handleSave = async () => {
-    if (!user) return
-
-    try {
-      await updateUser.mutateAsync({
-        id: userId,
-        data: {
-          name: name || null,
-          role,
-          emailVerified: emailVerified ? new Date().toISOString() : null
-        }
-      })
-      toast.success('User updated successfully')
-    } catch (error) {
-      console.error('Error updating user:', error)
-    }
-  }
+  const { 
+    name, 
+    setName, 
+    role, 
+    setRole, 
+    emailVerified, 
+    setEmailVerified, 
+    isActive,
+    setIsActive,
+    password,
+    setPassword,
+    isSelf,
+    handleSave, 
+    isSaving 
+  } = useUserEditHandlers(user)
 
   if (isLoading) {
     return (
@@ -108,216 +65,57 @@ export default function ViewUserPage () {
   }
 
   return (
-    <div className="space-y-6 mt-6">
-      <div className="gradient-header-minimal pb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push(UserResource.LIST_PATH)}
-              className="h-8 text-xs hover:bg-muted/40"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Users
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <span className="relative">
-                  {user.email}
-                  <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></span>
-                </span>
-              </h1>
-              <p className="text-sm mt-2 text-muted-foreground">
-                Manage user account details and permissions
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={role === 'ADMIN' ? 'default' : 'secondary'} className="text-xs px-2 py-1">
-              <Shield className="h-3 w-3 mr-1" />
-              {role}
-            </Badge>
-            <Button
-              onClick={handleSave}
-              disabled={updateUser.isPending}
-              className="h-8 text-sm"
-            >
-              {updateUser.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
+    <div className="space-y-6 mt-6 pb-12">
+      <UserHeader 
+        user={user}
+        role={role}
+        onSave={handleSave}
+        isSaving={isSaving}
+      />
+
+      <Tabs value={userEditTab} onValueChange={setUserEditTab} className="w-full">
+        <div className="flex items-center justify-between border-b border-border/50 mb-6">
+            <TabsList className="bg-muted/50 h-10 w-fit justify-start gap-1 p-1 rounded-lg border border-border/20">
+                <TabsTrigger 
+                    value="profile" 
+                    className="h-full data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-primary rounded-md px-4 text-xs font-semibold transition-all"
+                >
+                    <User className="h-3.5 w-3.5 mr-2" />
+                    Account Profile
+                </TabsTrigger>
+                <TabsTrigger 
+                    value="resources" 
+                    className="h-full data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-primary rounded-md px-4 text-xs font-semibold transition-all"
+                >
+                    <Layout className="h-3.5 w-3.5 mr-2" />
+                    Ownership & Resources
+                </TabsTrigger>
+            </TabsList>
         </div>
-      </div>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5" />
-              User Information
-            </CardTitle>
-            <CardDescription>
-              Edit basic user details and account information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  value={user.email}
-                  disabled
-                  className="h-10 text-sm"
-                />
-                <p className="text-xs text-muted-foreground">Email address cannot be changed</p>
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="name" className="text-sm font-medium">Display Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter user name"
-                  className="h-10 text-sm"
-                />
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label htmlFor="role" className="text-sm font-medium flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  User Role
-                </Label>
-                <Select value={role} onValueChange={(value) => setRole(value)}>
-                  <SelectTrigger id="role" className="h-10 text-sm" suppressHydrationWarning>
-                    <SelectValue suppressHydrationWarning />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingRoles ? (
-                        <div className="p-2 text-xs text-muted-foreground flex items-center gap-2">
-                             <Loader2 className="h-3 w-3 animate-spin"/> Loading roles...
-                        </div>
-                    ) : globalRoles.length > 0 ? (
-                        globalRoles.map((r: any) => (
-                            <SelectItem key={r.id} value={r.name}>
-                                <div className="flex items-center gap-2">
-                                    <Shield className="h-4 w-4" />
-                                    {r.name}
-                                </div>
-                            </SelectItem>
-                        ))
-                    ) : (
-                        // Fallback to basic roles if none in DB
-                        <>
-                            <SelectItem value="USER">Standard User</SelectItem>
-                            <SelectItem value="ADMIN">Administrator</SelectItem>
-                        </>
-                    )}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {role === 'ADMIN' 
-                    ? 'Full access to all features and settings'
-                    : 'Limited access to basic features'
-                  }
-                </p>
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="emailVerified" className="text-sm font-medium">Email Verification</Label>
-                <div className="flex items-center space-x-3">
-                  <Switch
-                    id="emailVerified"
-                    checked={emailVerified}
-                    onCheckedChange={setEmailVerified}
-                  />
-                  <Label htmlFor="emailVerified" className="text-sm">
-                    {emailVerified ? 'Email verified' : 'Email not verified'}
-                  </Label>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {emailVerified 
-                    ? 'User has verified their email address'
-                    : 'User needs to verify their email address'
-                  }
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="profile" className="mt-0 outline-none">
+            <UserInfoCard 
+                user={user}
+                name={name}
+                setName={setName}
+                role={role}
+                setRole={setRole}
+                emailVerified={emailVerified}
+                setEmailVerified={setEmailVerified}
+                isActive={isActive}
+                setIsActive={setIsActive}
+                password={password}
+                setPassword={setPassword}
+                isSelf={isSelf}
+                globalRoles={globalRoles}
+                loadingRoles={loadingRoles}
+            />
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Account Metadata</CardTitle>
-            <CardDescription>
-              System information and account timestamps
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
-                <div className="p-2 bg-primary/10 rounded">
-                  <Fingerprint className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-muted-foreground mb-1">User ID</div>
-                  <div className="font-mono text-sm font-semibold truncate">{user.id}</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
-                <div className="p-2 bg-blue-500/10 rounded">
-                  <Calendar className="h-4 w-4 text-blue-500" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Created</div>
-                  <div className="text-sm font-semibold">{new Date(user.createdAt).toLocaleDateString()}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(user.createdAt).toLocaleTimeString()}</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
-                <div className="p-2 bg-green-500/10 rounded">
-                  <Clock className="h-4 w-4 text-green-500" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Last Updated</div>
-                  <div className="text-sm font-semibold">{new Date(user.updatedAt).toLocaleDateString()}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(user.updatedAt).toLocaleTimeString()}</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
-                <div className="p-2 bg-orange-500/10 rounded">
-                  <Mail className="h-4 w-4 text-orange-500" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Email Status</div>
-                  <Badge variant={emailVerified ? 'default' : 'outline'} className="text-xs">
-                    {emailVerified ? 'Verified' : 'Unverified'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="resources" className="mt-0 outline-none">
+            <UserResourcesTabs user={user} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

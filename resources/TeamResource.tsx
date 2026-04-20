@@ -19,8 +19,12 @@ const columnHelper = createColumnHelper<Team>()
 export class TeamResource {
   static readonly RESOURCE_NAME = 'Team'
   static readonly BASE_PATH = '/api/teams'
-  static readonly VIEW_PATH = '/dashboard/settings/teams'
-  static readonly LIST_PATH = '/dashboard/settings/teams'
+  static readonly VIEW_PATH = '/dashboard/teams'
+  static readonly LIST_PATH = '/dashboard/teams'
+  
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: true
+  }
 
   static createTableConfig (
     onView: (id: string) => void,
@@ -85,19 +89,21 @@ export class TeamResource {
       columns,
       enableRowSelection: true,
       rowActions: [
-        { label: 'View', icon: Eye, action: (row) => onView(row.id) },
-        { label: 'Edit', icon: Pencil, action: (row) => onEdit(row.id) },
+        { label: 'View', icon: Eye, action: (row) => onView(row.id), permission: { action: 'READ' as const } },
+        { label: 'Edit', icon: Pencil, action: (row) => onEdit(row.id), permission: { action: 'UPDATE' as const } },
         { 
           label: 'Delete', 
           icon: Trash2, 
           action: (row) => onDelete(row.id), 
-          variant: 'destructive',
-          requiresConfirmation: true
+          variant: 'destructive' as const,
+          requiresConfirmation: true,
+          permission: { action: 'DELETE' as const }
         },
         {
           label: 'Members',
           icon: Building2,
-          action: (row) => onManageMembers(row.id)
+          action: (row) => onManageMembers(row.id),
+          permission: { action: 'UPDATE' as const }
         }
       ],
       fetchData: async ({ page, pageSize, sortBy, sortOrder, filters: filterParams }) => {

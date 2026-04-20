@@ -16,6 +16,10 @@ interface CreateModalProps {
 
 export function CreateTeamDialog({ open, onOpenChange }: CreateModalProps) {
   const { form, onSubmit, isSubmitting } = useTeamCreate(() => onOpenChange(false))
+  
+  React.useEffect(() => {
+    if (open) form.reset()
+  }, [open, form])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -35,6 +39,10 @@ export function CreateTeamDialog({ open, onOpenChange }: CreateModalProps) {
 export function CreateProjectDialog({ open, onOpenChange }: CreateModalProps) {
     const { form, onSubmit, isSubmitting } = useProjectCreate(() => onOpenChange(false))
   
+    React.useEffect(() => {
+      if (open) form.reset()
+    }, [open, form])
+
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent className="sm:max-w-[650px] shadow-none border-2">
@@ -53,6 +61,10 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateModalProps) {
 export function CreateWorkspaceDialog({ open, onOpenChange }: CreateModalProps) {
     const { form, onSubmit, isSubmitting } = useWorkspaceCreate(() => onOpenChange(false))
   
+    React.useEffect(() => {
+      if (open) form.reset()
+    }, [open, form])
+
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[650px] shadow-none border-2">

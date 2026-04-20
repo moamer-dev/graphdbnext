@@ -20,15 +20,22 @@ export function useResourceForm<T extends z.ZodType<any, any, any>>({
   const resource = resourceHooks[resourceName] as any
   const createMutation = resource.useCreate({
     onSuccess: (data: any) => {
+        form.reset(defaultValues)
         onSuccess?.(data)
     }
   })
 
-  // Use any here to avoid the FieldValues constraint conflict with Zod types in RHF
   const form = useForm<any>({
     resolver: zodResolver(schema),
     defaultValues
   })
+
+  // Sync with defaultValues when they change (e.g. tenant context change)
+  React.useEffect(() => {
+    if (!form.formState.isDirty) {
+      form.reset(defaultValues)
+    }
+  }, [defaultValues, form])
 
   const onSubmit = useCallback(async (values: z.infer<T>) => {
     try {
@@ -85,17 +92,17 @@ export function useResourceUpdate<T extends z.ZodType<any, any, any>>({
             
             // Map Team projects to projectIds
             if (rawData.projects && Array.isArray(rawData.projects)) {
-                formattedData.projectIds = rawData.projects.map((p: any) => p.id || p.projectId)
+                formattedData.projectIds = rawData.projects.map((p: any) => p.id || p.projectId || p.project?.id)
             }
             
             // Map Project workspaces to workspaceIds (via junction table or direct)
             if (rawData.workspaces && Array.isArray(rawData.workspaces)) {
-                formattedData.workspaceIds = rawData.workspaces.map((w: any) => w.id || w.workspaceId)
+                formattedData.workspaceIds = rawData.workspaces.map((w: any) => w.id || w.workspaceId || w.workspace?.id)
             }
 
             // Map Workspace projects to projectIds
             if (rawData.projectIds === undefined && rawData.projects && Array.isArray(rawData.projects)) {
-                formattedData.projectIds = rawData.projects.map((p: any) => p.id || p.projectId)
+                formattedData.projectIds = rawData.projects.map((p: any) => p.id || p.projectId || p.project?.id)
             }
 
             // Sanitize null values to avoid React controlled/uncontrolled warnings

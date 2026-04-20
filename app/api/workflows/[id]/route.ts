@@ -1,141 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { WorkflowService } from '@/services/WorkflowService'
+import { z } from 'zod'
+
+const UpdateWorkflowSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  modelId: z.string().optional(),
+  config: z.any().optional(),
+  isActive: z.boolean().optional(),
+})
 
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!prisma || !prisma.workflow) {
-      console.error('Prisma client or workflow model is not available')
-      return NextResponse.json({ error: 'Database schema not updated. Please run: npx prisma generate' }, { status: 500 })
-    }
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      console.error('Workflow GET [id]: No session or user ID', { hasSession: !!session, hasUser: !!session?.user, userId: session?.user?.id })
-      return NextResponse.json({ error: 'Unauthorized: Please sign in to access workflows' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
-
-    const workflow = await prisma.workflow.findFirst({
-      where: {
-        id,
-        userId: session.user.id,
-        isActive: true
-      }
-    })
+    const workflow = await WorkflowService.findOneWithRBAC(session.user.id, id)
 
     if (!workflow) {
-      return NextResponse.json({ error: 'Workflow not found or you don\'t have access to it' }, { status: 404 })
+      return NextResponse.json({ error: 'Workflow not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ workflow })
-  } catch (error) {
-    console.error('Error fetching workflow:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch workflow'
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    return NextResponse.json({ data: workflow, workflow })
+  } catch (error: any) {
+    console.error('Workflow GET Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-export async function PUT(
-  request: NextRequest,
+export async function PATCH(
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!prisma || !prisma.workflow) {
-      console.error('Prisma client or workflow model is not available')
-      return NextResponse.json({ error: 'Database schema not updated. Please run: npx prisma generate' }, { status: 500 })
-    }
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      console.error('Workflow PUT: No session or user ID', { hasSession: !!session, hasUser: !!session?.user, userId: session?.user?.id })
-      return NextResponse.json({ error: 'Unauthorized: Please sign in to update workflows' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
-    const body = await request.json()
-    const { name, description, config } = body
+    const body = await req.json()
+    const validatedData = UpdateWorkflowSchema.parse(body)
 
-    const existingWorkflow = await prisma.workflow.findFirst({
-      where: {
-        id,
-        userId: session.user.id
-      }
-    })
+    const workflow = await WorkflowService.updateWithRBAC(session.user.id, id, validatedData as any)
 
-    if (!existingWorkflow) {
-      return NextResponse.json({ error: 'Workflow not found or you don\'t have access to it' }, { status: 404 })
+    return NextResponse.json({ data: workflow, workflow })
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })
     }
-
-    const workflow = await prisma.workflow.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(description !== undefined && { description }),
-        ...(config !== undefined && { config: config as any })
-      }
-    })
-
-    return NextResponse.json({ workflow })
-  } catch (error) {
-    console.error('Error updating workflow:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update workflow'
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    console.error('Workflow PATCH Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!prisma || !prisma.workflow) {
-      console.error('Prisma client or workflow model is not available')
-      return NextResponse.json({ error: 'Database schema not updated. Please run: npx prisma generate' }, { status: 500 })
-    }
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      console.error('Workflow DELETE: No session or user ID', { hasSession: !!session, hasUser: !!session?.user, userId: session?.user?.id })
-      return NextResponse.json({ error: 'Unauthorized: Please sign in to delete workflows' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
+    await WorkflowService.deleteWithRBAC(session.user.id, id)
 
-    const existingWorkflow = await prisma.workflow.findFirst({
-      where: {
-        id,
-        userId: session.user.id
-      }
-    })
-
-    if (!existingWorkflow) {
-      return NextResponse.json({ error: 'Workflow not found or you don\'t have access to it' }, { status: 404 })
-    }
-
-    await prisma.workflow.update({
-      where: { id },
-      data: { isActive: false }
-    })
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting workflow:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete workflow' },
-      { status: 500 }
-    )
+    return new NextResponse(null, { status: 204 })
+  } catch (error: any) {
+    console.error('Workflow DELETE Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
-

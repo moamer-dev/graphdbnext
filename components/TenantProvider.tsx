@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import { useTenantStore } from '@/stores/tenantStore'
 import { useSession } from 'next-auth/react'
+import { TeamResource } from '@/resources/TeamResource'
+import { ProjectResource } from '@/resources/ProjectResource'
+import { WorkspaceResource } from '@/resources/WorkspaceResource'
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
@@ -23,24 +26,27 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     const initializeTenant = async () => {
       try {
         // 1. Fetch Teams
-        const teamRes = await fetch('/api/teams')
-        const teams = await teamRes.json()
+        const teamRes = await fetch(TeamResource.BASE_PATH)
+        const teamResult = await teamRes.json()
+        const teams = teamResult.data || []
 
         if (teams.length > 0) {
           const currentTeamId = activeTeamId || teams[0].id
           if (!activeTeamId) setActiveTeam(teams[0].id)
 
           // 2. Fetch Projects for current team
-          const projectRes = await fetch(`/api/projects?teamId=${currentTeamId}`)
-          const projects = await projectRes.json()
+          const projectRes = await fetch(`${ProjectResource.BASE_PATH}?teamId=${currentTeamId}`)
+          const projectResult = await projectRes.json()
+          const projects = projectResult.data || []
 
           if (projects.length > 0) {
             const currentProjectId = activeProjectId || projects[0].id
             if (!activeProjectId) setActiveProject(projects[0].id)
 
             // 3. Fetch Workspaces for current project
-            const workspaceRes = await fetch(`/api/workspaces?projectId=${currentProjectId}`)
-            const workspaces = await workspaceRes.json()
+            const workspaceRes = await fetch(`${WorkspaceResource.BASE_PATH}?projectId=${currentProjectId}`)
+            const workspaceResult = await workspaceRes.json()
+            const workspaces = workspaceResult.data || []
 
             if (workspaces.length > 0) {
               if (!activeWorkspaceId) setActiveWorkspace(workspaces[0].id)

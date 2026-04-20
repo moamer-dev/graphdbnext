@@ -1,8 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
-import { Layers, Eye, Trash2, Pencil } from 'lucide-react'
+import { Eye, Trash2, Pencil } from 'lucide-react'
 import type { TableConfig, ResourceColumnDef } from './TableConfig'
-import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -11,8 +9,14 @@ export interface Workspace {
   name: string
   description: string | null
   isActive: boolean
+  creatorId: string
   createdAt: string
   updatedAt: string
+  creator?: {
+    id: string
+    name: string | null
+    email: string
+  }
 }
 
 const columnHelper = createColumnHelper<Workspace>()
@@ -20,14 +24,21 @@ const columnHelper = createColumnHelper<Workspace>()
 export class WorkspaceResource {
   static readonly RESOURCE_NAME = 'Workspace'
   static readonly BASE_PATH = '/api/workspaces'
-  static readonly VIEW_PATH = '/dashboard/settings/workspaces'
-  static readonly LIST_PATH = '/dashboard/settings/workspaces'
+  static readonly VIEW_PATH = '/dashboard/workspaces'
+  static readonly LIST_PATH = '/dashboard/workspaces'
+  
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: false
+  }
 
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,
     onDelete: (id: string) => Promise<void>,
-    _onManageMembers?: (id: string) => void
+    _onManageMembers?: (id: string) => void,
+    isAdmin?: boolean,
+    userId?: string,
+    userPermissions?: any[]
   ): TableConfig<Workspace> {
     const columns: ResourceColumnDef<Workspace>[] = [
       {
@@ -85,14 +96,20 @@ export class WorkspaceResource {
       resourceName: WorkspaceResource.RESOURCE_NAME,
       columns,
       rowActions: [
-        { label: 'View', icon: Eye, action: (row) => onView(row.id) },
-        { label: 'Edit', icon: Pencil, action: (row) => onEdit(row.id) },
+        { label: 'View', icon: Eye, action: (row) => onView(row.id), permission: { action: 'READ' as const } },
+        { 
+          label: 'Edit', 
+          icon: Pencil, 
+          action: (row) => onEdit(row.id),
+          permission: { action: 'UPDATE' as const }
+        },
         { 
           label: 'Delete', 
           icon: Trash2, 
           action: (row) => onDelete(row.id), 
-          variant: 'destructive',
-          requiresConfirmation: true
+          variant: 'destructive' as const,
+          requiresConfirmation: true,
+          permission: { action: 'DELETE' as const }
         }
       ],
       enableRowSelection: true,

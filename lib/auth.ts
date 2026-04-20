@@ -17,42 +17,39 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-          console.log('Attempting to authenticate user:', credentials.email)
-
           const user = await prisma.user.findUnique({
             where: { email: credentials.email }
           })
 
           if (!user) {
-            console.log('User not found:', credentials.email)
             return null
           }
 
+          if (!user.isActive) {
+            throw new Error('You are disabled from access, please contact the administrator.')
+          }
+
           if (!user.password) {
-            console.log('User has no password set')
             return null
           }
 
           const isValid = await bcrypt.compare(credentials.password, user.password)
 
           if (!isValid) {
-            console.log('Invalid password for user:', credentials.email)
             return null
           }
 
-          console.log('Authentication successful for user:', credentials.email)
           return {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role
+            role: 'USER' // Satisfy NextAuth type, actual role is determined in jwt callback
           }
         } catch (error) {
-          console.error('Authorization error:', error)
-          if (error instanceof Error) {
-            console.error('Error message:', error.message)
-            console.error('Error stack:', error.stack)
+          if (error instanceof Error && (error.message.includes('disabled') || error.message.includes('access'))) {
+            throw error
           }
+          console.error('Authorization error:', error)
           return null
         }
       }
@@ -63,72 +60,29 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt ({ token, user, trigger }) {
-      // When user signs in, store their role
       if (user) {
-        token.role = user.role
         token.id = user.id
-        // Fetch fresh user data and permissions
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-            select: { 
-              updatedAt: true,
-              role: true
-            }
-          })
-          
-          if (dbUser) {
-            token.updatedAt = dbUser.updatedAt.toISOString()
-            
-            // Fetch permissions for the role
-            const role = await prisma.role.findFirst({
-              where: { name: dbUser.role, isActive: true },
-              include: { permissions: { where: { isActive: true } } }
-            })
-            
-            if (role) {
-                token.permissions = role.permissions.map(p => ({
-                    resource: p.resource,
-                    action: p.action
-                }))
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching user data/permissions during signin:', error)
-        }
       }
       
-      // On every JWT callback, validate the user's current role from database
-      // This ensures that if role changes, the token reflects the current role
-      if (token.id && (trigger === 'update' || !trigger)) {
+      // On sign-in or session update, fetch permissions
+      if (token.id && (trigger === 'update' || !trigger || user)) {
         try {
-          const currentUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: { role: true, updatedAt: true }
+          const { getEffectivePermissions } = await import('@/utils/rbac-engine')
+          const permissions = await getEffectivePermissions(token.id as string)
+          
+          // Detect ADMIN role from Global Roles
+          const userGlobalRoles = await prisma.userGlobalRole.findMany({
+            where: { userId: token.id as string },
+            include: { role: true }
           })
           
-          if (currentUser) {
-            // Update token with current role and timestamp
-            token.role = currentUser.role
-            token.updatedAt = currentUser.updatedAt.toISOString()
-
-            // Fetch permissions
-            const role = await prisma.role.findFirst({
-              where: { name: currentUser.role, isActive: true },
-              include: { permissions: { where: { isActive: true } } }
-            })
-            
-            if (role) {
-                token.permissions = role.permissions.map(p => ({
-                    resource: p.resource,
-                    action: p.action
-                }))
-            } else {
-                token.permissions = []
-            }
-          }
+          const hasAdminRole = userGlobalRoles.some(ugr => ugr.role.name.toUpperCase() === 'ADMIN')
+          token.role = hasAdminRole ? 'ADMIN' : 'USER'
+          token.permissions = permissions
         } catch (error) {
-          console.error('Error validating user role in JWT callback:', error)
+          console.error('Error fetching permissions in JWT callback:', error)
+          token.permissions = []
+          token.role = 'USER'
         }
       }
       
@@ -136,8 +90,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session ({ session, token }) {
       if (session.user) {
-        session.user.role = token.role as string
         session.user.id = token.id as string
+        session.user.role = token.role as string
         session.user.permissions = (token.permissions as any[]) || []
       }
       return session

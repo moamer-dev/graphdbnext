@@ -23,18 +23,44 @@ enum StorageType {
   LOCAL_FS
 }
 
+enum PermissionResource {
+  MODEL
+  WORKSPACE
+  PROJECT
+  TEAM
+  DATA_SOURCE
+  CREDENTIAL
+  SAVED_QUERY
+  WORKFLOW
+}
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  MANAGE
+}
+
+enum PermissionScope {
+  ALL
+  TEAM
+  SELF
+}
+
 model User {
   id            String        @id @default(cuid())
   email         String        @unique
   password      String
   name          String?
-  role          String        @default("USER")
+  // role field removed in favor of globalRoles relationship
   emailVerified DateTime?
   isActive      Boolean       @default(true)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   
   // Relations
+  globalRoles   UserGlobalRole[]
   teamMembers   TeamMember[]
   models        Model[]       // Personal models or created models
   savedQueries  SavedQuery[]
@@ -47,6 +73,16 @@ model User {
   createdTeams      Team[]      @relation("TeamCreator")
   createdProjects   Project[]   @relation("ProjectCreator")
   createdWorkspaces Workspace[] @relation("WorkspaceCreator")
+  invitationsSent   TeamInvitation[] @relation("TeamInviter")
+}
+
+model UserGlobalRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
 }
 
 model Team {
@@ -61,6 +97,7 @@ model Team {
   members     TeamMember[]
   projects    Project[]
   roles       Role[]
+  invitations TeamInvitation[]
   
   creatorId   String?
   creator     User?    @relation("TeamCreator", fields: [creatorId], references: [id])
@@ -70,41 +107,52 @@ model TeamMember {
   id        String   @id @default(cuid())
   userId    String
   teamId    String
-  roleId    String
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  role      Role     @relation(fields: [roleId], references: [id])
+  roles     TeamMemberRole[]
 
   @@unique([userId, teamId])
+}
+
+model TeamMemberRole {
+  teamMemberId String
+  roleId       String
+  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([teamMemberId, roleId])
 }
 
 model Role {
   id          String       @id @default(cuid())
   name        String       // e.g., "Developer", "Reviewer"
-  teamId      String?
+  description String?
+  teamId      String?      // Null for global roles
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   
-  team        Team?        @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permissions Permission[]
-  members     TeamMember[]
+  team            Team?            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permissions     Permission[]
+  userGlobalRoles UserGlobalRole[]
+  teamMemberRoles TeamMemberRole[]
 }
 
 model Permission {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
   roleId    String
-  resource  String   // e.g., "MODEL", "WORKSPACE", "CREDENTIAL"
-  action    String   // e.g., "CREATE", "READ", "UPDATE", "DELETE"
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  resource  PermissionResource
+  action    PermissionAction
+  scope     PermissionScope    @default(SELF)
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role      Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
 }
 
 model Project {
@@ -171,7 +219,7 @@ model DataSource {
   id              String         @id @default(cuid())
   name            String
   type            DataSourceType
-  authorId        String?
+  creatorId       String?        // Standardized from authorId
   size            Int?           // Size in bytes
   
   // Dynamic Storage
@@ -234,7 +282,7 @@ model Model {
   name        String
   description String?
   workspaceId String?
-  userId      String?    // Creator
+  creatorId   String?    // Standardized from userId
   isActive    Boolean   @default(true)
   version     String    @default("1.0")
   createdAt   DateTime  @default(now())
@@ -245,7 +293,7 @@ model Model {
   schemaMd    String?   @db.Text
   
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user        User?      @relation(fields: [userId], references: [id])
+  creator     User?      @relation(fields: [creatorId], references: [id])
   workflows   Workflow[]
 
   @@index([workspaceId])
@@ -257,7 +305,7 @@ model Workflow {
   name        String
   description String?
   modelId     String
-  userId      String?    // Creator
+  creatorId   String?    // Standardized from userId
   config      Json
   isActive    Boolean   @default(true)
   version     String    @default("1.0")
@@ -265,7 +313,7 @@ model Workflow {
   updatedAt   DateTime  @updatedAt
   
   model       Model     @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  user        User?      @relation(fields: [userId], references: [id])
+  creator     User?      @relation(fields: [creatorId], references: [id])
 
   @@index([modelId])
   @@index([isActive])
@@ -319,8 +367,8 @@ model SavedQuery {
   category    String?
   tags        String[]    @default([])
   source      QuerySource @default(CYPHER)
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creatorId   String      // Standardized from userId
+  creator     User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   executedAt     DateTime?
   executionCount Int       @default(0)
@@ -328,7 +376,7 @@ model SavedQuery {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  @@index([userId])
+  @@index([creatorId])
 }
 
 model UserSettings {
@@ -338,4 +386,28 @@ model UserSettings {
   aiSettings Json?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model TeamInvitation {
+  id          String   @id @default(cuid())
+  email       String
+  teamId      String
+  roleId      String?  // Optional specific role for the invitee
+  invitedById String
+  token       String   @unique
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitedBy User     @relation("TeamInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([email, teamId]) // One active invite per email per team
 }

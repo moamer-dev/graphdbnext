@@ -1,120 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { WorkflowService } from '@/services/WorkflowService'
+import { z } from 'zod'
 
-export async function GET(request: NextRequest) {
+const CreateWorkflowSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  modelId: z.string().min(1, 'modelId is required'),
+  config: z.any(),
+})
+
+export async function GET(req: NextRequest) {
   try {
-    if (!prisma) {
-      console.error('Prisma client is not initialized')
-      return NextResponse.json({ error: 'Database connection error' }, { status: 500 })
-    }
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      console.error('Workflow GET: No session or user ID', { hasSession: !!session, hasUser: !!session?.user, userId: session?.user?.id })
-      return NextResponse.json({ error: 'Unauthorized: Please sign in to access workflows' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const modelId = searchParams.get('modelId')
+    const { searchParams } = new URL(req.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const pageSize = parseInt(searchParams.get('pageSize') || '10')
+    const query = searchParams.get('query') || searchParams.get('search') || undefined
+    const sortBy = searchParams.get('sortBy') || undefined
+    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined
 
-    if (!modelId) {
-      return NextResponse.json({ error: 'modelId is required' }, { status: 400 })
-    }
-
-    if (!prisma.workflow) {
-      console.error('Prisma workflow model is not available. Run: npx prisma generate')
-      return NextResponse.json({ error: 'Database schema not updated. Please run: npx prisma generate' }, { status: 500 })
-    }
-
-    const workflows = await prisma.workflow.findMany({
-      where: {
-        modelId,
-        userId: session.user.id,
-        isActive: true
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        version: true,
-        createdAt: true,
-        updatedAt: true
+    const filters: Record<string, any> = {}
+    searchParams.forEach((v, k) => {
+      if (!['page', 'pageSize', 'query', 'search', 'sortBy', 'sortOrder'].includes(k)) {
+        filters[k] = v
       }
     })
 
-    return NextResponse.json({ workflows })
-  } catch (error) {
-    console.error('Error fetching workflows:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch workflows'
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    const result = await WorkflowService.findAllWithRBAC(session.user.id, {
+      page,
+      pageSize,
+      sortBy,
+      sortOrder,
+      query,
+      filters
+    })
+
+    // Formatting for backward compatibility if needed (some components expect { workflows: [...] })
+    return NextResponse.json({ 
+        ...result,
+        workflows: result.data 
+    })
+  } catch (error: any) {
+    console.error('Workflows GET Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    if (!prisma) {
-      console.error('Prisma client is not initialized')
-      return NextResponse.json({ error: 'Database connection error' }, { status: 500 })
-    }
-
-    if (!prisma.workflow) {
-      console.error('Prisma workflow model is not available. Run: npx prisma generate')
-      return NextResponse.json({ error: 'Database schema not updated. Please run: npx prisma generate' }, { status: 500 })
-    }
-
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      console.error('Workflow POST: No session or user ID', { hasSession: !!session, hasUser: !!session?.user, userId: session?.user?.id })
-      return NextResponse.json({ error: 'Unauthorized: Please sign in to save workflows' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { modelId, name, description, config } = body
+    const body = await req.json()
+    const validatedData = CreateWorkflowSchema.parse(body)
 
-    if (!modelId || !name || !config) {
-      return NextResponse.json(
-        { error: 'modelId, name, and config are required' },
-        { status: 400 }
-      )
+    const workflow = await WorkflowService.createWithRBAC(session.user.id, validatedData as any)
+
+    return NextResponse.json({ data: workflow, workflow }, { status: 201 })
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })
     }
-
-    const model = await prisma.model.findFirst({
-      where: {
-        id: modelId,
-        userId: session.user.id
-      }
-    })
-
-    if (!model) {
-      return NextResponse.json({ error: `Model not found or you don't have access to it` }, { status: 404 })
-    }
-
-    const workflow = await prisma.workflow.create({
-      data: {
-        name,
-        description: description || null,
-        modelId,
-        userId: session.user.id,
-        config: config as any
-      }
-    })
-
-    return NextResponse.json({ workflow })
-  } catch (error) {
-    console.error('Error creating workflow:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create workflow'
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    console.error('Workflows POST Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
-

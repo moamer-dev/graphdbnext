@@ -17,7 +17,4 @@ export * from './graph/graph-database'
 // AI Services
 export { AIService, type NLQueryRequest, type NLQueryResponse, type QuerySuggestion } from './ai/AIService'
 
-// Database CRUD Services
-export * from './crud'
-export * from './core/createCrudService'
-export * from './core/CrudService'
+// Database CRUD Services are now explicit in @/services/ (e.g., ProjectService, WorkspaceService)

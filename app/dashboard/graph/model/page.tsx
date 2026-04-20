@@ -4,26 +4,24 @@ import { Suspense } from 'react'
 import { useState, useCallback, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useUrlState } from '@/hooks/view/useUrlState'
 import { DataTable } from '@/components/data-table/DataTable'
-import { ResourceGrid } from '@/components/resource-grid/ResourceGrid'
-import { ModelCard } from '@/components/resource-grid/ModelCard'
 import { useResourceTable } from '@/hooks/view/useResourceTable'
 import { resourceHooks } from '@/hooks/react-query'
-import { ModelResource, type Model } from '@/resources/ModelResource'
+import { ModelResource } from '@/resources/ModelResource'
 import { useModelUpload } from '@/hooks/model/useModelUpload'
 import { downloadTemplate } from '@/utils'
 import { useModelBuilder } from '@/hooks'
 import { Button } from '@/components/ui/button'
-import { Upload, LayoutGrid, Table2, Plus, FileCode } from 'lucide-react'
+import { Upload, Plus, FileCode, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2 } from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-type ViewMode = 'table' | 'grid'
+import { useRBAC } from '@/hooks/useRBAC'
+import { useUIStore } from '@/stores/uiStore'
+import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
+import { DataGrid } from '@/components/data-table/DataGrid'
+import { ResourceCard } from '@/components/dashboard/ResourceCard'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
 
 function ModelsPageContent() {
   const searchParams = useSearchParams()
@@ -39,11 +37,9 @@ function ModelsPageContent() {
   const [modelDescription, setModelDescription] = useState('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const router = useRouter()
+  const { can } = useRBAC()
 
-  // Use reusable hook for URL state management
-  const [viewMode, setViewMode] = useUrlState<ViewMode>('view', 'grid', {
-    removeWhenDefault: true
-  })
+  const { dashboardView: currentView } = useUIStore()
 
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'ADMIN'
@@ -102,17 +98,17 @@ function ModelsPageContent() {
     await deleteMutation.mutateAsync(id)
   }, [deleteMutation])
 
-  const renderModelCard = useCallback((model: Model) => {
-    return (
-      <ModelCard
-        key={model.id}
-        model={model}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    )
-  }, [handleView, handleEdit, handleDelete])
+  const gridActions = (item: any) => [
+    { label: 'View', icon: Eye, action: () => handleView(item.id), permission: { action: 'READ' as const } },
+    { label: 'Edit', icon: Pencil, action: () => handleEdit(item.id), permission: { action: 'UPDATE' as const } },
+    { 
+      label: 'Delete', 
+      icon: Trash2, 
+      variant: 'destructive' as const,
+      action: () => config.rowActions?.find(a => a.label === 'Delete')?.action(item),
+      permission: { action: 'DELETE' as const }
+    }
+  ]
 
   return (
     <div className="space-y-4 mt-4">
@@ -130,19 +126,8 @@ function ModelsPageContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} suppressHydrationWarning>
-              <TabsList className="h-7 bg-muted/40 border border-border/40 backdrop-blur-sm" suppressHydrationWarning>
-                <TabsTrigger value="table" className="h-6 text-xs px-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary" suppressHydrationWarning>
-                  <Table2 className="h-3 w-3 mr-1" />
-                  Table
-                </TabsTrigger>
-                <TabsTrigger value="grid" className="h-6 text-xs px-2.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary" suppressHydrationWarning>
-                  <LayoutGrid className="h-3 w-3 mr-1" />
-                  Grid
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            {modelBuilderEnabled && (
+            <ViewSwitcher />
+            {modelBuilderEnabled && can('CREATE', ModelResource.RESOURCE_NAME) && (
               <>
                 <Button
                   size="sm"
@@ -251,7 +236,7 @@ function ModelsPageContent() {
       </div>
 
       <div className="space-y-4">
-        {viewMode === 'table' ? (
+        {currentView === 'table' ? (
           <DataTable
             config={config}
             data={data}
@@ -269,108 +254,35 @@ function ModelsPageContent() {
             initialColumnVisibility={{ description: false }}
           />
         ) : (
-          <div className="space-y-4">
-            {/* Filters - reuse from table config */}
-            {config.filters && config.filters.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {config.filters.map((filter: any) => (
-                  <div key={filter.key} className="flex items-center gap-2">
-                    {filter.type === 'text' && (
-                      <Input
-                        placeholder={filter.placeholder || `Filter by ${filter.label}...`}
-                        value={(filters[filter.key] as string) || ''}
-                        onChange={(e) => onFiltersChange({ ...filters, [filter.key]: e.target.value })}
-                        className="h-8 w-[200px]"
-                      />
-                    )}
-                    {filter.type === 'select' && filter.options && (
-                      <Select
-                        value={(filters[filter.key] as string) || 'all'}
-                        onValueChange={(value) => onFiltersChange({ ...filters, [filter.key]: value === 'all' ? '' : value })}
-                      >
-                        <SelectTrigger className="h-8 w-[180px]" suppressHydrationWarning>
-                          <SelectValue suppressHydrationWarning />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          {filter.options
-                            .filter((option: any) => option.value !== '' && option.value !== 'all')
-                            .map((option: any) => (
-                              <SelectItem key={String(option.value)} value={String(option.value)}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                ))}
-              </div>
+          <DataGrid
+            config={config}
+            data={data}
+            total={total}
+            loading={loading}
+            page={page}
+            pageSize={pageSize}
+            filters={filters}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            onFiltersChange={onFiltersChange}
+            renderCard={(item: any, { isSelected, onSelect }) => (
+              <ResourceCard
+                key={item.id}
+                item={item}
+                resourceName={ModelResource.RESOURCE_NAME}
+                title={item.name}
+                description={item.description}
+                status={true}
+                date={item.createdAt}
+                creator={item.creator?.name}
+                isSelected={isSelected}
+                onSelect={onSelect}
+                onClick={() => handleView(item.id)}
+                showQuickPerspective={false}
+                actions={gridActions(item)}
+              />
             )}
-
-            {/* Grid View */}
-            <ResourceGrid
-              data={data}
-              loading={loading}
-              config={config}
-              onDelete={handleDelete}
-              renderCard={renderModelCard}
-            />
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">
-                  Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} results
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onPageChange(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm">Page</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={Math.ceil(total / pageSize)}
-                    value={page}
-                    onChange={(e) => onPageChange(Math.max(1, Math.min(Math.ceil(total / pageSize), Number(e.target.value))))}
-                    className="h-8 w-16"
-                  />
-                  <span className="text-sm">of {Math.ceil(total / pageSize)}</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onPageChange(Math.min(Math.ceil(total / pageSize), page + 1))}
-                  disabled={page >= Math.ceil(total / pageSize)}
-                >
-                  Next
-                </Button>
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(value) => onPageSizeChange(Number(value))}
-                >
-                  <SelectTrigger className="h-8 w-[70px]" suppressHydrationWarning>
-                    <SelectValue suppressHydrationWarning />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[10, 20, 30, 50, 100].map((size) => (
-                      <SelectItem key={size} value={String(size)}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+          />
         )}
       </div>
     </div>

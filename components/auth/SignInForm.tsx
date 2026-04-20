@@ -40,8 +40,16 @@ export function SignInForm ({ onSwitchToRegister }: SignInFormProps) {
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
-        toast.error('Invalid email or password')
+        let errorMessage = 'Invalid email or password'
+        
+        if (result.error !== 'CredentialsSignin') {
+          errorMessage = result.error === 'AccessDenied' 
+            ? 'Account access denied. You may be disabled.'
+            : result.error
+        }
+        
+        setError(errorMessage)
+        toast.error(errorMessage)
         setLoading(false)
       } else if (result?.ok || !result?.error) {
         toast.success('Signed in successfully')

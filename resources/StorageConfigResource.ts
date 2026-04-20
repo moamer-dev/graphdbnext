@@ -2,9 +2,13 @@ import { TableConfig } from './TableConfig'
 
 export const StorageConfigResource = {
   NAME: 'StorageConfig',
-  BASE_PATH: '/api/admin/storage',
-  LIST_PATH: '/api/admin/storage',
-  VIEW_PATH: '/api/admin/storage',
+  BASE_PATH: '/api/storage-configs',
+  LIST_PATH: '/dashboard/admin/storage',
+  VIEW_PATH: '/dashboard/admin/storage',
+  
+  HOOK_CONFIG: {
+    workspaceScoped: false
+  },
   createTableConfig: (onView: (id: string) => void, onEdit: (id: string) => void, onDelete: (id: string) => Promise<void>): TableConfig<StorageConfig> => ({
     name: 'storage-configs',
     resourceName: 'StorageConfig',
@@ -16,8 +20,8 @@ export const StorageConfigResource = {
       { id: 'isActive', header: 'Active', accessorKey: 'isActive', sortable: true }
     ],
     rowActions: [
-      { label: 'Edit', action: (item) => onEdit(item.id) },
-      { label: 'Delete', variant: 'destructive', action: (item) => onDelete(item.id), requiresConfirmation: true }
+      { label: 'Edit', action: (item) => onEdit(item.id), permission: { resource: 'TEAM', action: 'UPDATE' as const } },
+      { label: 'Delete', variant: 'destructive', action: (item) => onDelete(item.id), requiresConfirmation: true, permission: { resource: 'TEAM', action: 'DELETE' as const } }
     ],
     enableRowSelection: true
   })

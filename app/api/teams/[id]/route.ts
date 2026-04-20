@@ -1,153 +1,82 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { TeamService } from '@/services/TeamService'
+import { z } from 'zod'
 
-export async function DELETE(
-  req: Request,
+const UpdateTeamSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+  projectIds: z.array(z.string()).optional(),
+})
+
+export async function GET(
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 })
-
   try {
-    const { id } = await params
-    const isAdmin = session.user.role === 'ADMIN'
-    
-    // Check ownership
-    const team = await prisma.team.findUnique({
-      where: { id },
-      select: { creatorId: true }
-    })
-
-    if (!team) return new NextResponse('Not Found', { status: 404 })
-    if (!isAdmin && team.creatorId !== session.user.id) {
-      return new NextResponse('Forbidden: You can only delete teams you created', { status: 403 })
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
-    // Hard delete
-    await prisma.team.delete({
-      where: { id }
-    })
 
-    return new NextResponse(null, { status: 204 })
-  } catch (error) {
-    console.error('Error deleting team:', error)
-    return new NextResponse('Internal Error', { status: 500 })
+    const { id } = await params
+    const team = await TeamService.findOneWithRBAC(session.user.id, id)
+
+    if (!team) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ data: team })
+  } catch (error: any) {
+    console.error('Team GET Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 export async function PATCH(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 })
-
-    try {
-        const { id } = await params
-        const body = await req.json()
-        const isAdmin = session.user.role === 'ADMIN'
-
-        // Check ownership
-        const team = await prisma.team.findUnique({
-            where: { id },
-            select: { creatorId: true }
-        })
-
-        if (!team) return new NextResponse('Not Found', { status: 404 })
-        if (!isAdmin && team.creatorId !== session.user.id) {
-            return new NextResponse('Forbidden: You can only update teams you created', { status: 403 })
-        }
-
-        const updatedTeam = await prisma.$transaction(async (tx) => {
-            // Update team basic info
-            const updated = await tx.team.update({
-                where: { id },
-                data: {
-                    name: body.name,
-                    description: body.description,
-                    isActive: body.isActive,
-                    ...(isAdmin && body.creatorId ? { creatorId: body.creatorId } : {})
-                }
-            })
-
-            // Update project assignments if projectIds is present
-            if (body.projectIds && Array.isArray(body.projectIds)) {
-                // 1. Unassign projects that were in this team but are no longer selected
-                await tx.project.updateMany({
-                    where: { 
-                        teamId: id,
-                        id: { notIn: body.projectIds }
-                    },
-                    data: { teamId: null }
-                })
-
-                // 2. Assign new projects to this team
-                await tx.project.updateMany({
-                    where: { 
-                        id: { in: body.projectIds }
-                    },
-                    data: { teamId: id }
-                })
-            }
-
-            return true
-        })
-
-        const fullUpdated = await prisma.team.findUnique({
-            where: { id },
-            include: {
-                projects: true,
-                creator: true,
-                members: {
-                    include: {
-                        user: true,
-                        role: true
-                    }
-                }
-            }
-        })
-
-        return NextResponse.json({ data: fullUpdated })
-    } catch (error) {
-        console.error('Error updating team:', error)
-        return new NextResponse('Internal Error', { status: 500 })
-    }
-}
-
-export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 })
-
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
-    const isAdmin = session.user.role === 'ADMIN'
+    const body = await req.json()
+    const validatedData = UpdateTeamSchema.parse(body)
 
-    const team = await prisma.team.findFirst({
-      where: { 
-        id, 
-        ...(isAdmin ? {} : { creatorId: session.user.id }) 
-      },
-      include: {
-        creator: true,
-        members: {
-          include: {
-            user: true,
-            role: true
-          }
-        }
-      }
-    })
+    const team = await TeamService.updateWithRBAC(session.user.id, id, validatedData as any)
 
-    if (!team) return new NextResponse('Not Found', { status: 404 })
-    
     return NextResponse.json({ data: team })
-  } catch (error) {
-    console.error('Error fetching team:', error)
-    return new NextResponse('Internal Error', { status: 500 })
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })
+    }
+    console.error('Team PATCH Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    await TeamService.deleteWithRBAC(session.user.id, id)
+
+    return new NextResponse(null, { status: 204 })
+  } catch (error: any) {
+    console.error('Team DELETE Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -12,27 +12,37 @@ export interface SavedQuery {
   category: string | null
   tags: string[]
   source: 'BUILDER' | 'CYPHER' | 'LIBRARY'
-  userId: string
+  creatorId: string
   executedAt: string | null
   executionCount: number
   createdAt: string
   updatedAt: string
+  creator?: {
+    id: string
+    name: string | null
+    email: string
+  }
 }
 
 const columnHelper = createColumnHelper<SavedQuery>()
 
 export class SavedQueryResource {
   static readonly RESOURCE_NAME = 'SavedQuery'
-  static readonly BASE_PATH = '/api/queries'
+  static readonly BASE_PATH = '/api/saved-queries'
   static readonly VIEW_PATH = '/dashboard/database/queries'
   static readonly LIST_PATH = '/dashboard/database/queries'
   static readonly EDIT_PATH = (id: string) => `${SavedQueryResource.VIEW_PATH}/${id}/edit`
+  
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: false
+  }
 
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,
     onDelete: (id: string) => Promise<void>,
-    _onManageMembers?: (id: string) => void
+    _onManageMembers?: (id: string) => void,
+    isAdmin?: boolean
   ): TableConfig<SavedQuery> {
     const columns: ResourceColumnDef<SavedQuery>[] = [
       {
@@ -114,13 +124,15 @@ export class SavedQueryResource {
         label: 'View',
         icon: Eye,
         action: (row: SavedQuery) => onView(row.id),
-        variant: 'default' as const
+        variant: 'default' as const,
+        permission: { action: 'READ' as const }
       },
       {
         label: 'Edit',
         icon: Edit,
         action: (row: SavedQuery) => onEdit(row.id),
-        variant: 'default' as const
+        variant: 'default' as const,
+        permission: { action: 'UPDATE' as const }
       },
       {
         label: 'Delete',
@@ -128,7 +140,8 @@ export class SavedQueryResource {
         action: (row: SavedQuery) => onDelete(row.id),
         variant: 'destructive' as const,
         requiresConfirmation: true,
-        confirmationMessage: (row: SavedQuery) => `Are you sure you want to delete "${row.name}"? This action cannot be undone.`
+        confirmationMessage: (row: SavedQuery) => `Are you sure you want to delete "${row.name}"? This action cannot be undone.`,
+        permission: { action: 'DELETE' as const }
       }
     ]
 
@@ -148,7 +161,7 @@ export class SavedQueryResource {
           label: 'Source',
           type: 'select',
           options: [
-            { label: 'All', value: '' },
+            { label: 'All', value: 'all' },
             { label: 'Builder', value: 'BUILDER' },
             { label: 'Cypher', value: 'CYPHER' },
             { label: 'Library', value: 'LIBRARY' }
@@ -184,7 +197,7 @@ export class SavedQueryResource {
 
         const result = await response.json()
         return {
-          data: result.queries || [],
+          data: result.data || [],
           total: result.total || 0
         }
       }

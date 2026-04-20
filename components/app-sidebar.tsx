@@ -21,6 +21,8 @@ import {
 import { sidebarNavItems } from '@/config/sidebar-nav'
 import { Network } from 'lucide-react'
 
+import { NavWorkspace } from '@/components/nav-workspace'
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { data: session } = useSession()
@@ -29,14 +31,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   const hasPermission = (resource?: string, action: string = 'READ') => {
     if (isAdmin) return true
-    if (!resource) return true // If no resource is defined, it's public
-    return userPermissions.some((p: any) => p.resource === resource && (p.action === action || p.action === 'MANAGE'))
-  }
+    if (!resource) return true 
 
+    // Check if user has the specific action OR 'MANAGE' on the resource
+    return userPermissions.some((p: any) => 
+      p.resource === resource && (p.action === action || p.action === 'MANAGE')
+    )
+  }
   // Filter nav items based on admin status and permissions
   const filteredNavItems = sidebarNavItems
     .map(item => {
-      // Create a shallow copy to avoid mutating the original config
       const newItem = { ...item }
       
       // Filter sub-items if they exist
@@ -47,19 +51,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return newItem
     })
     .filter(item => {
-      // 1. Admin only check
       if (item.adminOnly && !isAdmin) {
         return false
       }
       
-      // 2. Check main item permission if defined
       if (!hasPermission(item.resource, item.action)) {
         return false
       }
       
-      // 3. If it has sub-items but all were filtered out, only show if it has a direct URL meant for landing
-      // But for Dashboard and some others, they might not have subItems anyway.
-      // Usually, if it has a sub-menu, and the sub-menu is empty, we hide the parent.
       if (item.items && item.items.length === 0 && sidebarNavItems.find(i => i.url === item.url)?.items?.length! > 0) {
           return false
       }
@@ -75,19 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" suppressHydrationWarning {...props}>
       <SidebarHeader suppressHydrationWarning>
-        <SidebarMenu suppressHydrationWarning>
-          <SidebarMenuItem suppressHydrationWarning>
-            <SidebarMenuButton size="lg" suppressHydrationWarning>
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Network className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-bold tracking-tight text-primary">Plexus</span>
-                <span className="truncate text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Research Platform</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <NavWorkspace />
       </SidebarHeader>
       <SidebarContent suppressHydrationWarning>
         <NavMain items={navMain} />

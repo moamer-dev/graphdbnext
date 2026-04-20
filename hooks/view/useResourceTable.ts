@@ -38,18 +38,21 @@ interface UseResourceTableOptions<T extends { id: string }> {
     mutateAsync: (ids: string[]) => Promise<void>
   }
   isAdmin?: boolean
+  userId?: string
+  userPermissions?: any[]
   initialFilters?: Record<string, unknown>
   tableConfigArgs?: unknown[]
   onView?: (id: string) => void
   onEdit?: (id: string) => void
   onManageMembers?: (id: string) => void
+  scope?: string
 }
 
 export function useResourceTable<T extends { id: string }>(
   options: UseResourceTableOptions<T>
 ) {
   const router = useRouter()
-  const { resource, useList, useDelete, useBulkDelete, isAdmin, initialFilters = {}, tableConfigArgs = [], onView: onViewOverride, onEdit: onEditOverride, onManageMembers: onManageMembersOverride } = options
+  const { resource, useList, useDelete, useBulkDelete, isAdmin, userId, userPermissions, initialFilters = {}, tableConfigArgs = [], onView: onViewOverride, onEdit: onEditOverride, onManageMembers: onManageMembersOverride, scope } = options
   const deleteMutation = useDelete({ redirect: false })
   const bulkDeleteMutation = useBulkDelete({ onSuccess: () => {} })
 
@@ -89,16 +92,20 @@ export function useResourceTable<T extends { id: string }>(
   // Memoize initialFilters to prevent infinite loops from object literals in page components
   const memoizedInitialFilters = useMemo(() => initialFilters, [JSON.stringify(initialFilters)])
 
-  const config = useMemo(() =>
-    resource.createTableConfig(
+  const config = useMemo(() => {
+    const args: any[] = [...tableConfigArgs]
+    if (isAdmin !== undefined) args.push(isAdmin)
+    if (userId !== undefined) args.push(userId)
+    if (userPermissions !== undefined) args.push(userPermissions)
+
+    return resource.createTableConfig(
       handleView,
       handleEdit,
       handleDelete,
       handleManageMembers,
-      ...(isAdmin !== undefined ? [isAdmin, ...tableConfigArgs] : tableConfigArgs)
-    ),
-    [resource, handleView, handleEdit, handleDelete, handleManageMembers, isAdmin, tableConfigArgs]
-  )
+      ...args
+    )
+  }, [resource, handleView, handleEdit, handleDelete, handleManageMembers, isAdmin, userId, userPermissions, tableConfigArgs])
 
   // 1b. Inject bulk delete action if selection is enabled
   const finalConfig = useMemo(() => {
@@ -112,7 +119,8 @@ export function useResourceTable<T extends { id: string }>(
           label: 'Delete Selected',
           variant: 'destructive' as const,
           requiresConfirmation: true,
-          action: (rows: T[]) => handleBulkDelete(rows)
+          action: (rows: T[]) => handleBulkDelete(rows),
+          permission: { action: 'DELETE' as const }
         }
       ]
     }
@@ -132,10 +140,10 @@ export function useResourceTable<T extends { id: string }>(
     sortBy: tableState.sortBy,
     sortOrder: tableState.sortOrder,
     filters: {
-        ...(!isAdmin ? memoizedInitialFilters : {}),
-        ...tableState.filters
+        ...tableState.filters,
+        ...(scope ? { scope } : {})
     }
-  }), [tableState.page, tableState.pageSize, tableState.sortBy, tableState.sortOrder, tableState.filters, memoizedInitialFilters, isAdmin])
+  }), [tableState.page, tableState.pageSize, tableState.sortBy, tableState.sortOrder, tableState.filters, scope])
 
   // 3. Fetch data using React Query
   const queryResult = useList(queryParams)

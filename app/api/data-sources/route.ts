@@ -1,110 +1,74 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { storageManager } from '@/lib/storage';
-import { StreamingParser } from '@/lib/storage/StreamingParser';
-import { Readable } from 'stream';
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { DataSourceService } from '@/services/DataSourceService'
+import { z } from 'zod'
+import { DataSourceType } from '@prisma/client'
 
-export async function GET(request: NextRequest) {
+const CreateDataSourceSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  type: z.nativeEnum(DataSourceType),
+  workspaceId: z.string().optional().nullable(),
+  jsonContent: z.any().optional().nullable(),
+  content: z.string().optional().nullable(),
+  fileUrl: z.string().optional().nullable(),
+})
+
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url);
-    const workspaceId = searchParams.get('workspaceId');
-    if (!workspaceId) {
-      return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
-    }
+    const { searchParams } = new URL(req.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const pageSize = parseInt(searchParams.get('pageSize') || '10')
+    const query = searchParams.get('query') || searchParams.get('search') || undefined
+    const sortBy = searchParams.get('sortBy') || undefined
+    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined
 
-    const dataSources = await prisma.dataSource.findMany({
-      where: {
-        workspaceId,
-        isActive: true,
-      },
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        size: true,
-        createdAt: true,
-        updatedAt: true,
-        // Only return content for small items
-        jsonContent: true,
-        content: true,
-        fileUrl: true,
-        structure: true
+    const filters: Record<string, any> = {}
+    searchParams.forEach((v, k) => {
+      if (!['page', 'pageSize', 'query', 'search', 'sortBy', 'sortOrder'].includes(k)) {
+        filters[k] = v
       }
-    });
+    })
 
-    return NextResponse.json({ 
-      data: dataSources,
-      total: dataSources.length 
-    });
-  } catch (error) {
-    console.error('DataSources GET Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch data sources' }, { status: 500 });
+    const result = await DataSourceService.findAllWithRBAC(session.user.id, {
+      page,
+      pageSize,
+      sortBy,
+      sortOrder,
+      query,
+      filters
+    })
+
+    return NextResponse.json(result)
+  } catch (error: any) {
+    console.error('DataSources GET Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json();
-    const { name, type, data, content, workspaceId, storageConfigId } = body;
+    const body = await req.json()
+    const validatedData = CreateDataSourceSchema.parse(body)
 
-    if (!name || !type || !workspaceId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const dataSource = await DataSourceService.createWithRBAC(session.user.id, validatedData as any)
+
+    return NextResponse.json({ data: dataSource }, { status: 201 })
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })
     }
-
-    const payload = data || content;
-    const stringified = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    const size = Buffer.byteLength(stringified);
-
-    let dataSourceData: any = {
-      name,
-      type,
-      workspaceId,
-      size,
-      authorId: session.user.id,
-      storageConfigId: storageConfigId || null,
-    };
-
-    if (storageManager.shouldUseExternal(size)) {
-      // Massive file found - push to storage provider
-      const provider = await storageManager.getActiveProvider();
-      const fileName = `${workspaceId}/${type.toLowerCase()}/${Date.now()}_${name.replace(/\s+/g, '_')}`;
-      const { url } = await provider.save(fileName, stringified);
-      
-      dataSourceData.fileUrl = url;
-
-      // Real-time Structural DNA extraction via Streaming
-      const readable = Readable.from(stringified);
-      const { paths } = await StreamingParser.getJsonStructure(readable);
-      dataSourceData.structure = paths;
-    } else {
-      // Small file - store directly in DB
-      if (type === 'XML') {
-        dataSourceData.content = stringified;
-      } else {
-        dataSourceData.jsonContent = typeof payload === 'string' ? JSON.parse(payload) : payload;
-      }
-    }
-
-    const dataSource = await prisma.dataSource.create({
-      data: dataSourceData
-    });
-
-    return NextResponse.json({ data: dataSource });
-  } catch (error) {
-    console.error('DataSources POST Error:', error);
-    return NextResponse.json({ error: 'Failed to create data source' }, { status: 500 });
+    console.error('DataSources POST Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

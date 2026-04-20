@@ -63,6 +63,8 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { cn } from '@/utils'
 import type { TableConfig, BulkAction } from '@/resources/TableConfig'
+import { useRBAC } from '@/hooks/useRBAC'
+import { useUIStore } from '@/stores/uiStore'
 
 interface DataTableProps<T> {
   config: TableConfig<T>
@@ -73,10 +75,12 @@ interface DataTableProps<T> {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   filters?: Record<string, unknown>
+  loading?: boolean
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
   onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void
   onFiltersChange?: (filters: Record<string, unknown>) => void
+  initialColumnVisibility?: VisibilityState
 }
 
 export function DataTable<T>({
@@ -88,11 +92,16 @@ export function DataTable<T>({
   sortBy,
   sortOrder,
   filters: filterValues = {},
+  loading = false,
   onPageChange,
   onPageSizeChange,
   onSortChange,
   onFiltersChange,
+  initialColumnVisibility = {}
 }: DataTableProps<T>) {
+  const { can } = useRBAC()
+  const { tableVisibility, setTableVisibility } = useUIStore()
+  
   // Local state for table features if not controlled externally
   const [internalPage, setInternalPage] = React.useState(page)
   const [internalPageSize, setInternalPageSize] = React.useState(pageSize)
@@ -100,8 +109,22 @@ export function DataTable<T>({
   const [internalSortOrder, setInternalSortOrder] = React.useState<'asc' | 'desc' | undefined>(sortOrder)
   const [internalFilters, setInternalFilters] = React.useState<Record<string, unknown>>(filterValues)
 
+  // Initialize from store if available
+  const storedVisibility = React.useMemo(() => 
+    config.name ? tableVisibility[config.name] : null
+  , [config.name, tableVisibility])
+
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
+    storedVisibility || initialColumnVisibility
+  )
+
+  // Sync state when store hydrates or changes externally
+  React.useEffect(() => {
+    if (storedVisibility) {
+      setColumnVisibility(storedVisibility)
+    }
+  }, [storedVisibility])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState('')
 
@@ -123,25 +146,22 @@ export function DataTable<T>({
     variant?: 'default' | 'destructive'
   } | null>(null)
 
-  // Save/Load column visibility
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`column-visibility-${config.name}`)
-      if (saved) {
-        try {
-          setColumnVisibility(JSON.parse(saved))
-        } catch (e) {
-          console.error('Failed to load column visibility', e)
-        }
+  // Save/Load column visibility is now handled via useUIStore
+  const handleOnColumnVisibilityChange = React.useCallback((updaterOrValue: any) => {
+    setColumnVisibility((prev) => {
+      const nextValue = typeof updaterOrValue === 'function' 
+        ? updaterOrValue(prev) 
+        : updaterOrValue
+      
+      if (config.name) {
+        // Schedule update to move it out of the render phase and avoid React warnings
+        Promise.resolve().then(() => {
+          setTableVisibility(config.name, nextValue)
+        })
       }
-    }
-  }, [config.name])
-
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`column-visibility-${config.name}`, JSON.stringify(columnVisibility))
-    }
-  }, [columnVisibility, config.name])
+      return nextValue
+    })
+  }, [config.name, setTableVisibility])
 
   // Process columns with selection
   const columnsWithSelection = React.useMemo<ColumnDef<T>[]>(() => {
@@ -161,6 +181,7 @@ export function DataTable<T>({
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(!!value)}
+            disabled={!can('DELETE', (config.resourceName || '').toUpperCase(), row.original)}
             aria-label="Select row"
           />
         ),
@@ -193,7 +214,18 @@ export function DataTable<T>({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {config.rowActions?.map((action, index) => {
+                {config.rowActions?.filter(action => {
+                  // 1. Check custom visibility logic
+                  if (action.visible && !action.visible(item)) return false
+                  
+                  // 2. Check RBAC permissions
+                  if (action.permission) {
+                    const resource = action.permission.resource || config.resourceName.toUpperCase()
+                    if (!can(action.permission.action, resource, item)) return false
+                  }
+                  
+                  return true
+                }).map((action, index) => {
                   const Icon = action.icon
                   return (
                     <DropdownMenuItem
@@ -244,7 +276,7 @@ export function DataTable<T>({
       }
     },
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: handleOnColumnVisibilityChange,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
@@ -254,7 +286,8 @@ export function DataTable<T>({
     manualPagination: true,
     pageCount: Math.ceil(total / pageSize),
     manualSorting: true,
-    manualFiltering: true
+    manualFiltering: true,
+    enableRowSelection: (row) => can('DELETE', (config.resourceName || '').toUpperCase(), row.original)
   })
 
   const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original)
@@ -420,7 +453,13 @@ export function DataTable<T>({
           "flex items-center gap-2 transition-all duration-300 overflow-hidden",
           selectedRows.length > 0 ? "max-w-md opacity-100" : "max-w-0 opacity-0"
         )}>
-          {config.bulkActions?.map((action, i) => {
+          {config.bulkActions?.filter(action => {
+            if (action.permission) {
+              const resource = action.permission.resource || config.resourceName.toUpperCase()
+              if (!can(action.permission.action, resource)) return false
+            }
+            return true
+          }).map((action, i) => {
             const Icon = action.icon
             return (
               <Button
@@ -513,6 +552,16 @@ export function DataTable<T>({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3 px-4">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : loading ? (
+              Array.from({ length: pageSize }).map((_, i) => (
+                <TableRow key={i} className="border-b last:border-0 opacity-40">
+                  {finalColumns.map((_, j) => (
+                    <TableCell key={j} className="py-4 px-4">
+                      <div className="h-4 bg-muted rounded-md animate-pulse w-full"></div>
                     </TableCell>
                   ))}
                 </TableRow>

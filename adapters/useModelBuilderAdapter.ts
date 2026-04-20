@@ -11,6 +11,7 @@ import type {
   ModelBuilderRef
 } from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
+import { DataSourceResource } from '@/resources/DataSourceResource'
 import { toast } from 'sonner'
 import { useDatabaseStore } from '@/stores/databaseStore'
 
@@ -89,20 +90,20 @@ export function useModelBuilderAdapter({
   // Default DataSources persistence
   const defaultDataSourcesPersistence = useMemo<DataSourcesPersistence>(() => ({
     onLoad: async () => {
-      const resp = await fetch(`/api/data-sources?workspaceId=${workspaceId}`)
+      const resp = await fetch(`${DataSourceResource.BASE_PATH}?workspaceId=${workspaceId}`)
       if (!resp.ok) return []
-      const data = await resp.json()
-      return data.dataSources
+      const result = await resp.json()
+      return result.data || []
     },
     onSave: async (source) => {
-      await fetch('/api/data-sources', {
+      await fetch(DataSourceResource.BASE_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...source, workspaceId })
       })
     },
     onDelete: async (id) => {
-      await fetch(`/api/data-sources/${id}`, { method: 'DELETE' })
+      await fetch(`${DataSourceResource.BASE_PATH}/${id}`, { method: 'DELETE' })
     }
   }), [workspaceId])
 

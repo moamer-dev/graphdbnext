@@ -11,6 +11,9 @@ import {
 import { useTenantStore } from '@/stores/tenantStore'
 import { Building2, FolderKanban, Layers } from 'lucide-react'
 import { Skeleton } from './ui/skeleton'
+import { TeamResource } from '@/resources/TeamResource'
+import { ProjectResource } from '@/resources/ProjectResource'
+import { WorkspaceResource } from '@/resources/WorkspaceResource'
 
 export function TenantSwitchers() {
   const { 
@@ -29,7 +32,7 @@ export function TenantSwitchers() {
 
   // Fetch Teams
   useEffect(() => {
-    fetch('/api/teams')
+    fetch(TeamResource.BASE_PATH)
       .then(res => res.json())
       .then(json => setTeams(json.data || []))
       .catch(console.error)
@@ -41,7 +44,8 @@ export function TenantSwitchers() {
     // If we have a team, fetch that team's projects. 
     // If not, fetch "Independent / Personal" projects (teamId=null)
     setLoading(true)
-    const url = activeTeamId ? `/api/projects?teamId=${activeTeamId}` : '/api/projects?teamId=null'
+    const baseUrl = ProjectResource.BASE_PATH
+    const url = activeTeamId ? `${baseUrl}?teamId=${activeTeamId}` : `${baseUrl}?teamId=null`
     
     fetch(url)
       .then(res => res.json())
@@ -54,7 +58,7 @@ export function TenantSwitchers() {
   useEffect(() => {
     if (!activeProjectId) return
     setLoading(true)
-    fetch(`/api/workspaces?projectId=${activeProjectId}`)
+    fetch(`${WorkspaceResource.BASE_PATH}?projectId=${activeProjectId}`)
       .then(res => res.json())
       .then(json => setWorkspaces(json.data || []))
       .catch(console.error)

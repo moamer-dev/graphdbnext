@@ -205,7 +205,6 @@ export function ViewWorkspaceDialog({ id, open, onOpenChange }: ViewModalProps) 
 
   const { data, isLoading } = resourceHooks.workspaces.useSingle(stableId, !!stableId) as any
   const workspace = data?.data
-console.log(workspace)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px] shadow-none border-2">

@@ -27,7 +27,7 @@ export default function Home () {
           <Database className="h-12 w-12 text-primary" />
         </div>
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Plexus</h1>
+          <h1 className="text-3xl font-bold tracking-tight">TextLPG</h1>
           <p className="text-muted-foreground mt-2 max-w-[280px] mx-auto leading-relaxed">
             Integrated Graph Research Platform for the Digital Humanities
           </p>

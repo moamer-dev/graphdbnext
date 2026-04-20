@@ -13,6 +13,13 @@ export interface User {
   createdAt: string
   updatedAt: string
   emailVerified: string | null
+  isActive: boolean
+  globalRoles?: Array<{
+    role: {
+      id: string
+      name: string
+    }
+  }>
 }
 
 const columnHelper = createColumnHelper<User>()
@@ -32,6 +39,10 @@ export class UserResource {
   static readonly VIEW_PATH = '/dashboard/admin/users'
   static readonly LIST_PATH = '/dashboard/admin/users'
   static readonly EDIT_PATH = (id: string) => `${UserResource.VIEW_PATH}/${id}/edit`
+  
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: false
+  }
 
   /**
    * Create table configuration for the User entity
@@ -40,7 +51,9 @@ export class UserResource {
     onView: (id: string) => void,
     onEdit: (id: string) => void,
     onDelete: (id: string) => Promise<void>,
-    _onManageMembers?: (id: string) => void
+    _onManageMembers?: (id: string) => void,
+    isAdmin?: boolean,
+    currentUserId?: string
   ): TableConfig<User> {
     const columns: ResourceColumnDef<User>[] = [
       {
@@ -127,7 +140,8 @@ export class UserResource {
         label: 'View',
         icon: Eye,
         action: (row: User) => onView(row.id),
-        variant: 'default' as const
+        variant: 'default' as const,
+        permission: { resource: 'TEAM', action: 'READ' as const }
       },
       {
         label: 'Delete',
@@ -135,7 +149,9 @@ export class UserResource {
         action: (row: User) => onDelete(row.id),
         variant: 'destructive' as const,
         requiresConfirmation: true,
-        confirmationMessage: (row: User) => `Are you sure you want to delete user "${row.email}"? This action cannot be undone.`
+        confirmationMessage: (row: User) => `Are you sure you want to delete user "${row.email}"? This action cannot be undone.`,
+        permission: { resource: 'TEAM', action: 'DELETE' as const },
+        visible: (row: User) => row.id !== currentUserId
       }
     ]
 
@@ -177,7 +193,7 @@ export class UserResource {
 
         const result = await response.json()
         return {
-          data: result.users || [],
+          data: result.data || [],
           total: result.total || 0
         }
       }

@@ -144,8 +144,8 @@ export function QueryViewModal ({ query, open, onOpenChange }: QueryViewModalPro
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <label className="text-xs text-muted-foreground">User ID</label>
-                    <p className="font-medium font-mono text-xs">{query.userId}</p>
+                    <label className="text-xs text-muted-foreground">Creator</label>
+                    <p className="font-medium font-mono text-xs">{query.creator?.name}</p>
                   </div>
                 </div>
               </div>

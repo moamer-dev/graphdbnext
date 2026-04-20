@@ -20,7 +20,7 @@ const prismaConfig: {
   accelerateUrl?: string
   log?: ('query' | 'error' | 'warn')[]
 } = {
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error']
 }
 
 // If using Prisma Accelerate, use accelerateUrl

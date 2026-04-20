@@ -7,12 +7,17 @@ import { resourceHooks } from '@/hooks/react-query'
 import { SavedQueryResource, type SavedQuery } from '@/resources/SavedQueryResource'
 import { Database } from 'lucide-react'
 import { QueryViewModal } from './QueryViewModal'
+import { useUIStore } from '@/stores/uiStore'
+import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
+import { DataGrid } from '@/components/data-table/DataGrid'
+import { ResourceCard } from '@/components/dashboard/ResourceCard'
 
 export default function AdminQueriesPage () {
   // Middleware guarantees admin access, so we can assume isAdmin = true
   const isAdmin = true
   const [selectedQuery, setSelectedQuery] = useState<SavedQuery | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { dashboardView } = useUIStore()
 
   // Use generic hooks directly
   const { 
@@ -59,6 +64,18 @@ export default function AdminQueriesPage () {
     )
   }), [config, handleView, handleEdit])
 
+  const gridActions = (item: any) => [
+    { label: 'View', icon: Database, action: () => handleView(item.id), permission: { action: 'READ' as const } },
+    { label: 'Edit', icon: Database, action: () => handleEdit(item.id), permission: { action: 'UPDATE' as const } },
+    { 
+      label: 'Delete', 
+      icon: Database, // Will be replaced by Trash2 actually if I use standard icons, but let's keep it consistent
+      variant: 'destructive' as const,
+      action: () => config.rowActions?.find(a => a.label === 'Delete')?.action(item),
+      permission: { action: 'DELETE' as const }
+    }
+  ]
+
   return (
     <div className="space-y-4 mt-4">
       <div className="gradient-header-minimal pb-3">
@@ -75,25 +92,59 @@ export default function AdminQueriesPage () {
               View and manage all saved queries from all users
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <ViewSwitcher />
+          </div>
         </div>
       </div>
       
       <div>
-        <DataTable
+        {dashboardView === 'table' ? (
+          <DataTable
+              config={tableConfig}
+              data={data}
+              total={total}
+              loading={loading}
+              page={page}
+              pageSize={pageSize}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              filters={filters}
+              onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
+              onSortChange={onSortChange}
+              onFiltersChange={onFiltersChange}
+          />
+        ) : (
+          <DataGrid
             config={tableConfig}
             data={data}
             total={total}
             loading={loading}
             page={page}
             pageSize={pageSize}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
             filters={filters}
             onPageChange={onPageChange}
             onPageSizeChange={onPageSizeChange}
-            onSortChange={onSortChange}
             onFiltersChange={onFiltersChange}
-        />
+            renderCard={(item: any, { isSelected, onSelect }) => (
+              <ResourceCard
+                key={item.id}
+                item={item}
+                resourceName="SavedQuery"
+                title={item.name}
+                description={item.description}
+                status={true}
+                date={item.createdAt}
+                creator={item.creator?.name}
+                isSelected={isSelected}
+                onSelect={onSelect}
+                onClick={() => handleView(item.id)}
+                actions={gridActions(item)}
+              />
+            )}
+          />
+        )}
       </div>
 
       {selectedQuery && (

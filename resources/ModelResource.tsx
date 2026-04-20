@@ -14,12 +14,12 @@ export interface Model {
   isActive: boolean
   createdAt: string
   updatedAt: string
-  userId?: string
+  creatorId?: string
   schemaJson?: unknown
   schemaMd?: string | null
   noteCount?: number
   relationCount?: number
-  user?: {
+  creator?: {
     id: string
     email: string
     name: string | null
@@ -45,6 +45,10 @@ export class ModelResource {
   static readonly VIEW_PATH = '/dashboard/graph/model'
   static readonly LIST_PATH = '/dashboard/graph/model'
   static readonly EDIT_PATH = (id: string) => `${ModelResource.VIEW_PATH}/${id}/edit`
+  
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: true
+  }
 
   /**
    * Create table configuration for the Model entity
@@ -99,12 +103,12 @@ export class ModelResource {
       } as ResourceColumnDef<Model>,
       ...(isAdmin
         ? [
-            columnHelper.accessor('user', {
+            columnHelper.accessor('creator', {
               header: 'Created By',
               cell: (info) => {
-                const user = info.getValue()
+                const creator = info.getValue()
                 const modelId = info.row.original.id
-                if (!user) {
+                if (!creator) {
                   return <div className="text-sm text-muted-foreground">-</div>
                 }
                 return (
@@ -113,7 +117,7 @@ export class ModelResource {
                     className="h-auto p-0 text-sm text-left justify-start hover:cursor-pointer"
                     onClick={() => onView(modelId)}
                   >
-                    {user.name || user.email}
+                    {creator.name || creator.email}
                   </Button>
                 )
               }
@@ -176,14 +180,16 @@ export class ModelResource {
         icon: Eye,
         action: (row: Model) => {
           onView(row.id)
-        }
+        },
+        permission: { action: 'READ' as const }
       },
       {
         label: 'Edit',
         icon: Edit,
         action: (row: Model) => {
           onEdit(row.id)
-        }
+        },
+        permission: { action: 'UPDATE' as const }
       },
       {
         label: 'Delete',
@@ -193,7 +199,8 @@ export class ModelResource {
           await onDelete(row.id)
         },
         requiresConfirmation: true,
-        confirmationMessage: (row: Model) => `Are you sure you want to delete model "${row.name}"? This action cannot be undone.`
+        confirmationMessage: (row: Model) => `Are you sure you want to delete model "${row.name}"? This action cannot be undone.`,
+        permission: { action: 'DELETE' as const }
       }
     ]
 

@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
             create: (permissions || []).map((p: any) => ({
                resource: p.resource,
                action: p.action,
+               scope: p.scope || 'SELF',
                isActive: true
             }))
          }

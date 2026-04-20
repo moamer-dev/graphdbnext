@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 export async function POST (request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name } = body
+    const { email, password, name, workspaceName, projectName } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -29,21 +29,58 @@ export async function POST (request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || null,
-        role: 'USER'
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true
+    // Create user, roles, and onboarding resources in a transaction
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: name || null
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          createdAt: true
+        }
+      })
+
+      // 1. Assign default global USER role
+      await tx.userGlobalRole.create({
+        data: {
+          userId: newUser.id,
+          roleId: 'cl_user_global'
+        }
+      })
+
+      // 2. Automated Onboarding (Workspace & Project)
+      if (workspaceName) {
+        const workspace = await tx.workspace.create({
+          data: {
+            name: workspaceName,
+            creatorId: newUser.id
+          }
+        })
+
+        if (projectName) {
+          const project = await tx.project.create({
+            data: {
+              name: projectName,
+              creatorId: newUser.id
+            }
+          })
+
+          // Link them
+          await tx.projectWorkspace.create({
+            data: {
+              projectId: project.id,
+              workspaceId: workspace.id
+            }
+          })
+        }
       }
+
+      return newUser
     })
 
     return NextResponse.json(
@@ -58,4 +95,3 @@ export async function POST (request: NextRequest) {
     )
   }
 }
-

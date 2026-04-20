@@ -24,6 +24,10 @@ export class DataSourceResource {
   static readonly VIEW_PATH = '/dashboard/database'
   static readonly LIST_PATH = '/dashboard/database'
 
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: true
+  }
+
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,
@@ -70,8 +74,8 @@ export class DataSourceResource {
       resourceName: DataSourceResource.RESOURCE_NAME,
       columns,
       rowActions: [
-        { label: 'View', icon: Eye, action: (row) => onView(row.id) },
-        { label: 'Delete', icon: Trash2, action: (row) => onDelete(row.id), variant: 'destructive', requiresConfirmation: true }
+        { label: 'View', icon: Eye, action: (row) => onView(row.id), permission: { action: 'READ' as const } },
+        { label: 'Delete', icon: Trash2, action: (row) => onDelete(row.id), variant: 'destructive' as const, requiresConfirmation: true, permission: { action: 'DELETE' as const } }
       ],
       fetchData: async ({ page, pageSize, sortBy, sortOrder, filters }) => {
         const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...filters })

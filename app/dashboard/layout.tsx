@@ -6,8 +6,9 @@ import { ClientOnly } from '@/components/client-only'
 import { sidebarNavItems } from '@/config/sidebar-nav'
 import { useSession } from 'next-auth/react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { CreateWorkspaceDialog } from '@/components/dashboard/CreateModals'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -96,6 +97,14 @@ export default function DashboardLayout({
     }
   }, [pathname, session, status, router])
 
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
+
+  useEffect(() => {
+    const handleOpenWorkspace = () => setIsWorkspaceModalOpen(true)
+    window.addEventListener('open-workspace-modal', handleOpenWorkspace)
+    return () => window.removeEventListener('open-workspace-modal', handleOpenWorkspace)
+  }, [])
+
   return (
     <SidebarProvider suppressHydrationWarning>
       <ClientOnly>
@@ -103,6 +112,7 @@ export default function DashboardLayout({
       </ClientOnly>
       <SidebarInset suppressHydrationWarning className="gradient-page">
         <TenantProvider>
+          <CreateWorkspaceDialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
           <header className="gradient-header flex h-14 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12" suppressHydrationWarning>
             <div className="relative z-10 flex items-center gap-2 px-4 w-full overflow-hidden">
               <SidebarTrigger className="-ml-1" />
@@ -114,23 +124,16 @@ export default function DashboardLayout({
                 <Breadcrumb className="hidden md:block">
                   <BreadcrumbList>
                     <BreadcrumbItem>
-                      <BreadcrumbLink href="/dashboard" className="text-[10px] font-medium text-foreground/60 hover:text-foreground">
-                        PLEXUS
+                      <BreadcrumbLink href="/dashboard" className="text-[10px] font-medium text-foreground/40 hover:text-primary transition-colors tracking-tighter uppercase">
+                        Dashboard
                       </BreadcrumbLink>
                     </BreadcrumbItem>
-                    <BreadcrumbSeparator className="opacity-20" />
+                    <BreadcrumbSeparator className="opacity-10" />
                     <BreadcrumbItem>
-                      <BreadcrumbPage className="text-[10px] font-semibold uppercase tracking-wider">{currentTitle}</BreadcrumbPage>
+                      <BreadcrumbPage className="text-[10px] font-bold uppercase tracking-widest text-primary/80">{currentTitle}</BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
-                
-                {/* Tenant Switcher Module - Hidden for Admins to show all resources without scoping */}
-                {session?.user?.role !== 'ADMIN' && (
-                  <div className="flex items-center gap-2">
-                    <TenantSwitchers />
-                  </div>
-                )}
               </div>
 
               <div className="ml-auto flex items-center gap-2 shrink-0">

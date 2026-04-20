@@ -71,8 +71,8 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
   // Fetch list with pagination
   async function fetchList (params: FetchParams): Promise<ResourceResponse<T>> {
     const searchParams = new URLSearchParams({
-      page: String(params.page),
-      pageSize: String(params.pageSize)
+      page: String(params.page || 1),
+      pageSize: String(params.pageSize || 10)
     })
 
     if (params.sortBy) {
@@ -190,14 +190,16 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
 
   // Hook: Fetch list
   function useList (params: FetchParams) {
-    const { activeWorkspaceId } = useTenantStore()
+    const { activeWorkspaceId, isGlobalScope } = useTenantStore()
     
-    // Inject workspaceId filter if scoped
+    // Inject workspaceId filter if scoped and NOT in global scope
+    const applyWorkspaceScope = config.workspaceScoped && activeWorkspaceId && !isGlobalScope
+
     const effectiveParams = {
         ...params,
         filters: {
             ...params.filters,
-            ...(config.workspaceScoped && activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {})
+            ...(applyWorkspaceScope ? { workspaceId: activeWorkspaceId } : {})
         }
     }
 
@@ -251,8 +253,8 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
           toast.success(`${config.resourceName} created successfully`)
         }
         
-        if (options?.redirect !== false && viewPath && item?.id) {
-          router.push(`${viewPath}/${item.id}`)
+        if (options?.redirect !== false && listPath) {
+          router.push(listPath)
         }
         
         if (item) {

@@ -10,6 +10,8 @@ export interface FilterConfig {
   placeholder?: string
 }
 
+export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE'
+
 export interface BulkAction<T = unknown> {
   label: string
   icon?: React.ComponentType<{ className?: string }>
@@ -17,6 +19,7 @@ export interface BulkAction<T = unknown> {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
   requiresConfirmation?: boolean
   confirmationMessage?: string
+  permission?: { resource?: string; action: PermissionAction }
 }
 
 export type ResourceColumnDef<T = any> = ColumnDef<T> & {
@@ -61,6 +64,8 @@ export interface TableConfig<T = unknown> {
     variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
     requiresConfirmation?: boolean
     confirmationMessage?: string | ((row: T) => string)
+    visible?: (row: T) => boolean
+    permission?: { resource?: string; action: PermissionAction }
   }>
 
   // Optional: Custom renderers

@@ -4,10 +4,18 @@ import { DataTable } from '@/components/data-table/DataTable'
 import { useResourceTable } from '@/hooks/view/useResourceTable'
 import { resourceHooks } from '@/hooks/react-query'
 import { UserResource } from '@/resources/UserResource'
-import { Users } from 'lucide-react'
+import { Users, Eye, Trash2 } from 'lucide-react'
+import { useUIStore } from '@/stores/uiStore'
+import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
+import { DataGrid } from '@/components/data-table/DataGrid'
+import { ResourceCard } from '@/components/dashboard/ResourceCard'
+import { useSession } from 'next-auth/react'
 
 export default function UsersPage () {
+  const { data: session } = useSession()
   const isAdmin = true
+  const { dashboardView } = useUIStore()
+
   const { 
     config, 
     data, 
@@ -27,8 +35,27 @@ export default function UsersPage () {
     useList: resourceHooks.users.useList,
     useDelete: resourceHooks.users.useDelete,
     useBulkDelete: resourceHooks.users.useBulkDelete,
-    isAdmin
+    isAdmin,
+    userId: session?.user?.id
   })
+
+  const gridActions = (item: any) => {
+    const actions = [
+      { label: 'View', icon: Eye, action: () => config.rowActions?.[0]?.action(item), permission: { action: 'READ' as const, resource: 'TEAM' } },
+      { 
+        label: 'Delete', 
+        icon: Trash2, 
+        variant: 'destructive' as const,
+        action: () => config.rowActions?.[1]?.action(item),
+        permission: { action: 'DELETE' as const, resource: 'TEAM' }
+      }
+    ]
+
+    return actions.filter(action => {
+      if (action.label === 'Delete' && item.id === session?.user?.id) return false
+      return true
+    })
+  }
 
   return (
     <div className="space-y-4 mt-4">
@@ -46,25 +73,59 @@ export default function UsersPage () {
               Manage user accounts and permissions
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <ViewSwitcher />
+          </div>
         </div>
       </div>
       
       <div>
-        <DataTable
+        {dashboardView === 'table' ? (
+          <DataTable
+              config={config}
+              data={data}
+              total={total}
+              loading={loading}
+              page={page}
+              pageSize={pageSize}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              filters={filters}
+              onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
+              onSortChange={onSortChange}
+              onFiltersChange={onFiltersChange}
+          />
+        ) : (
+          <DataGrid
             config={config}
             data={data}
             total={total}
             loading={loading}
             page={page}
             pageSize={pageSize}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
             filters={filters}
             onPageChange={onPageChange}
             onPageSizeChange={onPageSizeChange}
-            onSortChange={onSortChange}
             onFiltersChange={onFiltersChange}
-        />
+            renderCard={(item: any, { isSelected, onSelect }) => (
+              <ResourceCard
+                key={item.id}
+                item={item}
+                resourceName="TEAM" // Users are part of TEAM resource in RBAC terms here? No, RESOURCE_NAME is User but actions check TEAM.
+                title={item.name || item.email.split('@')[0]}
+                description={item.email}
+                status={true}
+                date={item.createdAt}
+                isSelected={isSelected}
+                onSelect={onSelect}
+                onClick={() => config.rowActions?.[0]?.action(item)}
+                showQuickPerspective={false}
+                actions={gridActions(item)}
+              />
+            )}
+          />
+        )}
       </div>
     </div>
   )

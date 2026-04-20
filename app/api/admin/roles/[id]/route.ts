@@ -71,6 +71,7 @@ export async function PATCH(
                           roleId: id,
                           resource: p.resource,
                           action: p.action,
+                          scope: p.scope || 'SELF',
                           isActive: true
                        }))
                     });

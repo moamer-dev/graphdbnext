@@ -11,8 +11,14 @@ export interface Project {
   description: string | null
   teamId: string
   isActive: boolean
+  creatorId: string
   createdAt: string
   updatedAt: string
+  creator?: {
+    id: string
+    name: string | null
+    email: string
+  }
 }
 
 const columnHelper = createColumnHelper<Project>()
@@ -20,14 +26,19 @@ const columnHelper = createColumnHelper<Project>()
 export class ProjectResource {
   static readonly RESOURCE_NAME = 'Project'
   static readonly BASE_PATH = '/api/projects'
-  static readonly VIEW_PATH = '/dashboard/settings/projects'
-  static readonly LIST_PATH = '/dashboard/settings/projects'
+  static readonly VIEW_PATH = '/dashboard/projects'
+  static readonly LIST_PATH = '/dashboard/projects'
+  
+  static readonly HOOK_CONFIG = {
+    workspaceScoped: true
+  }
 
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,
     onDelete: (id: string) => Promise<void>,
-    _onManageMembers?: (id: string) => void
+    _onManageMembers?: (id: string) => void,
+    isAdmin?: boolean
   ): TableConfig<Project> {
     const columns: ResourceColumnDef<Project>[] = [
       {
@@ -85,14 +96,15 @@ export class ProjectResource {
       resourceName: ProjectResource.RESOURCE_NAME,
       columns,
       rowActions: [
-        { label: 'View', icon: Eye, action: (row) => onView(row.id) },
-        { label: 'Edit', icon: Pencil, action: (row) => onEdit(row.id) },
+        { label: 'View', icon: Eye, action: (row) => onView(row.id), permission: { action: 'READ' as const } },
+        { label: 'Edit', icon: Pencil, action: (row) => onEdit(row.id), permission: { action: 'UPDATE' as const } },
         { 
           label: 'Delete', 
           icon: Trash2, 
           action: (row) => onDelete(row.id), 
           variant: 'destructive',
-          requiresConfirmation: true
+          requiresConfirmation: true,
+          permission: { action: 'DELETE' as const }
         }
       ],
       enableRowSelection: true,

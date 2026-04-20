@@ -11,9 +11,9 @@ export type RoleFormValues = z.infer<typeof RoleSchema>
 export const RoleResource = {
   NAME: 'Role',
   resourceName: 'Role',
-  BASE_PATH: '/api/admin/roles',
-  LIST_PATH: '/api/admin/roles',
-  VIEW_PATH: '/api/admin/roles',
+  BASE_PATH: '/api/roles',
+  LIST_PATH: '/dashboard/admin/roles',
+  VIEW_PATH: '/dashboard/admin/roles',
   fetchData: async () => ({ data: [], total: 0 }),
   createTableConfig: (onView: (id: string) => void, onEdit: (id: string) => void, onDelete: (id: string) => Promise<void>, _onManageMembers?: (id: string) => void): TableConfig<Role> => ({
     name: 'roles',
@@ -32,7 +32,7 @@ export const RoleResource = {
 
 export const PermissionResource = {
   NAME: 'Permission',
-  BASE_PATH: '/api/admin/permissions',
+  BASE_PATH: '/api/permissions',
   LIST_PATH: '/api/admin/permissions',
   VIEW_PATH: '/api/admin/permissions',
 }
@@ -40,7 +40,8 @@ export const PermissionResource = {
 export interface Role {
   id: string
   name: string
-  teamId: string
+  description?: string
+  teamId?: string | null
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -50,8 +51,9 @@ export interface Role {
 export interface Permission {
   id: string
   roleId: string
-  resource: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM'
+  resource: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM' | 'SAVED_QUERY' | 'WORKFLOW' | 'DATA_SOURCE'
   action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
+  scope: 'SELF' | 'TEAM' | 'ALL'
   isActive: boolean
   createdAt: string
   updatedAt: string

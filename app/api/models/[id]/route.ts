@@ -1,130 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { modelCrudService } from '@/services/server'
+import { ModelService } from '@/services/ModelService'
+import { z } from 'zod'
 
-// GET /api/models/[id] - Get a specific model (admins can access any, users only their own)
-export async function GET (
-  request: NextRequest,
+const UpdateModelSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+  schemaJson: z.any().optional().nullable(),
+  schemaMd: z.string().optional().nullable(),
+  version: z.string().optional(),
+})
+
+export async function GET(
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
-
-    // Use CrudService for consistent RBAC
-    const model = await modelCrudService.findOne(session, id)
+    const model = await ModelService.findOneWithRBAC(session.user.id, id)
 
     if (!model) {
-      return NextResponse.json(
-        { error: 'Model not found or unauthorized access' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Model not found' }, { status: 404 })
     }
 
-    // Return in the format expected by useResource hook: { data: model }
     return NextResponse.json({ data: model })
-  } catch (error: unknown) {
-    console.error('Error fetching model:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch model' },
-      { status: 500 }
-    )
+  } catch (error: any) {
+    console.error('Model GET Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-// PUT /api/models/[id] - Update a model (admins can update any, users only their own)
-export async function PUT (
-  request: NextRequest,
+export async function PATCH(
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
-    const body = await request.json()
-    const { name, description, schemaJson, schemaMd, version, isActive } = body
+    const body = await req.json()
+    const validatedData = UpdateModelSchema.parse(body)
 
-    // Use CrudService for consistent RBAC and update logic
-    const model = await modelCrudService.update(session, id, {
-      ...(name && { name }),
-      ...(description !== undefined && { description }),
-      ...(schemaJson !== undefined && { schemaJson }),
-      ...(schemaMd !== undefined && { schemaMd }),
-      ...(version && { version }),
-      ...(isActive !== undefined && { isActive })
-    })
+    const model = await ModelService.updateWithRBAC(session.user.id, id, validatedData as any)
 
-    // Return in the format expected by useResource hook: { data: model }
     return NextResponse.json({ data: model })
-  } catch (error: unknown) {
-    console.error('Error updating model:', error)
-    
-    // Handle "Record not found" error from CrudService
-    if (error instanceof Error && error.message === 'Record not found') {
-      return NextResponse.json(
-        { error: 'Model not found or unauthorized access' },
-        { status: 404 }
-      )
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })
     }
-
-    return NextResponse.json(
-      { error: 'Failed to update model' },
-      { status: 500 }
-    )
+    console.error('Model PATCH Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
-// DELETE /api/models/[id] - Soft delete a model (admins can delete any, users only their own)
-export async function DELETE (
-  request: NextRequest,
+// Support PUT as an alias for PATCH for backward compatibility if needed, 
+// though enterprise practice usually prefers explicit PATCH for partial updates.
+export async function PUT(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    return PATCH(req, { params })
+}
+
+export async function DELETE(
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
+    await ModelService.updateWithRBAC(session.user.id, id, { isActive: false })
 
-    // Use CrudService for consistent RBAC and soft delete logic
-    await modelCrudService.delete(session, id)
-
-    return NextResponse.json({ success: true })
-  } catch (error: unknown) {
-    console.error('Error deleting model:', error)
-    
-    // Handle "Record not found" error from CrudService
-    if (error instanceof Error && error.message === 'Record not found') {
-      return NextResponse.json(
-        { error: 'Model not found or unauthorized access' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to delete model' },
-      { status: 500 }
-    )
+    return new NextResponse(null, { status: 204 })
+  } catch (error: any) {
+    console.error('Model DELETE Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

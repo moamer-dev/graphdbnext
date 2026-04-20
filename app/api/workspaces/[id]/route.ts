@@ -1,148 +1,82 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { WorkspaceService } from '@/services/WorkspaceService'
+import { z } from 'zod'
 
-export async function DELETE(
-  req: Request,
+const UpdateWorkspaceSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+  projectIds: z.array(z.string()).optional(),
+})
+
+export async function GET(
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 })
-
   try {
-    const { id } = await params
-    const isAdmin = session.user.role === 'ADMIN'
-
-    // Check ownership
-    const workspace = await prisma.workspace.findUnique({
-      where: { id },
-      select: { creatorId: true }
-    })
-
-    if (!workspace) return new NextResponse('Not Found', { status: 404 })
-    if (!isAdmin && workspace.creatorId !== session.user.id) {
-        return new NextResponse('Forbidden: You can only delete workspaces you created', { status: 403 })
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
-    // Hard delete
-    await prisma.workspace.delete({
-      where: { id }
-    })
 
-    return new NextResponse(null, { status: 204 })
-  } catch (error) {
-    console.error('Error deleting workspace:', error)
-    return new NextResponse('Internal Error', { status: 500 })
+    const { id } = await params
+    const workspace = await WorkspaceService.findOneWithRBAC(session.user.id, id)
+
+    if (!workspace) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ data: workspace })
+  } catch (error: any) {
+    console.error('Workspace GET Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 export async function PATCH(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 })
-
-    try {
-        const { id } = await params
-        const body = await req.json()
-        const isAdmin = session.user.role === 'ADMIN'
-
-        // Check ownership
-        const workspace = await prisma.workspace.findUnique({
-            where: { id },
-            select: { creatorId: true }
-        })
-
-        if (!workspace) return new NextResponse('Not Found', { status: 404 })
-        if (!isAdmin && workspace.creatorId !== session.user.id) {
-            return new NextResponse('Forbidden: You can only update workspaces you created', { status: 403 })
-        }
-
-        const updatedWorkspace = await prisma.$transaction(async (tx) => {
-            // Basic workspace update
-            const updated = await tx.workspace.update({
-                where: { id },
-                data: {
-                    name: body.name,
-                    description: body.description,
-                    isActive: body.isActive,
-                    ...(isAdmin && body.creatorId ? { creatorId: body.creatorId } : {})
-                }
-            })
-
-            // Project assignments
-            if (body.projectIds && Array.isArray(body.projectIds)) {
-                // Remove existing assignments
-                await tx.projectWorkspace.deleteMany({
-                    where: { workspaceId: id }
-                })
-                
-                // Create new assignments
-                if (body.projectIds.length > 0) {
-                    await tx.projectWorkspace.createMany({
-                        data: body.projectIds.map((projectId: string) => ({
-                            workspaceId: id,
-                            projectId
-                        }))
-                    })
-                }
-            }
-
-            return true
-        })
-
-        const fullUpdated = await prisma.workspace.findUnique({
-            where: { id },
-            include: {
-                creator: true,
-                projects: {
-                    include: {
-                        project: true
-                    }
-                }
-            }
-        })
-
-        return NextResponse.json({ data: fullUpdated })
-    } catch (error) {
-        console.error('Error updating workspace:', error)
-        return new NextResponse('Internal Error', { status: 500 })
-    }
-}
-
-export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 })
-
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
-    const isAdmin = session.user.role === 'ADMIN'
+    const body = await req.json()
+    const validatedData = UpdateWorkspaceSchema.parse(body)
 
-    const workspace = await prisma.workspace.findFirst({
-      where: { 
-        id, 
-        ...(isAdmin ? {} : { creatorId: session.user.id }) 
-      },
-      include: {
-        creator: true,
-        projects: {
-          include: {
-            project: true
-          }
-        }
-      }
-    })
+    const workspace = await WorkspaceService.updateWithRBAC(session.user.id, id, validatedData as any)
 
-    if (!workspace) return new NextResponse('Not Found', { status: 404 })
-    
     return NextResponse.json({ data: workspace })
-  } catch (error) {
-    console.error('Error fetching workspace:', error)
-    return new NextResponse('Internal Error', { status: 500 })
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })
+    }
+    console.error('Workspace PATCH Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    await WorkspaceService.deleteWithRBAC(session.user.id, id)
+
+    return new NextResponse(null, { status: 204 })
+  } catch (error: any) {
+    console.error('Workspace DELETE Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

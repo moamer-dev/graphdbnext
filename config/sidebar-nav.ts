@@ -1,4 +1,4 @@
-import { type LucideIcon, Database, Network, Users, Settings, LayoutDashboard } from 'lucide-react'
+import { type LucideIcon, Database, Network, Users, Settings, LayoutDashboard, FolderKanban, LayoutGrid } from 'lucide-react'
 
 export interface SidebarNavItem {
   title: string
@@ -8,11 +8,11 @@ export interface SidebarNavItem {
     title: string
     url: string
     section?: string
-    resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM'
+    resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM' | 'SAVED_QUERY' | 'WORKFLOW' | 'DATA_SOURCE'
     action?: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
   }[]
   adminOnly?: boolean
-  resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM'
+  resource?: 'MODEL' | 'WORKSPACE' | 'CREDENTIAL' | 'PROJECT' | 'TEAM' | 'SAVED_QUERY' | 'WORKFLOW' | 'DATA_SOURCE'
   action?: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE'
 }
 
@@ -29,6 +29,11 @@ export const sidebarNavItems: SidebarNavItem[] = [
     icon: Network,
     items: [
       {
+        title: 'Create Model',
+        url: '/dashboard/graph/model/new',
+        section: 'create-model'
+      },
+      {
         title: 'Schema Models',
         url: '/dashboard/graph/model',
         section: 'schema',
@@ -38,7 +43,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
         title: 'XML Importer',
         url: '/dashboard/graph/model/new/from-xml',
         section: 'xml-importer'
-      }
+      },
     ]
   },
   {
@@ -112,20 +117,20 @@ export const sidebarNavItems: SidebarNavItem[] = [
   },
   {
     title: 'Teams',
-    url: '/dashboard/settings/teams',
+    url: '/dashboard/teams',
     icon: Users,
     resource: 'TEAM'
   },
   {
     title: 'Projects',
-    url: '/dashboard/settings/projects',
-    icon: Users,
+    url: '/dashboard/projects',
+    icon: FolderKanban,
     resource: 'PROJECT'
   },
   {
     title: 'Workspaces',
-    url: '/dashboard/settings/workspaces',
-    icon: Users,
+    url: '/dashboard/workspaces',
+    icon: LayoutGrid,
     resource: 'WORKSPACE'
   }
 ]
