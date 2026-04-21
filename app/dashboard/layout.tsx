@@ -25,12 +25,14 @@ import {
 } from '@/components/ui/sidebar'
 import { QuickActions } from '@/components/quick-actions'
 import { TenantProvider } from '@/components/TenantProvider'
-import { TenantSwitchers } from '@/components/tenant-switchers'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { ModeToggle } from '@/components/ModeToggle'
 
 const sectionTitles: Record<string, string> = {
   '/dashboard/convert': 'XML to Graph Conversion',
   '/dashboard/database': 'Database Management',
   '/dashboard/database/queries': 'Query Execution',
+  '/dashboard/data-sources': 'Data Sources Library',
   '/dashboard/database/analytics': 'Graph Analytics',
   '/dashboard/html': 'HTML Conversion',
   '/dashboard/graph/model': 'Model Visualization',
@@ -115,58 +117,61 @@ export default function DashboardLayout({
   }, [])
 
   return (
-    <SidebarProvider suppressHydrationWarning>
-      <ClientOnly>
-        <AppSidebar />
-      </ClientOnly>
-      <SidebarInset suppressHydrationWarning className="gradient-page">
-        <TenantProvider>
-          <CreateWorkspaceDialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
-          <header className="gradient-header flex h-14 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12" suppressHydrationWarning>
-            <div className="relative z-10 flex items-center gap-2 px-4 w-full overflow-hidden">
-              <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4 opacity-40 shrink-0"
-              />
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <Breadcrumb className="hidden md:block">
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink href="/dashboard" className="text-[10px] font-medium text-foreground/40 hover:text-primary transition-colors tracking-tighter uppercase">
-                        Dashboard
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="opacity-10" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage className="text-[10px] font-bold uppercase tracking-widest text-primary/80">{currentTitle}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <SidebarProvider suppressHydrationWarning>
+        <ClientOnly>
+          <AppSidebar />
+        </ClientOnly>
+        <SidebarInset suppressHydrationWarning className="bg-background">
+          <TenantProvider>
+            <CreateWorkspaceDialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
+            <header className="flex h-14 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b" suppressHydrationWarning>
+              <div className="relative z-10 flex items-center gap-2 px-4 w-full overflow-hidden">
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 data-[orientation=vertical]:h-4 opacity-40 shrink-0"
+                />
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <Breadcrumb className="hidden md:block">
+                    <BreadcrumbList>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink href="/dashboard" className="text-[10px] font-medium text-foreground/40 hover:text-primary transition-colors tracking-tighter uppercase">
+                          Dashboard
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator className="opacity-10" />
+                      <BreadcrumbItem>
+                        <BreadcrumbPage className="text-[10px] font-bold uppercase tracking-widest text-primary/80">{currentTitle}</BreadcrumbPage>
+                      </BreadcrumbItem>
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                </div>
 
-              <div className="ml-auto flex items-center gap-2 shrink-0">
-                <QuickActions />
+                <div className="ml-auto flex items-center gap-2 shrink-0">
+                  <ModeToggle />
+                  <QuickActions />
+                </div>
+              </div>
+            </header>
+            <div className={cn('flex flex-1 flex-col gap-3 relative', 
+              pathname === '/dashboard/graph/builder' || 
+              pathname === '/dashboard/graph/model/new/from-xml' || 
+              pathname === '/dashboard/data-sources' || 
+              pathname?.includes('/edit') ? 'p-0' : 'p-3 pt-0')}>
+              <div className={cn('mx-auto w-full relative z-10', 
+                pathname === '/dashboard/database/queries' || 
+                pathname === '/dashboard/data-sources' || 
+                pathname === '/dashboard/graph/builder' || 
+                pathname === '/dashboard/graph/model/new' || 
+                pathname === '/dashboard/graph/model/new/from-xml' || 
+                pathname?.includes('/edit') ? '' : 'max-w-7xl')}>
+                {children}
               </div>
             </div>
-          </header>
-          <div className={cn('flex flex-1 flex-col gap-3 relative gradient-section', 
-            pathname === '/dashboard/graph/builder' || 
-            pathname === '/dashboard/graph/model/new/from-xml' || 
-            pathname === '/dashboard/database/sources' || 
-            pathname?.includes('/edit') ? 'p-0' : 'p-3 pt-0')}>
-            <div className={cn('mx-auto w-full relative z-10', 
-              pathname === '/dashboard/database/queries' || 
-              pathname === '/dashboard/database/sources' || 
-              pathname === '/dashboard/graph/builder' || 
-              pathname === '/dashboard/graph/model/new' || 
-              pathname === '/dashboard/graph/model/new/from-xml' || 
-              pathname?.includes('/edit') ? '' : 'max-w-7xl')}>
-              {children}
-            </div>
-          </div>
-        </TenantProvider>
-      </SidebarInset>
-    </SidebarProvider>
+          </TenantProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </ThemeProvider>
   )
 }

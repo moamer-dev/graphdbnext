@@ -4,7 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { GripVertical } from 'lucide-react'
 
 // Hooks from handlers
-import { useDataSourceExplorer } from '@/app/dashboard/database/sources/(handlers)/useDataSourceExplorer'
+import { useDataSourceExplorer } from '@/app/dashboard/data-sources/(handlers)/useDataSourceExplorer'
 
 // UI Components
 import { ExplorerSidebar } from './explorer/ExplorerSidebar'

@@ -28,6 +28,7 @@ model User {
   workflows         Workflow[]
   createdWorkspaces Workspace[]      @relation("WorkspaceCreator")
   createdDataSources DataSource[]     @relation("DataSourceCreator")
+  createdCredentials Credential[]     @relation("CredentialCreator")
 }
 
 model UserGlobalRole {
@@ -183,9 +184,11 @@ model Credential {
   type        String
   data        Json
   workspaceId String?
+  creatorId   String?
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  creator     User?      @relation("CredentialCreator", fields: [creatorId], references: [id])
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 

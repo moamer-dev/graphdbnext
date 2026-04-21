@@ -162,7 +162,7 @@ export function XmlImportWizard({ onImportComplete, className, workspaceXmls: pr
 
   const wizardContent = (
     <div className={cn('flex gap-4', className)}>
-      <div className="shrink-0 w-32 border-r pr-6 relative hidden md:block">
+      <div className="shrink-0 w-32 border-r pr-6 pt-4 relative hidden md:block">
         <div className="absolute right-[22px] top-6 bottom-6 w-[2px] bg-muted/40" />
         <div className="flex flex-col gap-8 relative z-10">
           {[

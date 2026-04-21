@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react'
+import { useTheme } from 'next-themes'
 import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { xml as xmlLang } from '@codemirror/lang-xml'
 import { EditorView, Decoration } from '@codemirror/view'
@@ -89,6 +90,7 @@ const highlightField = StateField.define({
 
 export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>(
   ({ value, height = '500px', wrapWord = false, scrollToPosition, scrollToId, onChange }, ref) => {
+    const { theme } = useTheme()
     const codeMirrorRef = useRef<ReactCodeMirrorRef>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const [isWrapping, setIsWrapping] = React.useState(wrapWord)
@@ -353,12 +355,12 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
         </div>
         <style>{`
           .cm-highlighted-xml-element {
-            background-color: #fef08a !important;
+            background-color: ${theme === 'dark' ? 'rgba(250, 204, 21, 0.2)' : '#fef08a'} !important;
             padding: 2px 0;
             border-radius: 2px;
             transition: background-color 0.2s;
             display: inline-block;
-            box-shadow: 0 0 0 2px #fbbf24;
+            box-shadow: 0 0 0 2px ${theme === 'dark' ? 'rgba(250, 204, 21, 0.4)' : '#fbbf24'};
           }
         `}</style>
         <TypedCodeMirror
@@ -376,7 +378,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
             searchKeymap: true
           } as any}
           extensions={extensions}
-          theme="light"
+          theme={theme === 'dark' ? 'dark' : 'light'}
         />
       </div>
     )

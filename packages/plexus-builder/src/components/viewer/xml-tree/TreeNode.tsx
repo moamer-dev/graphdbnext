@@ -63,13 +63,13 @@ export function TreeNode({
       <div
         className={cn(
           'flex items-center gap-1 py-0.5 hover:bg-muted/30 rounded cursor-pointer group transition-all duration-200',
-          node.key.startsWith('_') && 'text-blue-600',
-          node.key === '__text' && 'text-green-600',
-          isHighlighted && 'bg-yellow-200 dark:bg-yellow-900/30',
-          wasVisited && 'bg-yellow-100/50 dark:bg-yellow-900/15',
-          isSelected && 'bg-primary/10 border-l-2 border-primary ring-1 ring-primary/20 z-10',
-          isTypeMatch && 'bg-purple-50/50 border-l-2 border-purple-200',
-          isElementIncludedLocal && !isSelected && !isTypeMatch && 'bg-emerald-50/40 border-l-2 border-emerald-200/60'
+          node.key.startsWith('_') && 'text-primary/80',
+          node.key === '__text' && 'text-emerald-600 dark:text-emerald-400',
+          isHighlighted && 'bg-primary/20 dark:bg-primary/30 ring-1 ring-primary/40',
+          wasVisited && 'bg-primary/5 dark:bg-primary/10',
+          isSelected && 'bg-primary/10 dark:bg-primary/20 border-l-2 border-primary ring-1 ring-primary/30 z-10',
+          isTypeMatch && 'bg-indigo-500/10 dark:bg-indigo-500/20 border-l-2 border-indigo-400',
+          isElementIncludedLocal && !isSelected && !isTypeMatch && 'bg-emerald-500/10 dark:bg-emerald-500/20 border-l-2 border-emerald-400'
         )}
         style={{ paddingLeft: `${indent}px` }}
         onClick={(e) => handleNodeClick(node, currentPath, e)}
@@ -112,7 +112,7 @@ export function TreeNode({
               </button>
             )}
             {isElementIncludedLocal && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <Check className="h-2.5 w-2.5 inline" />
               </span>
             )}

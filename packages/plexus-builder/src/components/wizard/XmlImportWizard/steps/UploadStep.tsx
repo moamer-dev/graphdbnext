@@ -21,10 +21,10 @@ export function UploadStep({
 
   return (
     <div className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
-        <Info className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-        <div className="text-xs text-blue-900">
-          <p className="font-medium mb-1">Getting Started</p>
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-2">
+        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div className="text-xs text-foreground/80">
+          <p className="font-medium mb-1 text-primary">Getting Started</p>
           <p>Upload your XML file to begin. Supported formats include TEI, edXML, and other XML documents. The system will analyze the structure and help you map it to a graph database.</p>
         </div>
       </div>

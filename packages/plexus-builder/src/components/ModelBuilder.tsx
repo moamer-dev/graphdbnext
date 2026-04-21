@@ -308,7 +308,13 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         importDialogOpen={ui.importDialogOpen} setImportDialogOpen={ui.setImportDialogOpen}
         importFile={ui.importFile} setImportFile={ui.setImportFile}
         importing={importing} importError={importError}
-        onImportSchema={() => importSchema(ui.importFile!)}
+        onImportSchema={async () => {
+          const result = await importSchema(ui.importFile!)
+          if (result) {
+            ui.setImportDialogOpen(false)
+            ui.setImportFile(null)
+          }
+        }}
         workflowConfigDialogOpen={ui.workflowConfigDialogOpen} setWorkflowConfigDialogOpen={ui.setWorkflowConfigDialogOpen}
         workflowConfigFile={ui.workflowConfigFile} onWorkflowConfigFileChange={ui.setWorkflowConfigFile}
         onImportWorkflow={handleImportWorkflowConfig}

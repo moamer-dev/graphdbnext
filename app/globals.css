@@ -86,37 +86,37 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.12 0.01 260);
+  --foreground: oklch(0.98 0.005 260);
+  --card: oklch(0.15 0.01 260);
+  --card-foreground: oklch(0.98 0.005 260);
+  --popover: oklch(0.15 0.01 260);
+  --popover-foreground: oklch(0.98 0.005 260);
+  --primary: oklch(0.7 0.12 260);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.18 0.01 260);
+  --secondary-foreground: oklch(0.9 0.01 260);
+  --muted: oklch(0.18 0.01 260);
+  --muted-foreground: oklch(0.65 0.01 260);
+  --accent: oklch(0.25 0.03 200);
+  --accent-foreground: oklch(0.95 0.03 200);
+  --destructive: oklch(0.5 0.2 25);
+  --border: oklch(0.25 0.01 260);
+  --input: oklch(0.25 0.01 260 / 0.5);
+  --ring: oklch(0.7 0.12 260 / 0.4);
+  --chart-1: oklch(0.7 0.15 260);
+  --chart-2: oklch(0.65 0.12 200);
+  --chart-3: oklch(0.6 0.1 300);
+  --chart-4: oklch(0.75 0.12 180);
+  --chart-5: oklch(0.7 0.1 40);
+  --sidebar: oklch(0.14 0.01 260);
+  --sidebar-foreground: oklch(0.9 0.01 260);
+  --sidebar-primary: oklch(0.7 0.12 260);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.18 0.01 260);
+  --sidebar-accent-foreground: oklch(0.98 0.01 260);
+  --sidebar-border: oklch(0.22 0.01 260);
+  --sidebar-ring: oklch(0.7 0.12 260 / 0.3);
 }
 
 @layer base {
@@ -125,11 +125,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Subtle gradient background - light harmonious */
-    background-image: 
-      radial-gradient(at 0% 0%, oklch(0.99 0.005 260 / 0.25) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, oklch(0.98 0.008 250 / 0.2) 0px, transparent 50%);
-    background-attachment: fixed;
   }
   
   /* Compact, research-oriented typography */
@@ -171,201 +166,66 @@
     animation: accordion-up 0.2s ease-out;
   }
   
-  /* Research-oriented gradient utilities - light harmonious */
+  /* Simple, solid research-oriented utilities */
   .gradient-card {
-    background: linear-gradient(
-      135deg,
-      oklch(1 0 0 / 0.4) 0%,
-      oklch(0.99 0.005 260 / 0.3) 100%
-    );
+    @apply bg-card border border-border shadow-sm;
     backdrop-filter: blur(8px);
-    border: 1px solid oklch(0.9 0.005 260 / 0.2);
-    box-shadow: 0 1px 3px oklch(0 0 0 / 0.05);
   }
   
-  /* Minimal card for boxed content - blends with background */
   .gradient-card-minimal {
-    background: transparent;
-    border: none;
-    box-shadow: none;
+    @apply bg-transparent border-none shadow-none;
   }
   
-  /* Page gradient: light harmonious background */
   .gradient-page {
-    background: linear-gradient(
-      to top left,
-      oklch(0.99 0.005 260 / 0.3) 0%,
-      oklch(0.98 0.008 250 / 0.2) 50%,
-      oklch(0.97 0.01 240 / 0.1) 100%
-    );
-    position: relative;
+    @apply bg-background relative;
   }
   
-  .gradient-page::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top left,
-      transparent 0%,
-      oklch(0.99 0.005 260 / 0.15) 30%,
-      oklch(0.98 0.008 250 / 0.2) 70%,
-      transparent 100%
-    );
-    pointer-events: none;
-  }
-  
-  /* Section gradient: light harmonious background */
   .gradient-section {
-    background: linear-gradient(
-      to top left,
-      oklch(1 0 0 / 0.3) 0%,
-      oklch(0.99 0.005 260 / 0.25) 30%,
-      oklch(0.98 0.008 250 / 0.15) 60%,
-      oklch(0.97 0.01 240 / 0.08) 100%
-    );
-    position: relative;
-    min-height: 100%;
+    @apply bg-background relative min-h-full;
   }
   
-  .gradient-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top left,
-      transparent 0%,
-      oklch(0.99 0.005 260 / 0.1) 30%,
-      oklch(0.98 0.008 250 / 0.15) 60%,
-      oklch(0.97 0.01 240 / 0.1) 90%,
-      transparent 100%
-    );
-    pointer-events: none;
-  }
-  
-  .gradient-section::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 40%;
-    height: 40%;
-    background: radial-gradient(
-      circle at top right,
-      oklch(0.99 0.005 260 / 0.15) 0%,
-      transparent 70%
-    );
-    pointer-events: none;
-  }
-  
-  /* Elegant header gradient - light harmonious */
   .gradient-header {
-    background: linear-gradient(
-      to top left,
-      oklch(1 0 0 / 0.5) 0%,
-      oklch(0.99 0.005 260 / 0.4) 50%,
-      oklch(0.98 0.008 250 / 0.25) 100%
-    );
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid oklch(0.9 0.005 260 / 0.15);
-    position: relative;
+    @apply bg-background/80 backdrop-blur-md border-b border-border relative;
   }
   
-  .gradient-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(
-      to right,
-      transparent 0%,
-      oklch(0.99 0.005 260 / 0.2) 50%,
-      transparent 100%
-    );
-  }
-  
-  /* Sidebar gradient - same as header */
   [data-sidebar="sidebar"] {
-    background: linear-gradient(
-      to top left,
-      oklch(1 0 0 / 0.5) 0%,
-      oklch(0.99 0.005 260 / 0.4) 50%,
-      oklch(0.98 0.008 250 / 0.25) 100%
-    ) !important;
-    backdrop-filter: blur(8px);
+    @apply !bg-sidebar;
   }
   
-  /* Minimal header for boxed content - light harmonious */
   .gradient-header-minimal {
-    background: linear-gradient(
-      to right,
-      oklch(0.99 0.005 260 / 0.4) 0%,
-      oklch(0.98 0.008 250 / 0.25) 100%
-    );
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid oklch(0.9 0.005 260 / 0.2);
-    padding-bottom: 0.75rem;
-  }
-  
-  .gradient-header-minimal::after {
-    display: none;
+    @apply bg-background/80 backdrop-blur-md border-b border-border pb-3;
   }
   
   .gradient-primary {
-    background: linear-gradient(135deg, oklch(0.55 0.12 260) 0%, oklch(0.5 0.1 280) 100%);
+    @apply bg-primary text-primary-foreground;
   }
   
   .bg-gradient-primary {
-    background: linear-gradient(to right, oklch(0.55 0.12 260 / 0.05) 0%, oklch(0.5 0.1 200 / 0.05) 100%);
-  }
-  
-  .bg-gradient-primary:hover {
-    background: linear-gradient(to right, oklch(0.55 0.12 260 / 0.1) 0%, oklch(0.5 0.1 200 / 0.1) 100%);
+    @apply bg-primary/5 hover:bg-primary/10;
   }
   
   .gradient-accent {
-    background: linear-gradient(135deg, oklch(0.92 0.03 200 / 0.6) 0%, oklch(0.9 0.025 220 / 0.4) 100%);
+    @apply bg-accent/60;
   }
   
   .gradient-muted {
-    background: linear-gradient(135deg, oklch(0.97 0.01 280 / 0.5) 0%, oklch(0.95 0.01 280 / 0.3) 100%);
+    @apply bg-muted/50;
   }
   
-  /* Elegant table gradient - light harmonious */
   .gradient-table {
-    background: linear-gradient(
-      to top left,
-      oklch(1 0 0 / 0.5) 0%,
-      oklch(0.99 0.005 260 / 0.4) 50%,
-      oklch(0.98 0.008 250 / 0.25) 100%
-    );
-    backdrop-filter: blur(8px);
+    @apply bg-card backdrop-blur-md;
   }
   
   .gradient-table-header {
-    background: linear-gradient(
-      to top left,
-      oklch(0.99 0.005 260 / 0.5) 0%,
-      oklch(0.98 0.008 250 / 0.4) 50%,
-      oklch(0.97 0.01 240 / 0.25) 100%
-    );
-    border-bottom: 1px solid oklch(0.9 0.005 260 / 0.3);
+    @apply bg-muted/30 border-b border-border;
   }
   
   .gradient-table-row {
-    border-bottom: 1px solid oklch(0.9 0.005 260 / 0.15);
-    transition: all 0.2s ease;
+    @apply border-b border-border transition-colors;
   }
   
   .gradient-table-row:hover {
-    background: linear-gradient(
-      to top left,
-      oklch(0.99 0.005 260 / 0.35) 0%,
-      oklch(0.98 0.008 250 / 0.3) 50%,
-      oklch(0.97 0.01 240 / 0.2) 100%
-    );
+    @apply bg-accent/20;
   }
   
   /* Compact spacing utilities */

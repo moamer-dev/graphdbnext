@@ -26,6 +26,7 @@ import { EditorView } from '@codemirror/view'
 import { foldAll, unfoldAll } from '@codemirror/language'
 import { FileIcon } from './FileIcon'
 import { useState, useRef } from 'react'
+import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import { cn } from '@/utils'
 import { ReactCodeMirrorProps } from '@uiw/react-codemirror'
@@ -78,6 +79,7 @@ export const ResourceEditor = ({
   resourceKey,
   isUpdatePending
 }: ResourceEditorProps) => {
+  const { theme } = useTheme()
   const [isWrapping, setIsWrapping] = useState(true)
   const [isCopied, setIsCopied] = useState(false)
   const [isAllCollapsed, setIsAllCollapsed] = useState(false)
@@ -100,7 +102,7 @@ export const ResourceEditor = ({
       setIsCopied(true)
       toast.success('Content copied to clipboard')
       setTimeout(() => setIsCopied(false), 2000)
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy content')
     }
   }
@@ -268,7 +270,7 @@ export const ResourceEditor = ({
         </Button>
       </div>
 
-      <div className="flex-1 relative bg-[#fafafa] flex flex-col min-h-0 overflow-hidden">
+      <div className={cn("flex-1 relative flex flex-col min-h-0 overflow-hidden", theme === 'dark' ? 'bg-[#0f1115]' : 'bg-[#fafafa]')}>
         {isLoadingDetail ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm z-20">
             <div className="flex flex-col items-center gap-3">
@@ -281,7 +283,7 @@ export const ResourceEditor = ({
             ref={editorRef}
             value={editedContent}
             height="100%"
-            theme="light"
+            theme={theme === 'dark' ? 'dark' : 'light'}
             className="flex-1 min-h-0 overflow-hidden text-[13px] border-0 outline-none h-full"
             style={{ height: '100%' }}
             extensions={[

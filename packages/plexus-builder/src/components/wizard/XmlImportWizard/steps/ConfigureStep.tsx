@@ -169,8 +169,8 @@ export function ConfigureStep({
       {showSemantic && (
         <div className="bg-card border rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="bg-purple-100 rounded-lg p-1.5">
-              <FileText className="h-4 w-4 text-purple-600" />
+            <div className="bg-primary/10 rounded-lg p-1.5">
+              <FileText className="h-4 w-4 text-primary" />
             </div>
             <span className="text-sm font-semibold">Semantic Enrichment</span>
             <span className="text-xs text-muted-foreground ml-auto">
@@ -206,9 +206,9 @@ export function ConfigureStep({
               borderBottomRightRadius: showMapping ? 0 : undefined
             }}
           >
-            <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200/50 shrink-0">
-              <div className="bg-blue-100 rounded-lg p-1.5">
-                <Eye className="h-4 w-4 text-blue-600" />
+            <div className="flex items-center gap-2 px-4 py-3 bg-muted/20 border-b shrink-0">
+              <div className="bg-primary/10 rounded-lg p-1.5">
+                <Eye className="h-4 w-4 text-primary" />
               </div>
               <span className="text-sm font-semibold text-foreground">XML Structure</span>
               <span className="ml-auto text-xs text-muted-foreground">
@@ -268,9 +268,9 @@ export function ConfigureStep({
               borderBottomLeftRadius: showStructure ? 0 : undefined
             }}
           >
-            <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200/50 shrink-0">
-              <div className="bg-green-100 rounded-lg p-1.5">
-                <FileText className="h-4 w-4 text-green-600" />
+            <div className="flex items-center gap-2 px-4 py-3 bg-muted/20 border-b shrink-0">
+              <div className="bg-emerald-500/10 rounded-lg p-1.5">
+                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <span className="text-sm font-semibold text-foreground">Mapping Configuration</span>
               <span className="ml-auto text-xs text-muted-foreground">

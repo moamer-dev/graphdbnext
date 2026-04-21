@@ -55,7 +55,7 @@ export function useDataSourceImport(open: boolean, onOpenChange: (open: boolean)
           try {
             const jsonContent = JSON.parse(content)
             resolve({ file, content: jsonContent, type, status: 'idle' })
-          } catch (err) {
+          } catch {
             resolve({ file, content, type: DataSourceType.API_RESPONSE, status: 'error', error: 'Invalid JSON format' })
           }
         } else {

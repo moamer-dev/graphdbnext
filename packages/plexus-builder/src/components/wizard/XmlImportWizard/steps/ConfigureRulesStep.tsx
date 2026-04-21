@@ -136,7 +136,7 @@ export function ConfigureRulesStep({
       </div>
 
       {extracting ? (
-        <div className="flex items-center justify-center p-16 bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
+        <div className="flex items-center justify-center p-16 bg-muted/30 rounded-xl border-2 border-dashed border-muted-foreground/20">
           <div className="text-center space-y-3">
             <Loader2 className="h-10 w-10 mx-auto animate-spin text-primary" />
             <div>

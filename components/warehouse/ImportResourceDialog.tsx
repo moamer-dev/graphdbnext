@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select"
 
 // Handlers
-import { useDataSourceImport } from '@/app/dashboard/database/sources/(handlers)/useDataSourceImport'
+import { useDataSourceImport } from '@/app/dashboard/data-sources/(handlers)/useDataSourceImport'
 
 interface ImportResourceDialogProps {
   open: boolean

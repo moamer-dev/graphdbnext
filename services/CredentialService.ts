@@ -82,7 +82,8 @@ class CredentialServiceClass extends BaseRepository<
 
     return this.create({
       ...data,
-      workspaceId: sanitizedWorkspaceId
+      workspaceId: sanitizedWorkspaceId,
+      creatorId: userId
     } as any)
   }
 
