@@ -21,7 +21,8 @@ interface UseRealXmlSampleResult {
 export function useRealXmlSample(
     file: File | null,
     tagName: string,
-    externalSelectedIndex?: number
+    externalSelectedIndex?: number,
+    xmlContent?: string
 ): UseRealXmlSampleResult {
     const [instances, setInstances] = useState<RealXmlInstance[]>([])
     const [selectedInstanceIndex, setSelectedInstanceIndex] = useState<number>(0)
@@ -29,8 +30,22 @@ export function useRealXmlSample(
     const [error, setError] = useState<string | null>(null)
     const [parsedDoc, setParsedDoc] = useState<Document | null>(null)
 
-    // Parse file when it changes
     useEffect(() => {
+        if (xmlContent) {
+            try {
+                const parser = new DOMParser()
+                const doc = parser.parseFromString(xmlContent, 'text/xml')
+                const parseError = doc.querySelector('parsererror')
+                if (parseError) throw new Error('Failed to parse XML: ' + parseError.textContent)
+                setParsedDoc(doc)
+                setError(null)
+            } catch (err) {
+                console.error('XML Parse Error (from content):', err)
+                setError(err instanceof Error ? err.message : 'Unknown parse error')
+            }
+            return
+        }
+
         if (!file) {
             setParsedDoc(null)
             setInstances([])
@@ -67,8 +82,8 @@ export function useRealXmlSample(
             setLoading(false)
         }
 
-        reader.readAsText(file) // Read entire file - simplistic for now
-    }, [file])
+        reader.readAsText(file)
+    }, [file, xmlContent])
 
     // Extract instances when doc or tagName changes
     useEffect(() => {

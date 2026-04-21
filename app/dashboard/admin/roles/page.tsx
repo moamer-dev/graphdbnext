@@ -14,7 +14,7 @@ import { PermissionTable } from '@/components/rbac/PermissionTable'
 import { RoleDialogs } from '@/components/rbac/RoleDialogs'
 import { useRoleHandlers } from './(handlers)/useRoleHandlers'
 
-const RESOURCES = ['MODEL', 'WORKSPACE', 'CREDENTIAL', 'PROJECT', 'TEAM', 'SAVED_QUERY', 'WORKFLOW', 'DATA_SOURCE', 'DATABASE', 'QUERY', 'ANALYTICS'] as const
+const RESOURCES = ['MODEL', 'WORKSPACE', 'CREDENTIAL', 'PROJECT', 'TEAM', 'SAVED_QUERY', 'WORKFLOW', 'DATA_SOURCE', 'DATA_SOURCE_PAGE', 'DATABASE', 'QUERY', 'ANALYTICS'] as const
 const ACTIONS = ['CREATE', 'READ', 'UPDATE', 'DELETE', 'ACCESS'] as const
 const SCOPES = ['SELF', 'TEAM', 'ALL'] as const
 

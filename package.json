@@ -15,7 +15,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/lang-xml": "^6.1.0",
     "@hookform/resolvers": "^5.2.2",
     "@langchain/community": "^1.1.1",
     "@langchain/mistralai": "^1.0.2",

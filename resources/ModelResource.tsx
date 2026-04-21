@@ -15,6 +15,7 @@ export interface Model {
   createdAt: string
   updatedAt: string
   creatorId?: string
+  workspaceId?: string | null
   schemaJson?: unknown
   schemaMd?: string | null
   noteCount?: number

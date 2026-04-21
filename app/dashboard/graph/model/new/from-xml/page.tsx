@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useModelBuilder } from '@/hooks'
 import { XmlImportWizard, AISettingsProvider, useXmlImportWizardStore, DEFAULT_AI_SETTINGS } from '@plexus/builder'
 import type { AISettings } from '@plexus/builder'
@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import { ModelResource } from '@/resources/ModelResource'
 import { useRouter } from 'next/navigation'
+import { resourceHooks } from '@/hooks/react-query'
+import { useDataSourcesStore } from '@plexus/builder'
 
 export default function NewModelFromXmlPage () {
   const router = useRouter()
@@ -39,12 +41,38 @@ export default function NewModelFromXmlPage () {
     fetchAISettings()
   }, [])
 
-  // Clear wizard state when unmounting
+  // Fetch workspace XMLs to populate the warehouse selection
+  const { data: dataSourcesResult } = resourceHooks.dataSources.useList({
+    page: 1,
+    pageSize: 100,
+    filters: { type: 'XML' }
+  })
+
   useEffect(() => {
-    return () => {
-      useXmlImportWizardStore.getState().reset()
+    if (dataSourcesResult?.data) {
+      useDataSourcesStore.getState().setSources(dataSourcesResult.data)
+    }
+  }, [dataSourcesResult])
+
+  const handleFetchXml = useCallback(async (xmlSource: any) => {
+    try {
+      const response = await fetch(`/api/data-sources/${xmlSource.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        return { content: data.data.content || '', name: data.data.name }
+      }
+      return null
+    } catch (err) {
+      console.error('Failed to fetch XML content:', err)
+      return null
     }
   }, [])
+
+  const handleImportComplete = useCallback(() => {
+    // Redirect to model builder to refine the model
+    // Pass 'from=xml' query param to indicate we came from XML import
+    router.push('/dashboard/graph/model/new?from=xml')
+  }, [router])
 
   if (moduleLoading) {
     return (
@@ -111,15 +139,12 @@ export default function NewModelFromXmlPage () {
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-0">
         {aiSettings ? (
           <AISettingsProvider settings={aiSettings}>
             <XmlImportWizard
-              onImportComplete={() => {
-                // Redirect to model builder to refine the model
-                // Pass 'from=xml' query param to indicate we came from XML import
-                router.push('/dashboard/graph/model/new?from=xml')
-              }}
+              onFetchXml={handleFetchXml}
+              onImportComplete={handleImportComplete}
             />
           </AISettingsProvider>
         ) : (

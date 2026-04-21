@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CredentialsManager } from './shared/CredentialsManager'
 import { SaveWorkflowDialog } from './dialogs/SaveWorkflowDialog'
 import { WorkflowChangeConfirmDialog } from './dialogs/WorkflowChangeConfirmDialog'
+import { SaveXmlToWorkspaceDialog } from './dialogs/SaveXmlToWorkspaceDialog'
 
 interface ModelBuilderDialogsProps {
   importDialogOpen: boolean
@@ -70,6 +71,14 @@ interface ModelBuilderDialogsProps {
   pendingWorkflowName?: string
   onConfirmWorkflowChange: (updateCurrent: boolean) => void
   onCancelWorkflowChange: () => void
+
+  // Save XML to workspace
+  saveXmlToWorkspaceDialogOpen: boolean
+  setSaveXmlToWorkspaceDialogOpen: (val: boolean) => void
+  saveXmlToWorkspaceName: string
+  setSaveXmlToWorkspaceName: (val: string) => void
+  onConfirmSaveXmlToWorkspace: () => void
+  isPushingXml: boolean
 }
 
 
@@ -125,7 +134,13 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
   currentWorkflowName,
   pendingWorkflowName,
   onConfirmWorkflowChange,
-  onCancelWorkflowChange
+  onCancelWorkflowChange,
+  saveXmlToWorkspaceDialogOpen,
+  setSaveXmlToWorkspaceDialogOpen,
+  saveXmlToWorkspaceName,
+  setSaveXmlToWorkspaceName,
+  onConfirmSaveXmlToWorkspace,
+  isPushingXml
 }) => {
   return (
     <>
@@ -227,6 +242,15 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
           onCancel={onCancelWorkflowChange}
         />
       )}
+
+      <SaveXmlToWorkspaceDialog
+        open={saveXmlToWorkspaceDialogOpen}
+        onOpenChange={setSaveXmlToWorkspaceDialogOpen}
+        name={saveXmlToWorkspaceName}
+        setName={setSaveXmlToWorkspaceName}
+        onConfirm={onConfirmSaveXmlToWorkspace}
+        isLoading={isPushingXml}
+      />
     </>
   )
 }

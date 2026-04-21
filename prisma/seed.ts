@@ -132,7 +132,21 @@ async function main () {
     create: { userId, roleId: adminRole.id }
   })
   
-  console.log('Admin privileges assigned.')
+  // 4. Create Default Storage Configuration
+  await prisma.storageConfig.upsert({
+    where: { id: 'default-database-storage' },
+    update: {},
+    create: {
+      id: 'default-database-storage',
+      name: 'System Database Storage',
+      type: 'DATABASE',
+      config: {},
+      isDefault: true,
+      isActive: true
+    }
+  })
+  
+  console.log('Default storage configuration provisioned.')
 }
 
 main()

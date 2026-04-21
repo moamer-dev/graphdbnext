@@ -150,8 +150,18 @@ export default function DashboardLayout({
               </div>
             </div>
           </header>
-          <div className={cn('flex flex-1 flex-col gap-3 relative gradient-section', pathname === '/dashboard/graph/builder' || pathname?.includes('/edit') ? 'p-0' : 'p-3 pt-0')}>
-            <div className={cn('mx-auto w-full relative z-10', pathname === '/dashboard/database/queries' || pathname === '/dashboard/graph/builder' || pathname === '/dashboard/graph/model/new' || pathname?.includes('/edit') ? '' : 'max-w-7xl')}>
+          <div className={cn('flex flex-1 flex-col gap-3 relative gradient-section', 
+            pathname === '/dashboard/graph/builder' || 
+            pathname === '/dashboard/graph/model/new/from-xml' || 
+            pathname === '/dashboard/database/sources' || 
+            pathname?.includes('/edit') ? 'p-0' : 'p-3 pt-0')}>
+            <div className={cn('mx-auto w-full relative z-10', 
+              pathname === '/dashboard/database/queries' || 
+              pathname === '/dashboard/database/sources' || 
+              pathname === '/dashboard/graph/builder' || 
+              pathname === '/dashboard/graph/model/new' || 
+              pathname === '/dashboard/graph/model/new/from-xml' || 
+              pathname?.includes('/edit') ? '' : 'max-w-7xl')}>
               {children}
             </div>
           </div>

@@ -1,14 +1,22 @@
 'use client'
 
 import { useRef } from 'react'
-import { Upload, FileText, Info } from 'lucide-react'
+import { Upload, FileText, Info, CheckCircle2 } from 'lucide-react'
+import { cn } from '../../../../utils/cn'
 
 interface UploadStepProps {
   selectedFile: File | null
   onFileSelect: (file: File) => void
+  workspaceXmls?: any[]
+  onSelectWorkspaceXml?: (xmlSource: any) => void
 }
 
-export function UploadStep({ selectedFile, onFileSelect }: UploadStepProps) {
+export function UploadStep({ 
+  selectedFile, 
+  onFileSelect,
+  workspaceXmls = [],
+  onSelectWorkspaceXml
+}: UploadStepProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   return (
@@ -70,6 +78,49 @@ export function UploadStep({ selectedFile, onFileSelect }: UploadStepProps) {
           </div>
         )}
       </div>
+      
+      {/* Warehouse Selection */}
+      {workspaceXmls.length > 0 && (
+        <div className="space-y-3 pt-4 border-t">
+          <div className="flex items-center gap-2">
+            <div className="h-px flex-1 bg-muted" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-2">Or Select from Workspace Library</span>
+            <div className="h-px flex-1 bg-muted" />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+            {workspaceXmls.map((xml) => (
+              <button
+                key={xml.id}
+                type="button"
+                onClick={() => onSelectWorkspaceXml?.(xml)}
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-lg border transition-all text-left",
+                  selectedFile?.name === xml.name
+                    ? "bg-primary/5 border-primary shadow-sm"
+                    : "bg-background border-muted hover:border-primary/50 hover:bg-muted/5"
+                )}
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className={cn(
+                    "p-1.5 rounded-md",
+                    selectedFile?.name === xml.name ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                  )}>
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col truncate">
+                    <span className="text-xs font-semibold truncate">{xml.name}</span>
+                    <span className="text-[10px] text-muted-foreground">Workspace Asset</span>
+                  </div>
+                </div>
+                {selectedFile?.name === xml.name && (
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { BaseRepository } from './core/BaseRepository'
-import { DataSource, Prisma, DataSourceType } from '@prisma/client'
+import { DataSource, Prisma } from '@prisma/client'
 import { checkPermission, getAuthorizedQuery, isAdmin } from '@/utils/rbac-engine'
+
+const sanitizeId = (id: any) => (id && typeof id === 'string' && id.trim() !== '' && id !== 'null' && id !== 'undefined') ? id : null
 
 class DataSourceServiceClass extends BaseRepository<
   DataSource,
@@ -29,24 +31,28 @@ class DataSourceServiceClass extends BaseRepository<
       filters = {}
     } = params
 
-    const sanitizeId = (id: any) => (id && typeof id === 'string' && id.trim() !== '' && id !== 'null' && id !== 'undefined') ? id : null
-    
     const userIsAdmin = await isAdmin(userId)
     const authWhere = await getAuthorizedQuery(userId, 'DATA_SOURCE', 'READ')
     
-    const { workspaceId, ...otherFilters } = filters
+    const { workspaceId, isGlobalScope, ...otherFilters } = filters
+    const isGlobal = isGlobalScope === 'true' || isGlobalScope === true
     
+    // BUILD THE WHERE CLAUSE
+    // 1. Start with RBAC authorization (usually { creatorId: userId } for SELF scope)
     const whereClause: Prisma.DataSourceWhereInput = {
-      ...authWhere,
-      ...otherFilters,
-      ...(!userIsAdmin && sanitizeId(workspaceId) && {
-        workspaceId: sanitizeId(workspaceId) as string
-      }),
-      ...(query && {
-        OR: [
+      ...(userIsAdmin ? {} : authWhere), // Admins see everything
+      ...otherFilters
+    }
+
+    // 2. Apply Workspace filtering only if NOT admin and NOT in global scope
+    if (!userIsAdmin && !isGlobal && sanitizeId(workspaceId)) {
+        whereClause.workspaceId = sanitizeId(workspaceId) as string
+    }
+
+    if (query) {
+      whereClause.OR = [
           { name: { contains: query, mode: 'insensitive' } }
-        ]
-      })
+      ]
     }
 
     return this.findAll({
@@ -55,14 +61,18 @@ class DataSourceServiceClass extends BaseRepository<
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
-        workspace: { select: { id: true, name: true } }
+        workspace: { select: { id: true, name: true } },
+        creator: { select: { id: true, name: true, email: true } }
       }
     })
   }
 
   async findOneWithRBAC(userId: string, id: string) {
     const dataSource = await this.findById(id, {
-        include: { workspace: { select: { id: true, name: true } } }
+        include: { 
+            workspace: { select: { id: true, name: true } },
+            creator: { select: { id: true, name: true, email: true } }
+        }
     })
     
     if (!dataSource) return null
@@ -82,13 +92,41 @@ class DataSourceServiceClass extends BaseRepository<
     if (!hasPermission) throw new Error('Unauthorized CREATE on DATA_SOURCE')
 
     // Sanitize workspaceId
-    const sanitizedWorkspaceId = data.workspaceId && data.workspaceId !== '' ? data.workspaceId : null
+    const sanitizedWorkspaceId = sanitizeId(data.workspaceId)
+    
+    // Check if workspace actually exists to avoid P2003
+    let verifiedWorkspaceId = null
+    if (sanitizedWorkspaceId) {
+        const workspace = await prisma.workspace.findUnique({ where: { id: sanitizedWorkspaceId } })
+        if (workspace) {
+            verifiedWorkspaceId = sanitizedWorkspaceId
+        } else {
+            console.warn(`DataSource creation: Workspace ${sanitizedWorkspaceId} not found. Falling back to personal scope.`)
+        }
+    }
 
-    return this.create({
+    // If no storageConfigId is provided, use the default DATABASE storage
+    let storageConfigId = data.storageConfigId
+    if (!storageConfigId) {
+      const defaultConfig = await prisma.storageConfig.findFirst({
+        where: { isDefault: true, isActive: true }
+      })
+      storageConfigId = defaultConfig?.id
+    }
+
+    // Calculate size
+    const size = data.content ? Buffer.byteLength(data.content as string) : 
+                 data.jsonContent ? Buffer.byteLength(JSON.stringify(data.jsonContent)) : 0
+
+    const finalData = {
       ...data,
-      workspaceId: sanitizedWorkspaceId,
-      creatorId: userId
-    } as any)
+      workspaceId: verifiedWorkspaceId,
+      creatorId: userId,
+      storageConfigId: storageConfigId as string | undefined,
+      size
+    }
+
+    return this.create(finalData as any)
   }
 
   async updateWithRBAC(userId: string, id: string, data: Prisma.DataSourceUncheckedUpdateInput) {
@@ -104,7 +142,7 @@ class DataSourceServiceClass extends BaseRepository<
     // Filter out internal fields and sanitize workspaceId
     const { id: _, creatorId: __, ...updateData } = data
     if ('workspaceId' in updateData) {
-      updateData.workspaceId = updateData.workspaceId && updateData.workspaceId !== '' ? updateData.workspaceId : null
+      updateData.workspaceId = sanitizeId(updateData.workspaceId)
     }
 
     return this.update(id, updateData as Prisma.DataSourceUpdateInput)

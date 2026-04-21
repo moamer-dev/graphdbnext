@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
-import { Upload, AlertCircle, FileText, Settings, Eye, CheckCircle2, ChevronDown } from 'lucide-react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { Upload, AlertCircle, FileText, Settings, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { UploadStep } from './steps/UploadStep'
 import { ConfigureRulesStep } from './steps/ConfigureRulesStep'
-import { AnalyzeStep } from './steps/AnalyzeStep'
 import { ConfigureStep } from './steps/ConfigureStep'
 import { ReviewStep } from './steps/ReviewStep'
 import { useXmlImport } from '../../../hooks/xml/useXmlImport'
@@ -13,13 +12,23 @@ import { useXmlImportWizardStore } from '../../../stores/xmlImportWizardStore'
 import { useXmlImportWizardUI } from '../../../hooks/wizard/useXmlImportWizardUI'
 import { cn } from '../../../utils/cn'
 import { createXmlImportWizardHandlers, formatXml } from './handlers/createXmlImportWizardHandlers'
+import { useDataSourcesStore, type DataSource } from '../../../stores/dataSourcesStore'
 
 interface XmlImportWizardProps {
   onImportComplete?: () => void
   className?: string
+  workspaceXmls?: any[]
+  onFetchXml?: (xmlSource: any) => Promise<{ content: string; name: string } | null>
 }
 
-export function XmlImportWizard({ onImportComplete, className }: XmlImportWizardProps) {
+export function XmlImportWizard({ onImportComplete, className, workspaceXmls: propsWorkspaceXmls, onFetchXml }: XmlImportWizardProps) {
+  const sources = useDataSourcesStore((state) => state.sources)
+  const storeWorkspaceXmls = useMemo(() => 
+    Object.values(sources).filter((s: DataSource) => s.type === 'XML'),
+    [sources]
+  )
+  const workspaceXmls = propsWorkspaceXmls || storeWorkspaceXmls
+
   const ui = useXmlImportWizardUI()
   const {
     fileInputRef,
@@ -62,6 +71,7 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
 
   // Hook for XML import operations
   const {
+    analyzing,
     analysis: hookAnalysis,
     mapping: hookMapping,
     error: hookError,
@@ -95,7 +105,8 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
     handleImportRules,
     handleImportConfig,
     canAccessStep,
-    handleStepClick
+    handleStepClick,
+    handleSelectWarehouseXml
   } = createXmlImportWizardHandlers({
     selectedFile,
     analysisRules,
@@ -127,7 +138,9 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
     resetImport,
     clearError,
     onImportComplete,
-    getLatestMapping
+    getLatestMapping,
+    onFetchXml,
+    setXmlPreview
   })
 
   // Load XML preview when entering configure step (for Document Tree)
@@ -149,96 +162,59 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
 
   const wizardContent = (
     <div className={cn('flex gap-4', className)}>
-      {/* Vertical Step Indicator on Left */}
-      <div className="bg-muted/30 rounded-lg p-3 shrink-0 w-32">
-        <div className="flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleStepClick('upload')}
-            disabled={!canAccessStep('upload')}
-            className={cn(
-              'flex flex-col items-center gap-1.5 px-2 py-2 rounded-md transition-all w-full',
-              step === 'upload' && 'bg-primary text-primary-foreground shadow-sm',
-              canAccessStep('upload') && step !== 'upload' && 'hover:bg-muted',
-              !canAccessStep('upload') && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            <Upload className={cn('h-5 w-5', step === 'upload' && 'text-primary-foreground')} />
-            <span className="text-xs font-medium">Upload</span>
-            <span className="text-[10px] text-muted-foreground">XML File</span>
-          </button>
+      <div className="shrink-0 w-32 border-r pr-6 relative hidden md:block">
+        <div className="absolute right-[22px] top-6 bottom-6 w-[2px] bg-muted/40" />
+        <div className="flex flex-col gap-8 relative z-10">
+          {[
+            { id: 'upload', icon: Upload, label: 'Upload', sub: 'XML File' },
+            { id: 'configure-rules', icon: Settings, label: 'Rules', sub: 'Analysis' },
+            { id: 'configure', icon: FileText, label: 'Configure', sub: 'Mapping' }
+          ].map((s, idx, arr) => {
+            const stepOrder = ['upload', 'configure-rules', 'analyze', 'configure', 'review']
+            const currentIdx = stepOrder.indexOf(step)
+            const thisIdx = stepOrder.indexOf(s.id as any)
+            const isActive = step === s.id || (step === 'analyze' && s.id === 'configure-rules')
+            const isCompleted = thisIdx < currentIdx && step !== 'analyze'
+            const isPending = !isActive && !isCompleted
 
-          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-
-          <button
-            type="button"
-            onClick={() => handleStepClick('configure-rules')}
-            disabled={!canAccessStep('configure-rules')}
-            className={cn(
-              'flex flex-col items-center gap-1.5 px-2 py-2 rounded-md transition-all w-full',
-              step === 'configure-rules' && 'bg-primary text-primary-foreground shadow-sm',
-              canAccessStep('configure-rules') && step !== 'configure-rules' && 'hover:bg-muted',
-              !canAccessStep('configure-rules') && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            <Settings className={cn('h-5 w-5', step === 'configure-rules' && 'text-primary-foreground')} />
-            <span className="text-xs font-medium">Rules</span>
-            <span className="text-[10px] text-muted-foreground">Analysis</span>
-          </button>
-
-          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-
-          <button
-            type="button"
-            onClick={() => handleStepClick('analyze')}
-            disabled={!canAccessStep('analyze')}
-            className={cn(
-              'flex flex-col items-center gap-1.5 px-2 py-2 rounded-md transition-all w-full',
-              step === 'analyze' && 'bg-primary text-primary-foreground shadow-sm',
-              canAccessStep('analyze') && step !== 'analyze' && 'hover:bg-muted',
-              !canAccessStep('analyze') && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            <Eye className={cn('h-5 w-5', step === 'analyze' && 'text-primary-foreground')} />
-            <span className="text-xs font-medium">Analyze</span>
-            <span className="text-[10px] text-muted-foreground">Structure</span>
-          </button>
-
-          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-
-          <button
-            type="button"
-            onClick={() => handleStepClick('configure')}
-            disabled={!canAccessStep('configure')}
-            className={cn(
-              'flex flex-col items-center gap-1.5 px-2 py-2 rounded-md transition-all w-full',
-              step === 'configure' && 'bg-primary text-primary-foreground shadow-sm',
-              canAccessStep('configure') && step !== 'configure' && 'hover:bg-muted',
-              !canAccessStep('configure') && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            <FileText className={cn('h-5 w-5', step === 'configure' && 'text-primary-foreground')} />
-            <span className="text-xs font-medium">Configure</span>
-            <span className="text-[10px] text-muted-foreground">Mapping</span>
-          </button>
-
-          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-
-          <button
-            type="button"
-            onClick={() => handleStepClick('review')}
-            disabled={!canAccessStep('review')}
-            className={cn(
-              'flex flex-col items-center gap-1.5 px-2 py-2 rounded-md transition-all w-full',
-              step === 'review' && 'bg-primary text-primary-foreground shadow-sm',
-              canAccessStep('review') && step !== 'review' && 'hover:bg-muted',
-              !canAccessStep('review') && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            <CheckCircle2 className={cn('h-5 w-5', step === 'review' && 'text-primary-foreground')} />
-            <span className="text-xs font-medium">Review</span>
-            <span className="text-[10px] text-muted-foreground">Complete</span>
-          </button>
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => handleStepClick(s.id as any)}
+                disabled={!canAccessStep(s.id as any)}
+                className={cn(
+                  'group flex flex-col items-center gap-2 transition-all duration-300 outline-none cursor-pointer',
+                  !canAccessStep(s.id as any) && 'opacity-40 cursor-not-allowed'
+                )}
+              >
+                <div className="relative">
+                  <div className={cn(
+                    "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-sm",
+                    isActive && "bg-primary border-primary text-primary-foreground scale-110 shadow-primary/20",
+                    isCompleted && "bg-background border-primary text-primary shadow-sm",
+                    isPending && "bg-background border-muted text-muted-foreground"
+                  )}>
+                    {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <s.icon className="h-5 w-5" />}
+                  </div>
+                  {isActive && (
+                    <div className="absolute -inset-1 rounded-full border border-primary/20 animate-pulse" />
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className={cn(
+                    "text-[11px] font-bold tracking-tight transition-colors",
+                    isActive ? "text-primary uppercase" : "text-foreground/70"
+                  )}>
+                    {s.label}
+                  </div>
+                  <div className="text-[9px] text-muted-foreground font-medium">
+                    {s.sub}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -255,11 +231,14 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
           </div>
         )}
 
+
         {/* Step Content */}
         {step === 'upload' && (
           <UploadStep
             selectedFile={selectedFile}
             onFileSelect={handleFileSelect}
+            workspaceXmls={workspaceXmls}
+            onSelectWorkspaceXml={handleSelectWarehouseXml}
           />
         )}
 
@@ -277,7 +256,20 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
           />
         )}
 
-        {step === 'analyze' && <AnalyzeStep />}
+        {step === 'analyze' && (
+          <div className="flex-1 flex flex-col items-center justify-center py-20 text-center space-y-4">
+            <div className="bg-primary/5 p-6 rounded-full">
+              <Loader2 className="h-9 w-9 text-primary animate-spin" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Tree is being built...</h2>
+              <p className="text-muted-foreground max-w-xs mx-auto">
+                Processing XML structure and generating your visual mapping environment.
+              </p>
+            </div>
+          </div>
+        )}
+
 
         {step === 'configure' && analysis && mapping && (
           <ConfigureStep
@@ -302,7 +294,6 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
           />
         )}
 
-        {step === 'review' && <ReviewStep />}
 
         {/* Navigation Buttons */}
         <div className="flex justify-between gap-2 pt-4 border-t">
@@ -313,13 +304,9 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
               onClick={() => {
                 if (step === 'configure-rules') {
                   setStep('upload')
-                } else if (step === 'analyze') {
-                  setStep('configure-rules')
                 } else if (step === 'configure') {
                   // Go back to configure-rules to allow re-analyzing with different rules
                   setStep('configure-rules')
-                } else if (step === 'review') {
-                  setStep('configure')
                 }
               }}
             >
@@ -346,16 +333,11 @@ export function XmlImportWizard({ onImportComplete, className }: XmlImportWizard
                   Cancel
                 </Button>
                 <Button onClick={handleGenerate}>
-                  Generate Model
+                  Model Builder
                 </Button>
               </>
             )}
 
-            {step === 'review' && (
-              <Button onClick={handleReset}>
-                Import Another File
-              </Button>
-            )}
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ import { useAIFeature } from '../../ai/config'
 import { useDataSourcesStore, useXmlSources } from '../../stores/dataSourcesStore'
 import { useCredentialsStore } from '../../stores/credentialsStore'
 import { useAiStore } from '../../stores/aiStore'
+import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
 
 export function useModelBuilderInternal(props: any, ref: any) {
   const {
@@ -28,6 +29,10 @@ export function useModelBuilderInternal(props: any, ref: any) {
     onSave,
     onSaveModel
   } = props
+
+  const [xmlPanelOpen, setXmlPanelOpen] = useState(false)
+  const [xmlPanelWidth, setXmlPanelWidth] = useState(600)
+  const [hasAutoOpened, setHasAutoOpened] = useState(false)
 
   // Collaborative Store Synchronization
   useEffect(() => {
@@ -59,6 +64,16 @@ export function useModelBuilderInternal(props: any, ref: any) {
   }, [dataSourcesPersistence, credentialsPersistence, aiPersistence])
 
   const ui = useModelBuilderUI()
+
+  // Auto-open XML panel if a file was imported/selected from the wizard
+  const xmlFileFromWizard = useXmlImportWizardStore((state) => state.selectedFile)
+  useEffect(() => {
+    if (xmlFileFromWizard && !hasAutoOpened) {
+      ui.setXmlFile(xmlFileFromWizard)
+      setXmlPanelOpen(true)
+      setHasAutoOpened(true)
+    }
+  }, [xmlFileFromWizard, hasAutoOpened, ui.setXmlFile])
   const {
     setWorkflowConfigDialogOpen,
     workflowConfigFile
@@ -87,7 +102,7 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const selectedToolNodeId = useToolCanvasStore((state) => state.selectedNodeId)
   const selectedActionNodeId = useActionCanvasStore((state) => state.selectedNodeId)
 
-  const { xmlContent, handleRunWorkflow, handleUploadXml } = useWorkflowLifecycle({
+  const { xmlContent, setXmlContent, handleRunWorkflow, handleUploadXml } = useWorkflowLifecycle({
     initialWorkflow, nodes, relationships, ui
   })
 
@@ -97,8 +112,6 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const [sidebarWidth, setSidebarWidth] = useState(260)
   const [agentsPanelOpen, setAgentsPanelOpen] = useState(false)
   const [agentsPanelWidth, setAgentsPanelWidth] = useState(400)
-  const [xmlPanelOpen, setXmlPanelOpen] = useState(false)
-  const [xmlPanelWidth, setXmlPanelWidth] = useState(600)
   const [xmlWrapWord, setXmlWrapWord] = useState(false)
   const [showToolbar, setShowToolbar] = useState(true)
   const [clearWorkflowDialogOpen, setClearWorkflowDialogOpen] = useState(false)
@@ -108,6 +121,13 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const [schemaDesignMode] = useState<'suggest' | 'optimize' | 'validate'>('suggest')
   const [workflowGenerationDialogOpen, setWorkflowGenerationDialogOpen] = useState(false)
   const [isPushingXml, setIsPushingXml] = useState(false)
+
+  const {
+    saveXmlToWorkspaceDialogOpen,
+    setSaveXmlToWorkspaceDialogOpen,
+    saveXmlToWorkspaceName,
+    setSaveXmlToWorkspaceName
+  } = ui
 
   const workspaceXmls = useXmlSources()
 
@@ -480,6 +500,7 @@ export function useModelBuilderInternal(props: any, ref: any) {
     selectedToolNodeId,
     selectedActionNodeId,
     xmlContent,
+    setXmlContent,
     handleRunWorkflow,
     handleUploadXml,
     onSelectWorkspaceXml: async (xmlSource: any) => {
@@ -506,16 +527,28 @@ export function useModelBuilderInternal(props: any, ref: any) {
     },
     onPushXmlToWorkspace: async () => {
         if (!ui.xmlFile || !dataSourcesPersistence?.onSave) return
+        
+        // If the dialog is not open yet, open it and set the default name
+        if (!saveXmlToWorkspaceDialogOpen) {
+            setSaveXmlToWorkspaceName(ui.xmlFile.name)
+            setSaveXmlToWorkspaceDialogOpen(true)
+            return
+        }
+
+        // If we are here, the dialog is open and the user clicked "Confirm"
         setIsPushingXml(true)
         try {
-            const content = await ui.xmlFile.text()
+            // Use xmlContent (edited) instead of ui.xmlFile.text() (original)
+            const contentToSave = xmlContent
+            
             await dataSourcesPersistence.onSave({
-                name: ui.xmlFile.name,
+                name: saveXmlToWorkspaceName || ui.xmlFile.name,
                 type: 'XML',
-                content: content,
-                size: ui.xmlFile.size
+                content: contentToSave,
+                size: new Blob([contentToSave]).size
             })
             toast.success('XML saved to workspace library')
+            setSaveXmlToWorkspaceDialogOpen(false)
             
             // Re-load data sources to see the new item
             if (dataSourcesPersistence.onLoad) {
@@ -544,6 +577,10 @@ export function useModelBuilderInternal(props: any, ref: any) {
     setXmlPanelWidth,
     xmlWrapWord,
     setXmlWrapWord,
+    saveXmlToWorkspaceDialogOpen,
+    setSaveXmlToWorkspaceDialogOpen,
+    saveXmlToWorkspaceName,
+    setSaveXmlToWorkspaceName,
     showToolbar,
     setShowToolbar,
     clearWorkflowDialogOpen,

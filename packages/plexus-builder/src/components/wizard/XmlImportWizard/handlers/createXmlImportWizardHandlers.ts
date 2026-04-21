@@ -57,6 +57,8 @@ export interface XmlImportWizardHandlerDeps {
   clearError: () => void
   onImportComplete?: () => void
   getLatestMapping: () => XmlMappingConfig | null
+  onFetchXml?: (xmlSource: any) => Promise<{ content: string; name: string } | null>
+  setXmlPreview: (value: string | null) => void
 }
 
 export interface XmlImportWizardHandlers {
@@ -75,6 +77,7 @@ export interface XmlImportWizardHandlers {
   handleImportConfig: (file: File) => Promise<void>
   canAccessStep: (targetStep: WizardStep) => boolean
   handleStepClick: (targetStep: WizardStep) => void
+  handleSelectWarehouseXml: (xmlSource: any) => Promise<void>
 }
 
 export function createXmlImportWizardHandlers({
@@ -108,7 +111,9 @@ export function createXmlImportWizardHandlers({
   resetImport,
   clearError,
   onImportComplete,
-  getLatestMapping
+  getLatestMapping,
+  onFetchXml,
+  setXmlPreview
 }: XmlImportWizardHandlerDeps): XmlImportWizardHandlers {
   const handleMappingChange = (newMapping: XmlMappingConfig) => {
     const elementMappings = newMapping?.elementMappings || {}
@@ -129,11 +134,10 @@ export function createXmlImportWizardHandlers({
       return
     }
 
-    if (selectedFile && selectedFile.name !== file.name) {
-      setAnalysis(null)
-      setMapping(null)
-      resetImport()
-    }
+    // Always reset wizard state when a new file is chosen to prevent stale rules/mappings
+    resetWizard()
+    resetImport()
+    setXmlPreview(null) // Clear preview to force reload for new file
 
     setSelectedFile(file)
     setExtracting(true)
@@ -154,6 +158,24 @@ export function createXmlImportWizardHandlers({
     }
 
     setStep('configure-rules')
+  }
+
+  const handleSelectWarehouseXml = async (xmlSource: any) => {
+    if (!onFetchXml) return
+    setWizardError(null)
+    setExtracting(true)
+    try {
+      const data = await onFetchXml(xmlSource)
+      if (data && data.content) {
+        const file = new File([data.content], data.name, { type: 'text/xml' })
+        await handleFileSelect(file)
+      }
+    } catch (err) {
+      console.error('Failed to select warehouse XML:', err)
+      setWizardError('Failed to load selected warehouse file')
+    } finally {
+      setExtracting(false)
+    }
   }
 
   const handleAnalyze = async () => {
@@ -319,7 +341,6 @@ export function createXmlImportWizardHandlers({
         description: `Imported from ${selectedFile?.name || 'XML file'}`,
         version: '1.0.0'
       })
-      setStep('review')
       onImportComplete?.()
     }
   }
@@ -436,8 +457,6 @@ export function createXmlImportWizardHandlers({
         return !!selectedFile && Object.keys(analysisRules).length > 0
       case 'configure':
         return !!analysis && !!mapping
-      case 'review':
-        return !!analysis && !!mapping
       default:
         return false
     }
@@ -464,7 +483,8 @@ export function createXmlImportWizardHandlers({
     handleImportRules,
     handleImportConfig,
     canAccessStep,
-    handleStepClick
+    handleStepClick,
+    handleSelectWarehouseXml
   }
 }
 

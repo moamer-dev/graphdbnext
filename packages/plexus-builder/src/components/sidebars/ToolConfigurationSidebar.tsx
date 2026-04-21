@@ -53,12 +53,14 @@ export type SwitchSource = 'attribute' | 'elementName' | 'textContent'
 
 interface ToolConfigurationSidebarProps {
   toolNodeId: string | null
+  xmlContent?: string
   onClose: () => void
   className?: string
 }
 
 export function ToolConfigurationSidebar({
   toolNodeId,
+  xmlContent,
   onClose,
   className
 }: ToolConfigurationSidebarProps) {
@@ -108,7 +110,7 @@ export function ToolConfigurationSidebar({
     instances,
     selectedInstanceData,
     loading: loadingRealData
-  } = useRealXmlSample(selectedFile as any as File | null, elementToSample, selectedInstanceIndex)
+  } = useRealXmlSample(selectedFile as any as File | null, elementToSample, selectedInstanceIndex, xmlContent)
 
   // Use real instance data if available for testing
   const createTestElement = useCallback(() => {

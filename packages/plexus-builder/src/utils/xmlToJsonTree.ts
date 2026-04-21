@@ -123,6 +123,12 @@ function convertElementToNode (
     }
   }
 
+  // If subtree is ignored, don't process attributes or children
+  if (ignoredSubtrees.has(nodeNameLower)) {
+    result.value = result.type === 'object' ? '{0}' : '[]'
+    return result
+  }
+
   // Add attributes as children with '_' prefix
   const attrs = element.attributes
   for (let i = 0; i < attrs.length; i++) {
@@ -154,24 +160,33 @@ function convertElementToNode (
     }
   })
 
-  // Filter and process children
-  const validChildren: Element[] = []
-  elementChildren.forEach((child) => {
-    const childTagName = cleanName(child.tagName)
-    const childTagNameLower = childTagName.toLowerCase()
-    
-    // Skip if child is in ignored elements list
-    if (ignoredElements.has(childTagNameLower)) {
-      // If subtree is also ignored, skip completely
-      if (ignoredSubtrees.has(childTagNameLower)) {
+  // Collect children, hoisting children of ignored elements if subtree is kept
+  const computeValidChildren = (elements: Element[]): Element[] => {
+    const result: Element[] = []
+    elements.forEach((child) => {
+      const childTagNameLower = cleanName(child.tagName).toLowerCase()
+      
+      const isIgnored = ignoredElements.has(childTagNameLower)
+      const isSubtreeIgnored = ignoredSubtrees.has(childTagNameLower)
+
+      if (isIgnored) {
+        if (!isSubtreeIgnored) {
+          // Hoist children
+          const grandchildren = Array.from(child.childNodes).filter(
+            (node) => node.nodeType === 1
+          ) as Element[]
+          result.push(...computeValidChildren(grandchildren))
+        }
+        // If both are ignored, skip completely
         return
       }
-      // Otherwise, process the child's children (it's ignored but subtree isn't)
-      // This is handled in convertElementToNode itself
-    }
-    
-    validChildren.push(child)
-  })
+      
+      result.push(child)
+    })
+    return result
+  }
+
+  const validChildren = computeValidChildren(elementChildren)
 
   // Group element children by tag name
   const childrenByTag = new Map<string, Element[]>()
@@ -198,11 +213,12 @@ function convertElementToNode (
       result.children!.push(convertedChildren[0])
     } else {
       // Multiple children with same tag - add as array
+      const isSubtreeIgnored = ignoredSubtrees.has(tagName.toLowerCase())
       const arrayNode: JsonTreeNode = {
         key: tagName,
         type: 'array',
-        value: [],
-        children: convertedChildren.map((child, index) => ({
+        value: isSubtreeIgnored ? '(Subtree Ignored)' : [],
+        children: isSubtreeIgnored ? [] : convertedChildren.map((child, index) => ({
           ...child,
           key: String(index),
           isExpanded: false

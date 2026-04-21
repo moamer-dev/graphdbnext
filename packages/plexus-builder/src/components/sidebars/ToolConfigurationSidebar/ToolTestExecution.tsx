@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
+import { Play, CheckCircle2, XCircle, Eye, Loader2, Database, Info, Check, ChevronsUpDown } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '../../ui/select'
-import { Play, CheckCircle2, XCircle, Eye, Loader2, Database, Info } from 'lucide-react'
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '../../ui/command'
 import { ResponseHistory } from '../../shared/ResponseHistory'
 import { ApiResponseModal } from '../../dialogs/ApiResponseModal'
 import type { ToolCanvasNode } from '../../../stores/toolCanvasStore'
@@ -92,6 +94,8 @@ export function ToolTestExecution({
   loadingRealData = false
 }: ToolTestExecutionProps) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const isConditionTest = toolNodeType === 'tool:if' || toolNodeType === 'tool:switch'
   const isApiTest = showApiResponse
   
@@ -137,21 +141,80 @@ export function ToolTestExecution({
               </div>
 
               {realInstances.length > 0 ? (
-                <Select
-                  value={selectedInstanceIndex.toString()}
-                  onValueChange={(val) => onInstanceSelect?.(parseInt(val))}
-                >
-                  <SelectTrigger className="h-8 text-xs bg-background border-primary/20">
-                    <SelectValue placeholder="Select instance to test" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {realInstances.map((instance, idx) => (
-                      <SelectItem key={idx} value={idx.toString()} className="text-xs">
-                        Instance {idx + 1}: {instance.preview}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="h-9 w-full justify-between bg-background border-primary/20 text-xs font-normal"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Database className="h-3 w-3 text-muted-foreground/50" />
+                        {selectedInstanceIndex !== undefined && realInstances[selectedInstanceIndex] 
+                          ? `Instance ${selectedInstanceIndex + 1}: ${realInstances[selectedInstanceIndex].preview}`
+                          : "Select instance to test..."}
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput 
+                        placeholder="Search instances..." 
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                        className="h-8 text-xs"
+                      />
+                      <CommandList>
+                        <CommandEmpty className="py-2 text-[10px] text-center text-muted-foreground">
+                          No instances found.
+                        </CommandEmpty>
+                        <CommandGroup heading="Available Instances">
+                          {realInstances
+                            .filter(instance => 
+                              !searchQuery || 
+                              instance.preview?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              (instance.id && instance.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                              (idx => (idx + 1).toString().includes(searchQuery))(realInstances.indexOf(instance))
+                            )
+                            .slice(0, 10)
+                            .map((instance) => {
+                              const idx = realInstances.indexOf(instance)
+                              return (
+                                <CommandItem
+                                  key={idx}
+                                  value={idx.toString()}
+                                  onSelect={(val) => {
+                                    onInstanceSelect?.(parseInt(val))
+                                    setOpen(false)
+                                    setSearchQuery('')
+                                  }}
+                                  className="text-xs cursor-pointer"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-3 w-3",
+                                      selectedInstanceIndex === idx ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col truncate">
+                                    <span className="font-semibold text-[10px]">Instance {idx + 1}</span>
+                                    <span className="truncate opacity-70">{instance.preview}</span>
+                                  </div>
+                                </CommandItem>
+                              )
+                            })}
+                        </CommandGroup>
+                        {realInstances.length > 10 && !searchQuery && (
+                          <div className="px-2 py-1.5 text-[9px] text-muted-foreground text-center border-t bg-muted/20 italic">
+                            Showing first 10 of {realInstances.length} instances. Use search to find more.
+                          </div>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               ) : (
                 <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-2 rounded border border-dashed">
                   No real instances found for &quot;{attachedNode.label}&quot; in the uploaded file. Synthetic data will be used.

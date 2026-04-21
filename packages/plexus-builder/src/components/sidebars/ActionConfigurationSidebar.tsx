@@ -13,12 +13,14 @@ import { ActionGroupConfiguration } from './ActionConfigurationSidebar/ActionGro
 
 interface ActionConfigurationSidebarProps {
   actionNodeId: string | null
+  xmlContent?: string
   onClose: () => void
   className?: string
 }
 
 export function ActionConfigurationSidebar({
   actionNodeId,
+  xmlContent,
   onClose,
   className
 }: ActionConfigurationSidebarProps) {
@@ -45,7 +47,7 @@ export function ActionConfigurationSidebar({
     updateActionNode,
     toolNodes,
     actionEdges
-  } = useActionConfiguration(actionNodeId)
+  } = useActionConfiguration(actionNodeId, xmlContent)
 
   const {
     testResult,

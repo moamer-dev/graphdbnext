@@ -8,8 +8,8 @@ import { DataSourceType } from '@prisma/client'
 const CreateDataSourceSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   type: z.nativeEnum(DataSourceType),
-  workspaceId: z.string().optional().nullable(),
-  jsonContent: z.any().optional().nullable(),
+    workspaceId: z.string().optional().nullable(),
+    jsonContent: z.any().optional().nullable(),
   content: z.string().optional().nullable(),
   fileUrl: z.string().optional().nullable(),
 })

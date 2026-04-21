@@ -152,25 +152,21 @@ export function ConfigureStep({
             <span>Export Config</span>
           </Button>
         </div>
-        {isSemanticEnrichmentEnabled && (
-          <>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Label htmlFor="show-semantic" className="text-xs cursor-pointer">
-                Semantic
-              </Label>
-              <Switch
-                id="show-semantic"
-                checked={showSemantic}
-                onCheckedChange={setShowSemantic}
-                className="scale-75"
-              />
-            </div>
-          </>
-        )}
+        <div className="w-px h-4 bg-border" />
+        <div className="flex items-center gap-2">
+          <Label htmlFor="show-semantic" className="text-xs cursor-pointer">
+            Semantic
+          </Label>
+          <Switch
+            id="show-semantic"
+            checked={showSemantic}
+            onCheckedChange={setShowSemantic}
+            className="scale-75"
+          />
+        </div>
       </div>
 
-      {isSemanticEnrichmentEnabled && showSemantic && (
+      {showSemantic && (
         <div className="bg-card border rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
             <div className="bg-purple-100 rounded-lg p-1.5">

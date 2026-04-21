@@ -11,6 +11,8 @@ export type {
 
 // Stores
 export { useXmlImportWizardStore } from './stores/xmlImportWizardStore'
+export { useDataSourcesStore } from './stores/dataSourcesStore'
+export type { DataSource, DataSourceType } from './stores/dataSourcesStore'
 export type { WizardStep } from './stores/xmlImportWizardStore'
 
 // Conversion utilities

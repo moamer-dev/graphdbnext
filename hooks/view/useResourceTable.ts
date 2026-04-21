@@ -94,9 +94,9 @@ export function useResourceTable<T extends { id: string }>(
 
   const config = useMemo(() => {
     const args: any[] = [...tableConfigArgs]
-    if (isAdmin !== undefined) args.push(isAdmin)
-    if (userId !== undefined) args.push(userId)
-    if (userPermissions !== undefined) args.push(userPermissions)
+    args.push(isAdmin)
+    args.push(userId)
+    args.push(userPermissions)
 
     return resource.createTableConfig(
       handleView,
@@ -165,6 +165,7 @@ export function useResourceTable<T extends { id: string }>(
     onPageChange: tableState.setPage,
     onPageSizeChange: tableState.setPageSize,
     onSortChange: tableState.updateSorting,
-    onFiltersChange: tableState.updateFilters
+    onFiltersChange: tableState.updateFilters,
+    refetch: queryResult.refetch
   }
 }

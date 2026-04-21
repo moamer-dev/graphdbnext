@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma'
-import { PermissionResource, PermissionAction, PermissionScope } from '@prisma/client'
+import { PermissionAction, PermissionScope } from '@prisma/client'
 
 export interface UserPermission {
-  resource: PermissionResource
+  resource: string
   action: PermissionAction
   scope: PermissionScope
 }
@@ -130,7 +130,7 @@ export async function getEffectivePermissions(userId: string, teamId?: string): 
  */
 export async function checkPermission(
   userId: string, 
-  resource: PermissionResource, 
+  resource: string, 
   action: PermissionAction, 
   context?: { teamId?: string, resourceCreatorId?: string }
 ): Promise<boolean> {
@@ -175,7 +175,7 @@ export async function checkPermission(
  */
 export async function getAuthorizedQuery(
   userId: string,
-  resource: PermissionResource,
+  resource: string,
   action: PermissionAction,
   teamId?: string
 ): Promise<Record<string, any>> {
@@ -207,6 +207,14 @@ export async function getAuthorizedQuery(
         ]
       }
     }
+    if (resource === 'DATA_SOURCE') {
+      return {
+        OR: [
+          { creatorId: userId },
+          { workspace: { teamId: { in: myTeamIds } } }
+        ]
+      }
+    }
     return {
       OR: [
         { creatorId: userId },
@@ -234,6 +242,10 @@ export async function getAuthorizedQuery(
           { teamId: { in: myTeamIds } }
         ]
       }
+    }
+
+    if (resource === 'DATA_SOURCE') {
+        return { creatorId: userId }
     }
 
     return { creatorId: userId }

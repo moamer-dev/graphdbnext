@@ -11,7 +11,7 @@ import { workflowRegistry } from '../../registry'
 import { convertBuilderToSchemaJson } from '../../utils/schemaJsonConverter'
 import { executeWorkflow as executeWorkflowExecutor } from '../../services/workflow/workflowExecutor'
 
-export function useActionConfiguration(actionNodeId: string | null) {
+export function useActionConfiguration(actionNodeId: string | null, xmlContent?: string) {
   const actionNodes = useActionCanvasStore((state) => state.nodes)
   const actionEdges = useActionCanvasStore((state) => state.edges)
   const updateActionNode = useActionCanvasStore((state) => state.updateNode)
@@ -156,10 +156,12 @@ export function useActionConfiguration(actionNodeId: string | null) {
     }
 
     const executeWorkflow = async (): Promise<Array<Record<string, unknown>>> => {
-      const xmlContent = await xmlFileToUse.text()
+      // Use live xmlContent if available, otherwise read from file
+      const currentXml = xmlContent || (xmlFileToUse ? await xmlFileToUse.text() : '')
+      
       const schemaJson = convertBuilderToSchemaJson(nodes, relationships)
       const graph = await executeWorkflowExecutor({
-        xmlContent,
+        xmlContent: currentXml,
         schemaJson,
         nodes,
         relationships,

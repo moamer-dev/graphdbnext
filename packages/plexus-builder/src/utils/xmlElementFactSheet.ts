@@ -1,4 +1,5 @@
 import { DOMParser } from '@xmldom/xmldom'
+import { type XmlAnalysisRules } from '../services/xml/xmlAnalyzer'
 
 export interface ElementFactSheet {
   elementName: string
@@ -18,8 +19,11 @@ export interface ElementFactSheet {
 export function getElementFactSheet (
   xmlString: string,
   nodePath: string,
-  nodeKey: string
+  nodeKey: string,
+  analysisRules?: Partial<XmlAnalysisRules>
 ): ElementFactSheet | null {
+  const ignoredElements = new Set((analysisRules?.ignoredElements || []).map(e => e.toLowerCase()))
+  const ignoredSubtrees = new Set((analysisRules?.ignoredSubtrees || []).map(e => e.toLowerCase()))
   try {
     const parser = new DOMParser()
     const doc = parser.parseFromString(xmlString, 'text/xml')
@@ -54,16 +58,32 @@ export function getElementFactSheet (
       }
     }
 
-    // Extract children (grouped by name)
+    // Extract children (grouped by name, respecting ignored elements)
     const childrenMap = new Map<string, number>()
-    const childElements = Array.from(element.childNodes).filter(
-      (node) => node.nodeType === 1
-    ) as Element[]
     
-    childElements.forEach((child) => {
-      const tagName = cleanName(child.tagName)
-      childrenMap.set(tagName, (childrenMap.get(tagName) || 0) + 1)
-    })
+    if (!ignoredSubtrees.has(nodeKey.toLowerCase())) {
+      const processChildren = (nodes: NodeList) => {
+        const childElements = Array.from(nodes).filter(
+          (node) => node.nodeType === 1
+        ) as Element[]
+        
+        childElements.forEach((child) => {
+          const tagName = cleanName(child.tagName)
+          const tagNameLower = tagName.toLowerCase()
+          
+          if (ignoredElements.has(tagNameLower)) {
+            if (!ignoredSubtrees.has(tagNameLower)) {
+              processChildren(child.childNodes)
+            }
+            return
+          }
+          
+          childrenMap.set(tagName, (childrenMap.get(tagName) || 0) + 1)
+        })
+      }
+      
+      processChildren(element.childNodes)
+    }
 
     const children = Array.from(childrenMap.entries()).map(([name, count]) => ({
       name,
@@ -403,7 +423,6 @@ export function findElementPosition (
       }
       
       if (bestMatch) {
-        console.log('Found position by ID:', bestMatch.position)
         return bestMatch.position
       }
       

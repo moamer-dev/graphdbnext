@@ -4,8 +4,8 @@ import { WorkflowSelector } from './workflow/WorkflowSelector'
 import { Switch } from './ui/switch'
 import { OntologyCombobox } from './wizard/XmlImportWizard/components/OntologyCombobox'
 import { Button } from './ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem } from './ui/dropdown-menu'
-import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck, Globe, FileJson, Share2, MoreHorizontal, ChevronRight } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu'
+import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck, Globe, FileJson, Share2 } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { SemanticValidationDialog } from './semantic/SemanticValidationDialog'
 
@@ -113,6 +113,16 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   isPushingXml = false
 }) => {
   const [semanticValidationOpen, setSemanticValidationOpen] = React.useState(false)
+
+  const handleUploadWithToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onUploadXml(e)
+    setXmlPanelOpen(true)
+  }
+
+  const handleSelectWithToggle = (xml: any) => {
+    onSelectWorkspaceXml?.(xml)
+    setXmlPanelOpen(true)
+  }
 
   return (
     <div className={cn("flex items-center gap-3 p-3 border-b bg-background", className)}>
@@ -318,7 +328,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
           type="file"
           accept=".xml"
           className="hidden"
-          onChange={onUploadXml}
+          onChange={handleUploadWithToggle}
         />
         <div className="flex items-center rounded-md border bg-background p-0.5">
           <DropdownMenu>
@@ -330,7 +340,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                 title={xmlFile ? `Current XML: ${xmlFile.name}` : "Manage structural definitions"}
               >
                 <FileUp className="h-3.5 w-3.5 lg:mr-1" />
-                <span className="hidden lg:inline">{xmlFile ? 'Change XML' : 'XML Library'}</span>
+                <span className="hidden lg:inline">{xmlFile ? 'Select XML' : 'XML Library'}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
@@ -366,14 +376,17 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                   {workspaceXmls.map((xml) => (
                     <DropdownMenuItem 
                       key={xml.id} 
-                      onSelect={() => onSelectWorkspaceXml?.(xml)}
-                      className="flex items-center justify-between"
+                      onSelect={() => handleSelectWithToggle(xml)}
+                      className={cn(
+                        "flex items-center justify-between",
+                        xmlFile?.name === xml.name && "bg-blue-50 text-blue-700 font-medium focus:bg-blue-100 focus:text-blue-800"
+                      )}
                     >
                       <div className="flex items-center gap-2 overflow-hidden">
-                        <FileJson className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        <FileJson className={cn("h-3.5 w-3.5 shrink-0", xmlFile?.name === xml.name ? "text-blue-600" : "text-blue-500")} />
                         <span className="truncate">{xml.name}</span>
                       </div>
-                      {xmlFile?.name === xml.name && <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0 ml-2" />}
+                      {xmlFile?.name === xml.name && <CheckCircle2 className="h-3 w-3 text-blue-600 shrink-0 ml-2" />}
                     </DropdownMenuItem>
                   ))}
                 </div>

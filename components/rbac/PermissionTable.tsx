@@ -92,7 +92,7 @@ export function PermissionTable({
                         <tbody className="divide-y divide-border/50">
                             {actions
                                 .filter(action => {
-                                    const isSpecial = ['DATABASE', 'QUERY', 'ANALYTICS'].includes(selectedResource)
+                                    const isSpecial = ['DATABASE', 'QUERY', 'ANALYTICS','DATA_SOURCE_PAGE'].includes(selectedResource)
                                     return isSpecial ? action === 'ACCESS' : action !== 'ACCESS'
                                 })
                                 .map(action => {

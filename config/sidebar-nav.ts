@@ -62,8 +62,14 @@ export const sidebarNavItems: SidebarNavItem[] = [
       {
         title: 'Management',
         url: '/dashboard/database',
-        section: 'database',
-        resource: 'DATABASE'
+        resource: 'DATABASE',
+        action: 'ACCESS'
+      },
+      {
+        title: 'Data Sources',
+        url: '/dashboard/database/sources',
+        resource: 'DATA_SOURCE_PAGE',
+        action: 'ACCESS'
       },
       {
         title: 'Queries',

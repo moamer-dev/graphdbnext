@@ -144,7 +144,8 @@ export const useWorkflowLifecycle = ({
     setExecutionProgress({ current: 0, total: 100, currentStep: 'Loading XML...' })
 
     try {
-      const text = await xmlFileToLoad.text()
+      // Use the current xmlContent state (which includes manual edits)
+      const text = xmlContent
       setExecutionProgress({ current: 10, total: 100, currentStep: 'Converting schema...' })
 
       const schemaJson = convertBuilderToSchemaJson(nodes, relationships)
@@ -189,6 +190,7 @@ export const useWorkflowLifecycle = ({
 
   return {
     xmlContent,
+    setXmlContent,
     handleLoadWorkflowFromConfig,
     handleRunWorkflow,
     handleUploadXml

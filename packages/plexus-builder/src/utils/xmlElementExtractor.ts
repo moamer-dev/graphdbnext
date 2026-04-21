@@ -58,8 +58,8 @@ export async function extractXmlElements (file: File): Promise<XmlElementInfo> {
         function traverse (node: Node) {
           if (node.nodeType === 1) { // ELEMENT_NODE
             const element = node as Element
-            const elementName = element.nodeName
-            elementNames.add(elementName)
+            const localName = element.localName || element.nodeName.split(':').pop() || element.nodeName
+            elementNames.add(localName)
             
             // Extract attributes
             if (element.attributes && element.attributes.length > 0) {

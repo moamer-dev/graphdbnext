@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,7 +6,336 @@ datasource db {
   provider = "postgresql"
 }
 
-// Global access levels moved to Role table
+model User {
+  id                String           @id @default(cuid())
+  email             String           @unique
+  password          String
+  name              String?
+  emailVerified     DateTime?
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  accounts          Account[]
+  models            Model[]
+  createdProjects   Project[]        @relation("ProjectCreator")
+  savedQueries      SavedQuery[]
+  sessions          Session[]
+  createdTeams      Team[]           @relation("TeamCreator")
+  invitationsSent   TeamInvitation[] @relation("TeamInviter")
+  teamMembers       TeamMember[]
+  globalRoles       UserGlobalRole[]
+  userSettings      UserSettings?
+  workflows         Workflow[]
+  createdWorkspaces Workspace[]      @relation("WorkspaceCreator")
+  createdDataSources DataSource[]     @relation("DataSourceCreator")
+}
+
+model UserGlobalRole {
+  userId String
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Team {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  creatorId   String?
+  projects    Project[]
+  roles       Role[]
+  creator     User?            @relation("TeamCreator", fields: [creatorId], references: [id])
+  invitations TeamInvitation[]
+  members     TeamMember[]
+}
+
+model TeamMember {
+  id        String           @id @default(cuid())
+  userId    String
+  teamId    String
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  team      Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles     TeamMemberRole[]
+
+  @@unique([userId, teamId])
+}
+
+model TeamMemberRole {
+  teamMemberId String
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+
+  @@id([teamMemberId, roleId])
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  teamId          String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  permissions     Permission[]
+  team            Team?            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamMemberRoles TeamMemberRole[]
+  userGlobalRoles UserGlobalRole[]
+}
+
+model Permission {
+  id        String           @id @default(cuid())
+  roleId    String
+  resource  String
+  action    PermissionAction
+  scope     PermissionScope  @default(SELF)
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  role      Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  teamId      String?
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  creatorId   String?
+  creator     User?              @relation("ProjectCreator", fields: [creatorId], references: [id])
+  team        Team?              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  workspaces  ProjectWorkspace[]
+}
+
+model Workspace {
+  id           String             @id @default(cuid())
+  name         String
+  description  String?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  creatorId    String?
+  chatSessions ChatSession[]
+  credentials  Credential[]
+  dataSources  DataSource[]
+  models       Model[]
+  projects     ProjectWorkspace[]
+  creator      User?              @relation("WorkspaceCreator", fields: [creatorId], references: [id])
+}
+
+model ProjectWorkspace {
+  projectId   String
+  workspaceId String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, workspaceId])
+}
+
+model StorageConfig {
+  id          String       @id @default(cuid())
+  name        String
+  type        StorageType  @default(DATABASE)
+  config      Json
+  isDefault   Boolean      @default(false)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  dataSources DataSource[]
+}
+
+model DataSource {
+  id              String         @id @default(cuid())
+  name            String
+  type            DataSourceType
+  creatorId       String?
+  size            Int?
+  jsonContent     Json?
+  content         String?
+  fileUrl         String?
+  structure       Json?
+  storageConfigId String?
+  workspaceId     String?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  creator         User?          @relation("DataSourceCreator", fields: [creatorId], references: [id])
+  storageConfig   StorageConfig? @relation(fields: [storageConfigId], references: [id])
+  workspace       Workspace?     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Credential {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  type        String
+  data        Json
+  workspaceId String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ChatSession {
+  id          String        @id @default(cuid())
+  title       String?
+  workspaceId String?
+  agentId     String
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  messages    ChatMessage[]
+  workspace   Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  metadata  Json?
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Model {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  workspaceId String?
+  creatorId   String?
+  isActive    Boolean    @default(true)
+  version     String     @default("1.0")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  schemaJson  Json?
+  schemaMd    String?
+  creator     User?      @relation(fields: [creatorId], references: [id])
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workflows   Workflow[]
+
+  @@index([workspaceId])
+  @@index([isActive])
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  modelId     String
+  creatorId   String?
+  config      Json
+  isActive    Boolean  @default(true)
+  version     String   @default("1.0")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creator     User?    @relation(fields: [creatorId], references: [id])
+  model       Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+  @@index([isActive])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model SavedQuery {
+  id             String      @id @default(cuid())
+  name           String
+  description    String?
+  query          String
+  category       String?
+  tags           String[]    @default([])
+  source         QuerySource @default(CYPHER)
+  creatorId      String
+  executedAt     DateTime?
+  executionCount Int         @default(0)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  creator        User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+}
+
+model UserSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  theme     String?  @default("light")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GlobalSettings {
+  id        String   @id @default("singleton")
+  modules   Json?
+  ai        Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeamInvitation {
+  id          String           @id @default(cuid())
+  email       String
+  teamId      String
+  roleId      String?
+  invitedById String
+  token       String           @unique
+  expiresAt   DateTime
+  isActive    Boolean          @default(true)
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  invitedBy   User             @relation("TeamInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+  team        Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([email, teamId])
+}
 
 enum DataSourceType {
   XML
@@ -38,376 +364,14 @@ enum PermissionScope {
   SELF
 }
 
-model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  password      String
-  name          String?
-  // role field removed in favor of globalRoles relationship
-  emailVerified DateTime?
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
-  // Relations
-  globalRoles   UserGlobalRole[]
-  teamMembers   TeamMember[]
-  models        Model[]       // Personal models or created models
-  savedQueries  SavedQuery[]
-  workflows     Workflow[]
-  accounts      Account[]
-  sessions      Session[]
-  userSettings  UserSettings?
-
-  // Added creator relations
-  createdTeams      Team[]      @relation("TeamCreator")
-  createdProjects   Project[]   @relation("ProjectCreator")
-  createdWorkspaces Workspace[] @relation("WorkspaceCreator")
-  invitationsSent   TeamInvitation[] @relation("TeamInviter")
-}
-
-model UserGlobalRole {
-  userId String
-  roleId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@id([userId, roleId])
-}
-
-model Team {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  
-  // Relations
-  members     TeamMember[]
-  projects    Project[]
-  roles       Role[]
-  invitations TeamInvitation[]
-  
-  creatorId   String?
-  creator     User?    @relation("TeamCreator", fields: [creatorId], references: [id])
-}
-
-model TeamMember {
-  id        String   @id @default(cuid())
-  userId    String
-  teamId    String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  roles     TeamMemberRole[]
-
-  @@unique([userId, teamId])
-}
-
-model TeamMemberRole {
-  teamMemberId String
-  roleId       String
-  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@id([teamMemberId, roleId])
-}
-
-model Role {
-  id          String       @id @default(cuid())
-  name        String       // e.g., "Developer", "Reviewer"
-  description String?
-  teamId      String?      // Null for global roles
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  
-  team            Team?            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permissions     Permission[]
-  userGlobalRoles UserGlobalRole[]
-  teamMemberRoles TeamMemberRole[]
-}
-
-model Permission {
-  id        String             @id @default(cuid())
-  roleId    String
-  resource  String
-  action    PermissionAction
-  scope     PermissionScope    @default(SELF)
-  isActive  Boolean            @default(true)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  
-  role      Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
-}
-
-model Project {
-  id          String             @id @default(cuid())
-  name        String
-  description String?
-  teamId      String?
-  isActive    Boolean            @default(true)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  
-  team        Team?              @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  workspaces  ProjectWorkspace[]
-  
-  creatorId   String?
-  creator     User?              @relation("ProjectCreator", fields: [creatorId], references: [id])
-}
-
-model Workspace {
-  id           String             @id @default(cuid())
-  name         String
-  description  String?
-  isActive     Boolean            @default(true)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  
-  // Relations
-  projects     ProjectWorkspace[]
-  models       Model[]
-  dataSources  DataSource[]
-  credentials  Credential[]
-  chatSessions ChatSession[]
-  
-  creatorId    String?
-  creator      User?             @relation("WorkspaceCreator", fields: [creatorId], references: [id])
-}
-
-model ProjectWorkspace {
-  projectId   String
-  workspaceId String
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  @@id([projectId, workspaceId])
-}
-
-model StorageConfig {
-  id          String      @id @default(cuid())
-  name        String      // e.g., "Company S3 Storage"
-  type        StorageType @default(DATABASE)
-  config      Json        // Credentials, bucket name, etc.
-  isDefault   Boolean     @default(false)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  dataSources DataSource[]
-}
-
-model DataSource {
-  id              String         @id @default(cuid())
-  name            String
-  type            DataSourceType
-  creatorId       String?        // Standardized from authorId
-  size            Int?           // Size in bytes
-  
-  // Dynamic Storage
-  jsonContent     Json?          // Small direct JSON
-  content         String?        @db.Text // Small direct text (XML etc)
-  fileUrl         String?        // Remote storage path
-  structure       Json?          // Virtual tree/schema for huge files
-  
-  storageConfigId String?
-  workspaceId     String?
-  isActive        Boolean        @default(true)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  
-  storageConfig   StorageConfig? @relation(fields: [storageConfigId], references: [id])
-  workspace       Workspace?     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-}
-
-model Credential {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  type        String    // e.g., "API_KEY", "ORCID", "GETTY"
-  data        Json      // Encrypted credential data
-  workspaceId String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-}
-
-model ChatSession {
-  id          String        @id @default(cuid())
-  title       String?
-  workspaceId String?
-  agentId     String
-  isActive    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
-  workspace   Workspace?     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  messages    ChatMessage[]
-}
-
-model ChatMessage {
-  id        String      @id @default(cuid())
-  sessionId String
-  role      String      // "user", "assistant", "system"
-  content   String      @db.Text
-  metadata  Json?       // Context logs, tool tokens etc
-  isActive  Boolean     @default(true)
-  createdAt DateTime    @default(now())
-  
-  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-}
-
-model Model {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  workspaceId String?
-  creatorId   String?    // Standardized from userId
-  isActive    Boolean   @default(true)
-  version     String    @default("1.0")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Content
-  schemaJson  Json?
-  schemaMd    String?   @db.Text
-  
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  creator     User?      @relation(fields: [creatorId], references: [id])
-  workflows   Workflow[]
-
-  @@index([workspaceId])
-  @@index([isActive])
-}
-
-model Workflow {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  modelId     String
-  creatorId   String?    // Standardized from userId
-  config      Json
-  isActive    Boolean   @default(true)
-  version     String    @default("1.0")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  model       Model     @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  creator     User?      @relation(fields: [creatorId], references: [id])
-
-  @@index([modelId])
-  @@index([isActive])
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 enum QuerySource {
   BUILDER
   CYPHER
   LIBRARY
 }
 
-model SavedQuery {
-  id          String      @id @default(cuid())
-  name        String
-  description String?
-  query       String      @db.Text
-  category    String?
-  tags        String[]    @default([])
-  source      QuerySource @default(CYPHER)
-  creatorId   String      // Standardized from userId
-  creator     User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-
-  executedAt     DateTime?
-  executionCount Int       @default(0)
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@index([creatorId])
-}
-
-model UserSettings {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // Personal preferences like theme etc
-  theme      String?   @default("light")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
-model GlobalSettings {
-  id        String   @id @default("singleton")
-  // Platform-wide configurations
-  modules   Json?    // Enabled/disabled modules
-  ai        Json?    // AI configuration (provider, model, etc)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum InvitationStatus {
   PENDING
   ACCEPTED
   DECLINED
-}
-
-model TeamInvitation {
-  id          String   @id @default(cuid())
-  email       String
-  teamId      String
-  roleId      String?  // Optional specific role for the invitee
-  invitedById String
-  token       String   @unique
-  expiresAt   DateTime
-  isActive    Boolean  @default(true)
-  status      InvitationStatus @default(PENDING)
-  createdAt   DateTime @default(now())
-
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  invitedBy User     @relation("TeamInviter", fields: [invitedById], references: [id], onDelete: Cascade)
-
-  @@unique([email, teamId]) // One active invite per email per team
 }

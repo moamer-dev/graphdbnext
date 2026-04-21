@@ -14,6 +14,7 @@ import type { Model } from '@/resources/ModelResource'
 import { DataSourceResource } from '@/resources/DataSourceResource'
 import { toast } from 'sonner'
 import { useDatabaseStore } from '@/stores/databaseStore'
+import { useTenantStore } from '@/stores/tenantStore'
 
 export interface UseModelBuilderAdapterProps {
   model: Model | null
@@ -45,8 +46,10 @@ export function useModelBuilderAdapter({
   const persistedWorkflowKey = model?.id ? `plexus-builder:selected-workflow:${model.id}` : null
   const hasLoadedInitialWorkflowRef = useRef(false)
 
-  // Default workspace context (linked to Model's workspace in a real app)
-  const workspaceId = model?.id || 'default'
+  const { activeWorkspaceId: globalActiveWorkspaceId, isGlobalScope } = useTenantStore()
+  
+  // Effective workspace context
+  const workspaceId = model?.workspaceId || globalActiveWorkspaceId || 'default'
 
   // Default workflow persistence using app's API
   const defaultPersistence = useMemo<WorkflowPersistence>(() => {
@@ -90,7 +93,10 @@ export function useModelBuilderAdapter({
   // Default DataSources persistence
   const defaultDataSourcesPersistence = useMemo<DataSourcesPersistence>(() => ({
     onLoad: async () => {
-      const resp = await fetch(`${DataSourceResource.BASE_PATH}?workspaceId=${workspaceId}`)
+      const url = isGlobalScope 
+        ? DataSourceResource.BASE_PATH 
+        : `${DataSourceResource.BASE_PATH}?workspaceId=${workspaceId}`
+      const resp = await fetch(url)
       if (!resp.ok) return []
       const result = await resp.json()
       return result.data || []

@@ -15,13 +15,10 @@ export class ModuleService {
    */
   async syncWithDatabase (): Promise<void> {
     try {
-      console.log('ModuleService: Syncing with database...')
       const settings = await SettingsService.getGlobalSettings()
-      console.log('ModuleService: Settings found:', settings)
       const modulesConfig = (settings.modules || {}) as Record<string, boolean>
       
       for (const [id, enabled] of Object.entries(modulesConfig)) {
-        console.log(`ModuleServiceSync: ${id} -> ${enabled}`)
         if (enabled) {
           await this.registry.enable(id)
         } else {

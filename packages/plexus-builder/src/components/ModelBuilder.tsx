@@ -106,6 +106,7 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     selectedToolNodeId,
     selectedActionNodeId,
     xmlContent,
+    setXmlContent,
     handleRunWorkflow,
     handleUploadXml,
     leftTab,
@@ -164,7 +165,11 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     workspaceXmls,
     onSelectWorkspaceXml,
     onPushXmlToWorkspace,
-    isPushingXml
+    isPushingXml,
+    saveXmlToWorkspaceDialogOpen,
+    setSaveXmlToWorkspaceDialogOpen,
+    saveXmlToWorkspaceName,
+    setSaveXmlToWorkspaceName
   } = useModelBuilderInternal(props, ref)
 
   return (
@@ -271,7 +276,12 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
                   </div>
                 </div>
                 <div className="flex-1 relative overflow-hidden">
-                  <XmlCodePreview value={xmlContent} height="100%" wrapWord={xmlWrapWord} />
+                  <XmlCodePreview 
+                    value={xmlContent} 
+                    height="100%" 
+                    wrapWord={xmlWrapWord} 
+                    onChange={(newVal) => setXmlContent(newVal)}
+                  />
                 </div>
               </div>
             </ResizablePanel>
@@ -287,8 +297,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         {ui.sidebarOpen && (
           <div className="w-80 border-l bg-muted/10">
             {selectedRelationship ? <RelationshipEditor className="h-full" onClose={() => ui.setSidebarOpen(false)} /> :
-             selectedToolNodeId ? <ToolConfigurationSidebar toolNodeId={selectedToolNodeId} onClose={() => useToolCanvasStore.getState().selectNode(null)} className="h-full" /> :
-             selectedActionNodeId ? <ActionConfigurationSidebar actionNodeId={selectedActionNodeId} onClose={() => useActionCanvasStore.getState().selectNode(null)} className="h-full" /> :
+             selectedToolNodeId ? <ToolConfigurationSidebar toolNodeId={selectedToolNodeId} xmlContent={xmlContent} onClose={() => useToolCanvasStore.getState().selectNode(null)} className="h-full" /> :
+             selectedActionNodeId ? <ActionConfigurationSidebar actionNodeId={selectedActionNodeId} xmlContent={xmlContent} onClose={() => useActionCanvasStore.getState().selectNode(null)} className="h-full" /> :
              <NodeEditor className="h-full" onFocusNode={(id) => ui.focusNodeFnRef.current?.(id)} onClose={() => ui.setSidebarOpen(false)} />}
           </div>
         )}
@@ -329,6 +339,13 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         pendingWorkflowName={availableWorkflows.find(w => w.id === pendingWorkflowId)?.name}
         onConfirmWorkflowChange={confirmWorkflowChange}
         onCancelWorkflowChange={cancelWorkflowChange}
+        
+        saveXmlToWorkspaceDialogOpen={saveXmlToWorkspaceDialogOpen}
+        setSaveXmlToWorkspaceDialogOpen={setSaveXmlToWorkspaceDialogOpen}
+        saveXmlToWorkspaceName={saveXmlToWorkspaceName}
+        setSaveXmlToWorkspaceName={setSaveXmlToWorkspaceName}
+        onConfirmSaveXmlToWorkspace={onPushXmlToWorkspace}
+        isPushingXml={isPushingXml}
       />
 
     </div>

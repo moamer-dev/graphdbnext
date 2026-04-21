@@ -12,6 +12,8 @@ export function useModelBuilderUI() {
   const [xmlFile, setXmlFile] = useState<File | null>(null)
   const [running, setRunning] = useState(false)
   const [executionProgress, setExecutionProgress] = useState<{ current: number; total: number; currentStep?: string } | null>(null)
+  const [saveXmlToWorkspaceDialogOpen, setSaveXmlToWorkspaceDialogOpen] = useState(false)
+  const [saveXmlToWorkspaceName, setSaveXmlToWorkspaceName] = useState('')
   const [graphPreview, setGraphPreview] = useState<{
     items: Array<Record<string, unknown>>
     fullGraph: Array<Record<string, unknown>>
@@ -53,6 +55,10 @@ export function useModelBuilderUI() {
     setExecutionProgress,
     graphPreview,
     setGraphPreview,
+    saveXmlToWorkspaceDialogOpen,
+    setSaveXmlToWorkspaceDialogOpen,
+    saveXmlToWorkspaceName,
+    setSaveXmlToWorkspaceName,
     fileInputRef,
     focusNodeFnRef,
     focusRelationshipFnRef,

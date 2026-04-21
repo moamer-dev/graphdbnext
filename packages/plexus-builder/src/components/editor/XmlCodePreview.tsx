@@ -5,6 +5,16 @@ import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { xml as xmlLang } from '@codemirror/lang-xml'
 import { EditorView, Decoration } from '@codemirror/view'
 import { StateField, StateEffect } from '@codemirror/state'
+import { foldAll, unfoldAll } from '@codemirror/language'
+import { cn } from '../../utils/cn'
+import { 
+  WrapText, 
+  ChevronUp, 
+  ChevronDown, 
+  Copy, 
+  CheckCircle2 
+} from 'lucide-react'
+import { Button } from '../ui/button'
 
 interface XmlCodePreviewProps {
   value: string
@@ -12,12 +22,24 @@ interface XmlCodePreviewProps {
   wrapWord?: boolean
   scrollToPosition?: number | null
   scrollToId?: string | null // xml:id or id attribute value
+  onChange?: (value: string) => void
 }
 
 export interface XmlCodePreviewRef {
   scrollToPosition: (position: number) => void
   scrollToId: (id: string) => void
 }
+
+import { ReactCodeMirrorProps } from '@uiw/react-codemirror'
+
+interface ExtendedCodeMirrorProps extends ReactCodeMirrorProps {
+  className?: string
+  style?: React.CSSProperties
+}
+
+const TypedCodeMirror = CodeMirror as any as React.ForwardRefExoticComponent<
+  ExtendedCodeMirrorProps & React.RefAttributes<ReactCodeMirrorRef>
+>
 
 // Effect to set highlight position
 const setHighlight = StateEffect.define<number | null>()
@@ -66,13 +88,44 @@ const highlightField = StateField.define({
 })
 
 export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>(
-  ({ value, height = '500px', wrapWord = false, scrollToPosition, scrollToId }, ref) => {
+  ({ value, height = '500px', wrapWord = false, scrollToPosition, scrollToId, onChange }, ref) => {
     const codeMirrorRef = useRef<ReactCodeMirrorRef>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const [isWrapping, setIsWrapping] = React.useState(wrapWord)
+    const [isAllCollapsed, setIsAllCollapsed] = React.useState(false)
+    const [isCopied, setIsCopied] = React.useState(false)
 
-    const extensions = [xmlLang(), highlightField]
+    const handleToggleFold = () => {
+      if (codeMirrorRef.current?.view) {
+        if (isAllCollapsed) {
+          unfoldAll(codeMirrorRef.current.view)
+        } else {
+          foldAll(codeMirrorRef.current.view)
+        }
+        setIsAllCollapsed(!isAllCollapsed)
+      }
+    }
 
-    if (wrapWord) {
+    const handleCopy = async () => {
+      try {
+        await navigator.clipboard.writeText(value)
+        setIsCopied(true)
+        setTimeout(() => setIsCopied(false), 2000)
+      } catch (err) {
+        console.error('Failed to copy content')
+      }
+    }
+
+    const extensions = [
+      xmlLang(), 
+      highlightField,
+      EditorView.theme({
+        "&": { height: "100%" },
+        ".cm-scroller": { overflow: "auto" }
+      })
+    ]
+
+    if (isWrapping) {
       extensions.push(EditorView.lineWrapping)
     }
 
@@ -178,10 +231,8 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
       }
 
       if (tagStart !== null) {
-        console.log('Scrolling to ID at position:', tagStart, 'tag end:', tagEnd)
         // Verify the position by checking what's at that location
         const tagPreview = value.substring(tagStart, Math.min(tagStart + 100, value.length))
-        console.log('Tag preview at position:', tagPreview)
 
         // Add a small delay to ensure CodeMirror is ready, then scroll
         setTimeout(() => {
@@ -253,7 +304,53 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
     }, [scrollToId, scrollToIdPos])
 
     return (
-      <>
+      <div 
+        ref={containerRef} 
+        className="flex flex-col flex-1 min-h-0 overflow-hidden" 
+        style={{ height, width: '100%' }}
+      >
+        <div className="h-9 border-b border-border/40 bg-muted/5 flex items-center justify-between px-3 relative z-10 flex-shrink-0">
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-6 px-2 rounded-lg text-[10px] font-bold gap-1.5 transition-all shadow-none",
+                isWrapping ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+              )}
+              onClick={() => setIsWrapping(!isWrapping)}
+            >
+              <WrapText className="h-3 w-3" />
+              {isWrapping ? 'WRAP ON' : 'WRAP OFF'}
+            </Button>
+            <div className="w-px h-3 bg-border/60 mx-1" />
+            <Button
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-6 px-2 rounded-lg text-[10px] font-bold gap-1.5 transition-all shadow-none",
+                isAllCollapsed ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+              )}
+              onClick={handleToggleFold}
+            >
+              {isAllCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+              {isAllCollapsed ? 'EXPAND' : 'COLLAPSE'}
+            </Button>
+          </div>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "h-6 px-2 rounded-lg text-[10px] font-bold gap-1.5 transition-all shadow-none",
+              isCopied ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+            )}
+            onClick={handleCopy}
+          >
+            {isCopied ? <CheckCircle2 className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            {isCopied ? 'COPIED!' : 'COPY'}
+          </Button>
+        </div>
         <style>{`
           .cm-highlighted-xml-element {
             background-color: #fef08a !important;
@@ -263,27 +360,25 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
             display: inline-block;
             box-shadow: 0 0 0 2px #fbbf24;
           }
-          .cm-editor, .cm-scroller {
-            height: 100% !important;
-          }
         `}</style>
-        <div ref={containerRef} style={{ height, width: '100%' }}>
-          <CodeMirror
-            ref={codeMirrorRef}
-            value={value}
-            height={height}
-            editable={false}
-            basicSetup={{
-              lineNumbers: true,
-              highlightActiveLine: false,
-              foldGutter: true,
-              bracketMatching: true
-            }}
-            extensions={extensions}
-            theme="light"
-          />
-        </div>
-      </>
+        <TypedCodeMirror
+          ref={codeMirrorRef}
+          value={value}
+          height="100%"
+          editable={true}
+          className="flex-1 min-h-0"
+          onChange={onChange}
+          basicSetup={{
+            lineNumbers: true,
+            highlightActiveLine: false,
+            foldGutter: true,
+            bracketMatching: true,
+            searchKeymap: true
+          } as any}
+          extensions={extensions}
+          theme="light"
+        />
+      </div>
     )
   }
 )

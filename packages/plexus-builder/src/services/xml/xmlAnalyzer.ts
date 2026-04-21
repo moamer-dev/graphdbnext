@@ -703,8 +703,7 @@ export class XmlAnalyzer {
       }
 
       // Recursively analyze children (unless subtree is ignored)
-      // Only skip if explicitly marked as ignored subtree AND has no meaningful structure
-      if (!(elementType.specialPatterns.isIgnoredSubtree && element.childNodes.length === 0)) {
+      if (!elementType.specialPatterns.isIgnoredSubtree) {
         const children = Array.from(element.childNodes).filter(
           (node) => node.nodeType === 1
         ) as Element[]
