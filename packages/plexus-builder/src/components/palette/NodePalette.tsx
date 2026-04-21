@@ -59,6 +59,7 @@ import { generateNodeTemplate } from '../../services/xml/parseService'
 import { downloadFile } from '../../utils/exportUtils'
 import { useBulkNodeParser, useNodePaletteSearch } from '../../hooks'
 import { useNodePaletteDialogs } from '../../hooks/palette/useNodePaletteDialogs'
+import { useBuilderTranslations } from '../../i18n'
 import type { Node, NodeGroup } from '../../types'
 import { ToolsPaletteSection } from './sections/ToolsPaletteSection'
 import { ActionsPaletteSection } from './sections/ActionsPaletteSection'
@@ -72,6 +73,7 @@ interface NodePaletteProps {
 }
 
 export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRelationship }: NodePaletteProps) {
+  const t = useBuilderTranslations()
   const viewMode = mode
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -314,7 +316,7 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
             <div className="relative">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
-                placeholder="Search nodes..."
+                placeholder={t('builder.searchNodes')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 text-xs"
@@ -328,7 +330,7 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
                   <DialogTrigger asChild>
                     <button className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground">
                       <FolderPlus className="h-3.5 w-3.5" />
-                      Add Group
+                      {t('builder.addGroup')}
                     </button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
@@ -380,7 +382,7 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
                   <DialogTrigger asChild>
                     <button className="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground">
                       <Plus className="h-3.5 w-3.5" />
-                      Add Node
+                      {t('builder.addNode')}
                     </button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
@@ -502,7 +504,7 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
                 className="w-full flex items-center justify-center gap-2 px-2 py-1.5 text-xs rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-dashed border-border/60 shadow-sm hover:shadow text-muted-foreground hover:text-foreground"
               >
                 <FileText className="h-3.5 w-3.5" />
-                Bulk Add
+                {t('builder.bulkAdd')}
               </button>
             )}
 

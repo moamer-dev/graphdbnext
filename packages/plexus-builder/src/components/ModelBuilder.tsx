@@ -21,6 +21,7 @@ import { ActionConfigurationSidebar } from './sidebars/ActionConfigurationSideba
 import { NodeEditor } from './editor/NodeEditor'
 import { AIAgentsPanel } from './ai/AIAgentsPanel'
 import { useModelBuilderInternal } from '../hooks/builder/useModelBuilderInternal'
+import { useBuilderTranslations } from '../i18n'
 import type { WorkflowConfigExport } from '../utils/workflowConfigExport'
 
 export interface WorkflowPersistence {
@@ -76,6 +77,7 @@ export interface ModelBuilderRef {
   clearWorkflow: () => void
   getWorkflowConfig: () => WorkflowConfigExport | null
   hasChanges: () => boolean
+  setLocale: (locale: string) => void
 }
 
 const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((props, ref) => {
@@ -90,6 +92,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     onSaveModel,
     isNewModel = false
   } = props
+
+  const t = useBuilderTranslations()
 
   const {
     ui,
@@ -270,7 +274,7 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
             <ResizablePanel side="right" defaultWidth={xmlPanelWidth} minWidth={350} maxWidth={1000} onWidthChange={setXmlPanelWidth} className="h-full border-l bg-background">
               <div className="h-full flex flex-col">
                 <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
-                  <h3 className="text-xs font-semibold">XML Preview</h3>
+                  <h3 className="text-xs font-semibold">{t('builder.xmlPreview')}</h3>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setXmlPanelOpen(false)}>
                       <X className="h-3 w-3" />

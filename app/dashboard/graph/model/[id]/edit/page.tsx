@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useModelBuilder } from '@/hooks'
 import { resourceHooks } from '@/hooks/react-query'
+import { useLocale } from 'next-intl'
 import type { ModelBuilderRef } from '@plexus/builder'
 import { ModelResource, type Model } from '@/resources/ModelResource'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,14 @@ export default function EditModelPage() {
   const { data: modelData, isLoading } = resourceHooks.models.useSingle(modelId)
   const updateModelMutation = resourceHooks.models.useUpdate({ showToast: false })
   const builderRef = useRef<ModelBuilderRef>(null)
+  const locale = useLocale()
+
+  // Sync locale to builder
+  useEffect(() => {
+    if (builderRef.current) {
+      builderRef.current.setLocale(locale)
+    }
+  }, [locale, ModelBuilderAdapter]) // Re-sync if adapter changes
 
   // Clear builder state when unmounting
   useEffect(() => {

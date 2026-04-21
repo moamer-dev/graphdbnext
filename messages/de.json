@@ -1,0 +1,35 @@
+{
+  "Common": {
+    "search": "Suchen...",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "rename": "Umbenennen",
+    "upload": "Hochladen",
+    "actions": "Aktionen",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "confirm": "Bestätigen"
+  },
+  "Dashboard": {
+    "title": "Instrumententafel",
+    "explorer": "Explorer",
+    "refineResults": "Ergebnisse verfeinern",
+    "selectAll": "Alle auswählen",
+    "clearSelected": "{count} Ausgewählte aufheben",
+    "workspaceEmpty": "Arbeitsbereich leer",
+    "indexing": "Assets werden indiziert",
+    "allTypes": "Alle Typen",
+    "allAuthors": "Alle Autoren"
+  },
+  "Admin": {
+    "storage": {
+      "title": "Speicherkonfiguration",
+      "addProvider": "Speicheranbieter hinzufügen",
+      "editProvider": "Speicheranbieter bearbeiten",
+      "routingRules": "Auto-Routing-Regeln",
+      "matchedStorage": "Routing: {name}"
+    }
+  }
+}

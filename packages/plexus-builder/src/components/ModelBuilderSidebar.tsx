@@ -4,6 +4,7 @@ import { Button } from './ui/button'
 import { PanelLeftClose, Circle, Link2, Wrench, Zap } from 'lucide-react'
 import { NodePalette } from './palette/NodePalette'
 import { cn } from '../utils/cn'
+import { useBuilderTranslations } from '../i18n'
 
 interface ModelBuilderSidebarProps {
   nodesSidebarOpen: boolean
@@ -26,6 +27,7 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
   onFocusNode,
   onFocusRelationship
 }) => {
+  const t = useBuilderTranslations()
   if (!nodesSidebarOpen) return null
 
   return (
@@ -40,13 +42,13 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
       <div className="h-full flex flex-col">
         <div className="flex flex-col border-b bg-muted/20">
           <div className="flex items-center justify-between p-2 pb-0">
-            <span className="text-xs font-semibold text-muted-foreground pl-1">Library</span>
+            <span className="text-xs font-semibold text-muted-foreground pl-1">{t('builder.library')}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setNodesSidebarOpen(false)}
               className="h-6 w-6 p-0 shrink-0 hover:bg-background/80"
-              title="Hide Sidebar"
+              title={t('builder.hideSidebar')}
             >
               <PanelLeftClose className="h-3.5 w-3.5" />
             </Button>
@@ -56,28 +58,28 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
               active={leftTab === 'nodes'} 
               onClick={() => setLeftTab('nodes')} 
               icon={<Circle className="h-4 w-4" />} 
-              label="Nodes" 
+              label={t('common.nodes')} 
               colorClass="text-blue-600"
             />
             <TabButton 
               active={leftTab === 'relationships'} 
               onClick={() => setLeftTab('relationships')} 
               icon={<Link2 className="h-4 w-4" />} 
-              label="Rels" 
+              label={t('builder.rels')} 
               colorClass="text-indigo-600"
             />
             <TabButton 
               active={leftTab === 'tools'} 
               onClick={() => setLeftTab('tools')} 
               icon={<Wrench className="h-4 w-4" />} 
-              label="Tools" 
+              label={t('common.tools')} 
               colorClass="text-purple-600"
             />
             <TabButton 
               active={leftTab === 'actions'} 
               onClick={() => setLeftTab('actions')} 
               icon={<Zap className="h-4 w-4" />} 
-              label="Actions" 
+              label={t('common.actions')} 
               colorClass="text-amber-600"
             />
           </div>

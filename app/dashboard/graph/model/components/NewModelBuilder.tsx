@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useModelBuilder } from '@/hooks'
+import { useLocale } from 'next-intl'
 import type { ModelBuilderRef } from '@plexus/builder'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -47,6 +48,14 @@ export function NewModelBuilder({
   const router = useRouter()
   const { isEnabled, loading: moduleLoading, ModelBuilderAdapter } = useModelBuilder()
   const builderRef = useRef<ModelBuilderRef>(null)
+  const locale = useLocale()
+
+  // Sync locale to builder
+  useEffect(() => {
+    if (builderRef.current) {
+      builderRef.current.setLocale(locale)
+    }
+  }, [locale, ModelBuilderAdapter])
 
   // Clear builder state when unmounting
   useEffect(() => {

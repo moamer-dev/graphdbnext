@@ -1,6 +1,5 @@
 import { 
   Search, 
-  FolderSearch, 
   CloudUpload,
   Loader2,
   Ghost,
@@ -8,11 +7,8 @@ import {
   SortAsc,
   SortDesc,
   Trash2,
-  User as UserIcon,
   Check, 
-  ChevronDown,
-  CheckSquare,
-  Square
+  ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,6 +35,7 @@ import {
 import { cn } from '@/utils'
 import { FileIcon } from './FileIcon'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface ExplorerSidebarProps {
   search: string
@@ -87,6 +84,8 @@ export const ExplorerSidebar = ({
   can,
   resourceKey
 }: ExplorerSidebarProps) => {
+  const t = useTranslations('Dashboard')
+  const common = useTranslations('Common')
   const [isAuthorOpen, setIsAuthorOpen] = useState(false)
 
   const deletableItems = filteredItems.filter(i => can('DELETE', resourceKey, i))
@@ -122,7 +121,7 @@ export const ExplorerSidebar = ({
                 />
             )}
             <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 flex items-center gap-1.5 ml-1">
-                Explorer
+                {t('explorer')}
             </h2>
           </div>
 
@@ -157,7 +156,7 @@ export const ExplorerSidebar = ({
                 onClick={() => setIsImportOpen(true)}
               >
                 <CloudUpload className="h-3.5 w-3.5 mr-1.5" />
-                UPLOAD
+                {common('upload')}
               </Button>
             )}
           </div>
@@ -166,7 +165,7 @@ export const ExplorerSidebar = ({
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input 
-            placeholder="Search resources..." 
+            placeholder={common('search')} 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9 text-[12px] rounded-lg border-border bg-background/50 hover:bg-background focus:bg-background focus:ring-2 focus:ring-primary/20 shadow-none transition-all"
@@ -177,7 +176,7 @@ export const ExplorerSidebar = ({
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                   <Filter className="h-3 w-3 text-primary" />
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wide">Refine Results</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wide">{t('refineResults')}</span>
               </div>
               <div className="flex items-center gap-3">
                 {deletableItems.length > 0 && !isAllSelected && (
@@ -185,7 +184,7 @@ export const ExplorerSidebar = ({
                       onClick={toggleSelectAll}
                       className="text-[9px] font-black uppercase text-primary/60 hover:text-primary transition-colors tracking-tighter"
                     >
-                        Select All
+                        {t('selectAll')}
                     </button>
                 )}
                 {isAnySelected && (
@@ -193,7 +192,7 @@ export const ExplorerSidebar = ({
                       onClick={() => setMultiSelectedIds([])}
                       className="text-[9px] font-black uppercase text-muted-foreground hover:text-primary transition-colors tracking-tighter"
                     >
-                        Clear {multiSelectedIds.length}
+                        {t('clearSelected', { count: multiSelectedIds.length })}
                     </button>
                 )}
               </div>
@@ -207,7 +206,7 @@ export const ExplorerSidebar = ({
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border shadow-none">
-                  <SelectItem value="ALL" className="text-[11px] font-medium">All Types</SelectItem>
+                  <SelectItem value="ALL" className="text-[11px] font-medium">{t('allTypes')}</SelectItem>
                   {availableTypes.map((type) => (
                     <SelectItem key={type} value={type} className="text-[11px] font-medium uppercase">
                       {type}
@@ -229,7 +228,7 @@ export const ExplorerSidebar = ({
                   >
                     <span className="truncate">
                       {creatorFilter === "ALL" 
-                        ? "All Authors" 
+                        ? t('allAuthors') 
                         : availableCreators.find((c) => c.id === creatorFilter)?.label}
                     </span>
                     <ChevronDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
@@ -254,7 +253,7 @@ export const ExplorerSidebar = ({
                             creatorFilter === "ALL" ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        All Authors
+                        {t('allAuthors')}
                       </CommandItem>
                       {availableCreators.map((creator) => (
                         <CommandItem
@@ -290,12 +289,12 @@ export const ExplorerSidebar = ({
             <div className="p-3 rounded-full bg-primary/5">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-            <span className="text-[10px] uppercase font-bold tracking-widest">Indexing Assets</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest">{t('indexing')}</span>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-30">
             <Ghost className="h-10 w-10 text-muted-foreground" />
-            <span className="text-[11px] uppercase font-bold tracking-widest text-center px-4">Workspace Empty</span>
+            <span className="text-[11px] uppercase font-bold tracking-widest text-center px-4">{t('workspaceEmpty')}</span>
           </div>
         ) : (
           <div className="space-y-0.5">

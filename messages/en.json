@@ -1,0 +1,35 @@
+{
+  "Common": {
+    "search": "Search...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "rename": "Rename",
+    "upload": "Upload",
+    "actions": "Actions",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm"
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "explorer": "Explorer",
+    "refineResults": "Refine Results",
+    "selectAll": "Select All",
+    "clearSelected": "Clear {count} Selected",
+    "workspaceEmpty": "Workspace Empty",
+    "indexing": "Indexing Assets",
+    "allTypes": "All Types",
+    "allAuthors": "All Authors"
+  },
+  "Admin": {
+    "storage": {
+      "title": "Storage Configuration",
+      "addProvider": "Add Storage Provider",
+      "editProvider": "Edit Storage Provider",
+      "routingRules": "Auto-Routing Rules",
+      "matchedStorage": "Routing: {name}"
+    }
+  }
+}

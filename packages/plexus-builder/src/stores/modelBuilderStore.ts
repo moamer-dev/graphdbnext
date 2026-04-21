@@ -56,6 +56,7 @@ interface ModelBuilderActions {
   setSelectedOntologyId: (ontologyId: string | null) => void
   setIsSemanticEnabled: (enabled: boolean) => void
   setIsWorkflowVisible: (visible: boolean) => void
+  setLocale: (locale: string) => void
 }
 
 export type ModelBuilderStore = ModelBuilderState & ModelBuilderActions
@@ -72,6 +73,7 @@ const initialState: ModelBuilderState = {
   selectedOntologyId: null,
   isSemanticEnabled: false,
   isWorkflowVisible: true,
+  locale: 'en',
   metadata: {
     name: '',
     description: '',
@@ -633,6 +635,10 @@ export const useModelBuilderStore = create<ModelBuilderStore>()(
  
     setIsWorkflowVisible: (visible: boolean) => {
       set({ isWorkflowVisible: visible })
+    },
+ 
+    setLocale: (locale: string) => {
+      set({ locale })
     }
   }),
   {
@@ -642,6 +648,7 @@ export const useModelBuilderStore = create<ModelBuilderStore>()(
       isSemanticEnabled: state.isSemanticEnabled,
       selectedOntologyId: state.selectedOntologyId,
       hideUnconnectedNodes: state.hideUnconnectedNodes,
+      locale: state.locale,
     }),
   }
 )

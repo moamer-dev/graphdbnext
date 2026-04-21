@@ -12,6 +12,7 @@ import { SaveWorkflowDialog } from './dialogs/SaveWorkflowDialog'
 import { WorkflowChangeConfirmDialog } from './dialogs/WorkflowChangeConfirmDialog'
 import { SaveXmlToWorkspaceDialog } from './dialogs/SaveXmlToWorkspaceDialog'
 import type { CredentialsPersistence, WorkflowPersistence } from './ModelBuilder'
+import { useBuilderTranslations } from '../i18n'
 
 interface ModelBuilderDialogsProps {
   importDialogOpen: boolean
@@ -145,6 +146,7 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
   onConfirmSaveXmlToWorkspace,
   isPushingXml
 }) => {
+  const t = useBuilderTranslations()
   return (
     <>
       <ImportSchemaDialog
@@ -196,9 +198,9 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
       <Dialog open={credentialsDialogOpen} onOpenChange={setCredentialsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>API Credentials</DialogTitle>
+            <DialogTitle>{t('builder.apiCredentials')}</DialogTitle>
             <DialogDescription>
-              Manage API credentials for authenticated research APIs (ORCID, GeoNames, Europeana, Getty).
+              {t('builder.apiCredentialsDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
@@ -210,15 +212,15 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
       <AlertDialog open={clearWorkflowDialogOpen} onOpenChange={setClearWorkflowDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Clear Workflow?</AlertDialogTitle>
+            <AlertDialogTitle>{t('builder.clearWorkflow')}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove all workflow items (tools and actions) while keeping your schema nodes and relationships. This action cannot be undone.
+              {t('builder.clearWorkflowDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmClearWorkflow} className="bg-destructive text-primary-foreground hover:bg-destructive/80">
-              Clear Workflow
+              {t('builder.clearWorkflowAction')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

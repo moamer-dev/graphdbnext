@@ -52,6 +52,7 @@ export interface ModelBuilderState {
   isWorkflowVisible?: boolean // Whether workflow items should be visible
   hideUnconnectedNodes: boolean
   rootNodeId: string | null // ID of the root node for workflow execution
+  locale: string // Active language for the builder
   metadata: {
     name: string
     description: string

@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck, Globe, FileJson, Share2 } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { SemanticValidationDialog } from './semantic/SemanticValidationDialog'
+import { useBuilderTranslations } from '../i18n'
 
 interface ModelBuilderHeaderProps {
   className?: string
@@ -112,6 +113,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   onPushXmlToWorkspace,
   isPushingXml = false
 }) => {
+  const t = useBuilderTranslations()
   const [semanticValidationOpen, setSemanticValidationOpen] = React.useState(false)
 
   const handleUploadWithToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +131,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
       <Input
         value={metadata.name}
         onChange={(e) => updateMetadata({ name: e.target.value })}
-        placeholder="Model name"
+        placeholder={t('builder.placeholderName')}
         className="min-w-[120px] max-w-[200px] flex-1 h-8 text-sm"
       />
       {workflowPersistence && availableWorkflows.length > 0 && (
@@ -152,7 +154,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
       <div className="flex-1" />
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Semantic:</span>
+          <span className="text-xs text-muted-foreground">{t('builder.semantic')}:</span>
           <Switch
             id="plexus-builder-semantic"
             checked={isSemanticEnabled}
@@ -186,7 +188,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
 
         {hasWorkflowItems && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Workflow:</span>
+            <span className="text-xs text-muted-foreground">{t('common.actions')}:</span>
             <Switch
               id="show-workflow-canvas"
               checked={isWorkflowVisible}
@@ -197,7 +199,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
         )}
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Editor:</span>
+          <span className="text-xs text-muted-foreground">{t('builder.editor')}:</span>
           <Switch
             id="show-property-editor"
             checked={sidebarOpen}
@@ -207,7 +209,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Toolbar:</span>
+          <span className="text-xs text-muted-foreground">{t('builder.toolbar')}:</span>
           <Switch
             id="show-canvas-toolbar"
             checked={showToolbar}
@@ -232,65 +234,65 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 px-2">
               <Settings className="h-3.5 w-3.5 mr-1" />
-              <span className="text-xs hidden md:inline">Tools</span>
+              <span className="text-xs hidden md:inline">{t('builder.tools')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Project Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('builder.projectActions')}</DropdownMenuLabel>
             <DropdownMenuItem onSelect={onOpenCredentials}>
               <Key className="h-3.5 w-3.5 mr-2" />
-              Credentials Manager
+              {t('builder.credentialsManager')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Import Data</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('builder.importData')}</DropdownMenuLabel>
             <DropdownMenuItem onSelect={onImportSchema}>
               <Upload className="h-3.5 w-3.5 mr-2" />
-              Import Schema
+              {t('builder.importSchema')}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onImportWorkflow}>
               <FileUp className="h-3.5 w-3.5 mr-2" />
-              Import Workflow
+              {t('builder.importWorkflow')}
             </DropdownMenuItem>
             {hasContent && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Export Data</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('builder.exportData')}</DropdownMenuLabel>
                 <DropdownMenuItem onSelect={onExportJson}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export Schema JSON
+                  <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.exportSchemaJson')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={onExportMarkdown}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export Schema Markdown
+                  <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.exportSchemaMarkdown')}
                 </DropdownMenuItem>
                  {hasWorkflowItems && (
                 <DropdownMenuItem onSelect={onExportWorkflow}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Export Workflow
+                  <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.exportWorkflow')}
                 </DropdownMenuItem>
                 )}
                 {isSemanticEnabled && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Semantic Layer</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('builder.semanticLayer')}</DropdownMenuLabel>
                     <DropdownMenuItem onSelect={() => setSemanticValidationOpen(true)}>
                       <ShieldCheck className="h-3.5 w-3.5 mr-2" />
-                      Validate Semantics
+                      {t('builder.validateSemantics')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Export Semantic Data</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('builder.exportSemanticData')}</DropdownMenuLabel>
                     <DropdownMenuItem onSelect={onExportRdf}>
-                      <Download className="h-3.5 w-3.5 mr-2" /> Export RDF
+                      <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.exportRdf')}
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={onExportTtl}>
-                      <Download className="h-3.5 w-3.5 mr-2" /> Export TTL
+                      <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.exportTtl')}
                     </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Templates</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('builder.templates')}</DropdownMenuLabel>
                 <DropdownMenuItem onSelect={onDownloadNodeTemplate}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Node CSV Template
+                  <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.nodeCsvTemplate')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={onDownloadRelationshipTemplate}>
-                  <Download className="h-3.5 w-3.5 mr-2" /> Relationship CSV Template
+                  <Download className="h-3.5 w-3.5 mr-2" /> {t('builder.relationshipCsvTemplate')}
                 </DropdownMenuItem>
               </>
             )}
@@ -307,7 +309,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
             title="Save Changes"
           >
             <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-            <span className="text-xs font-medium">Save</span>
+            <span className="text-xs font-medium">{t('common.save')}</span>
           </Button>
         )}
 
@@ -340,14 +342,14 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                 title={xmlFile ? `Current XML: ${xmlFile.name}` : "Manage structural definitions"}
               >
                 <FileUp className="h-3.5 w-3.5 lg:mr-1" />
-                <span className="hidden lg:inline">{xmlFile ? 'Select XML' : 'XML Library'}</span>
+                <span className="hidden lg:inline">{xmlFile ? t('builder.selectXml') : t('builder.xmlLibrary')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
-              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">Local Operations</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">{t('builder.localOperations') || 'Local Operations'}</DropdownMenuLabel>
               <DropdownMenuItem onSelect={() => xmlUploadInputRef.current?.click()}>
                 <Upload className="h-3.5 w-3.5 mr-2" />
-                Upload from Computer
+                {t('builder.uploadFromComputer')}
               </DropdownMenuItem>
               
               {xmlFile && onPushXmlToWorkspace && (
@@ -357,7 +359,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                   className="text-primary font-medium"
                 >
                   <Share2 className="h-3.5 w-3.5 mr-2" />
-                  {isPushingXml ? 'Pushing to Workspace...' : 'Push to Workspace'}
+                  {isPushingXml ? t('builder.pushingToWorkspace') : t('builder.pushToWorkspace')}
                 </DropdownMenuItem>
               )}
 
@@ -369,7 +371,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
               
               {workspaceXmls.length === 0 ? (
                 <div className="p-4 text-center">
-                  <p className="text-[10px] text-muted-foreground italic">No shared XMLs in this workspace</p>
+                  <p className="text-[10px] text-muted-foreground italic">{t('builder.noSharedXmls')}</p>
                 </div>
               ) : (
                 <div className="max-h-[200px] overflow-y-auto pt-1">
@@ -403,7 +405,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
             disabled={!hasContent || !hasWorkflowItems}
           >
             <PlayCircle className="h-3.5 w-3.5 lg:mr-1" />
-            <span className="hidden lg:inline">Build a Graph</span>
+            <span className="hidden lg:inline">{t('builder.buildGraph')}</span>
           </Button>
         </div>
       </div>

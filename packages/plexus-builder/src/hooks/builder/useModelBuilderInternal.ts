@@ -482,6 +482,9 @@ export function useModelBuilderInternal(props: any, ref: any) {
         JSON.stringify(currentActionEdges) !== JSON.stringify(initialStateRef.current.actionEdges)
 
       return nodesChanged || relationshipsChanged || toolsChanged || actionsChanged
+    },
+    setLocale: (locale: string) => {
+      useModelBuilderStore.getState().setLocale(locale)
     }
   }))
 

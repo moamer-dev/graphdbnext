@@ -27,6 +27,7 @@ import { QuickActions } from '@/components/quick-actions'
 import { TenantProvider } from '@/components/TenantProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { ModeToggle } from '@/components/ModeToggle'
+import { LanguageToggle } from '@/components/LanguageToggle'
 
 const sectionTitles: Record<string, string> = {
   '/dashboard/convert': 'XML to Graph Conversion',
@@ -149,6 +150,7 @@ export default function DashboardLayout({
                 </div>
 
                 <div className="ml-auto flex items-center gap-2 shrink-0">
+                  <LanguageToggle />
                   <ModeToggle />
                   <QuickActions />
                 </div>
