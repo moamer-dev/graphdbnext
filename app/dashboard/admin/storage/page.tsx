@@ -1,19 +1,22 @@
 'use client'
 
+import React, { useState } from 'react'
 import { DataTable } from '@/components/data-table/DataTable'
 import { useResourceTable } from '@/hooks/view/useResourceTable'
 import { resourceHooks } from '@/hooks/react-query'
 import { StorageConfigResource, StorageConfig } from '@/resources/StorageConfigResource'
-import { Database, HardDrive, Cloud, Settings2, ShieldCheck, ShieldAlert } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Database, HardDrive, Cloud, Settings2, ShieldCheck, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { queryClient } from '@/hooks/react-query'
 import { queryKeys } from '@/hooks/react-query/queryKeys'
+import { StorageConfigDialog } from '@/components/admin/storage/StorageConfigDialog'
 
 export default function StorageAdminPage() {
   const isAdmin = true
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<StorageConfig | null>(null)
   
   const { 
     config, 
@@ -22,15 +25,24 @@ export default function StorageAdminPage() {
     loading,
     page,
     pageSize,
-    onPageChange
+    onPageChange,
+    refetch
   } = useResourceTable({
     resource: StorageConfigResource,
     useList: resourceHooks.storageConfigs.useList,
     useDelete: resourceHooks.storageConfigs.useDelete,
     useBulkDelete: resourceHooks.storageConfigs.useBulkDelete,
-    isAdmin
+    isAdmin,
+    onEdit: (id: string) => {
+      const item = data.find((d: any) => d.id === id)
+      if (item) {
+        setEditingItem(item)
+        setIsDialogOpen(true)
+      }
+    }
   })
 
+  const createMutation = resourceHooks.storageConfigs.useCreate()
   const updateMutation = resourceHooks.storageConfigs.useUpdate()
 
   const handleToggleDefault = async (item: StorageConfig) => {
@@ -56,6 +68,23 @@ export default function StorageAdminPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.storageConfigs.all })
     } catch (error) {
       toast.error('Failed to update storage config')
+    }
+  }
+
+  const handleSave = async (formData: any) => {
+    try {
+      if (editingItem) {
+        await updateMutation.mutateAsync({ id: editingItem.id, data: formData })
+        toast.success('Storage provider updated')
+      } else {
+        await createMutation.mutateAsync(formData)
+        toast.success('Storage provider created')
+      }
+      setIsDialogOpen(false)
+      setEditingItem(null)
+      refetch()
+    } catch (error) {
+      toast.error('Failed to save storage provider')
     }
   }
 
@@ -121,8 +150,16 @@ export default function StorageAdminPage() {
               Configure system-wide storage backends and massive file handling
             </p>
           </div>
-          <Button variant="outline" size="sm" className="h-8 gap-2">
-             <Database className="h-3.5 w-3.5" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
+            onClick={() => {
+              setEditingItem(null)
+              setIsDialogOpen(true)
+            }}
+          >
+             <Plus className="h-3.5 w-3.5" />
              Add New Provider
           </Button>
         </div>
@@ -149,6 +186,13 @@ export default function StorageAdminPage() {
             onPageChange={onPageChange}
         />
       </div>
+
+      <StorageConfigDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        item={editingItem}
+        onSave={handleSave}
+      />
     </div>
   )
 }

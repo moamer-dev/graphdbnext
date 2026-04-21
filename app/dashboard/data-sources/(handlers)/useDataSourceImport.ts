@@ -30,6 +30,13 @@ export function useDataSourceImport(open: boolean, onOpenChange: (open: boolean)
       mine: true
   })
 
+  // Fetch storage configs for routing preview
+  const { data: storageConfigsData } = resourceHooks.storageConfigs.useList({ 
+    pageSize: 100 
+  })
+  
+  const storageConfigs = (storageConfigsData?.data || []) as any[]
+
   // Pre-populate when dialog opens
   useEffect(() => {
     if (open) {
@@ -39,6 +46,32 @@ export function useDataSourceImport(open: boolean, onOpenChange: (open: boolean)
 
 
   const workspaces = workspacesData?.data || []
+
+  /**
+   * Predicts which storage provider will be used based on rules
+   */
+  const getMatchedStorage = useCallback((file: File, type: DataSourceType) => {
+    if (storageConfigs.length === 0) return null
+    
+    const size = file.size
+    
+    // Check for explicit matches
+    for (const config of storageConfigs) {
+      if (!config.isActive) continue
+      
+      const rules = config.config?.routingRules
+      if (rules) {
+        const { minSize, maxSize, allowedTypes } = rules
+        const matchesSize = (!minSize || size >= minSize) && (!maxSize || size <= maxSize)
+        const matchesType = !allowedTypes || allowedTypes.includes(type)
+        
+        if (matchesSize && matchesType) return config
+      }
+    }
+    
+    // Fallback to default
+    return storageConfigs.find(c => c.isDefault) || storageConfigs[0]
+  }, [storageConfigs])
 
   const processFile = useCallback(async (file: File): Promise<FileWithContent> => {
     return new Promise((resolve) => {
@@ -142,6 +175,7 @@ export function useDataSourceImport(open: boolean, onOpenChange: (open: boolean)
     removeFile,
     handleUpload,
     isUploading: createDataSource.isPending,
-    activeWorkspaceId
+    activeWorkspaceId,
+    getMatchedStorage
   }
 }

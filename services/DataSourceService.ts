@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { BaseRepository } from './core/BaseRepository'
 import { DataSource, Prisma } from '@prisma/client'
 import { checkPermission, getAuthorizedQuery, isAdmin } from '@/utils/rbac-engine'
+import { UniversalStorageService } from './UniversalStorageService'
 
 const sanitizeId = (id: any) => (id && typeof id === 'string' && id.trim() !== '' && id !== 'null' && id !== 'undefined') ? id : null
 
@@ -37,7 +38,6 @@ class DataSourceServiceClass extends BaseRepository<
     const { workspaceId, isGlobalScope, ...otherFilters } = filters
     const isGlobal = isGlobalScope === 'true' || isGlobalScope === true
     
-    // BUILD THE WHERE CLAUSE
     // 1. Start with RBAC authorization (usually { creatorId: userId } for SELF scope)
     const whereClause: Prisma.DataSourceWhereInput = {
       ...(userIsAdmin ? {} : authWhere), // Admins see everything
@@ -105,20 +105,48 @@ class DataSourceServiceClass extends BaseRepository<
         }
     }
 
-    // If no storageConfigId is provided, use the default DATABASE storage
+    // SMART ROUTING: Determine the best storage provider based on file metadata
     let storageConfigId = data.storageConfigId
+    
+    // Calculate size if not provided
+    const calculatedSize = data.content ? Buffer.byteLength(data.content as string) : 
+                           data.jsonContent ? Buffer.byteLength(JSON.stringify(data.jsonContent)) : 0
+
     if (!storageConfigId) {
-      const defaultConfig = await prisma.storageConfig.findFirst({
-        where: { isDefault: true, isActive: true }
+      // Fetch all active storage configurations to find a match
+      const configs = await prisma.storageConfig.findMany({
+        where: { isActive: true },
+        orderBy: { isDefault: 'desc' } // Check default last as fallback if needed, but we prefer a matched rule
       })
-      storageConfigId = defaultConfig?.id
+
+      // Try to find a config with matching rules
+      for (const config of configs) {
+        const rules = (config.config as any)?.routingRules
+        if (rules) {
+          const { minSize, maxSize, allowedTypes } = rules
+          const matchesSize = (!minSize || calculatedSize >= minSize) && (!maxSize || calculatedSize <= maxSize)
+          const matchesType = !allowedTypes || allowedTypes.includes(data.type)
+
+          if (matchesSize && matchesType) {
+            storageConfigId = config.id
+            break
+          }
+        }
+      }
+
+      // Fallback to default if no rule matched
+      if (!storageConfigId) {
+        const defaultConfig = configs.find(c => c.isDefault)
+        storageConfigId = defaultConfig?.id || configs[0]?.id
+      }
     }
 
     // Calculate size
-    const size = data.content ? Buffer.byteLength(data.content as string) : 
-                 data.jsonContent ? Buffer.byteLength(JSON.stringify(data.jsonContent)) : 0
+    const contentToStore = data.content as string || (data.jsonContent ? JSON.stringify(data.jsonContent) : '')
+    const size = Buffer.byteLength(contentToStore)
 
-    const finalData = {
+    // INITIALIZE FINAL PAYLOAD
+    let finalPayload: any = {
       ...data,
       workspaceId: verifiedWorkspaceId,
       creatorId: userId,
@@ -126,7 +154,34 @@ class DataSourceServiceClass extends BaseRepository<
       size
     }
 
-    return this.create(finalData as any)
+    // PERFORM PHYSICAL UPLOAD IF NOT DATABASE STORAGE
+    if (storageConfigId) {
+      const selectedConfig = await prisma.storageConfig.findUnique({ where: { id: storageConfigId } })
+      
+      if (selectedConfig && selectedConfig.type !== 'DATABASE') {
+        try {
+          const fileUrl = await UniversalStorageService.upload(
+            storageConfigId, 
+            data.name, 
+            contentToStore
+          )
+          
+          // Update payload for external storage: store URL and CLEAR database content
+          finalPayload = {
+            ...finalPayload,
+            fileUrl,
+            content: null,
+            jsonContent: null
+          }
+        } catch (error) {
+          console.error(`Physical storage upload failed for ${selectedConfig.type}:`, error)
+          // Fallback: If upload fails, keep it in DB but maybe mark it or log it
+          // For now, let's allow it to fall back to DB to avoid losing data
+        }
+      }
+    }
+
+    return this.create(finalPayload)
   }
 
   async updateWithRBAC(userId: string, id: string, data: Prisma.DataSourceUncheckedUpdateInput) {

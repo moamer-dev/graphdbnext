@@ -111,24 +111,59 @@ export function useModelBuilderAdapter({
     onDelete: async (id) => {
       await fetch(`${DataSourceResource.BASE_PATH}/${id}`, { method: 'DELETE' })
     }
-  }), [workspaceId])
+  }), [workspaceId, isGlobalScope])
 
   // Default Credentials persistence
   const defaultCredentialsPersistence = useMemo<CredentialsPersistence>(() => ({
     onLoad: async () => {
-      const resp = await fetch(`/api/credentials?workspaceId=${workspaceId}`)
+      const params = new URLSearchParams({ 
+        pageSize: '1000',
+        isGlobalScope: isGlobalScope.toString()
+      })
+      if (!isGlobalScope && globalActiveWorkspaceId) {
+        params.append('workspaceId', globalActiveWorkspaceId)
+      }
+      const resp = await fetch(`/api/credentials?${params.toString()}`)
       if (!resp.ok) return []
-      const data = await resp.json()
-      return data.credentials
+      const result = await resp.json()
+      
+      // Map DB credentials to Builder format
+      return (result.data || []).map((cred: any) => ({
+        id: cred.id,
+        name: cred.name,
+        type: cred.type,
+        data: cred.data,
+        storageSource: 'db' as const,
+        workspaceId: cred.workspaceId,
+        createdAt: new Date(cred.createdAt).getTime(),
+        updatedAt: new Date(cred.updatedAt).getTime(),
+        isActive: cred.isActive
+      }))
     },
     onSave: async (cred) => {
-      await fetch('/api/credentials', {
+      const resp = await fetch('/api/credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...cred, workspaceId })
       })
-    }
-  }), [workspaceId])
+      if (!resp.ok) throw new Error('Failed to save credential')
+      return resp.json()
+    },
+    onUpdate: async (id, cred) => {
+      const resp = await fetch(`/api/credentials/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...cred, workspaceId })
+      })
+      if (!resp.ok) throw new Error('Failed to update credential')
+      return resp.json()
+    },
+    onDelete: async (id) => {
+      const resp = await fetch(`/api/credentials/${id}`, { method: 'DELETE' })
+      if (!resp.ok) throw new Error('Failed to delete credential')
+    },
+    activeWorkspaceId: workspaceId
+  }), [workspaceId, isGlobalScope, globalActiveWorkspaceId])
 
   // Default AI persistence
   const defaultAiPersistence = useMemo<AIPersistence>(() => ({
@@ -160,7 +195,7 @@ export function useModelBuilderAdapter({
         body: JSON.stringify({ ...message, sessionId })
       })
     }
-  }), [workspaceId])
+  }), [workspaceId, isGlobalScope])
 
   const effectivePersistence = workflowPersistence || defaultPersistence
   const effectiveDataSourcesPersistence = passedDataSourcesPersistence || defaultDataSourcesPersistence

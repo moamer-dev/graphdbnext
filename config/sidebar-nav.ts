@@ -24,6 +24,19 @@ export const sidebarNavItems: SidebarNavItem[] = [
     url: '/dashboard',
     icon: LayoutDashboard
   },
+  {
+    title: 'API Credentials',
+    url: '/dashboard/credentials',
+    icon: Network,
+    resource: 'CREDENTIAL'
+  },
+  {
+    title: 'Data Sources',
+    url: '/dashboard/data-sources',
+    icon: Database,
+    resource: 'DATA_SOURCE_PAGE',
+    action: 'ACCESS'
+  },
 
   {
     title: 'Plexus',
@@ -63,12 +76,6 @@ export const sidebarNavItems: SidebarNavItem[] = [
         title: 'Management',
         url: '/dashboard/database',
         resource: 'DATABASE',
-        action: 'ACCESS'
-      },
-      {
-        title: 'Data Sources',
-        url: '/dashboard/data-sources',
-        resource: 'DATA_SOURCE_PAGE',
         action: 'ACCESS'
       },
       {

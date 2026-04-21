@@ -39,6 +39,7 @@ export function SchemaForm({
   getCredential
 }: SchemaFormProps) {
   const [collapsedMappings, setCollapsedMappings] = useState<Record<string, Record<number, boolean>>>({})
+  const credentialsInStore = useCredentialsStore((state) => state.credentials)
 
   const toggleMapping = (fieldName: string, idx: number) => {
     setCollapsedMappings(prev => ({
@@ -406,13 +407,24 @@ export function SchemaForm({
       }
 
       case 'credential':
-      case 'credentials':
+      case 'credentials': {
         const validTypes = ['orcid', 'geonames', 'europeana', 'getty', 'apiKey', 'bearer', 'basic', 'custom']
         const depValue = field.dependsOn ? config[field.dependsOn] : null
-        const isDepValidType = typeof depValue === 'string' && validTypes.includes(depValue)
         
+        // Check if dependency value is a valid credential type
+        const isDepValidType = typeof depValue === 'string' && validTypes.includes(depValue)
         const typeFilter = field.credentialType || (isDepValidType ? depValue : null)
-        const allCredentials = getCredentialsByType ? (typeFilter ? getCredentialsByType(typeFilter as any) : useCredentialsStore.getState().credentials) : []
+        
+        // Get credentials from store and apply type filter if needed
+        let allCredentials = typeFilter 
+          ? credentialsInStore.filter(c => c.type === typeFilter)
+          : credentialsInStore
+
+        // Special case: If we filtered down to nothing but have credentials in store, 
+        // and it's NOT a strict type-only field, show all as fallback
+        if (allCredentials.length === 0 && credentialsInStore.length > 0 && !field.credentialType) {
+          allCredentials = credentialsInStore
+        }
         
         return (
           <div key={field.name} className="space-y-1.5">
@@ -424,22 +436,35 @@ export function SchemaForm({
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder={field.placeholder || "Select credential"} />
               </SelectTrigger>
-              <SelectContent>
-                {allCredentials.map((cred) => (
+              <SelectContent className="max-h-[300px]">
+                {allCredentials.map((cred: any) => (
                   <SelectItem key={cred.id} value={cred.id} className="text-xs">
-                    <span className="flex items-center gap-2">
-                       <span className="opacity-50 text-[10px] uppercase font-bold">{cred.type}</span>
-                       <span>{cred.name}</span>
-                    </span>
+                    <div className="flex items-center justify-between w-full gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="opacity-50 text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-muted border border-border/30">{cred.type}</span>
+                        <span className="font-medium text-foreground">{cred.name}</span>
+                      </div>
+                      <span className={cn(
+                        "text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight",
+                        cred.storageSource === 'db' 
+                          ? "bg-primary/10 text-primary border border-primary/20" 
+                          : "bg-muted text-muted-foreground border border-border"
+                      )}>
+                        {cred.workspaceId ? 'WS' : (cred.storageSource || 'local')}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
                 {allCredentials.length === 0 && (
-                  <div className="p-2 text-[10px] text-muted-foreground text-center">No {typeFilter || ''} credentials found</div>
+                  <div className="p-4 text-[10px] text-muted-foreground text-center italic">
+                    No {typeFilter || ''} credentials available.
+                  </div>
                 )}
               </SelectContent>
             </Select>
           </div>
         )
+      }
       
       case 'separator':
         return <div key={field.name} className="hr border-t my-2" />

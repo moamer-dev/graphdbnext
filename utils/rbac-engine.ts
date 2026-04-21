@@ -215,6 +215,15 @@ export async function getAuthorizedQuery(
         ]
       }
     }
+    if (resource === 'CREDENTIAL') {
+      return {
+        OR: [
+          { creatorId: userId },
+          { workspace: { creatorId: userId } },
+          { workspace: { teamId: { in: myTeamIds } } }
+        ]
+      }
+    }
     return {
       OR: [
         { creatorId: userId },

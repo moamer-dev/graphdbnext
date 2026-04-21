@@ -35,5 +35,8 @@ export * from './SavedQueryResource'
 // Storage Config Resources
 export * from './StorageConfigResource'
 
+// Credential Resources
+export * from './CredentialResource'
+
 // Table Configuration Types
 export * from './TableConfig'

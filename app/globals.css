@@ -123,6 +123,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Fullscreen background fix */
+  *:fullscreen {
+    background-color: var(--background) !important;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

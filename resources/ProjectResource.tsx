@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { FolderKanban, Eye, Trash2, Pencil } from 'lucide-react'
+import { Eye, Trash2, Pencil } from 'lucide-react'
 import type { TableConfig, ResourceColumnDef } from './TableConfig'
-import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 

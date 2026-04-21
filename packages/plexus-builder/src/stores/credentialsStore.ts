@@ -17,6 +17,8 @@ export interface ApiCredential {
   name: string
   type: CredentialType
   data: Record<string, string> // Encrypted or plain
+  storageSource: 'local' | 'db'
+  workspaceId?: string | null
   createdAt: number
   updatedAt: number
   isActive?: boolean
@@ -27,7 +29,7 @@ interface CredentialsStore {
   
   // Actions
   setCredentials: (credentials: ApiCredential[]) => void
-  addCredential: (credential: ApiCredential) => void
+  addCredential: (credential: Omit<ApiCredential, 'id' | 'createdAt' | 'updatedAt'> & { id?: string; createdAt?: number; updatedAt?: number }) => void
   updateCredential: (id: string, updates: Partial<ApiCredential>) => void
   deleteCredential: (id: string) => void
   getCredential: (id: string) => ApiCredential | undefined
@@ -42,8 +44,15 @@ export const useCredentialsStore = create<CredentialsStore>((set, get) => ({
   },
 
   addCredential: (credential) => {
+    const newCredential: ApiCredential = {
+      ...credential,
+      id: credential.id || Math.random().toString(36).substr(2, 9),
+      createdAt: credential.createdAt || Date.now(),
+      updatedAt: credential.updatedAt || Date.now()
+    } as ApiCredential
+    
     set((state) => ({
-      credentials: [...state.credentials, credential]
+      credentials: [...state.credentials, newCredential]
     }))
   },
 
@@ -68,6 +77,7 @@ export const useCredentialsStore = create<CredentialsStore>((set, get) => ({
   },
 
   getCredentialsByType: (type) => {
+    if (!type) return get().credentials
     return get().credentials.filter((cred) => cred.type === type)
   }
 }))

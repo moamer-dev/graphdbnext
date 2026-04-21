@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { BaseRepository } from './core/BaseRepository'
 import { Credential, Prisma } from '@prisma/client'
-import { checkPermission, getAuthorizedQuery } from '@/utils/rbac-engine'
+import { checkPermission, getAuthorizedQuery, isAdmin } from '@/utils/rbac-engine'
+import { encryptJson, decryptJson } from '@/lib/encryption'
 
 class CredentialServiceClass extends BaseRepository<
   Credential,
@@ -29,15 +30,39 @@ class CredentialServiceClass extends BaseRepository<
       filters = {}
     } = params
 
+    const userIsAdmin = await isAdmin(userId)
     const authWhere = await getAuthorizedQuery(userId, 'CREDENTIAL', 'READ')
     
-    const { workspaceId, ...otherFilters } = filters
+    // Handle workspaceId filter (Scope)
+    const { workspaceId, isGlobalScope, scope: _scope, ...otherFilters } = filters
+    const isGlobal = isGlobalScope === 'true' || isGlobalScope === true || _scope === 'global'
 
-    const whereClause: Prisma.CredentialWhereInput = {
-      ...authWhere,
-      ...otherFilters,
-      ...(workspaceId && { workspaceId }),
-      ...(query && {
+    const andConditions: Prisma.CredentialWhereInput[] = [userIsAdmin ? {} : authWhere]
+
+    if (Object.keys(otherFilters).length > 0) {
+      andConditions.push(otherFilters)
+    }
+
+    if (!isGlobal) {
+      const sanitizedWorkspaceId = workspaceId === 'null' || workspaceId === 'undefined' ? null : workspaceId
+      
+      if (sanitizedWorkspaceId === 'true') {
+        andConditions.push({ workspaceId: { not: null } })
+      } else if (sanitizedWorkspaceId === 'false' || sanitizedWorkspaceId === null) {
+        andConditions.push({ workspaceId: null })
+      } else if (sanitizedWorkspaceId) {
+        // Active Workspace + Personal
+        andConditions.push({
+          OR: [
+            { workspaceId: sanitizedWorkspaceId }, 
+            { workspaceId: null }
+          ]
+        })
+      }
+    }
+
+    if (query) {
+      andConditions.push({
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { description: { contains: query, mode: 'insensitive' } }
@@ -45,7 +70,13 @@ class CredentialServiceClass extends BaseRepository<
       })
     }
 
-    return this.findAll({
+    const whereClause: Prisma.CredentialWhereInput = {
+      AND: andConditions
+    }
+
+    // console.log('Credentials Fetch - User:', userId, 'Where:', JSON.stringify(whereClause, null, 2))
+
+    const result = await this.findAll({
       where: whereClause,
       orderBy: { [sortBy]: sortOrder },
       skip: (page - 1) * pageSize,
@@ -54,6 +85,16 @@ class CredentialServiceClass extends BaseRepository<
         workspace: { select: { id: true, name: true } }
       }
     })
+
+    // Decrypt data for each credential
+    if (result.data) {
+      result.data = result.data.map((cred: Credential) => ({
+        ...cred,
+        data: typeof cred.data === 'string' ? decryptJson(cred.data) : cred.data
+      })) as any
+    }
+
+    return result
   }
 
   async findOneWithRBAC(userId: string, id: string) {
@@ -69,7 +110,11 @@ class CredentialServiceClass extends BaseRepository<
 
     if (!hasPermission) throw new Error('Unauthorized READ on CREDENTIAL')
 
-    return credential
+    // Decrypt data
+    return {
+      ...credential,
+      data: typeof credential.data === 'string' ? decryptJson(credential.data) : credential.data
+    }
   }
 
   async createWithRBAC(userId: string, data: Prisma.CredentialUncheckedCreateInput) {
@@ -80,10 +125,14 @@ class CredentialServiceClass extends BaseRepository<
     // Sanitize workspaceId
     const sanitizedWorkspaceId = data.workspaceId && data.workspaceId !== '' ? data.workspaceId : null
 
+    // Encrypt data
+    const encryptedData = encryptJson(data.data)
+
     return this.create({
       ...data,
       workspaceId: sanitizedWorkspaceId,
-      creatorId: userId
+      creatorId: userId,
+      data: encryptedData
     } as any)
   }
 
@@ -99,6 +148,11 @@ class CredentialServiceClass extends BaseRepository<
     const { id: _, ...updateData } = data
     if ('workspaceId' in updateData) {
       updateData.workspaceId = updateData.workspaceId && updateData.workspaceId !== '' ? updateData.workspaceId : null
+    }
+
+    // Encrypt data if provided
+    if (updateData.data) {
+      updateData.data = encryptJson(updateData.data)
     }
 
     return this.update(id, updateData as Prisma.CredentialUpdateInput)

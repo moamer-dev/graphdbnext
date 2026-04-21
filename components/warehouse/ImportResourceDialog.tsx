@@ -52,7 +52,8 @@ export function ImportResourceDialog({ open, onOpenChange }: ImportResourceDialo
     removeFile,
     handleUpload,
     isUploading,
-    activeWorkspaceId
+    activeWorkspaceId,
+    getMatchedStorage
   } = useDataSourceImport(open, onOpenChange)
 
   return (
@@ -150,11 +151,24 @@ export function ImportResourceDialog({ open, onOpenChange }: ImportResourceDialo
                     <div className={`p-2 rounded-lg text-white ${f.type === DataSourceType.XML ? 'bg-orange-500' : 'bg-primary'}`}>
                       {f.type === DataSourceType.XML ? <FileCode className="h-4 w-4" /> : <FileJson className="h-4 w-4" />}
                     </div>
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden flex-1">
                       <p className="text-xs font-bold truncate text-foreground">{f.file.name}</p>
-                      <span className="text-[9px] font-black text-muted-foreground/50 uppercase">
-                          {(f.file.size / 1024).toFixed(1)} KB • {f.type}
-                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9px] font-black text-muted-foreground/50 uppercase">
+                            {(f.file.size / 1024).toFixed(1)} KB • {f.type}
+                        </span>
+                        {(() => {
+                           const matched = getMatchedStorage(f.file, f.type)
+                           if (!matched) return null
+                           return (
+                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/5 border border-primary/10">
+                                <span className="text-[8px] font-black text-primary uppercase whitespace-nowrap">
+                                  Routing: {matched.name}
+                                </span>
+                             </div>
+                           )
+                        })()}
+                      </div>
                     </div>
                   </div>
                   

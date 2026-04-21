@@ -17,6 +17,7 @@ import { useDataSourcesStore, useXmlSources } from '../../stores/dataSourcesStor
 import { useCredentialsStore } from '../../stores/credentialsStore'
 import { useAiStore } from '../../stores/aiStore'
 import { useXmlImportWizardStore } from '../../stores/xmlImportWizardStore'
+// Removed root imports that cause bundling issues
 
 export function useModelBuilderInternal(props: any, ref: any) {
   const {
@@ -47,7 +48,11 @@ export function useModelBuilderInternal(props: any, ref: any) {
         // Load Credentials
         if (credentialsPersistence?.onLoad) {
           const credentials = await credentialsPersistence.onLoad()
-          if (credentials) useCredentialsStore.getState().setCredentials(credentials)
+          if (credentials) {
+            const currentStore = useCredentialsStore.getState()
+            const localCreds = currentStore.credentials.filter(c => c.storageSource === 'local')
+            currentStore.setCredentials([...localCreds, ...credentials])
+          }
         }
 
         // Load AI Chat Sessions

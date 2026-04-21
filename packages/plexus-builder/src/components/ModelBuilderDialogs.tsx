@@ -11,6 +11,7 @@ import { CredentialsManager } from './shared/CredentialsManager'
 import { SaveWorkflowDialog } from './dialogs/SaveWorkflowDialog'
 import { WorkflowChangeConfirmDialog } from './dialogs/WorkflowChangeConfirmDialog'
 import { SaveXmlToWorkspaceDialog } from './dialogs/SaveXmlToWorkspaceDialog'
+import type { CredentialsPersistence, WorkflowPersistence } from './ModelBuilder'
 
 interface ModelBuilderDialogsProps {
   importDialogOpen: boolean
@@ -51,6 +52,7 @@ interface ModelBuilderDialogsProps {
 
   credentialsDialogOpen: boolean
   setCredentialsDialogOpen: (val: boolean) => void
+  credentialsPersistence?: CredentialsPersistence
 
   clearWorkflowDialogOpen: boolean
   setClearWorkflowDialogOpen: (val: boolean) => void
@@ -116,6 +118,7 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
   setWorkflowGenerationDialogOpen,
   credentialsDialogOpen,
   setCredentialsDialogOpen,
+  credentialsPersistence,
   clearWorkflowDialogOpen,
   setClearWorkflowDialogOpen,
   confirmClearWorkflow,
@@ -191,15 +194,15 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
         onOpenChange={setWorkflowGenerationDialogOpen}
       />
       <Dialog open={credentialsDialogOpen} onOpenChange={setCredentialsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>API Credentials</DialogTitle>
             <DialogDescription>
               Manage API credentials for authenticated research APIs (ORCID, GeoNames, Europeana, Getty).
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <CredentialsManager />
+          <div className="py-2">
+            <CredentialsManager persistence={credentialsPersistence} />
           </div>
         </DialogContent>
       </Dialog>

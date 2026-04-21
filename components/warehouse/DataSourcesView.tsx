@@ -19,8 +19,12 @@ export function DataSourcesView() {
     setIsImportOpen,
     selectedId,
     setSelectedId,
+    multiSelectedIds,
+    setMultiSelectedIds,
     deleteId,
     setDeleteId,
+    isBulkDeleting,
+    setIsBulkDeleting,
     search,
     setSearch,
     typeFilter,
@@ -50,6 +54,7 @@ export function DataSourcesView() {
     handleSave,
     handleRename,
     handleDelete,
+    startBulkDelete,
     refetchList,
     isUpdatePending,
     isDeletePending,
@@ -76,7 +81,10 @@ export function DataSourcesView() {
             filteredItems={filteredItems}
             selectedId={selectedId}
             setSelectedId={setSelectedId}
+            multiSelectedIds={multiSelectedIds}
+            setMultiSelectedIds={setMultiSelectedIds}
             setDeleteId={setDeleteId}
+            startBulkDelete={startBulkDelete}
             setIsImportOpen={setIsImportOpen}
             availableTypes={availableTypes}
             availableCreators={availableCreators}
@@ -117,10 +125,15 @@ export function DataSourcesView() {
 
       <DeleteConfirmation 
         deleteId={deleteId}
-        setDeleteId={setDeleteId}
-        resourceName={listData?.data?.find((i:any)=>i.id === deleteId)?.name}
+        setDeleteId={(id) => {
+            setDeleteId(id)
+            if (!id) setIsBulkDeleting(false)
+        }}
+        resourceName={isBulkDeleting ? `${multiSelectedIds.length} selected items` : listData?.data?.find((i:any)=>i.id === deleteId)?.name}
         handleDelete={handleDelete}
         isPending={isDeletePending}
+        title={isBulkDeleting ? "Bulk Delete Resources" : undefined}
+        description={isBulkDeleting ? "Are you sure you want to delete all selected resources? This action is permanent." : undefined}
       />
 
       <ImportResourceDialog 

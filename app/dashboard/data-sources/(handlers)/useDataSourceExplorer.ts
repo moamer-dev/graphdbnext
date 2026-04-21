@@ -12,7 +12,9 @@ export function useDataSourceExplorer() {
   
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('ALL')
   const [creatorFilter, setCreatorFilter] = useState<string>('ALL')
@@ -55,6 +57,20 @@ export function useDataSourceExplorer() {
               setEditedContent('')
           }
           setDeleteId(null)
+          refetchList()
+      }
+  })
+
+  const bulkDeleteMutation = resourceHooks.dataSources.useBulkDelete({
+      showToast: false,
+      onSuccess: () => {
+          toast.success('Resources deleted successfully')
+          if (selectedId && multiSelectedIds.includes(selectedId)) {
+              setSelectedId(null)
+              setEditedContent('')
+          }
+          setMultiSelectedIds([])
+          setIsBulkDeleting(false)
           refetchList()
       }
   })
@@ -155,8 +171,18 @@ export function useDataSourceExplorer() {
   }
 
   const handleDelete = async () => {
-      if (!deleteId) return
-      await deleteMutation.mutateAsync(deleteId)
+      if (isBulkDeleting) {
+          if (multiSelectedIds.length === 0) return
+          await bulkDeleteMutation.mutateAsync(multiSelectedIds)
+      } else {
+          if (!deleteId) return
+          await deleteMutation.mutateAsync(deleteId)
+      }
+  }
+
+  const startBulkDelete = () => {
+      setIsBulkDeleting(true)
+      setDeleteId('bulk') // Marker for confirmation dialog
   }
 
   return {
@@ -165,8 +191,12 @@ export function useDataSourceExplorer() {
     setIsImportOpen,
     selectedId,
     setSelectedId,
+    multiSelectedIds,
+    setMultiSelectedIds,
     deleteId,
     setDeleteId,
+    isBulkDeleting,
+    setIsBulkDeleting,
     search,
     setSearch,
     typeFilter,
@@ -196,9 +226,10 @@ export function useDataSourceExplorer() {
     handleSave,
     handleRename,
     handleDelete,
+    startBulkDelete,
     refetchList,
     isUpdatePending: updateMutation.isPending,
-    isDeletePending: deleteMutation.isPending,
+    isDeletePending: deleteMutation.isPending || bulkDeleteMutation.isPending,
     
     // Permissions helpers (optional, but keep it consistent)
     can,

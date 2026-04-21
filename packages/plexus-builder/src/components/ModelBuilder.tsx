@@ -39,8 +39,10 @@ export interface DataSourcesPersistence {
 
 export interface CredentialsPersistence {
   onLoad?: () => Promise<any[]>
-  onSave?: (credential: any) => Promise<void>
+  onSave?: (credential: any) => Promise<any>
+  onUpdate?: (id: string, credential: any) => Promise<any>
   onDelete?: (id: string) => Promise<void>
+  activeWorkspaceId?: string | null
 }
 
 export interface AIPersistence {

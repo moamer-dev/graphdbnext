@@ -16,6 +16,8 @@ interface DeleteConfirmationProps {
   resourceName?: string
   handleDelete: () => Promise<void>
   isPending: boolean
+  title?: string
+  description?: string
 }
 
 export const DeleteConfirmation = ({
@@ -23,7 +25,9 @@ export const DeleteConfirmation = ({
   setDeleteId,
   resourceName,
   handleDelete,
-  isPending
+  isPending,
+  title,
+  description
 }: DeleteConfirmationProps) => {
   return (
     <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
@@ -33,11 +37,15 @@ export const DeleteConfirmation = ({
               <div className="p-3 rounded-2xl bg-destructive/10">
                   <Trash2 className="h-6 w-6" />
               </div>
-              Confirm Deletion
+              {title || "Confirm Deletion"}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sm text-muted-foreground/80 leading-relaxed pt-2">
-            You are about to permanently remove <span className="font-bold text-foreground">"{resourceName}"</span>. 
-            This will erase all metadata and content associated with this resource from the central data warehouse. This action is irreversible.
+            {description ? description : (
+                <>
+                    You are about to permanently remove <span className="font-bold text-foreground">"{resourceName}"</span>. 
+                    This will erase all metadata and content associated with this resource from the central data warehouse. This action is irreversible.
+                </>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="pt-8 gap-3">
