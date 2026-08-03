@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select'
+import { Badge } from '../ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,7 @@ interface RunWorkflowDialogProps {
     items: Array<Record<string, unknown>>
     fullGraph: Array<Record<string, unknown>>
   } | null
+  xmlContent?: string
   onRun: () => void
   onPushToDB?: (graph: Array<Record<string, unknown>>) => Promise<void>
 }
@@ -61,6 +63,7 @@ export function RunWorkflowDialog({
   xmlFileFromWizard,
   running,
   graphPreview,
+  xmlContent,
   onRun,
   onPushToDB
 }: RunWorkflowDialogProps) {
@@ -89,25 +92,45 @@ export function RunWorkflowDialog({
               </div>
             </div>
           )}
-          <div className="space-y-2">
-
-            <Label>XML file</Label>
-            {xmlFileFromWizard ? (
-              <div className="p-3 bg-muted/50 rounded-lg border border-muted">
-                <p className="text-xs text-muted-foreground mb-1">Using file from XML Import Wizard:</p>
-                <p className="text-sm font-mono font-medium">{xmlFileFromWizard.name}</p>
-                <p className="text-xs text-muted-foreground mt-2">You can also select a different file below:</p>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">XML Source</Label>
+            {xmlFileFromWizard || xmlFile ? (
+              <div className="mt-2 p-4 bg-primary/[0.03] rounded-xl border border-primary/10 transition-all animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <Database className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                       <p className="text-sm font-bold truncate text-foreground/90">{xmlFileFromWizard?.name || xmlFile?.name}</p>
+                       <Badge variant="outline" className="h-4 px-1.5 text-[8px] font-black tracking-tighter bg-amber-50 text-amber-700 border-amber-200 uppercase shrink-0">
+                         Live Buffer
+                       </Badge>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                      {xmlFileFromWizard ? 'Imported from Wizard' : 'Selected from Library'} • {(((xmlFileFromWizard?.size || xmlFile?.size || 0) / 1024).toFixed(1))} KB
+                    </p>
+                  </div>
+                </div>
               </div>
-            ) : null}
-            <Input
-              type="file"
-              accept=".xml"
-              onChange={(e) => onXmlFileChange(e.target.files?.[0] || null)}
-            />
-            {xmlFile && !xmlFileFromWizard && (
-              <p className="text-xs text-muted-foreground">Selected: {xmlFile.name}</p>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-[11px] text-muted-foreground font-medium italic">No XML file selected. Please upload a file to proceed with the graph generation.</p>
+                <div className="relative group">
+                   <div className="absolute inset-0 bg-primary/5 rounded-lg border border-dashed border-primary/20 group-hover:border-primary/40 transition-all" />
+                   <Input
+                    type="file"
+                    accept=".xml"
+                    onChange={(e) => onXmlFileChange(e.target.files?.[0] || null)}
+                    className="opacity-0 w-full h-24 cursor-pointer relative z-10"
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <Download className="h-6 w-6 text-primary/40 mb-2 group-hover:scale-110 transition-transform" />
+                    <p className="text-xs font-bold text-primary/60">Click to upload XML file</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">.xml files only</p>
+                  </div>
+                </div>
+              </div>
             )}
-          </div>
           <div className="space-y-2">
             <Label>Root Node (Starter)</Label>
             <Select

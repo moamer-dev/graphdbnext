@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { Eye, FileText, Upload, Download, Loader2 } from 'lucide-react'
+import { Eye, FileText, Upload, Download, Loader2, Network } from 'lucide-react'
 import { Switch } from '../../../ui/switch'
 import { Label } from '../../../ui/label'
 import { Button } from '../../../ui/button'
@@ -69,7 +69,6 @@ export function ConfigureStep({
   const setShowSemantic = useXmlImportWizardStore(state => state.setShowSemantic)
   const selectedOntologyId = useXmlImportWizardStore(state => state.selectedOntologyId)
   const setSelectedOntologyId = useXmlImportWizardStore(state => state.setSelectedOntologyId)
-
 
   return (
     <div className={cn('space-y-4', className)}>

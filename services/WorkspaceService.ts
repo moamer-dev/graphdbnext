@@ -70,9 +70,34 @@ class WorkspaceServiceClass extends BaseRepository<
     const workspace = await this.findById(id, {
       include: { 
         creator: { select: { id: true, name: true, email: true } },
+        dataSources: {
+          include: {
+            creator: { select: { id: true, name: true } }
+          }
+        },
+        models: {
+          include: {
+            creator: { select: { id: true, name: true } }
+          }
+        },
         projects: {
           include: {
-            project: true
+            project: {
+              include: {
+                team: {
+                  include: {
+                    members: {
+                      include: {
+                        user: { select: { id: true, name: true, email: true } }
+                      }
+                    },
+                    invitations: {
+                      where: { isActive: true }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

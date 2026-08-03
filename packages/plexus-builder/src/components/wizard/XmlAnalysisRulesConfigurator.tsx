@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef, startTransition } from 'react'
-import { Plus, List, Search, Ban, FolderTree, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Plus, List, Search, Ban, FolderTree, Trash2, Eye, EyeOff, ArrowUpDown } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { ResizablePanel } from '../ui/resizable-panel'
 import { cn } from '../../utils/cn'
@@ -63,7 +64,25 @@ export function XmlAnalysisRulesConfigurator({
     elements: false,
     subtrees: false
   })
+  const [sortBy, setSortBy] = useState<'structure-asc' | 'structure-desc' | 'name-asc' | 'name-desc'>('structure-asc')
   const prevInitialRulesRef = useRef<string>(JSON.stringify(initialRules || {}))
+
+  const getSortedElementNames = useMemo(() => {
+    if (!availableElements?.elementNames) return []
+    const list = [...availableElements.elementNames]
+    switch (sortBy) {
+      case 'structure-asc':
+        return list
+      case 'structure-desc':
+        return list.reverse()
+      case 'name-asc':
+        return list.sort((a, b) => a.localeCompare(b))
+      case 'name-desc':
+        return list.sort((a, b) => b.localeCompare(a))
+      default:
+        return list
+    }
+  }, [availableElements?.elementNames, sortBy])
 
   // Sync with initialRules when they change (e.g., when navigating back)
   // Also sanitize legacy pattern/relationship rules we no longer expose
@@ -210,7 +229,7 @@ export function XmlAnalysisRulesConfigurator({
               </div>
 
               <div className="flex-1 min-h-0 flex flex-col">
-                <div className="p-4 border-b shrink-0 flex items-center gap-4">
+                <div className="p-4 border-b shrink-0 flex items-center gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -220,7 +239,21 @@ export function XmlAnalysisRulesConfigurator({
                       onChange={(e) => setSearchTerm({ ...searchTerm, elementSearch: e.target.value })}
                     />
                   </div>
-                  <div className="flex items-center gap-2 pr-2 border-l pl-4">
+                  <Select value={sortBy} onValueChange={(val: typeof sortBy) => setSortBy(val)}>
+                    <SelectTrigger className="h-9 text-xs w-[170px]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <SelectValue placeholder="Sort order..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="structure-asc">Structure (First → Last)</SelectItem>
+                      <SelectItem value="structure-desc">Structure (Last → First)</SelectItem>
+                      <SelectItem value="name-asc">Name (A → Z)</SelectItem>
+                      <SelectItem value="name-desc">Name (Z → A)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2 pr-2 border-l pl-3">
                     <Switch
                       id="show-ignored-elements"
                       checked={showOnlyIgnored.elements}
@@ -236,7 +269,7 @@ export function XmlAnalysisRulesConfigurator({
                 <div className="flex-1 overflow-y-auto">
                   {availableElements ? (
                     <div className="divide-y divide-border/40">
-                      {availableElements.elementNames
+                      {getSortedElementNames
                         .filter(name => {
                           const matchesSearch = !searchTerm.elementSearch || name.toLowerCase().includes(searchTerm.elementSearch.toLowerCase())
                           if (showOnlyIgnored.elements) {
@@ -244,7 +277,6 @@ export function XmlAnalysisRulesConfigurator({
                           }
                           return matchesSearch
                         })
-                        .sort()
                         .map(name => {
                           const isIgnored = getList('ignoredElements').includes(name)
                           return (
@@ -294,7 +326,7 @@ export function XmlAnalysisRulesConfigurator({
               </div>
 
               <div className="flex-1 min-h-0 flex flex-col">
-                <div className="p-4 border-b shrink-0 flex items-center gap-4">
+                <div className="p-4 border-b shrink-0 flex items-center gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -304,7 +336,21 @@ export function XmlAnalysisRulesConfigurator({
                       onChange={(e) => setSearchTerm({ ...searchTerm, subtreeSearch: e.target.value })}
                     />
                   </div>
-                  <div className="flex items-center gap-2 pr-2 border-l pl-4">
+                  <Select value={sortBy} onValueChange={(val: typeof sortBy) => setSortBy(val)}>
+                    <SelectTrigger className="h-9 text-xs w-[170px]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <SelectValue placeholder="Sort order..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="structure-asc">Structure (First → Last)</SelectItem>
+                      <SelectItem value="structure-desc">Structure (Last → First)</SelectItem>
+                      <SelectItem value="name-asc">Name (A → Z)</SelectItem>
+                      <SelectItem value="name-desc">Name (Z → A)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2 pr-2 border-l pl-3">
                     <Switch
                       id="show-ignored-subtrees"
                       checked={showOnlyIgnored.subtrees}
@@ -320,7 +366,7 @@ export function XmlAnalysisRulesConfigurator({
                 <div className="flex-1 overflow-y-auto">
                   {availableElements ? (
                     <div className="divide-y divide-border/40">
-                      {availableElements.elementNames
+                      {getSortedElementNames
                         .filter(name => {
                           const matchesSearch = !searchTerm.subtreeSearch || name.toLowerCase().includes(searchTerm.subtreeSearch.toLowerCase())
                           if (showOnlyIgnored.subtrees) {
@@ -328,7 +374,6 @@ export function XmlAnalysisRulesConfigurator({
                           }
                           return matchesSearch
                         })
-                        .sort()
                         .map(name => {
                           const isSubtreeIgnored = getList('ignoredSubtrees').includes(name)
                           return (

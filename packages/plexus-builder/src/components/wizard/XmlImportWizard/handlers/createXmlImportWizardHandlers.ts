@@ -6,8 +6,92 @@ import type {
 } from '../../../../services/xml/xmlAnalyzer'
 import { extractXmlElements, type XmlElementInfo } from '../../../../utils/xmlElementExtractor'
 import { downloadFile } from '../../../../utils/exportUtils'
-import type { WizardStep } from '../../../../stores/xmlImportWizardStore'
+import { useXmlImportWizardStore, type WizardStep } from '../../../../stores/xmlImportWizardStore'
 import type { XmlImportResult } from '../../../../hooks/xml/useXmlImport'
+
+export function inferInitialRelationships(
+  analysis: XmlStructureAnalysis,
+  elementMappings: Record<string, { include: boolean }>
+): Record<string, { include: boolean; relationshipType: string; viaAttribute?: string }> {
+  const result: Record<string, { include: boolean; relationshipType: string; viaAttribute?: string }> = {}
+
+  const includedNames = new Set(
+    Object.entries(elementMappings)
+      .filter(([, cfg]) => cfg && cfg.include)
+      .map(([name]) => name)
+  )
+
+  if (includedNames.size <= 1) return result
+
+  // 1. Direct relationship patterns from analysis
+  if (analysis.relationshipPatterns) {
+    analysis.relationshipPatterns.forEach((pattern) => {
+      if (includedNames.has(pattern.from) && includedNames.has(pattern.to)) {
+        const relKey = `${pattern.from}->${pattern.to}`
+        result[relKey] = {
+          include: true,
+          relationshipType: pattern.type || 'contains',
+          viaAttribute: pattern.viaAttribute
+        }
+      }
+    })
+  }
+
+  // 2. Parent-child relationships directly from elementTypes
+  if (analysis.elementTypes) {
+    analysis.elementTypes.forEach((elementType) => {
+      if (!includedNames.has(elementType.name)) return
+      const parentName = elementType.name
+
+      elementType.children.forEach((childName) => {
+        if (!includedNames.has(childName)) return
+        const relKey = `${parentName}->${childName}`
+        if (!result[relKey]) {
+          result[relKey] = {
+            include: true,
+            relationshipType: 'contains'
+          }
+        }
+      })
+    })
+  }
+
+  // 3. Structural containment for indirect parent-child relationships
+  includedNames.forEach((fromName) => {
+    includedNames.forEach((toName) => {
+      if (fromName === toName) return
+      const directKey = `${fromName}->${toName}`
+      if (result[directKey]) return
+
+      const isAncestorWithoutIncludedIntermediates = (current: string, target: string, visited = new Set<string>()): boolean => {
+        if (current === target) return true
+        visited.add(current)
+        const currType = analysis.elementTypes?.find((et) => et.name === current)
+        if (!currType || !currType.children) return false
+
+        for (const child of currType.children) {
+          if (visited.has(child)) continue
+          if (child === target) return true
+          if (!includedNames.has(child)) {
+            if (isAncestorWithoutIncludedIntermediates(child, target, new Set(visited))) {
+              return true
+            }
+          }
+        }
+        return false
+      }
+
+      if (isAncestorWithoutIncludedIntermediates(fromName, toName)) {
+        result[directKey] = {
+          include: true,
+          relationshipType: 'contains'
+        }
+      }
+    })
+  })
+
+  return result
+}
 
 interface XmlWizardConfigExport {
   version: 1
@@ -186,6 +270,9 @@ export function createXmlImportWizardHandlers({
     const result = await analyzeXml(selectedFile, analysisRules)
     if (result) {
       setAnalysis(result)
+      if (result.rootElements && result.rootElements.length > 0) {
+        useXmlImportWizardStore.getState().setRootElementName(result.rootElements[0])
+      }
 
       setTimeout(() => {
         const currentMapping = hookMapping || getLatestMapping()
@@ -210,6 +297,7 @@ export function createXmlImportWizardHandlers({
       setShowMapping(true)
     }
 
+    const autoConnectRelations = useXmlImportWizardStore.getState().autoConnectRelations
     const newElementMappings = { ...mapping.elementMappings }
     const newAttributeMappings = { ...mapping.attributeMappings }
 
@@ -255,10 +343,32 @@ export function createXmlImportWizardHandlers({
       })
     })
 
+    // Auto-set rootElementName if not set yet
+    const currentRoot = useXmlImportWizardStore.getState().rootElementName
+    const includedNames = Object.entries(newElementMappings)
+      .filter(([, config]) => config.include)
+      .map(([name]) => name)
+    if (!currentRoot || !includedNames.includes(currentRoot)) {
+      const matchingRoot = analysis.rootElements.find((r) => includedNames.includes(r)) || includedNames[0]
+      if (matchingRoot) {
+        useXmlImportWizardStore.getState().setRootElementName(matchingRoot)
+      }
+    }
+
+    let newRelationshipMappings = { ...mapping.relationshipMappings }
+    if (autoConnectRelations) {
+      const inferredRels = inferInitialRelationships(analysis, newElementMappings)
+      newRelationshipMappings = {
+        ...newRelationshipMappings,
+        ...inferredRels
+      }
+    }
+
     const newMapping: XmlMappingConfig = {
       ...mapping,
       elementMappings: newElementMappings,
-      attributeMappings: newAttributeMappings
+      attributeMappings: newAttributeMappings,
+      relationshipMappings: newRelationshipMappings
     }
 
     handleMappingChange(newMapping)

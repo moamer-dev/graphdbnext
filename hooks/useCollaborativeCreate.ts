@@ -14,11 +14,21 @@ export const TeamSchema = z.object({
 
 export type TeamFormValues = z.infer<typeof TeamSchema>
 
-export function useTeamCreate(onSuccess?: (data: any) => void) {
+export function useTeamCreate(onSuccess?: (data: any) => void, options?: { redirect?: boolean; defaultProjectId?: string }) {
+  const defaultValues = useMemo(() => ({
+    name: '',
+    description: '',
+    isActive: true,
+    projectIds: options?.defaultProjectId ? [options.defaultProjectId] : [],
+    creatorId: undefined
+  }), [options?.defaultProjectId])
+
   return useResourceForm({
     resourceName: 'teams',
     schema: TeamSchema,
-    onSuccess
+    defaultValues,
+    onSuccess,
+    redirect: options?.redirect
   })
 }
 
@@ -44,7 +54,7 @@ export const ProjectSchema = z.object({
 
 export type ProjectFormValues = z.infer<typeof ProjectSchema>
 
-export function useProjectCreate(onSuccess?: (data: any) => void) {
+export function useProjectCreate(onSuccess?: (data: any) => void, options?: { redirect?: boolean; defaultWorkspaceId?: string }) {
   const { activeTeamId } = useTenantStore()
   
   const defaultValues = useMemo(() => ({
@@ -52,14 +62,15 @@ export function useProjectCreate(onSuccess?: (data: any) => void) {
     description: '',
     isActive: true,
     teamId: activeTeamId || null,
-    workspaceIds: []
-  }), [activeTeamId])
+    workspaceIds: options?.defaultWorkspaceId ? [options.defaultWorkspaceId] : []
+  }), [activeTeamId, options?.defaultWorkspaceId])
 
   return useResourceForm({
     resourceName: 'projects',
     schema: ProjectSchema,
     defaultValues,
-    onSuccess
+    onSuccess,
+    redirect: options?.redirect
   })
 }
 
@@ -84,7 +95,7 @@ export const WorkspaceSchema = z.object({
 
 export type WorkspaceFormValues = z.infer<typeof WorkspaceSchema>
 
-export function useWorkspaceCreate(onSuccess?: (data: any) => void) {
+export function useWorkspaceCreate(onSuccess?: (data: any) => void, options?: { redirect?: boolean }) {
   const { activeProjectId } = useTenantStore()
   
   const defaultValues = useMemo(() => ({
@@ -99,7 +110,8 @@ export function useWorkspaceCreate(onSuccess?: (data: any) => void) {
     resourceName: 'workspaces',
     schema: WorkspaceSchema,
     defaultValues,
-    onSuccess
+    onSuccess,
+    redirect: options?.redirect
   })
 }
 

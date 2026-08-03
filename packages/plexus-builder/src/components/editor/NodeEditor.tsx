@@ -13,7 +13,7 @@ import {
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
 import { cn } from '../../utils/cn'
-import { Eye, EyeOff, Crosshair, X, ChevronDown, ChevronRight, Hash, Trash2, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Crosshair, X, ChevronDown, ChevronRight, Hash, Trash2, AlertCircle, Fingerprint } from 'lucide-react'
 import { CollapsibleSection } from '../shared/CollapsibleSection'
 import { NodePropertySuggestionPanel } from '../ai/NodePropertySuggestionPanel'
 // OntologyCombobox moved to ModelBuilder toolbar
@@ -45,7 +45,7 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
   const node = selectedNode ? nodes.find((n: Node) => n.id === selectedNode) || null : null
 
   const editor = useNodeEditor({ node })
-  const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set([0]))
+  const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set())
  
   const toggleExpand = (index: number) => {
     const next = new Set(expandedIndices)
@@ -210,78 +210,98 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
       </div>
       <div className="flex flex-col h-[calc(100%-4rem)]">
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
-          <div>
-            <label className="text-xs font-medium mb-1 block">Label</label>
-            <input
-              type="text"
-              value={editor.label}
-              onChange={(e) => editor.setLabel(e.target.value)}
-              className="w-full px-2 py-1 text-xs border rounded"
-              placeholder="Node label"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">Type</label>
-            <input
-              type="text"
-              value={editor.type}
-              onChange={(e) => editor.setType(e.target.value)}
-              className="w-full px-2 py-1 text-xs border rounded"
-              placeholder="Node type"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">Group</label>
-            <Select
-              value={editor.groupId || 'none'}
-              onValueChange={editor.handleGroupChange}
-            >
-              <SelectTrigger className="w-full h-8 text-xs">
-                <SelectValue placeholder="No group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No group</SelectItem>
-                {groups.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">Root Node</label>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={node ? rootNodeId === node.id : false}
-                onCheckedChange={(checked) => {
-                  if (node) {
-                    if (checked) {
-                      // Set this node as root (will automatically unset previous root)
-                      setRootNodeId(node.id)
-                    } else {
-                      // Unset root
-                      setRootNodeId(null)
-                    }
-                  }
-                }}
-                disabled={!node}
-              />
-              <label className="text-xs text-muted-foreground">
-                Set as root node for workflow execution
-              </label>
+          <CollapsibleSection title="General Configuration" defaultOpen={false}>
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Label</label>
+                  <input
+                    type="text"
+                    value={editor.label}
+                    onChange={(e) => editor.setLabel(e.target.value)}
+                    className="w-full px-2 py-1 h-8 text-xs border border-primary/20 rounded bg-primary/5 focus:bg-background focus:ring-1 focus:ring-primary outline-none transition-all"
+                    placeholder="Node label"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Type</label>
+                  <input
+                    type="text"
+                    value={editor.type}
+                    onChange={(e) => editor.setType(e.target.value)}
+                    className="w-full px-2 py-1 h-8 text-xs border border-primary/20 rounded bg-primary/5 focus:bg-background focus:ring-1 focus:ring-primary outline-none transition-all"
+                    placeholder="Node type"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Group</label>
+                  <Select
+                    value={editor.groupId || 'none'}
+                    onValueChange={editor.handleGroupChange}
+                  >
+                    <SelectTrigger className="w-full h-8 text-xs bg-primary/5 border-primary/20 rounded focus:bg-background transition-all">
+                      <SelectValue placeholder="No group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none" className="text-xs">No group</SelectItem>
+                      {groups.map((group) => (
+                        <SelectItem key={group.id} value={group.id} className="text-xs">
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex flex-col">
+                  <label className="text-xs font-medium mb-1 block text-muted-foreground">Role</label>
+                  <div className={cn(
+                    "flex items-center gap-2 px-2 h-8 rounded border transition-colors",
+                    node && rootNodeId === node.id 
+                      ? "bg-primary/10 border-primary/30 text-primary" 
+                      : "bg-primary/5 border-primary/20 text-muted-foreground"
+                  )}>
+                    <Checkbox
+                      id="root-node-check"
+                      checked={node ? rootNodeId === node.id : false}
+                      onCheckedChange={(checked) => {
+                        if (node) {
+                          if (checked) setRootNodeId(node.id)
+                          else setRootNodeId(null)
+                        }
+                      }}
+                      disabled={!node}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <label htmlFor="root-node-check" className="text-[10px] font-bold cursor-pointer uppercase tracking-tight">
+                      Root Node
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {rootNodeId && rootNodeId !== node?.id && (
+                <div className="p-1.5 bg-amber-50 border border-amber-100 rounded flex items-center gap-2">
+                  <AlertCircle className="h-3 w-3 text-amber-600 shrink-0" />
+                  <p className="text-[10px] text-amber-700 font-medium leading-tight">
+                    Current root: <span className="underline">{nodes.find(n => n.id === rootNodeId)?.label || 'Other'}</span>
+                  </p>
+                </div>
+              )}
             </div>
-            {rootNodeId && rootNodeId !== node?.id && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Current root: {nodes.find(n => n.id === rootNodeId)?.label || 'Unknown'}
-              </p>
-            )}
-          </div>
+          </CollapsibleSection>
           {/* Semantic Enrichment */}
           {isSemanticEnabled && (
-            <div className="border-t pt-4 mt-4">
-              <label className="text-xs font-medium mb-2 block">Semantic Enrichment</label>
-              <div className="space-y-3">
+            <CollapsibleSection 
+              title="Semantic Enrichment" 
+              defaultOpen={false} 
+              icon={Fingerprint}
+              className="border-t pt-4 mt-4"
+            >
+              <div className="space-y-3 pt-2">
                 {(selectedOntologyId || (node.data as any)?.semantic?.ontologyId) ? (
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Class</label>
@@ -303,25 +323,28 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
                           }
                         })
                       }}
-                      className="h-8"
+                      className="h-8 shadow-none bg-primary/5 border-primary/20 rounded focus:bg-background transition-all"
                     />
                     {(node.data as any)?.semantic?.classLabel && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {(node.data as any).semantic.classCurie && (
-                          <span className="font-mono text-blue-600">{(node.data as any).semantic.classCurie}</span>
-                        )}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Curie:</span>
+                         <span className="text-[10px] font-mono px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-100 italic">
+                          {(node.data as any).semantic.classCurie || 'No curie'}
+                        </span>
+                      </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Select an ontology in the toolbar to add semantic data.</p>
+                  <p className="text-xs text-muted-foreground italic bg-primary/5 p-2 rounded border border-dashed border-primary/20">
+                    Select an ontology in the toolbar to enable semantic mapping for this node.
+                  </p>
                 )}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
             <CollapsibleSection
               title="Properties"
-              defaultOpen={true}
+              defaultOpen={false}
               icon={Hash}
               className="border-t pt-4 mt-4"
               headerClassName="mb-1"
@@ -381,40 +404,43 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
 
                     return (
                       <div key={index} className={cn(
-                        "rounded-lg border bg-muted/5 transition-all overflow-hidden",
-                        isExpanded ? "border-primary/20 bg-primary/5 shadow-sm" : "hover:bg-muted/10 border-transparent",
-                        showSemanticWarning && !isExpanded && "border-amber-500/30 bg-amber-500/5"
+                        "rounded-md border transition-all duration-200 overflow-hidden",
+                        isExpanded 
+                          ? "bg-primary/[0.04] border-primary/30" 
+                          : "bg-primary/[0.02] border-primary/10 hover:border-primary/20 hover:bg-primary/[0.04]"
                       )}>
                         {/* Property Header */}
                         <div
-                          className="flex items-center gap-2 cursor-pointer group py-2 px-2"
+                          className={cn(
+                            "flex items-center gap-2 cursor-pointer group py-1.5 px-2.5",
+                            isExpanded ? "bg-primary/5" : "bg-transparent"
+                          )}
                           onClick={() => toggleExpand(index)}
                         >
-                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                          {isExpanded ? <ChevronDown className="h-3 w-3 text-primary" /> : <ChevronRight className="h-3 w-3 text-primary/50 group-hover:text-primary" />}
                           <div className="flex-1 flex items-center justify-between min-w-0">
                             <div className="flex items-center gap-2 min-w-0">
                               <span className={cn(
-                                "text-xs font-medium truncate",
-                                !prop.key && "text-muted-foreground italic"
+                                "text-[11px] font-bold tracking-tight truncate",
+                                !prop.key ? "text-primary/40 italic" : "text-primary/90"
                               )}>
-                                {prop.key || "Unnamed property"}
+                                {prop.key || "Unnamed Field"}
                               </span>
-                              {showSemanticWarning && !isExpanded && (
-                                <AlertCircle className="h-3 w-3 text-amber-500 shrink-0 animate-pulse" />
-                              )}
                               {hasSemantic && !isExpanded && (
-                                <span className={cn(
-                                  "text-[9px] font-mono px-1 py-0 rounded",
-                                  isExpanded ? "bg-primary/20 text-primary" : "bg-blue-100 text-blue-700"
-                                )}>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-700 border border-blue-200">
                                   {semanticMapping?.propertyCurie || "Mapped"}
                                 </span>
                               )}
                             </div>
                             {!isExpanded && (
-                              <span className="text-[10px] bg-muted border rounded px-1.5 py-0.5 text-muted-foreground font-mono">
-                                {prop.type}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] uppercase font-black text-muted-foreground/60 tracking-wider">
+                                  {prop.type}
+                                </span>
+                                {prop.required && (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-primary" title="Required" />
+                                )}
+                              </div>
                             )}
                           </div>
                           <button
@@ -422,7 +448,7 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
                               e.stopPropagation()
                               editor.handleDeleteProperty(index)
                             }}
-                            className="text-muted-foreground hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="text-muted-foreground hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -431,26 +457,26 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
                         {/* Expanded Content */}
                         {isExpanded && (
                           <div className="p-3 space-y-3 pt-0 border-t border-primary/10">
-                            <div className="space-y-1">
-                              <label className="text-[10px] font-medium text-muted-foreground uppercase opacity-70">Field Name</label>
-                              <input
-                                type="text"
-                                value={prop.key}
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => editor.handleUpdateProperty(index, { key: e.target.value })}
-                                placeholder="e.g. email, age, full_name"
-                                className="w-full px-2 py-1.5 text-xs bg-background border rounded focus-visible:ring-1 focus-visible:ring-primary outline-none transition-shadow"
-                              />
-                            </div>
- 
-                            <div className="flex gap-3 items-end">
-                              <div className="flex-1 space-y-1">
-                                <label className="text-[10px] font-medium text-muted-foreground uppercase opacity-70">Data Type</label>
+                            <div className="grid grid-cols-2 gap-3 items-end">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest pl-0.5">Field Name</label>
+                                <input
+                                  type="text"
+                                  value={prop.key}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => editor.handleUpdateProperty(index, { key: e.target.value })}
+                                  placeholder="e.g. email"
+                                  className="w-full h-8 px-2 text-xs bg-background border border-muted-foreground/20 rounded focus:ring-1 focus:ring-primary outline-none transition-all"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest pl-0.5">Data Type</label>
                                 <Select
                                   value={prop.type}
                                   onValueChange={(val) => editor.handleUpdateProperty(index, { type: val as Property['type'] })}
                                 >
-                                  <SelectTrigger className="h-8 text-xs bg-background focus:bg-background transition-colors w-full">
+                                  <SelectTrigger className="h-8 text-xs bg-background border-muted-foreground/20 rounded focus:ring-1 focus:ring-primary transition-all">
                                     <SelectValue placeholder="Type" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -463,22 +489,36 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
                                   </SelectContent>
                                 </Select>
                               </div>
- 
-                              <label className="flex items-center gap-1.5 text-xs h-8 pb-0.5 cursor-pointer">
-                                <Checkbox
-                                  checked={prop.required}
-                                  onCheckedChange={(checked) => editor.handleUpdateProperty(index, { required: checked === true })}
-                                />
-                                <span className="font-medium text-muted-foreground">Required</span>
-                              </label>
                             </div>
  
-                            {/* Property-level semantic annotation */}
-                            {isSemanticEnabled && (selectedOntologyId || (node.data as any)?.semantic?.ontologyId) && prop.key && (
-                              <div className="pt-2 border-t border-primary/10 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-[10px] font-medium text-muted-foreground uppercase opacity-70">Semantic Mapping</label>
+                            <div className="flex items-center justify-between gap-3">
+                               <div className={cn(
+                                "flex-1 flex items-center gap-2 px-2 h-8 rounded border transition-colors",
+                                prop.required 
+                                  ? "bg-primary/5 border-primary/20 text-primary" 
+                                  : "bg-muted/30 border-muted/20 text-muted-foreground"
+                              )}>
+                                <Checkbox
+                                  id={`prop-required-${index}`}
+                                  checked={prop.required}
+                                  onCheckedChange={(checked) => editor.handleUpdateProperty(index, { required: checked === true })}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                                <label htmlFor={`prop-required-${index}`} className="text-[10px] font-bold cursor-pointer uppercase tracking-tight">
+                                  Required Field
+                                </label>
+                              </div>
+
+                              {/* Property-level semantic annotation inline label */}
+                              {isSemanticEnabled && (selectedOntologyId || (node.data as any)?.semantic?.ontologyId) && prop.key && (
+                                <div className="text-[9px] font-black text-blue-600/70 uppercase tracking-widest shrink-0">
+                                  Semantic mapping
                                 </div>
+                              )}
+                            </div>
+  
+                            {isSemanticEnabled && (selectedOntologyId || (node.data as any)?.semantic?.ontologyId) && prop.key && (
+                              <div className="pt-2 border-t border-blue-100/50 space-y-2">
                                 <SemanticPropertySelect
                                   ontologyId={selectedOntologyId || (node.data as any)?.semantic?.ontologyId}
                                   value={(node.data as any)?.propertySemantics?.[prop.key]?.propertyIri}
@@ -499,12 +539,12 @@ export function NodeEditor({ className, onFocusNode, onClose }: NodeEditorProps)
                                       }
                                     })
                                   }}
-                                  className="h-8"
+                                  className="h-8 bg-blue-50/30 border-blue-200/30 rounded shadow-none"
                                 />
                                 {(node.data as any)?.propertySemantics?.[prop.key]?.propertyCurie && (
-                                  <p className="text-[10px] flex items-center gap-1">
-                                    <span className="text-muted-foreground">Curie:</span>
-                                    <span className="font-mono text-blue-600 bg-blue-50 px-1 rounded">
+                                  <p className="text-[9px] flex items-center gap-1 font-mono">
+                                    <span className="text-muted-foreground uppercase opacity-70">Curie:</span>
+                                    <span className="text-blue-600 font-bold bg-blue-50 px-1 py-0.5 rounded border border-blue-100/50">
                                       {(node.data as any).propertySemantics[prop.key].propertyCurie}
                                     </span>
                                   </p>

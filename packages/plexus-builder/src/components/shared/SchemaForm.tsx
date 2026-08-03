@@ -21,6 +21,8 @@ import { useCredentialsStore } from '../../stores/credentialsStore'
 import { HelpTooltip } from './HelpTooltip'
 import { cn } from '../../utils/cn'
 
+import { CollapsibleSection } from './CollapsibleSection'
+
 interface SchemaFormProps {
   schema: ConfigField[]
   config: Record<string, any>
@@ -39,6 +41,7 @@ export function SchemaForm({
   getCredential
 }: SchemaFormProps) {
   const [collapsedMappings, setCollapsedMappings] = useState<Record<string, Record<number, boolean>>>({})
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const credentialsInStore = useCredentialsStore((state) => state.credentials)
 
   const toggleMapping = (fieldName: string, idx: number) => {
@@ -88,7 +91,7 @@ export function SchemaForm({
               placeholder={field.placeholder}
               value={value || ''}
               onChange={(e) => onChange(field.name, e.target.value)}
-              className="h-8 text-xs"
+              className="h-8 text-xs bg-primary/5 border-primary/20 focus:bg-background transition-all"
             />
           </div>
         )
@@ -114,7 +117,7 @@ export function SchemaForm({
               placeholder={field.placeholder}
               value={value || ''}
               onChange={(e) => onChange(field.name, e.target.value)}
-              className="min-h-[80px] text-xs resize-none"
+              className="min-h-[80px] text-xs resize-none bg-primary/5 border-primary/20 focus:bg-background transition-all"
             />
           </div>
         )
@@ -128,7 +131,7 @@ export function SchemaForm({
               placeholder={field.placeholder}
               value={value || ''}
               onChange={(e) => onChange(field.name, parseFloat(e.target.value))}
-              className="h-8 text-xs"
+              className="h-8 text-xs bg-primary/5 border-primary/20 focus:bg-background transition-all"
             />
           </div>
         )
@@ -164,7 +167,7 @@ export function SchemaForm({
               value={value || ''}
               onValueChange={(val) => onChange(field.name, val)}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors">
                 <SelectValue placeholder={field.placeholder || "Select option"} />
               </SelectTrigger>
               <SelectContent>
@@ -433,7 +436,7 @@ export function SchemaForm({
               value={value || ''}
               onValueChange={(val) => onChange(field.name, val)}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors">
                 <SelectValue placeholder={field.placeholder || "Select credential"} />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
@@ -467,16 +470,84 @@ export function SchemaForm({
       }
       
       case 'separator':
-        return <div key={field.name} className="hr border-t my-2" />
+        return <div key={field.name} className="hr border-t my-2 border-primary/10" />
 
       default:
         return <div key={field.name}>Unsupported field type: {field.type}</div>
     }
   }
 
+  // Pre-process schema into items (single fields or groups)
+  const items: Array<{ type: 'field', field: ConfigField } | { type: 'group', name: string, fields: ConfigField[] }> = []
+  const groupMap = new Map<string, { type: 'group', name: string, fields: ConfigField[] }>()
+
+  schema.forEach(field => {
+    if (field.group) {
+      if (groupMap.has(field.group)) {
+        groupMap.get(field.group)!.fields.push(field)
+      } else {
+        const newGroup = { type: 'group' as const, name: field.group, fields: [field] }
+        groupMap.set(field.group, newGroup)
+        items.push(newGroup)
+      }
+    } else {
+      items.push({ type: 'field' as const, field })
+    }
+  })
+
   return (
     <div className="space-y-4">
-      {schema.map(renderField)}
+      {items.map((item, idx) => {
+        if (item.type === 'field') {
+          return renderField(item.field)
+        } else {
+          // Check if any field in the group is visible (based on dependencies)
+          const visibleFields = item.fields.filter(f => {
+             // Basic dependency check for visibility in the group
+             if (!f.dependsOn) return true
+             const depValue = config[f.dependsOn]
+             if (f.dependsOnValue !== undefined) {
+               return Array.isArray(f.dependsOnValue)
+                 ? f.dependsOnValue.includes(depValue)
+                 : depValue === f.dependsOnValue
+             }
+             return !!depValue
+          })
+
+          if (visibleFields.length === 0) return null
+
+          return (
+            <CollapsibleSection 
+              key={item.name} 
+              title={item.name} 
+              defaultOpen={openGroups[item.name] ?? false}
+              onToggle={(open) => setOpenGroups(prev => ({ ...prev, [item.name]: open }))}
+              className="py-1"
+            >
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-2">
+                {item.fields.map(field => {
+                  const rendered = renderField(field)
+                  if (!rendered) return null
+                  
+                  const isFullWidth = [
+                    'properties', 
+                    'mappings', 
+                    'transforms', 
+                    'textarea', 
+                    'separator'
+                  ].includes(field.type)
+
+                  return (
+                    <div key={field.name} className={isFullWidth ? "col-span-2" : "col-span-1"}>
+                      {rendered}
+                    </div>
+                  )
+                })}
+              </div>
+            </CollapsibleSection>
+          )
+        }
+      })}
     </div>
   )
 }

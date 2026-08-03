@@ -46,6 +46,8 @@ export class ModelResource {
   static readonly VIEW_PATH = '/dashboard/graph/model'
   static readonly LIST_PATH = '/dashboard/graph/model'
   static readonly EDIT_PATH = (id: string) => `${ModelResource.VIEW_PATH}/${id}/edit`
+  static readonly VIEW_MODE: 'page' | 'modal' = 'page'
+  static readonly EDIT_MODE: 'page' | 'modal' = 'page'
   
   static readonly HOOK_CONFIG = {
     workspaceScoped: true

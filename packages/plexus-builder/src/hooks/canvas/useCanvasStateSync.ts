@@ -15,10 +15,10 @@ import { useCanvasVisibility } from './useCanvasVisibility'
 import { labelFromType } from '../../utils/canvasUtils'
 import type { Node as BuilderNode, Relationship } from '../../types'
 
-function calculateStoreNodesSig(nodes: BuilderNode[], visibleNodeIds: Set<string>, wfNodes: any[], toolNodes: any[], actionNodes: any[], rootNodeId: string | null, isWorkflowVisible: boolean) {
+function calculateStoreNodesSig(nodes: BuilderNode[], visibleNodeIds: Set<string>, selectedNodeId: string | null, wfNodes: any[], toolNodes: any[], actionNodes: any[], rootNodeId: string | null, isWorkflowVisible: boolean) {
   const storePart = nodes
     .filter(n => visibleNodeIds.has(n.id))
-    .map(n => `${n.id}:${n.position.x}:${n.position.y}:${n.label}:${n.type}`)
+    .map(n => `${n.id}:${n.position.x}:${n.position.y}:${n.label}:${n.type}:${n.id === selectedNodeId ? '1' : '0'}`)
     .sort()
     .join('|')
   
@@ -32,7 +32,7 @@ function calculateStoreNodesSig(nodes: BuilderNode[], visibleNodeIds: Set<string
     .sort()
     .join('|')
 
-  return `${storePart}#${extraPart}#${rootNodeId || ''}#${isWorkflowVisible}`
+  return `${storePart}#${extraPart}#${selectedNodeId || ''}#${rootNodeId || ''}#${isWorkflowVisible}`
 }
 
 function calculateStoreRelationshipsSig(rels: Relationship[], visibleNodeIds: Set<string>, selectedRelId: string | null, wfEdges: any[], toolEdges: any[], actionEdges: any[], isWorkflowVisible: boolean) {
@@ -299,7 +299,7 @@ export function useCanvasStateSync({
         })
 
       // 1. Calculate signature from UNTAINTED data (before adding callbacks)
-      const sig = calculateStoreNodesSig(storeNodes, visibleNodeIds, wfNodes, toolNodes, actionNodes, rootNodeId, isWorkflowVisible || false)
+      const sig = calculateStoreNodesSig(storeNodes, visibleNodeIds, selectedNode, wfNodes, toolNodes, actionNodes, rootNodeId, isWorkflowVisible || false)
 
       // 2. Build the tainted objects with callbacks
       const finalNodes = [...baseNodes, ...workflowNodes, ...toolNodesFlow, ...actionNodesFlow] as Node[]

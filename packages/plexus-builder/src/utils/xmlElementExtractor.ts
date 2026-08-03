@@ -84,7 +84,7 @@ export async function extractXmlElements (file: File): Promise<XmlElementInfo> {
         traverse(root)
         
         resolve({
-          elementNames: Array.from(elementNames).sort(),
+          elementNames: Array.from(elementNames),
           attributeNames: Array.from(attributeNames).sort(),
           rootElements: Array.from(rootElements)
         })

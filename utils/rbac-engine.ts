@@ -148,9 +148,14 @@ export async function checkPermission(
 
   const permissions = await getEffectivePermissions(userId, context?.teamId)
   
-  // Find matching permission
+  // Find matching permission (exact match or super-permissions)
   const perm = permissions.find(p => 
-    p.resource === resource && p.action === action
+    p.resource === resource && (
+      p.action === action || 
+      (p.action as string) === 'MANAGE' || 
+      (p.action as string) === 'All' || 
+      (p.action as string) === '*'
+    )
   )
   
   if (!perm) return false
@@ -161,11 +166,38 @@ export async function checkPermission(
   // ALL scope matches everything
   if (perm.scope === 'ALL') return true
   
-  // TEAM scope matches if context teamId matches
-  if (perm.scope === 'TEAM' && context?.teamId) return true
+  // TEAM scope: allow if user is creator OR if they are a member of the associated team
+  if (perm.scope === 'TEAM') {
+    // Ownership check (TEAM scope should always include SELF)
+    if (context?.resourceCreatorId === userId) return true
+
+    if (context?.teamId) {
+      // Check if the user is a member of this team
+      const membership = await prisma.teamMember.findUnique({
+        where: { userId_teamId: { userId, teamId: context.teamId } }
+      })
+      
+      // Check if they are the team creator
+      const team = await prisma.team.findUnique({
+        where: { id: context.teamId },
+        select: { creatorId: true }
+      })
+
+      if (membership || team?.creatorId === userId) return true
+    }
+  }
   
   // SELF scope matches if user is the creator
   if (perm.scope === 'SELF' && context?.resourceCreatorId === userId) return true
+
+  // Special case for SELF scope on foundational resources:
+  // If the user is a member of the team/project, treat it as SELF/Own context
+  if (perm.scope === 'SELF' && (resource === 'TEAM' || resource === 'PROJECT') && context?.teamId) {
+     const membership = await prisma.teamMember.findUnique({
+       where: { userId_teamId: { userId, teamId: context.teamId } }
+     })
+     if (membership) return true
+  }
 
   return false
 }
@@ -185,7 +217,12 @@ export async function getAuthorizedQuery(
 
   const permissions = await getEffectivePermissions(userId, teamId)
   const perm = permissions.find(p => 
-    p.resource === resource && p.action === action
+    p.resource === resource && (
+      p.action === action || 
+      (p.action as string) === 'MANAGE' || 
+      (p.action as string) === 'All' || 
+      (p.action as string) === '*'
+    )
   )
 
   if (!perm) return { creatorId: userId } // Implicit ownership fallback

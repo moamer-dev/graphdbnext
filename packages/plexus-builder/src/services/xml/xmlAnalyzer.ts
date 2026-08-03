@@ -764,7 +764,6 @@ export class XmlAnalyzer {
     // Filter out ignored elements from final results (user-specified ignored elements are already excluded)
     const finalElementTypes = Array.from(elementTypes.values())
       .filter(et => !et.specialPatterns.isIgnored)
-      .sort((a, b) => b.count - a.count)
 
     return {
       elementTypes: finalElementTypes,

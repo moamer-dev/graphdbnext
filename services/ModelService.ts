@@ -56,7 +56,7 @@ class ModelServiceClass extends BaseRepository<
       take: pageSize,
       include: {
         workspace: { select: { id: true, name: true } },
-        creator: { select: { id: true, name: true } }
+        creator: { select: { id: true, name: true, email: true } }
       }
     })
   }
@@ -65,7 +65,7 @@ class ModelServiceClass extends BaseRepository<
     const model = await this.findById(id, {
         include: { 
             workspace: { select: { id: true, name: true } },
-            creator: { select: { id: true, name: true } }
+            creator: { select: { id: true, name: true, email: true } }
         }
     })
     

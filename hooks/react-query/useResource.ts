@@ -45,6 +45,7 @@ export interface FetchParams {
   pageSize: number
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
+  query?: string
   filters?: Record<string, unknown>
 }
 
@@ -74,6 +75,10 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
       page: String(params.page || 1),
       pageSize: String(params.pageSize || 10)
     })
+
+    if (params.query) {
+      searchParams.append('query', params.query)
+    }
 
     if (params.sortBy) {
       searchParams.append('sortBy', params.sortBy)
@@ -193,7 +198,9 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
     const { activeWorkspaceId, isGlobalScope } = useTenantStore()
     
     // Inject workspaceId filter if scoped and NOT in global scope
-    const applyWorkspaceScope = config.workspaceScoped && activeWorkspaceId && !isGlobalScope
+    const isMemberScope = params.filters?.scope === 'member'
+    const isExplicitGlobal = params.filters?.isGlobal === 'true'
+    const applyWorkspaceScope = config.workspaceScoped && activeWorkspaceId && !isGlobalScope && !isMemberScope && !isExplicitGlobal
 
     const effectiveParams = {
         ...params,
@@ -206,8 +213,8 @@ export function createResourceHooks<T extends { id: string }>(config: ResourceCo
     return useQuery({
       queryKey: config.queryKeys.paginated(effectiveParams),
       queryFn: () => fetchList(effectiveParams),
-      staleTime: 0, // Disable caching for now to ensure visibility
-      placeholderData: keepPreviousData // Keep previous data while fetching new data to prevent flickering
+      staleTime: 0,
+      placeholderData: keepPreviousData
     })
   }
 

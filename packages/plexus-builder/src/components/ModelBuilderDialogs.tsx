@@ -43,6 +43,7 @@ interface ModelBuilderDialogsProps {
   graphPreview: any
   onRunWorkflow: () => void
   onPushToDB?: (graph: any[]) => Promise<void>
+  xmlContent?: string
 
   schemaDesignDialogOpen: boolean
   setSchemaDesignDialogOpen: (val: boolean) => void
@@ -144,7 +145,8 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
   saveXmlToWorkspaceName,
   setSaveXmlToWorkspaceName,
   onConfirmSaveXmlToWorkspace,
-  isPushingXml
+  isPushingXml,
+  xmlContent
 }) => {
   const t = useBuilderTranslations()
   return (
@@ -184,6 +186,7 @@ export const ModelBuilderDialogs: React.FC<ModelBuilderDialogsProps> = ({
         graphPreview={graphPreview}
         onRun={onRunWorkflow}
         onPushToDB={onPushToDB}
+        xmlContent={xmlContent}
       />
       <AIChatbot />
       <SchemaDesignPanel

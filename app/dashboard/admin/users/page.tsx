@@ -1,60 +1,39 @@
 'use client'
 
 import { DataTable } from '@/components/data-table/DataTable'
-import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { useResourcePage } from '@/hooks/view/useResourcePage'
 import { resourceHooks } from '@/hooks/react-query'
 import { UserResource } from '@/resources/UserResource'
-import { Users, Eye, Trash2 } from 'lucide-react'
-import { useUIStore } from '@/stores/uiStore'
+import { Users, Loader2 } from 'lucide-react'
 import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
 import { DataGrid } from '@/components/data-table/DataGrid'
 import { ResourceCard } from '@/components/dashboard/ResourceCard'
-import { useSession } from 'next-auth/react'
 
 export default function UsersPage () {
-  const { data: session } = useSession()
-  const isAdmin = true
-  const { dashboardView } = useUIStore()
-
   const { 
-    config, 
-    data, 
-    total, 
-    loading,
-    page,
-    pageSize,
-    sortBy,
-    sortOrder,
-    filters,
-    onPageChange,
-    onPageSizeChange,
-    onSortChange,
-    onFiltersChange
-  } = useResourceTable({
+    config, data, total, loading, page, pageSize, sortBy, sortOrder, filters, onPageChange, onPageSizeChange, onSortChange, onFiltersChange,
+    status, handleView, getGridActions, currentView, session
+  } = useResourcePage({
     resource: UserResource,
     useList: resourceHooks.users.useList,
     useDelete: resourceHooks.users.useDelete,
-    useBulkDelete: resourceHooks.users.useBulkDelete,
-    isAdmin,
-    userId: session?.user?.id
+    useBulkDelete: resourceHooks.users.useBulkDelete
   })
 
-  const gridActions = (item: any) => {
-    const actions = [
-      { label: 'View', icon: Eye, action: () => config.rowActions?.[0]?.action(item), permission: { action: 'READ' as const, resource: 'TEAM' } },
-      { 
-        label: 'Delete', 
-        icon: Trash2, 
-        variant: 'destructive' as const,
-        action: () => config.rowActions?.[1]?.action(item),
-        permission: { action: 'DELETE' as const, resource: 'TEAM' }
-      }
-    ]
-
-    return actions.filter(action => {
+  // Filter grid actions to exclude self-deletion
+  const filteredGridActions = (item: any) => {
+    return getGridActions(item).filter(action => {
       if (action.label === 'Delete' && item.id === session?.user?.id) return false
       return true
     })
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+      </div>
+    )
   }
 
   return (
@@ -79,8 +58,8 @@ export default function UsersPage () {
         </div>
       </div>
       
-      <div>
-        {dashboardView === 'table' ? (
+      <div className="min-h-[400px]">
+        {currentView === 'table' ? (
           <DataTable
               config={config}
               data={data}
@@ -112,16 +91,16 @@ export default function UsersPage () {
               <ResourceCard
                 key={item.id}
                 item={item}
-                resourceName="TEAM" // Users are part of TEAM resource in RBAC terms here? No, RESOURCE_NAME is User but actions check TEAM.
+                resourceName="TEAM"
                 title={item.name || item.email.split('@')[0]}
                 description={item.email}
                 status={true}
                 date={item.createdAt}
                 isSelected={isSelected}
                 onSelect={onSelect}
-                onClick={() => config.rowActions?.[0]?.action(item)}
+                onClick={() => handleView(item.id)}
                 showQuickPerspective={false}
-                actions={gridActions(item)}
+                actions={filteredGridActions(item)}
               />
             )}
           />
@@ -130,4 +109,3 @@ export default function UsersPage () {
     </div>
   )
 }
-

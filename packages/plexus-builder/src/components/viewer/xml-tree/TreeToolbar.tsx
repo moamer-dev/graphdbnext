@@ -1,12 +1,13 @@
 'use client'
 
 import React from 'react'
-import { Search, X, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
+import { Search, X, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Network } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Switch } from '../../ui/switch'
 import { Label } from '../../ui/label'
 import { cn } from '../../../utils/cn'
+import { useXmlImportWizardStore } from '../../../stores/xmlImportWizardStore'
 
 interface TreeToolbarProps {
   activeTab: 'tree' | 'nodes'
@@ -45,6 +46,8 @@ export function TreeToolbar({
   goToNextMatch,
   onClearSearch
 }: TreeToolbarProps) {
+  const autoConnectRelations = useXmlImportWizardStore(state => state.autoConnectRelations)
+  const setAutoConnectRelations = useXmlImportWizardStore(state => state.setAutoConnectRelations)
   return (
     <div className="p-4 border-b bg-background flex-shrink-0 space-y-3">
       <div className="flex items-center justify-between">
@@ -90,6 +93,18 @@ export function TreeToolbar({
                 id="show-details"
                 checked={isDetailsPanelOpen}
                 onCheckedChange={setIsDetailsPanelOpen}
+                className="scale-75"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Network className="h-3 w-3 text-muted-foreground" />
+              <Label htmlFor="auto-connect-structure" className="text-[12px] text-muted-foreground cursor-pointer" title="Auto-connect relations based on structure when adding nodes to mapping">
+                Auto-Connect
+              </Label>
+              <Switch
+                id="auto-connect-structure"
+                checked={autoConnectRelations}
+                onCheckedChange={setAutoConnectRelations}
                 className="scale-75"
               />
             </div>

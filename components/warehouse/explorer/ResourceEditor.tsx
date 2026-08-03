@@ -109,19 +109,19 @@ export const ResourceEditor = ({
 
   if (!selectedId) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-12 relative z-10">
-        <div className="p-6 rounded-3xl bg-muted/10 mb-6 group hover:scale-[1.05] transition-transform duration-500">
-          <FolderSearch className="h-14 w-14 text-primary/10 group-hover:text-primary/20 transition-colors" />
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-12 relative z-10 bg-muted/10 backdrop-blur-sm rounded-xl border border-border/20 m-3 shadow-sm">
+        <div className="p-6 rounded-3xl bg-primary/5 mb-6 group hover:scale-[1.05] transition-transform duration-500 border border-primary/10">
+          <FolderSearch className="h-14 w-14 text-primary/20 group-hover:text-primary/40 transition-colors" />
         </div>
-        <p className="text-[13px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 mb-2">Select a file to inspect</p>
-        <p className="text-[11px] text-muted-foreground/40 max-w-xs">Efficiently manage your data warehouse assets with real-time editing and RBAC protection.</p>
+        <p className="text-[13px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 mb-2 font-medium">Select a file to inspect</p>
+        <p className="text-[11px] text-muted-foreground/40 max-w-xs font-normal underline-offset-4">Efficiently manage your data warehouse assets with real-time editing and RBAC protection.</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col flex-1 h-full overflow-hidden min-h-0">
-      <div className="h-14 border-b border-border flex items-center justify-between px-5 bg-muted/5 backdrop-blur-sm relative z-10 flex-shrink-0">
+    <div className="flex flex-col flex-1 h-full overflow-hidden min-h-0 bg-muted/10 backdrop-blur-sm rounded-xl border border-border/20 m-3 shadow-sm">
+      <div className="h-14 border-b border-border/20 flex items-center justify-between px-5 bg-transparent relative z-10 flex-shrink-0">
         <div className="flex items-center gap-4 overflow-hidden flex-1">
           <div className="p-2 rounded-lg bg-primary/5 shadow-none border border-primary/10">
             <FileIcon type={selectedItem?.type || ''} className="h-5 w-5 text-primary" />
@@ -205,7 +205,7 @@ export const ResourceEditor = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-9 px-4 rounded-xl text-muted-foreground/70 hover:text-destructive hover:bg-destructive/5 font-bold text-[11px] tracking-wide transition-all gap-2.5 shadow-none"
+              className="h-9 px-4 text-muted-foreground/70 hover:text-destructive hover:bg-destructive/5 font-bold text-[11px] tracking-wide transition-all gap-2.5 shadow-none"
               onClick={() => setDeleteId(selectedId)}
             >
               <Trash2 className="h-4 w-4" />
@@ -216,18 +216,18 @@ export const ResourceEditor = ({
           {can('UPDATE', resourceKey, selectedItem) && (
             <Button
               size="sm"
-              className="h-9 px-6 rounded-xl bg-primary text-white font-black text-[11px] tracking-[0.1em] transition-all gap-2.5 hover:scale-[0.98] shadow-none border-none active:scale-[0.98]"
+              className="h-8 gap-2"
               disabled={isUpdatePending || !editedContent}
               onClick={handleSave}
             >
               {isUpdatePending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Save className="h-4 w-4" />}
-              SAVE CHANGES
+              Save Changes
             </Button>
           )}
         </div>
       </div>
 
-      <div className="h-10 border-b border-border/40 bg-muted/5 flex items-center justify-between px-5 relative z-10 flex-shrink-0">
+      <div className="h-10 border-b border-border/20 bg-transparent flex items-center justify-between px-5 relative z-10 flex-shrink-0">
         <div className="flex items-center gap-1">
           <Button
             size="sm"

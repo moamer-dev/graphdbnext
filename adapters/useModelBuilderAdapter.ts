@@ -68,7 +68,7 @@ export function useModelBuilderAdapter({
       },
       onUpdateWorkflow: async (id, workflow) => {
         const response = await fetch(`/api/workflows/${id}`, {
-          method: 'PUT',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(workflow)
         })

@@ -35,6 +35,9 @@ interface XmlImportWizardState {
   // Semantic
   selectedOntologyId: string | null
   showSemantic: boolean
+
+  // Relations
+  autoConnectRelations: boolean
 }
 
 interface XmlImportWizardActions {
@@ -73,6 +76,9 @@ interface XmlImportWizardActions {
   // Semantic
   setSelectedOntologyId: (ontologyId: string | null) => void
   setShowSemantic: (show: boolean) => void
+
+  // Relations
+  setAutoConnectRelations: (autoConnect: boolean) => void
 }
 
 export type XmlImportWizardStore = XmlImportWizardState & XmlImportWizardActions
@@ -88,7 +94,8 @@ const getInitialState = (): XmlImportWizardState => ({
   rootElementName: null,
   error: null,
   selectedOntologyId: null,
-  showSemantic: false
+  showSemantic: false,
+  autoConnectRelations: true
 })
 
 export const useXmlImportWizardStore = create<XmlImportWizardStore>((set, get) => ({
@@ -139,6 +146,8 @@ export const useXmlImportWizardStore = create<XmlImportWizardStore>((set, get) =
   setSelectedOntologyId: (ontologyId) => set({ selectedOntologyId: ontologyId }),
 
   setShowSemantic: (show) => set({ showSemantic: show }),
+
+  setAutoConnectRelations: (autoConnect) => set({ autoConnectRelations: autoConnect }),
 
   reset: () => set(getInitialState())
 }))

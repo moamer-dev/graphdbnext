@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const mine = searchParams.get('mine') === 'true'
     const filters: Record<string, any> = {}
     searchParams.forEach((v, k) => {
-      if (!['page', 'pageSize', 'query', 'search', 'sortBy', 'sortOrder', 'mine'].includes(k)) {
+      if (!['page', 'pageSize', 'query', 'search', 'sortBy', 'sortOrder', 'mine', 'isGlobal', 'scope'].includes(k)) {
         filters[k] = v
       }
     })

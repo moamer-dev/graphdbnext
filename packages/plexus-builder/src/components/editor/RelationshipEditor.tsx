@@ -19,10 +19,12 @@ import {
   DialogTitle
 } from '../ui/dialog'
 import { Button } from '../ui/button'
-import { Pencil, X } from 'lucide-react'
+import { Pencil, X, Fingerprint, Network, ArrowRightLeft } from 'lucide-react'
 import { SemanticPropertySelect } from '../wizard/XmlImportWizard/components/SemanticPropertySelect'
 import type { Relationship, Node } from '../../types'
 import { RelationshipRecommendationPanel } from '../ai/RelationshipRecommendationPanel'
+import { CollapsibleSection } from '../shared/CollapsibleSection'
+import { cn } from '../../utils/cn'
 
 interface RelationshipEditorProps {
   className?: string
@@ -61,11 +63,15 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
   const toNode = nodes.find((n: Node) => n.id === editor.to)
 
   return (
-    <div className={className + ' flex flex-col h-full'}>
-      <div className="p-4 border-b shrink-0">
+    <div className={cn(className, "flex flex-col h-full bg-background/50 backdrop-blur-xl border-l")}>
+      {/* Header */}
+      <div className="p-4 border-b bg-background/40 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Edit Relationship</h3>
+            <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+              <Network className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-bold tracking-tight">Edit Relationship</h3>
             {fromNode && toNode && (
               <RelationshipRecommendationPanel
                 fromNodeId={editor.from}
@@ -105,212 +111,209 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
               selectRelationship(null)
               onClose?.()
             }}
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
             title="Close editor"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
+
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-4 space-y-4">
-          <div>
-            <label className="text-xs font-medium mb-1 block">Type</label>
-            <div className="space-y-2">
-              {relationshipTypes.length > 0 && (
+          {/* General Configuration */}
+          <CollapsibleSection title="General Configuration" defaultOpen={true}>
+            <div className="space-y-4 pt-2">
+              {/* Relationship Type */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-primary/50 tracking-wider mb-1.5 block">
+                  Relationship Type
+                </label>
+                <div className="space-y-2">
+                  {relationshipTypes.length > 0 && (
+                    <Select
+                      value={editor.type}
+                      onValueChange={editor.handleTypeChange}
+                    >
+                      <SelectTrigger className="w-full h-8 text-xs bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {relationshipTypes.map((relType) => (
+                          <SelectItem key={relType.type} value={relType.type}>
+                            {relType.type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      value={editor.type}
+                      onChange={(e) => editor.handleTypeInputChange(e.target.value)}
+                      className="flex-1 h-8 text-xs bg-primary/5 border-primary/20 focus:bg-background transition-all"
+                      placeholder="Enter relationship type"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={editor.handleRenameType}
+                      disabled={!editor.type.trim() || editor.type.trim() === relationship?.type || editor.typeRenamed}
+                      className="h-8 px-3 text-xs border-primary/20 hover:bg-primary/5"
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Rename
+                    </Button>
+                  </div>
+                  {editor.typeRenamed && (
+                    <p className="text-[10px] text-green-600 font-medium ml-1">
+                      Type renamed successfully.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Inlined Cardinality and Direction (Optional/Future) */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-primary/50 tracking-wider mb-1.5 block">
+                  Cardinality
+                </label>
                 <Select
-                  value={editor.type}
-                  onValueChange={editor.handleTypeChange}
+                  value={editor.cardinality || 'none'}
+                  onValueChange={editor.handleCardinalityChange}
                 >
-                  <SelectTrigger className="w-full h-8 text-xs">
-                    <SelectValue placeholder="Select relationship type" />
+                  <SelectTrigger className="w-full h-8 text-xs bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors">
+                    <SelectValue placeholder="Select cardinality" />
                   </SelectTrigger>
                   <SelectContent>
-                    {relationshipTypes.map((relType) => (
-                      <SelectItem key={relType.type} value={relType.type}>
-                        {relType.type}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="one-to-one">One-to-One</SelectItem>
+                    <SelectItem value="one-to-many">One-to-Many</SelectItem>
+                    <SelectItem value="many-to-many">Many-to-Many</SelectItem>
                   </SelectContent>
                 </Select>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={editor.type}
-                  onChange={(e) => editor.handleTypeInputChange(e.target.value)}
-                  className="flex-1 h-8 text-xs"
-                  placeholder="Enter or edit relationship type"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={editor.handleRenameType}
-                  disabled={!editor.type.trim() || editor.type.trim() === relationship?.type || editor.typeRenamed}
-                  className="h-8 px-3 text-xs"
-                >
-                  <Pencil className="h-3 w-3 mr-1" />
-                  Rename
-                </Button>
               </div>
-              {editor.typeRenamed && (
-                <p className="text-xs text-muted-foreground">
-                  Type renamed successfully.
-                </p>
-              )}
+
+              {/* Connection Grid */}
+              <div className="grid grid-cols-1 gap-3 p-3 rounded-md bg-primary/[0.03] border border-primary/10 relative overflow-hidden">
+                 {/* Visual Line */}
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 w-0.5 h-8 bg-primary/10" />
+                
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-primary/40 tracking-wider mb-1.5 block flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50" /> From Node
+                  </label>
+                  <Select
+                    value={editor.from}
+                    onValueChange={editor.handleFromChange}
+                    open={editor.fromOpen}
+                    onOpenChange={editor.setFromOpen}
+                  >
+                    <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-primary/20">
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent className="p-0">
+                      <div className="p-2 border-b">
+                        <Input
+                          placeholder="Search nodes..."
+                          value={editor.fromSearch}
+                          onChange={(e) => editor.setFromSearch(e.target.value)}
+                          className="h-7 text-xs bg-muted/20 border-none focus-visible:ring-0"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              editor.setFromOpen(false)
+                            }
+                          }}
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {nodes
+                          .filter((node: Node) => {
+                            const searchLower = editor.fromSearch.toLowerCase()
+                            return (
+                              node.label.toLowerCase().includes(searchLower) ||
+                              node.type.toLowerCase().includes(searchLower) ||
+                              node.id.toLowerCase().includes(searchLower)
+                            )
+                          })
+                          .map((node: Node) => (
+                            <SelectItem key={node.id} value={node.id} className="text-xs">
+                              {node.label} ({node.type})
+                            </SelectItem>
+                          ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-primary/40 tracking-wider mb-1.5 block flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500/50" /> To Node
+                  </label>
+                  <Select
+                    value={editor.to}
+                    onValueChange={editor.handleToChange}
+                    open={editor.toOpen}
+                    onOpenChange={editor.setToOpen}
+                  >
+                    <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-primary/20">
+                      <SelectValue placeholder="Select target" />
+                    </SelectTrigger>
+                    <SelectContent className="p-0">
+                      <div className="p-2 border-b">
+                        <Input
+                          placeholder="Search nodes..."
+                          value={editor.toSearch}
+                          onChange={(e) => editor.setToSearch(e.target.value)}
+                          className="h-7 text-xs bg-muted/20 border-none focus-visible:ring-0"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              editor.setToOpen(false)
+                            }
+                          }}
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {nodes
+                          .filter((node: Node) => {
+                            const searchLower = editor.toSearch.toLowerCase()
+                            return (
+                              node.label.toLowerCase().includes(searchLower) ||
+                              node.type.toLowerCase().includes(searchLower) ||
+                              node.id.toLowerCase().includes(searchLower)
+                            )
+                          })
+                          .map((node: Node) => (
+                            <SelectItem key={node.id} value={node.id} className="text-xs">
+                              {node.label} ({node.type})
+                            </SelectItem>
+                          ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">From Node</label>
-            <Select
-              value={editor.from}
-              onValueChange={editor.handleFromChange}
-              open={editor.fromOpen}
-              onOpenChange={editor.setFromOpen}
-            >
-              <SelectTrigger className="w-full h-8 text-xs">
-                <SelectValue placeholder="Select source node" />
-              </SelectTrigger>
-              <SelectContent className="p-0">
-                <div className="p-2 border-b">
-                  <Input
-                    placeholder="Search nodes..."
-                    value={editor.fromSearch}
-                    onChange={(e) => editor.setFromSearch(e.target.value)}
-                    className="h-7 text-xs"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        editor.setFromOpen(false)
-                      }
-                    }}
-                    autoFocus
-                  />
-                </div>
-                <div className="max-h-[200px] overflow-y-auto">
-                  {nodes
-                    .filter((node: Node) => {
-                      const searchLower = editor.fromSearch.toLowerCase()
-                      return (
-                        node.label.toLowerCase().includes(searchLower) ||
-                        node.type.toLowerCase().includes(searchLower) ||
-                        node.id.toLowerCase().includes(searchLower)
-                      )
-                    })
-                    .map((node: Node) => (
-                      <SelectItem key={node.id} value={node.id} className="text-xs">
-                        {node.label} ({node.type})
-                      </SelectItem>
-                    ))}
-                  {nodes.filter((node: Node) => {
-                    const searchLower = editor.fromSearch.toLowerCase()
-                    return (
-                      node.label.toLowerCase().includes(searchLower) ||
-                      node.type.toLowerCase().includes(searchLower) ||
-                      node.id.toLowerCase().includes(searchLower)
-                    )
-                  }).length === 0 && (
-                      <div className="p-2 text-xs text-muted-foreground text-center">
-                        No nodes found
-                      </div>
-                    )}
-                </div>
-              </SelectContent>
-            </Select>
-            {fromNode && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {fromNode.label} → {toNode?.label || '...'}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">To Node</label>
-            <Select
-              value={editor.to}
-              onValueChange={editor.handleToChange}
-              open={editor.toOpen}
-              onOpenChange={editor.setToOpen}
-            >
-              <SelectTrigger className="w-full h-8 text-xs">
-                <SelectValue placeholder="Select target node" />
-              </SelectTrigger>
-              <SelectContent className="p-0">
-                <div className="p-2 border-b">
-                  <Input
-                    placeholder="Search nodes..."
-                    value={editor.toSearch}
-                    onChange={(e) => editor.setToSearch(e.target.value)}
-                    className="h-7 text-xs"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        editor.setToOpen(false)
-                      }
-                    }}
-                    autoFocus
-                  />
-                </div>
-                <div className="max-h-[200px] overflow-y-auto">
-                  {nodes
-                    .filter((node: Node) => {
-                      const searchLower = editor.toSearch.toLowerCase()
-                      return (
-                        node.label.toLowerCase().includes(searchLower) ||
-                        node.type.toLowerCase().includes(searchLower) ||
-                        node.id.toLowerCase().includes(searchLower)
-                      )
-                    })
-                    .map((node: Node) => (
-                      <SelectItem key={node.id} value={node.id} className="text-xs">
-                        {node.label} ({node.type})
-                      </SelectItem>
-                    ))}
-                  {nodes.filter((node: Node) => {
-                    const searchLower = editor.toSearch.toLowerCase()
-                    return (
-                      node.label.toLowerCase().includes(searchLower) ||
-                      node.type.toLowerCase().includes(searchLower) ||
-                      node.id.toLowerCase().includes(searchLower)
-                    )
-                  }).length === 0 && (
-                      <div className="p-2 text-xs text-muted-foreground text-center">
-                        No nodes found
-                      </div>
-                    )}
-                </div>
-              </SelectContent>
-            </Select>
-            {toNode && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {fromNode?.label || '...'} → {toNode.label}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">Cardinality</label>
-            <Select
-              value={editor.cardinality || 'none'}
-              onValueChange={editor.handleCardinalityChange}
-            >
-              <SelectTrigger className="w-full h-8 text-xs">
-                <SelectValue placeholder="Select cardinality" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="one-to-one">One-to-One</SelectItem>
-                <SelectItem value="one-to-many">One-to-Many</SelectItem>
-                <SelectItem value="many-to-many">Many-to-Many</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          </CollapsibleSection>
 
           {/* Semantic Enrichment */}
           {isSemanticEnabled && (
-            <div className="border-t pt-4 mt-4">
-              <label className="text-xs font-medium mb-2 block">Semantic Enrichment</label>
-              <div className="space-y-3">
+            <CollapsibleSection 
+              title="Semantic Enrichment" 
+              defaultOpen={!!(relationship.data as any)?.semantic?.propertyIri}
+              icon={Fingerprint}
+              className="border-t pt-4 mt-4"
+            >
+              <div className="space-y-4 pt-2">
                 {(selectedOntologyId || (relationship.data as any)?.semantic?.ontologyId) ? (
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Property</label>
+                    <label className="text-[10px] uppercase font-bold text-primary/50 tracking-wider mb-1.5 block text-left">
+                      Semantic Property
+                    </label>
                     <SemanticPropertySelect
                       ontologyId={selectedOntologyId || (relationship.data as any).semantic?.ontologyId}
                       value={(relationship.data as any)?.semantic?.propertyIri}
@@ -329,21 +332,30 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
                           }
                         })
                       }}
-                      className="h-8"
+                      className="h-8 bg-primary/5 border-primary/20"
                     />
                     {(relationship.data as any)?.semantic?.propertyLabel && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {(relationship.data as any).semantic.propertyCurie && (
-                          <span className="font-mono text-blue-600">{(relationship.data as any).semantic.propertyCurie}</span>
-                        )}
-                      </p>
+                      <div className="mt-2 p-2 rounded bg-primary/5 border border-primary/10 flex items-center justify-between">
+                         <span className="text-[10px] font-medium text-primary/80 truncate max-w-[150px]">
+                           {(relationship.data as any).semantic.propertyLabel}
+                         </span>
+                         {(relationship.data as any).semantic.propertyCurie && (
+                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm bg-blue-100/80 text-blue-700 border border-blue-200/50">
+                             {(relationship.data as any).semantic.propertyCurie}
+                           </span>
+                         )}
+                      </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Select an ontology in the toolbar to add semantic data.</p>
+                  <div className="p-3 rounded-md border border-primary/20 border-dashed bg-primary/5 text-center">
+                    <p className="text-[11px] text-primary/60">
+                      Select an ontology in the toolbar to enable semantic mapping for this relationship.
+                    </p>
+                  </div>
                 )}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
         </div>
       </div>
@@ -358,37 +370,45 @@ export function RelationshipEditor({ className, onClose }: RelationshipEditorPro
           }
         }}
       >
-        <DialogContent className="max-w-2xl w-[90vw] sm:w-full">
+        <DialogContent className="max-w-md bg-background/95 backdrop-blur-2xl border-primary/20">
           <DialogHeader>
-            <DialogTitle>Update Relationship Type</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1 rounded bg-amber-100 text-amber-600">
+                <ArrowRightLeft className="h-4 w-4" />
+              </div>
+              Update Relationship Type
+            </DialogTitle>
+            <DialogDescription className="text-xs pt-2">
               There {relationships.filter((rel: Relationship) => rel.type === relationship?.type && rel.id !== relationship?.id).length === 1 ? 'is' : 'are'}{' '}
-              {relationships.filter((rel: Relationship) => rel.type === relationship?.type && rel.id !== relationship?.id).length}{' '}
-              other relationship{relationships.filter((rel: Relationship) => rel.type === relationship?.type && rel.id !== relationship?.id).length !== 1 ? 's' : ''} with type &quot;{relationship?.type}&quot;.
+              <span className="font-bold text-primary">
+                {relationships.filter((rel: Relationship) => rel.type === relationship?.type && rel.id !== relationship?.id).length}
+              </span>{' '}
+              other relationship{relationships.filter((rel: Relationship) => rel.type === relationship?.type && rel.id !== relationship?.id).length !== 1 ? 's' : ''} with type &quot;<span className="italic">{relationship?.type}</span>&quot;.
+              <br/><br/>
               How would you like to proceed?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4 text-xs">
             <Button
               type="button"
               variant="outline"
               onClick={editor.handleCloseBulkUpdateDialog}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-8 text-[11px]"
             >
               Cancel
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={() => editor.handleBulkUpdate(false)}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-8 text-[11px] bg-primary/5 hover:bg-primary/10 border-primary/10"
             >
-              Update This One Only
+              Update This Only
             </Button>
             <Button
               type="button"
               onClick={() => editor.handleBulkUpdate(true)}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-8 text-[11px]"
             >
               Update All ({relationships.filter((rel: Relationship) => rel.type === relationship?.type).length})
             </Button>

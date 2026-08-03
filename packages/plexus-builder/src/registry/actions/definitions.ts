@@ -199,6 +199,7 @@ registerAction({
       name: 'targetMode', 
       label: 'Target Mode', 
       type: 'select',
+      group: 'Target Settings',
       options: [
         { label: 'Current Context Node', value: 'current' },
         { label: 'Lookup Target by Criteria', value: 'lookup' }
@@ -209,6 +210,7 @@ registerAction({
       name: 'targetLabel', 
       label: 'Lookup Target Label', 
       type: 'text', 
+      group: 'Lookup Criteria',
       dependsOn: 'targetMode', 
       dependsOnValue: 'lookup',
       placeholder: 'e.g. Person, Place'
@@ -217,6 +219,7 @@ registerAction({
       name: 'lookupProperty', 
       label: 'Lookup Property Key', 
       type: 'text', 
+      group: 'Lookup Criteria',
       dependsOn: 'targetMode', 
       dependsOnValue: 'lookup',
       placeholder: 'e.g. id, uri'
@@ -225,11 +228,12 @@ registerAction({
       name: 'lookupValue', 
       label: 'Lookup Property Value', 
       type: 'template', 
+      group: 'Lookup Criteria',
       dependsOn: 'targetMode', 
       dependsOnValue: 'lookup',
       placeholder: 'e.g. @id or {{ $json.id }}' 
     },
-    { name: 'properties', label: 'Properties to Update', type: 'properties' }
+    { name: 'properties', label: 'Properties to Update', type: 'properties', group: 'Update Payload' }
   ],
   defaultConfig: { targetMode: 'current', properties: [], targetLabel: '', lookupProperty: '', lookupValue: '' }
 }),
@@ -465,11 +469,11 @@ registerAction({
   },
   executor: executeCopyPropertyAction,
   configSchema: [
-    { name: 'sep1', label: 'SOURCE (From)', type: 'separator' },
     { 
       name: 'sourceAlias', 
-      label: 'Source Node Mode', 
+      label: 'Node Mode', 
       type: 'select',
+      group: 'Source Definition',
       options: [
         { label: 'Current Context Node', value: 'current' },
         { label: 'Parent Node', value: 'parent' },
@@ -477,16 +481,16 @@ registerAction({
       ],
       defaultValue: 'current'
     },
-    { name: 'sourceLabel', label: 'Lookup Source Label', type: 'text', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
-    { name: 'sourceLookupProperty', label: 'Lookup Source Property Key', type: 'text', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
-    { name: 'sourceLookupValue', label: 'Lookup Source Property Value', type: 'template', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
-    { name: 'sourceProperty', label: 'Source Property Key', type: 'text' },
+    { name: 'sourceLabel', label: 'Lookup Label', type: 'text', group: 'Source Definition', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
+    { name: 'sourceLookupProperty', label: 'Lookup Property Key', type: 'text', group: 'Source Definition', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
+    { name: 'sourceLookupValue', label: 'Lookup Property Value', type: 'template', group: 'Source Definition', dependsOn: 'sourceAlias', dependsOnValue: 'lookup' },
+    { name: 'sourceProperty', label: 'Property Key', type: 'text', group: 'Source Definition' },
     
-    { name: 'sep2', label: 'TARGET (To)', type: 'separator' },
     { 
       name: 'targetMode', 
-      label: 'Target Node Mode', 
+      label: 'Node Mode', 
       type: 'select',
+      group: 'Target Definition',
       options: [
         { label: 'Current Context Node', value: 'current' },
         { label: 'Parent Node', value: 'parent' },
@@ -494,10 +498,10 @@ registerAction({
       ],
       defaultValue: 'current'
     },
-    { name: 'targetLabel', label: 'Lookup Target Label', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
-    { name: 'lookupProperty', label: 'Lookup Target Property Key', type: 'text', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
-    { name: 'lookupValue', label: 'Lookup Target Property Value', type: 'template', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
-    { name: 'targetProperty', label: 'Target Property Key', type: 'text' }
+    { name: 'targetLabel', label: 'Lookup Label', type: 'text', group: 'Target Definition', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupProperty', label: 'Lookup Property Key', type: 'text', group: 'Target Definition', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'lookupValue', label: 'Lookup Property Value', type: 'template', group: 'Target Definition', dependsOn: 'targetMode', dependsOnValue: 'lookup' },
+    { name: 'targetProperty', label: 'Property Key', type: 'text', group: 'Target Definition' }
   ],
   defaultConfig: { sourceAlias: 'current', targetMode: 'current', sourceProperty: '', targetProperty: '' }
 }),
@@ -844,16 +848,25 @@ registerAction({
       name: 'nodeLabel', 
       label: 'Node Label', 
       type: 'template',
+      group: 'Node Identity',
       placeholder: 'e.g. Person, Place or {{ $json.type }}'
     },
-    { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms' },
-    { name: 'inheritProperties', label: 'Inherit all XML Attributes', type: 'boolean', defaultValue: true, description: 'Automatically add all XML attributes of this element to the graph node properties' },
-    { name: 'properties', label: 'Properties Mapping', type: 'mappings' },
-    { name: 'separator_rel', label: 'Relationship Settings', type: 'separator' },
+    { name: 'labelTransforms', label: 'Label Transformations', type: 'transforms', group: 'Node Identity' },
+    { 
+      name: 'inheritProperties', 
+      label: 'Inherit all XML Attributes', 
+      type: 'boolean', 
+      group: 'Data Persistence',
+      defaultValue: true, 
+      description: 'Automatically add all XML attributes of this element to the graph node properties' 
+    },
+    { name: 'properties', label: 'Properties Mapping', type: 'mappings', group: 'Data Persistence' },
+    
     { 
       name: 'relationshipType', 
       label: 'Relationship Type', 
       type: 'text', 
+      group: 'Graph Relationship',
       defaultValue: 'contains',
       placeholder: 'e.g. contains, refersTo, hasAttribute' 
     },
@@ -861,6 +874,7 @@ registerAction({
       name: 'relationshipMode', 
       label: 'Relationship Mode', 
       type: 'select',
+      group: 'Graph Relationship',
       options: [
         { label: 'Connect to Parent (Direct)', value: 'connected' },
         { label: 'Lookup Target (Deferred)', value: 'deferred' },
@@ -872,6 +886,7 @@ registerAction({
       name: 'targetNodeLabel', 
       label: 'Target Node Label', 
       type: 'text', 
+      group: 'Graph Relationship',
       dependsOn: 'relationshipMode', 
       dependsOnValue: 'deferred',
       placeholder: 'Label of the node to find' 
@@ -880,6 +895,7 @@ registerAction({
       name: 'lookupProperty', 
       label: 'Lookup Property Key', 
       type: 'text', 
+      group: 'Graph Relationship',
       dependsOn: 'relationshipMode', 
       dependsOnValue: 'deferred',
       placeholder: 'e.g. id, uri, name' 
@@ -888,6 +904,7 @@ registerAction({
       name: 'lookupValue', 
       label: 'Lookup Property Value', 
       type: 'template', 
+      group: 'Graph Relationship',
       dependsOn: 'relationshipMode', 
       dependsOnValue: 'deferred',
       placeholder: 'e.g. @id or {{ $json.target }}' 
@@ -896,6 +913,7 @@ registerAction({
       name: 'relationshipDirection', 
       label: 'Relationship Direction', 
       type: 'select',
+      group: 'Graph Relationship',
       options: [
         { label: 'Out: Created → Target (Parent/Lookup)', value: 'outgoing' },
         { label: 'In: Target (Parent/Lookup) → Created', value: 'incoming' }

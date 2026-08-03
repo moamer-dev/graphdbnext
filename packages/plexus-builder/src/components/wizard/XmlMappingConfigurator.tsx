@@ -236,7 +236,6 @@ export function XmlMappingConfigurator({
           <Settings className="h-4 w-4" />
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold leading-tight">Mapping</h3>
               {addingItems.size > 0 && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />

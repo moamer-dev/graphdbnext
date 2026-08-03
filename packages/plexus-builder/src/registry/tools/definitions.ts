@@ -98,6 +98,7 @@ registerTool({
       name: 'method', 
       label: 'Method', 
       type: 'select', 
+      group: 'Request Configuration',
       options: [
         { label: 'GET', value: 'GET' },
         { label: 'POST', value: 'POST' },
@@ -107,12 +108,13 @@ registerTool({
       ],
       defaultValue: 'GET'
     },
-    { name: 'url', label: 'URL', type: 'text', placeholder: 'https://api.example.com/data' },
-    { name: 'useCredential', label: 'Use Stored Credential', type: 'boolean', defaultValue: false },
+    { name: 'url', label: 'URL', type: 'text', group: 'Request Configuration', placeholder: 'https://api.example.com/data' },
+    { name: 'useCredential', label: 'Use Stored Credential', type: 'boolean', group: 'Authentication', defaultValue: false },
     { 
       name: 'credentialId', 
       label: 'Credential', 
       type: 'credential', 
+      group: 'Authentication',
       dependsOn: 'useCredential', 
       dependsOnValue: true,
       description: 'Select a stored credential for automated authentication'
@@ -121,6 +123,7 @@ registerTool({
       name: 'authType', 
       label: 'Manual Auth Type', 
       type: 'select', 
+      group: 'Authentication',
       dependsOn: 'useCredential',
       dependsOnValue: false,
       options: [
@@ -132,19 +135,20 @@ registerTool({
       defaultValue: 'none'
     },
     // Manual Auth Fields
-    { name: 'bearerToken', label: 'Token', type: 'text', dependsOn: 'authType', dependsOnValue: 'bearer' },
-    { name: 'basicUsername', label: 'Username', type: 'text', dependsOn: 'authType', dependsOnValue: 'basic' },
-    { name: 'basicPassword', label: 'Password', type: 'text', dependsOn: 'authType', dependsOnValue: 'basic' },
-    { name: 'apiKey', label: 'API Key', type: 'text', dependsOn: 'authType', dependsOnValue: 'apiKey' },
-    { name: 'apiKeyHeader', label: 'Header Name', type: 'text', dependsOn: 'authType', dependsOnValue: 'apiKey', placeholder: 'X-API-Key' },
+    { name: 'bearerToken', label: 'Token', type: 'text', group: 'Authentication', dependsOn: 'authType', dependsOnValue: 'bearer' },
+    { name: 'basicUsername', label: 'Username', type: 'text', group: 'Authentication', dependsOn: 'authType', dependsOnValue: 'basic' },
+    { name: 'basicPassword', label: 'Password', type: 'text', group: 'Authentication', dependsOn: 'authType', dependsOnValue: 'basic' },
+    { name: 'apiKey', label: 'API Key', type: 'text', group: 'Authentication', dependsOn: 'authType', dependsOnValue: 'apiKey' },
+    { name: 'apiKeyHeader', label: 'Header Name', type: 'text', group: 'Authentication', dependsOn: 'authType', dependsOnValue: 'apiKey', placeholder: 'X-API-Key' },
     
-    { name: 'queryParams', label: 'Query Parameters', type: 'properties' },
-    { name: 'headers', label: 'Custom Headers', type: 'properties' },
+    { name: 'queryParams', label: 'Query Parameters', type: 'properties', group: 'Payload & Parameters' },
+    { name: 'headers', label: 'Custom Headers', type: 'properties', group: 'Payload & Parameters' },
     
     { 
       name: 'bodyType', 
       label: 'Body Type', 
       type: 'select', 
+      group: 'Payload & Parameters',
       options: [
         { label: 'JSON', value: 'json' },
         { label: 'Text', value: 'text' },
@@ -159,11 +163,12 @@ registerTool({
       name: 'body', 
       label: 'Request Body', 
       type: 'textarea', 
+      group: 'Payload & Parameters',
       dependsOn: 'method',
       dependsOnValue: ['POST', 'PUT', 'PATCH'],
       placeholder: '{"key": "value"}'
     },
-    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 }
+    { name: 'timeout', label: 'Timeout (ms)', type: 'number', group: 'Request Configuration', defaultValue: 10000 }
   ],
   defaultConfig: { method: 'GET', url: '', useCredential: false, authType: 'none', headers: [], queryParams: [], outputAlias: 'httpResponse', timeout: 10000 }
 })
@@ -188,6 +193,7 @@ registerTool({
       name: 'apiProvider', 
       label: 'API Provider', 
       type: 'select', 
+      group: 'Provider Settings',
       options: [
         { label: 'Wikidata', value: 'wikidata' },
         { label: 'GND (German Authority)', value: 'gnd' },
@@ -207,6 +213,7 @@ registerTool({
       name: 'credentialId', 
       label: 'Credential', 
       type: 'credential', 
+      group: 'Provider Settings',
       dependsOn: 'apiProvider', 
       dependsOnValue: ['orcid', 'geonames', 'europeana', 'getty'],
       description: 'Select credentials for authenticated access'
@@ -215,6 +222,7 @@ registerTool({
       name: 'apiKey', 
       label: 'API Key', 
       type: 'text', 
+      group: 'Provider Settings',
       dependsOn: 'apiProvider', 
       dependsOnValue: ['orcid', 'geonames', 'europeana', 'getty'],
       description: 'Optional API key for higher rate limits or private data'
@@ -223,6 +231,7 @@ registerTool({
       name: 'customEndpoint', 
       label: 'Custom Endpoint URL', 
       type: 'text', 
+      group: 'Provider Settings',
       dependsOn: 'apiProvider', 
       dependsOnValue: 'custom',
       placeholder: 'https://api.example.com/data/{id}',
@@ -232,6 +241,7 @@ registerTool({
       name: 'idSource', 
       label: 'ID Source', 
       type: 'select', 
+      group: 'Identifier Extraction',
       options: [
         { label: 'XML Attribute', value: 'attribute' },
         { label: 'Text Content', value: 'textContent' },
@@ -239,9 +249,9 @@ registerTool({
       ],
       defaultValue: 'attribute'
     },
-    { name: 'idAttribute', label: 'Attribute Name', type: 'text', dependsOn: 'idSource', dependsOnValue: 'attribute', placeholder: 'e.g. wiki:id' },
-    { name: 'idXpath', label: 'XPath Expression', type: 'text', dependsOn: 'idSource', dependsOnValue: 'xpath', placeholder: 'e.g. ./@id' },
-    { name: 'timeout', label: 'Timeout (ms)', type: 'number', defaultValue: 10000 }
+    { name: 'idAttribute', label: 'Attribute Name', type: 'text', group: 'Identifier Extraction', dependsOn: 'idSource', dependsOnValue: 'attribute', placeholder: 'e.g. wiki:id' },
+    { name: 'idXpath', label: 'XPath Expression', type: 'text', group: 'Identifier Extraction', dependsOn: 'idSource', dependsOnValue: 'xpath', placeholder: 'e.g. ./@id' },
+    { name: 'timeout', label: 'Timeout (ms)', type: 'number', group: 'Provider Settings', defaultValue: 10000 }
   ],
   defaultConfig: { 
     apiProvider: 'wikidata', 

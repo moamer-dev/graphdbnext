@@ -217,7 +217,7 @@ export function ToolTestExecution({
                 </Popover>
               ) : (
                 <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-2 rounded border border-dashed">
-                  No real instances found for &quot;{attachedNode.label}&quot; in the uploaded file. Synthetic data will be used.
+                  You might not yet have uploaded any files or there are no instances of &quot;{attachedNode.label}&quot; in the uploaded file.
                 </div>
               )}
             </div>

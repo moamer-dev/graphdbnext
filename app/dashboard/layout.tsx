@@ -167,6 +167,8 @@ export default function DashboardLayout({
                 pathname === '/dashboard/graph/builder' || 
                 pathname === '/dashboard/graph/model/new' || 
                 pathname === '/dashboard/graph/model/new/from-xml' || 
+                pathname?.includes('/dashboard/graph/model/') || 
+                pathname === '/dashboard/workspaces/hub' ||
                 pathname?.includes('/edit') ? '' : 'max-w-7xl')}>
                 {children}
               </div>

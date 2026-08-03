@@ -31,6 +31,9 @@ export class WorkspaceResource {
     workspaceScoped: false
   }
 
+  static readonly VIEW_MODE: 'page' | 'modal' = 'page'
+  static readonly EDIT_MODE: 'page' | 'modal' = 'modal'
+
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,

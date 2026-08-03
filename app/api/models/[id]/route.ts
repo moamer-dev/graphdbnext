@@ -5,8 +5,8 @@ import { ModelService } from '@/services/ModelService'
 import { z } from 'zod'
 
 const UpdateModelSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().optional(),
+  name: z.string().min(0).optional(),
+  description: z.string().optional().nullable(),
   isActive: z.boolean().optional(),
   schemaJson: z.any().optional().nullable(),
   schemaMd: z.string().optional().nullable(),

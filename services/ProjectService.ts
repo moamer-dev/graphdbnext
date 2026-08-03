@@ -87,7 +87,18 @@ class ProjectServiceClass extends BaseRepository<
             workspace: true
           }
         },
-        team: true
+        team: {
+          include: {
+            members: {
+              include: {
+                user: { select: { id: true, name: true, email: true } }
+              }
+            },
+            invitations: {
+              where: { isActive: true }
+            }
+          }
+        }
       }
     })
     

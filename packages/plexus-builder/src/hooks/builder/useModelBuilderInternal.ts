@@ -117,6 +117,7 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const [sidebarWidth, setSidebarWidth] = useState(260)
   const [agentsPanelOpen, setAgentsPanelOpen] = useState(false)
   const [agentsPanelWidth, setAgentsPanelWidth] = useState(400)
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(320)
   const [xmlWrapWord, setXmlWrapWord] = useState(false)
   const [showToolbar, setShowToolbar] = useState(true)
   const [clearWorkflowDialogOpen, setClearWorkflowDialogOpen] = useState(false)
@@ -583,6 +584,8 @@ export function useModelBuilderInternal(props: any, ref: any) {
     setXmlPanelOpen,
     xmlPanelWidth,
     setXmlPanelWidth,
+    rightSidebarWidth,
+    setRightSidebarWidth,
     xmlWrapWord,
     setXmlWrapWord,
     saveXmlToWorkspaceDialogOpen,

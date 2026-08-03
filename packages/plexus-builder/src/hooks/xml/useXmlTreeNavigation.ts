@@ -24,7 +24,6 @@ export function useXmlTreeNavigation(analysis?: XmlStructureAnalysis) {
         return et.name.toLowerCase().includes(query) ||
                et.attributes.some(attr => attr.toLowerCase().includes(query))
       })
-      .sort((a, b) => a.name.localeCompare(b.name))
   }, [analysis, nodesSearchQuery])
 
   const toggleNodeSelection = useCallback((elementName: string) => {

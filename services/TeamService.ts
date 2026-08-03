@@ -85,7 +85,15 @@ class TeamServiceClass extends BaseRepository<
     const team = await this.findById(id, {
       include: { 
         creator: { select: { id: true, name: true, email: true } },
-        projects: true
+        projects: true,
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        },
+        invitations: {
+          where: { isActive: true }
+        }
       }
     })
     

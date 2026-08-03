@@ -9,9 +9,12 @@ import { ToolWebhookConfiguration } from './ToolConfigurationSidebar/ToolWebhook
 import { useRealXmlSample } from '../../hooks/xml/useRealXmlSample'
 import { SchemaForm } from '../shared/SchemaForm'
 import { CollapsibleSection } from '../shared/CollapsibleSection'
+import { Play } from 'lucide-react'
 import { useToolConfiguration } from '../../hooks/configuration/useToolConfiguration'
 import { useToolTestExecution } from '../../hooks/configuration/useToolTestExecution'
 import { useToolConditionBuilder } from '../../hooks/configuration/useToolConditionBuilder'
+import { cn } from '../../utils/cn'
+import type { Node as PlexusNode } from '../../types'
 
 export type ConditionType =
   | 'HasChildren'
@@ -55,6 +58,7 @@ interface ToolConfigurationSidebarProps {
   toolNodeId: string | null
   xmlContent?: string
   onClose: () => void
+  attachedNode?: PlexusNode | null
   className?: string
 }
 
@@ -151,94 +155,114 @@ export function ToolConfigurationSidebar({
   const switchCasesLength = (config.switchCases as any[])?.length || 0
 
   return (
-    <div className={`flex flex-col h-full bg-background border-l ${className || ''}`}>
+    <div className={cn("flex flex-col h-full bg-background border-l", className)}>
       <ToolConfigurationHeader
         toolLabel={toolLabel}
         toolNode={toolNode}
-        attachedNode={attachedNode}
+        attachedNode={attachedNode as any}
+        toolDefinition={toolDefinition || undefined}
         onToolLabelChange={setToolLabel}
         onUpdateToolNode={updateToolNode}
         onClose={onClose}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
         {/* Schema Form for basic tool properties */}
-        {toolDefinition && (
-          <CollapsibleSection title="General Configuration" defaultOpen>
-            <SchemaForm
-              schema={toolDefinition.configSchema}
-              config={config}
-              onChange={(name, value) => handleUpdateConfig({ [name]: value })}
-              getCredentialsByType={getCredentialsByType as any}
-              getCredential={getCredential as any}
-            />
+        {toolDefinition && toolDefinition.configSchema?.some(field => field.type !== 'separator') && (
+          <CollapsibleSection 
+            title={`${toolDefinition.metadata.label} Configuration`} 
+            defaultOpen={true}
+          >
+            <div className="pt-2">
+              <SchemaForm
+                schema={toolDefinition.configSchema}
+                config={config}
+                onChange={(name, value) => handleUpdateConfig({ [name]: value })}
+                getCredentialsByType={getCredentialsByType as any}
+                getCredential={getCredential as any}
+              />
+            </div>
           </CollapsibleSection>
         )}
 
         {/* Specialized Tool Configurations */}
         {toolNode.type === 'tool:if' && (
-          <ToolConditionBuilder 
-            conditionBuilder={conditionBuilder}
-            xmlParent={selectedInstanceData?.parent?.tagName}
-            xmlAncestors={selectedInstanceData?.ancestors}
-            xmlChildren={selectedInstanceData?.children.map(c => ({ name: c.tagName, count: 1 }))}
-            xmlDescendants={selectedInstanceData?.descendants}
-          />
+          <CollapsibleSection title="Condition Rules" defaultOpen={true}>
+            <div className="pt-2">
+              <ToolConditionBuilder 
+                conditionBuilder={conditionBuilder}
+                xmlParent={selectedInstanceData?.parent?.tagName}
+                xmlAncestors={selectedInstanceData?.ancestors}
+                xmlChildren={selectedInstanceData?.children.map(c => ({ name: c.tagName, count: 1 }))}
+                xmlDescendants={selectedInstanceData?.descendants}
+              />
+            </div>
+          </CollapsibleSection>
         )}
 
         {toolNode.type === 'tool:switch' && (
-          <ToolSwitchConfiguration 
-            toolNodeId={toolNodeId}
-            toolNode={toolNode}
-            attachedNode={attachedNode}
-            switchSource={(config.switchSource as SwitchSource) || 'attribute'}
-            switchAttributeName={(config.switchAttributeName as string) || ''}
-            switchCases={(config.switchCases as SwitchCase[]) || []}
-            switchCaseInputs={(config.switchCaseInputs as Record<string, string>) || {}}
-            onSwitchSourceChange={(source) => handleUpdateConfig({ switchSource: source })}
-            onSwitchAttributeNameChange={(name) => handleUpdateConfig({ switchAttributeName: name })}
-            onSwitchCasesChange={(cases) => handleUpdateConfig({ switchCases: cases })}
-            onSwitchCaseInputsChange={(inputs) => handleUpdateConfig({ switchCaseInputs: inputs })}
-            onUpdateToolNode={updateToolNode}
-          />
+          <div className="p-3 rounded-md bg-primary/[0.02] border border-primary/10">
+            <ToolSwitchConfiguration 
+              toolNodeId={toolNodeId}
+              toolNode={toolNode}
+              attachedNode={attachedNode as any}
+              switchSource={(config.switchSource as SwitchSource) || 'attribute'}
+              switchAttributeName={(config.switchAttributeName as string) || ''}
+              switchCases={(config.switchCases as SwitchCase[]) || []}
+              switchCaseInputs={(config.switchCaseInputs as Record<string, string>) || {}}
+              onSwitchSourceChange={(source) => handleUpdateConfig({ switchSource: source })}
+              onSwitchAttributeNameChange={(name) => handleUpdateConfig({ switchAttributeName: name })}
+              onSwitchCasesChange={(cases) => handleUpdateConfig({ switchCases: cases })}
+              onSwitchCaseInputsChange={(inputs) => handleUpdateConfig({ switchCaseInputs: inputs })}
+              onUpdateToolNode={updateToolNode}
+            />
+          </div>
         )}
 
         {toolNode.type === 'tool:webhook' && (
-          <ToolWebhookConfiguration
-            toolNodeId={toolNodeId}
-            toolNode={toolNode}
-            onUpdateToolNode={updateToolNode}
-          />
+          <CollapsibleSection title="Webhook Delivery" defaultOpen={true}>
+            <div className="pt-2">
+              <ToolWebhookConfiguration
+                toolNodeId={toolNodeId}
+                toolNode={toolNode}
+                onUpdateToolNode={updateToolNode}
+              />
+            </div>
+          </CollapsibleSection>
         )}
 
         {/* Test Execution Section */}
         {(toolNode.type === 'tool:if' || 
           toolNode.type === 'tool:switch' ||
           isApiTool) && (
-          <ToolTestExecution
-            toolNode={toolNode}
-            toolNodeType={toolNode.type}
-            testResult={testResult}
-            isExecuting={isExecuting}
-            testIdInput={testIdInput}
-            onTestIdInputChange={setTestIdInput}
-            onExecuteTest={handleExecuteTest}
-            executedApiResponse={executedApiResponse}
-            apiResponseModalOpen={apiResponseModalOpen}
-            onApiResponseModalOpenChange={setApiResponseModalOpen}
-            responseHistory={responseHistory}
-            onResponseHistoryChange={setResponseHistory}
-            showApiResponse={isApiTool}
-            showTestIdInput={showTestIdInput}
-            conditionGroupsLength={conditionGroupsLength}
-            switchCasesLength={switchCasesLength}
-            attachedNode={attachedNode}
-            realInstances={instances}
-            selectedInstanceIndex={selectedInstanceIndex}
-            onInstanceSelect={setInstanceIndex}
-            loadingRealData={loadingRealData}
-            onUpdateToolNode={updateToolNode}
-          />
+          <CollapsibleSection title="Execution & Testing" defaultOpen={false} icon={Play}>
+            <div className="pt-2">
+              <ToolTestExecution
+                toolNode={toolNode}
+                toolNodeType={toolNode.type}
+                testResult={testResult}
+                isExecuting={isExecuting}
+                testIdInput={testIdInput}
+                onTestIdInputChange={setTestIdInput}
+                onExecuteTest={handleExecuteTest}
+                executedApiResponse={executedApiResponse}
+                apiResponseModalOpen={apiResponseModalOpen}
+                onApiResponseModalOpenChange={setApiResponseModalOpen}
+                responseHistory={responseHistory}
+                onResponseHistoryChange={setResponseHistory}
+                showApiResponse={isApiTool}
+                showTestIdInput={showTestIdInput}
+                conditionGroupsLength={conditionGroupsLength}
+                switchCasesLength={switchCasesLength}
+                attachedNode={attachedNode as any}
+                realInstances={instances}
+                selectedInstanceIndex={selectedInstanceIndex}
+                onInstanceSelect={setInstanceIndex}
+                loadingRealData={loadingRealData}
+                onUpdateToolNode={updateToolNode}
+              />
+            </div>
+          </CollapsibleSection>
         )}
       </div>
     </div>

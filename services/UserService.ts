@@ -34,8 +34,22 @@ class UserServiceClass extends BaseRepository<
       filters = {}
     } = params
 
+    const { scope, mine, role, isActive, ...restFilters } = filters
+
     const whereClause: Prisma.UserWhereInput = {
-      ...filters,
+      ...restFilters,
+      ...(isActive !== undefined && {
+        isActive: typeof isActive === 'string' ? isActive === 'true' : Boolean(isActive)
+      }),
+      ...(role && {
+        globalRoles: {
+          some: {
+            role: {
+              name: { equals: role, mode: 'insensitive' }
+            }
+          }
+        }
+      }),
       ...(query && {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },

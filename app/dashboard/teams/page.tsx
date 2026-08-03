@@ -1,67 +1,38 @@
 'use client'
 
-import React from 'react'
 import { DataTable } from '@/components/data-table/DataTable'
-import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { useResourcePage } from '@/hooks/view/useResourcePage'
 import { resourceHooks } from '@/hooks/react-query'
 import { TeamResource } from '@/resources/TeamResource'
-import { Building2, Plus } from 'lucide-react'
+import { Building2, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CreateTeamDialog } from '@/components/dashboard/CreateModals'
 import { EditTeamDialog } from '@/components/dashboard/EditModals'
 import { ViewTeamDialog } from '@/components/dashboard/ViewModals'
-import { useRBAC } from '@/hooks/useRBAC'
-import { useUIStore } from '@/stores/uiStore'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
 import { DataGrid } from '@/components/data-table/DataGrid'
 import { ResourceCard } from '@/components/dashboard/ResourceCard'
 import { ScopeSwitcher } from '@/components/data-table/ScopeSwitcher'
 
 export default function TeamsPage() {
-  const { can } = useRBAC()
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false)
-  const [editingId, setEditingId] = React.useState<string | null>(null)
-  const [viewingId, setViewingId] = React.useState<string | null>(null)
-  
-  const { dashboardView: currentView, resourceScope } = useUIStore()
-
   const { 
-    config, 
-    data, 
-    total, 
-    loading,
-    page,
-    pageSize,
-    sortBy,
-    sortOrder,
-    filters,
-    onPageChange,
-    onPageSizeChange,
-    onSortChange,
-    onFiltersChange
-  } = useResourceTable({
+    config, data, total, loading, page, pageSize, sortBy, sortOrder, filters, onPageChange, onPageSizeChange, onSortChange, onFiltersChange,
+    status, isCreateOpen, setIsCreateOpen, editingId, setEditingId, viewingId, setViewingId, 
+    handleView, getGridActions, currentView, can
+  } = useResourcePage({
     resource: TeamResource,
     useList: resourceHooks.teams.useList,
     useDelete: resourceHooks.teams.useDelete,
-    useBulkDelete: resourceHooks.teams.useBulkDelete,
-    isAdmin: true, // Allow management
-    scope: resourceScope,
-    onView: (id: string) => setViewingId(id),
-    onEdit: (id: string) => setEditingId(id)
+    useBulkDelete: resourceHooks.teams.useBulkDelete
   })
 
-  const gridActions = (item: any) => [
-    { label: 'View', icon: Eye, action: () => setViewingId(item.id), permission: { action: 'READ' as const } },
-    { label: 'Edit', icon: Pencil, action: () => setEditingId(item.id), permission: { action: 'UPDATE' as const } },
-    { 
-      label: 'Delete', 
-      icon: Trash2, 
-      variant: 'destructive' as const,
-      action: () => config.rowActions?.find(a => a.label === 'Delete')?.action(item),
-      permission: { action: 'DELETE' as const }
-    }
-  ]
+  if (status === 'loading') {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 mt-4">
@@ -146,8 +117,8 @@ export default function TeamsPage() {
                 creator={item.creator?.name}
                 isSelected={isSelected}
                 onSelect={onSelect}
-                onClick={() => setViewingId(item.id)}
-                actions={gridActions(item)}
+                onClick={() => handleView(item.id)}
+                actions={getGridActions(item)}
               />
             )}
           />

@@ -34,6 +34,7 @@ export interface ConfigField {
   // Conditional rendering
   dependsOn?: string
   dependsOnValue?: any | any[]
+  group?: string // Optional grouping for UI rendering
 }
 
 export interface ItemMetadata {

@@ -127,6 +127,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     setXmlPanelOpen,
     xmlPanelWidth,
     setXmlPanelWidth,
+    rightSidebarWidth,
+    setRightSidebarWidth,
     xmlWrapWord,
     showToolbar,
     setShowToolbar,
@@ -301,12 +303,19 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         )}
 
         {ui.sidebarOpen && (
-          <div className="w-80 border-l bg-muted/10">
+          <ResizablePanel 
+            side="right" 
+            defaultWidth={rightSidebarWidth} 
+            minWidth={280} 
+            maxWidth={600} 
+            onWidthChange={setRightSidebarWidth}
+            className="h-full border-l bg-muted/10 shrink-0"
+          >
             {selectedRelationship ? <RelationshipEditor className="h-full" onClose={() => ui.setSidebarOpen(false)} /> :
-             selectedToolNodeId ? <ToolConfigurationSidebar toolNodeId={selectedToolNodeId} xmlContent={xmlContent} onClose={() => useToolCanvasStore.getState().selectNode(null)} className="h-full" /> :
-             selectedActionNodeId ? <ActionConfigurationSidebar actionNodeId={selectedActionNodeId} xmlContent={xmlContent} onClose={() => useActionCanvasStore.getState().selectNode(null)} className="h-full" /> :
+             selectedToolNodeId ? <ToolConfigurationSidebar toolNodeId={selectedToolNodeId} xmlContent={xmlContent} onClose={() => { useToolCanvasStore.getState().selectNode(null); ui.setSidebarOpen(false); }} className="h-full" /> :
+             selectedActionNodeId ? <ActionConfigurationSidebar actionNodeId={selectedActionNodeId} xmlContent={xmlContent} onClose={() => { useActionCanvasStore.getState().selectNode(null); ui.setSidebarOpen(false); }} className="h-full" /> :
              <NodeEditor className="h-full" onFocusNode={(id) => ui.focusNodeFnRef.current?.(id)} onClose={() => ui.setSidebarOpen(false)} />}
-          </div>
+          </ResizablePanel>
         )}
       </div>
 
@@ -330,6 +339,7 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         xmlFile={ui.xmlFile} setXmlFile={ui.setXmlFile} xmlFileFromWizard={null}
         running={ui.running} graphPreview={ui.graphPreview}
         onRunWorkflow={handleRunWorkflow} onPushToDB={onPushToDB}
+        xmlContent={xmlContent}
         schemaDesignDialogOpen={schemaDesignDialogOpen} setSchemaDesignDialogOpen={setSchemaDesignDialogOpen} schemaDesignMode={schemaDesignMode}
         workflowGenerationDialogOpen={workflowGenerationDialogOpen} setWorkflowGenerationDialogOpen={setWorkflowGenerationDialogOpen}
         credentialsDialogOpen={ui.credentialsDialogOpen} setCredentialsDialogOpen={ui.setCredentialsDialogOpen}

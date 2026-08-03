@@ -107,9 +107,9 @@ export const ExplorerSidebar = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-muted/20">
+    <div className="flex flex-col h-full bg-muted/10 backdrop-blur-sm rounded-xl border border-border/20 overflow-hidden shadow-sm m-3">
       {/* HEADER SECTION */}
-      <div className="p-4 space-y-4 border-b border-border bg-muted/10">
+      <div className="p-4 space-y-4 border-b border-border/20 bg-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {deletableItems.length > 0 && (
@@ -283,7 +283,7 @@ export const ExplorerSidebar = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 bg-transparent">
         {isLoadingList ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-50">
             <div className="p-3 rounded-full bg-primary/5">
@@ -326,14 +326,13 @@ export const ExplorerSidebar = ({
                   <button
                     onClick={() => setSelectedId(item.id)}
                     className={cn(
-                      "w-full flex items-center gap-3.5 px-3 py-3 rounded-xl transition-all text-left relative",
+                      "w-full flex items-center gap-3.5 px-3 py-3 rounded-r-lg transition-all text-left relative border-l-4 duration-300 group",
                       hasDeletePermission ? "ml-9 w-[calc(100%-36px)]" : "ml-0 w-full",
                       isActive 
-                        ? "bg-primary/[0.04] ring-1 ring-primary/20 shadow-none text-primary" 
-                        : isSelected ? "bg-primary/[0.02]" : "hover:bg-muted/60"
+                        ? "bg-primary/[0.06] border-primary shadow-[0_4px_12px_rgba(var(--primary),0.05)] ring-1 ring-primary/10 pl-4" 
+                        : isSelected ? "bg-primary/[0.02] border-transparent" : "hover:bg-muted/30 border-transparent hover:border-muted-foreground/20 hover:pl-4"
                     )}
                   >
-                    {isActive && <div className="absolute left-[-2px] top-3 bottom-3 w-1 rounded-full bg-primary" />}
                     <div className={cn(
                       "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors shadow-none",
                       isActive ? "bg-primary/10" : "bg-muted/50"

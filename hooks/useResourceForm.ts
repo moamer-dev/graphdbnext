@@ -9,16 +9,19 @@ interface UseResourceFormOptions<T extends z.ZodType<any, any, any>> {
   schema: T
   defaultValues?: z.infer<T>
   onSuccess?: (data: any) => void
+  redirect?: boolean
 }
 
 export function useResourceForm<T extends z.ZodType<any, any, any>>({
   resourceName,
   schema,
   defaultValues,
-  onSuccess
+  onSuccess,
+  redirect
 }: UseResourceFormOptions<T>) {
   const resource = resourceHooks[resourceName] as any
   const createMutation = resource.useCreate({
+    redirect,
     onSuccess: (data: any) => {
         form.reset(defaultValues)
         onSuccess?.(data)

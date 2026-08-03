@@ -93,7 +93,7 @@ export async function POST (request: NextRequest) {
       data: {
         name,
         description: description || null,
-        userId: session.user.id,
+        creatorId: session.user.id,
         schemaJson: schemaJson as any,
         schemaMd: schemaMd,
         version: '1.0'

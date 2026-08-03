@@ -32,6 +32,9 @@ export class ProjectResource {
     workspaceScoped: true
   }
 
+  static readonly VIEW_MODE: 'page' | 'modal' = 'page'
+  static readonly EDIT_MODE: 'page' | 'modal' = 'modal'
+
   static createTableConfig (
     onView: (id: string) => void,
     onEdit: (id: string) => void,

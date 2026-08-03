@@ -11,6 +11,7 @@ interface CollapsibleSectionProps {
   className?: string
   headerClassName?: string
   icon?: React.ComponentType<{ className?: string }>
+  onToggle?: (isOpen: boolean) => void
 }
 
 export function CollapsibleSection({
@@ -19,14 +20,21 @@ export function CollapsibleSection({
   children,
   className,
   headerClassName,
-  icon: Icon
+  icon: Icon,
+  onToggle
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  const handleToggle = () => {
+    const next = !isOpen
+    setIsOpen(next)
+    onToggle?.(next)
+  }
 
   return (
     <div className={cn('space-y-2', className)}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={cn(
           'flex items-center gap-2 w-full text-left text-xs font-medium text-foreground hover:text-primary transition-colors',
           headerClassName

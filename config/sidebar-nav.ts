@@ -37,6 +37,13 @@ export const sidebarNavItems: SidebarNavItem[] = [
     resource: 'DATA_SOURCE_PAGE',
     action: 'ACCESS'
   },
+  {
+    title: 'Workspace Hub',
+    url: '/dashboard/workspaces/hub',
+    icon: LayoutGrid,
+    resource: 'WORKSPACE_HUB',
+    action: 'ACCESS'
+  },
 
   {
     title: 'Plexus',

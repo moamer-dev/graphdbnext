@@ -139,6 +139,31 @@ export function getElementFactSheet (
 }
 
 /**
+ * Helper to find an element anywhere in the XML tree matching targetName (case-insensitive)
+ */
+function findAnyElementByName (root: Element, targetName: string): Element | null {
+  if (cleanName(root.tagName).toLowerCase() === targetName.toLowerCase()) {
+    return root
+  }
+  const doc = root.ownerDocument || (root as any)
+  if (doc && typeof doc.getElementsByTagName === 'function') {
+    const allElements = Array.from(doc.getElementsByTagName('*')) as Element[]
+    const found = allElements.find(
+      (el) => cleanName(el.tagName).toLowerCase() === targetName.toLowerCase()
+    )
+    if (found) return found
+  }
+  const children = Array.from(root.childNodes).filter(
+    (node) => node.nodeType === 1
+  ) as Element[]
+  for (const child of children) {
+    const res = findAnyElementByName(child, targetName)
+    if (res) return res
+  }
+  return null
+}
+
+/**
  * Find an element in the XML tree based on the JSON tree path
  */
 function findElementByPath (
@@ -148,36 +173,20 @@ function findElementByPath (
 ): Element | null {
   try {
     // Check if root matches
-    if (cleanName(root.tagName) === nodeKey && (nodePath === nodeKey || nodePath === '')) {
+    if (cleanName(root.tagName).toLowerCase() === nodeKey.toLowerCase() && (nodePath === nodeKey || nodePath === '')) {
       return root
+    }
+
+    const pathStr = nodePath.replace(/^\./, '') // Remove leading dot
+    
+    // If path is empty or just the key, search root and all descendants
+    if (!pathStr || pathStr === nodeKey) {
+      return findAnyElementByName(root, nodeKey)
     }
 
     // Parse the path - handle both dot notation and array indices
     // Example: "edxml.header.title" or "edxml.facsimile[0].surface"
     const parts: Array<{ name: string; index?: number }> = []
-    const pathStr = nodePath.replace(/^\./, '') // Remove leading dot
-    
-    // If path is empty or just the key, try to find in root's children or return root
-    if (!pathStr || pathStr === nodeKey) {
-      // Check if root matches
-      if (cleanName(root.tagName) === nodeKey) {
-        return root
-      }
-      
-      // Try to find in root's children
-      const children = Array.from(root.childNodes).filter(
-        (node) => node.nodeType === 1
-      ) as Element[]
-      
-      const matching = children.find((child) => {
-        const tagName = cleanName(child.tagName)
-        return tagName === nodeKey
-      })
-      
-      return matching || null
-    }
-    
-    // Split by dots, but preserve array indices
     const segments = pathStr.split('.')
     
     for (let i = 0; i < segments.length; i++) {
@@ -186,19 +195,14 @@ function findElementByPath (
       if (arrayMatch) {
         parts.push({ name: arrayMatch[1], index: parseInt(arrayMatch[2], 10) })
       } else if (/^\d+$/.test(segment)) {
-        // Numeric segment - this is an array index for the previous part
-        // If there's a previous part, add the index to it
         if (parts.length > 0) {
           const lastPart = parts[parts.length - 1]
           if (lastPart.index === undefined) {
             lastPart.index = parseInt(segment, 10)
           } else {
-            // Previous part already has an index, create a new part with this index
-            // This shouldn't happen in normal cases, but handle it
             parts.push({ name: '', index: parseInt(segment, 10) })
           }
         } else {
-          // First segment is numeric - this shouldn't happen, but handle it
           parts.push({ name: '', index: parseInt(segment, 10) })
         }
       } else if (!segment.startsWith('_') && segment !== '__text') {
@@ -206,30 +210,17 @@ function findElementByPath (
       }
     }
     
-    // If no parts after parsing, try direct lookup
     if (parts.length === 0) {
-      // Check root
-      if (cleanName(root.tagName) === nodeKey) {
-        return root
-      }
-      
-      // Check root's children
-      const children = Array.from(root.childNodes).filter(
-        (node) => node.nodeType === 1
-      ) as Element[]
-      
-      return children.find((child) => cleanName(child.tagName) === nodeKey) || null
+      return findAnyElementByName(root, nodeKey)
     }
     
     // Navigate through the XML tree
     let current: Element | null = root
     
-    // Start navigation - if first part matches root, skip it
     let startIndex = 0
-    if (parts[0] && cleanName(root.tagName) === parts[0].name) {
+    if (parts[0] && cleanName(root.tagName).toLowerCase() === parts[0].name.toLowerCase()) {
       startIndex = 1
       if (parts.length === 1) {
-        // We're looking for the root element
         return root
       }
     }
@@ -237,38 +228,34 @@ function findElementByPath (
     for (let i = startIndex; i < parts.length; i++) {
       const part = parts[i]
       if (!current) {
-        console.warn('Current is null at part:', part)
-        return null
+        break
       }
       
       const children = Array.from(current.childNodes).filter(
         (node) => node.nodeType === 1
       ) as Element[]
       
-      // If part.name is empty but index is defined, use index directly
       if (!part.name && part.index !== undefined) {
         if (part.index >= children.length) {
-          console.warn('Array index out of bounds:', part.index, '>=', children.length)
-          return null
+          current = null
+          break
         }
         current = children[part.index]
       } else {
-        // Find elements with matching tag name
         const matching = children.filter((child) => {
           const tagName = cleanName(child.tagName)
-          return tagName === part.name
+          return tagName.toLowerCase() === part.name.toLowerCase()
         })
         
         if (matching.length === 0) {
-          console.warn('No matching children found for:', part.name, 'in', cleanName(current.tagName))
-          return null
+          current = null
+          break
         }
         
-        // If there's an index, use it; otherwise use the first match
         if (part.index !== undefined) {
           if (part.index >= matching.length) {
-            console.warn('Array index out of bounds:', part.index, '>=', matching.length)
-            return null
+            current = null
+            break
           }
           current = matching[part.index]
         } else {
@@ -277,27 +264,25 @@ function findElementByPath (
       }
     }
     
-    // Final check: if the current element's tag doesn't match the nodeKey,
-    // try to find a child with that key
-    if (current && cleanName(current.tagName) !== nodeKey) {
+    if (current && cleanName(current.tagName).toLowerCase() === nodeKey.toLowerCase()) {
+      return current
+    }
+
+    if (current) {
       const children = Array.from(current.childNodes).filter(
         (node) => node.nodeType === 1
       ) as Element[]
       
-      // If nodeKey is a number, treat it as an array index
       const nodeKeyAsIndex = parseInt(nodeKey, 10)
       if (!isNaN(nodeKeyAsIndex) && nodeKeyAsIndex >= 0) {
-        // nodeKey is a numeric index, return the element at that index
         if (nodeKeyAsIndex < children.length) {
           return children[nodeKeyAsIndex]
         }
-        return null
       }
       
-      // Otherwise, try to find a child with matching tag name
       const matching = children.find((child) => {
         const tagName = cleanName(child.tagName)
-        return tagName === nodeKey
+        return tagName.toLowerCase() === nodeKey.toLowerCase()
       })
       
       if (matching) {
@@ -305,10 +290,10 @@ function findElementByPath (
       }
     }
     
-    return current
+    return findAnyElementByName(root, nodeKey)
   } catch (error) {
     console.error('Error in findElementByPath:', error, { nodePath, nodeKey })
-    return null
+    return findAnyElementByName(root, nodeKey)
   }
 }
 

@@ -1,76 +1,35 @@
 'use client'
 
-import React from 'react'
-import { useSession } from 'next-auth/react'
-import { Layers, Plus, Loader2 } from 'lucide-react'
+import { Layers, Plus, Loader2, Layout } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/DataTable'
-import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { useResourcePage } from '@/hooks/view/useResourcePage'
 import { resourceHooks } from '@/hooks/react-query'
 import { WorkspaceResource } from '@/resources/WorkspaceResource'
 import { useTenantStore } from '@/stores/tenantStore'
 import { CreateWorkspaceDialog } from '@/components/dashboard/CreateModals'
 import { EditWorkspaceDialog } from '@/components/dashboard/EditModals'
 import { ViewWorkspaceDialog } from '@/components/dashboard/ViewModals'
-import { useUIStore } from '@/stores/uiStore'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
-import { useRBAC } from '@/hooks/useRBAC'
 import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
 import { DataGrid } from '@/components/data-table/DataGrid'
 import { ResourceCard } from '@/components/dashboard/ResourceCard'
+import { useRouter } from 'next/navigation'
 
 export default function WorkspacesPage() {
-  const { data: session, status } = useSession()
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false)
-  const [editingId, setEditingId] = React.useState<string | null>(null)
-  const [viewingId, setViewingId] = React.useState<string | null>(null)
+  const router = useRouter()
   const { activeProjectId } = useTenantStore()
   
-  const { can } = useRBAC()
-  
-  const { dashboardView: currentView } = useUIStore()
-
-  const isAdmin = session?.user?.role === 'ADMIN'
-  const userPermissions = (session?.user as any)?.permissions || []
-
   const { 
-    config, 
-    data, 
-    total, 
-    loading,
-    page,
-    pageSize,
-    sortBy,
-    sortOrder,
-    filters,
-    onPageChange,
-    onPageSizeChange,
-    onSortChange,
-    onFiltersChange
-  } = useResourceTable({
+    config, data, total, loading, page, pageSize, sortBy, sortOrder, filters, onPageChange, onPageSizeChange, onSortChange, onFiltersChange,
+    status, isCreateOpen, setIsCreateOpen, editingId, setEditingId, viewingId, setViewingId, 
+    handleView, getGridActions, currentView, can
+  } = useResourcePage({
     resource: WorkspaceResource,
     useList: resourceHooks.workspaces.useList,
     useDelete: resourceHooks.workspaces.useDelete,
     useBulkDelete: resourceHooks.workspaces.useBulkDelete,
-    initialFilters: { projectId: activeProjectId },
-    isAdmin,
-    userId: session?.user?.id,
-    userPermissions,
-    onView: (id: string) => setViewingId(id),
-    onEdit: (id: string) => setEditingId(id)
+    initialFilters: { projectId: activeProjectId }
   })
-
-  const gridActions = (item: any) => [
-    { label: 'View', icon: Eye, action: () => setViewingId(item.id), permission: { action: 'READ' as const } },
-    { label: 'Edit', icon: Pencil, action: () => setEditingId(item.id), permission: { action: 'UPDATE' as const } },
-    { 
-      label: 'Delete', 
-      icon: Trash2, 
-      variant: 'destructive' as const,
-      action: () => config.rowActions?.find(a => a.label === 'Delete')?.action(item),
-      permission: { action: 'DELETE' as const }
-    }
-  ]
 
   if (status === 'loading') {
     return (
@@ -97,6 +56,7 @@ export default function WorkspacesPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <div className="h-4 w-px bg-border/40 mx-1 shrink-0" />
             <ViewSwitcher />
             {can('CREATE', WorkspaceResource.RESOURCE_NAME) && (
               <Button size="sm" className="h-8 gap-2" onClick={() => setIsCreateOpen(true)}>
@@ -104,6 +64,15 @@ export default function WorkspacesPage() {
                 Create Workspace
               </Button>
             )}
+            <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
+                onClick={() => router.push('/dashboard/workspaces/hub')}
+            >
+                <Layout className="h-4 w-4" />
+                Workspace Hub
+            </Button>
           </div>
         </div>
       </div>
@@ -161,8 +130,8 @@ export default function WorkspacesPage() {
                 creator={item.creator?.name}
                 isSelected={isSelected}
                 onSelect={onSelect}
-                onClick={() => setViewingId(item.id)}
-                actions={gridActions(item)}
+                onClick={() => handleView(item.id)}
+                actions={getGridActions(item)}
               />
             )}
           />

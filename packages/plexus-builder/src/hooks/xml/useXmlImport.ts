@@ -139,6 +139,7 @@ export function useXmlImport() {
         version: '1.0.0'
       }
     })
+    useModelBuilderStore.getState().organizeLayout('grid')
   }
 
   /**

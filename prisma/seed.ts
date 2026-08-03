@@ -79,7 +79,7 @@ async function main () {
       isActive: true,
       permissions: {
         create: [
-          { resource: 'MODEL', action: 'READ', scope: 'ALL', isActive: true }, // Can see shared models
+          { resource: 'MODEL', action: 'READ', scope: 'ALL', isActive: true },
           { resource: 'MODEL', action: 'CREATE', scope: 'SELF', isActive: true },
           { resource: 'MODEL', action: 'UPDATE', scope: 'SELF', isActive: true },
           { resource: 'MODEL', action: 'DELETE', scope: 'SELF', isActive: true },
@@ -91,7 +91,11 @@ async function main () {
           { resource: 'PROJECT', action: 'CREATE', scope: 'SELF', isActive: true },
           
           { resource: 'TEAM', action: 'READ', scope: 'ALL', isActive: true },
-          { resource: 'TEAM', action: 'CREATE', scope: 'SELF', isActive: true }
+          { resource: 'TEAM', action: 'CREATE', scope: 'SELF', isActive: true },
+
+          { resource: 'WORKFLOW', action: 'MANAGE', scope: 'SELF', isActive: true },
+          { resource: 'CREDENTIAL', action: 'MANAGE', scope: 'SELF', isActive: true },
+          { resource: 'DATA_SOURCE', action: 'MANAGE', scope: 'SELF', isActive: true }
         ]
       }
     }

@@ -1,57 +1,28 @@
 'use client'
-
-import React from 'react'
 import { DataTable } from '@/components/data-table/DataTable'
-import { useResourceTable } from '@/hooks/view/useResourceTable'
+import { useResourcePage } from '@/hooks/view/useResourcePage'
 import { resourceHooks } from '@/hooks/react-query'
 import { ProjectResource } from '@/resources/ProjectResource'
 import { Button } from '@/components/ui/button'
 import { CreateProjectDialog } from '@/components/dashboard/CreateModals'
 import { EditProjectDialog } from '@/components/dashboard/EditModals'
 import { ViewProjectDialog } from '@/components/dashboard/ViewModals'
-import { useSession } from 'next-auth/react'
 import { Loader2, FolderKanban, Plus, Eye, Pencil, Trash2 } from 'lucide-react'
-import { useRBAC } from '@/hooks/useRBAC'
 import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
 import { DataGrid } from '@/components/data-table/DataGrid'
 import { ResourceCard } from '@/components/dashboard/ResourceCard'
-import { useUIStore } from '@/stores/uiStore'
 import { ScopeSwitcher } from '@/components/data-table/ScopeSwitcher'
 
 export default function ProjectsPage() {
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false)
-  const [editingId, setEditingId] = React.useState<string | null>(null)
-  const [viewingId, setViewingId] = React.useState<string | null>(null)
-  const { data: session, status } = useSession()
-  const { can } = useRBAC()
-  
-  const { dashboardView: currentView, resourceScope } = useUIStore()
-  const isAdmin = session?.user?.role === 'ADMIN'
-  
   const { 
-    config, 
-    data, 
-    total, 
-    loading,
-    page,
-    pageSize,
-    sortBy,
-    sortOrder,
-    filters,
-    onPageChange,
-    onPageSizeChange,
-    onSortChange,
-    onFiltersChange
-  } = useResourceTable({
+    config, data, total, loading, page, pageSize, sortBy, sortOrder, filters, onPageChange, onPageSizeChange, onSortChange, onFiltersChange,
+    status, isCreateOpen, setIsCreateOpen, editingId, setEditingId, viewingId, setViewingId, 
+    handleView, getGridActions, currentView, can
+  } = useResourcePage({
     resource: ProjectResource,
     useList: resourceHooks.projects.useList,
     useDelete: resourceHooks.projects.useDelete,
-    useBulkDelete: resourceHooks.projects.useBulkDelete,
-    isAdmin,
-    userId: session?.user?.id,
-    scope: resourceScope,
-    onView: (id: string) => setViewingId(id),
-    onEdit: (id: string) => setEditingId(id)
+    useBulkDelete: resourceHooks.projects.useBulkDelete
   })
 
   if (status === 'loading') {
@@ -61,18 +32,6 @@ export default function ProjectsPage() {
       </div>
     )
   }
-
-  const gridActions = (item: any) => [
-    { label: 'View', icon: Eye, action: () => setViewingId(item.id), permission: { action: 'READ' as const } },
-    { label: 'Edit', icon: Pencil, action: () => setEditingId(item.id), permission: { action: 'UPDATE' as const } },
-    { 
-      label: 'Delete', 
-      icon: Trash2, 
-      variant: 'destructive' as const,
-      action: () => config.rowActions?.find(a => a.label === 'Delete')?.action(item),
-      permission: { action: 'DELETE' as const }
-    }
-  ]
 
   return (
     <div className="space-y-4 mt-4">
@@ -157,8 +116,8 @@ export default function ProjectsPage() {
                 creator={item.creator?.name}
                 isSelected={isSelected}
                 onSelect={onSelect}
-                onClick={() => setViewingId(item.id)}
-                actions={gridActions(item)}
+                onClick={() => handleView(item.id)}
+                actions={getGridActions(item)}
               />
             )}
           />

@@ -21,7 +21,7 @@ export function UploadStep({
 
   return (
     <div className="space-y-4">
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-2">
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-2 mt-4">
         <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
         <div className="text-xs text-foreground/80">
           <p className="font-medium mb-1 text-primary">Getting Started</p>

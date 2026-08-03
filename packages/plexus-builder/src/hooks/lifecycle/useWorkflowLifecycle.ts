@@ -186,7 +186,7 @@ export const useWorkflowLifecycle = ({
       setRunning(false)
       setTimeout(() => setExecutionProgress(null), 2000)
     }
-  }, [nodes, relationships, setExecutionProgress, setGraphPreview, setRunning, xmlFileToLoad])
+  }, [nodes, relationships, setExecutionProgress, setGraphPreview, setRunning, xmlFileToLoad, xmlContent])
 
   return {
     xmlContent,

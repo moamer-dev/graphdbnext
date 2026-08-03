@@ -1,100 +1,26 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 import { ModelVisualization } from '../components'
-import { resourceHooks } from '@/hooks/react-query'
-import { ModelResource, type Model } from '@/resources/ModelResource'
+import { ModelResource } from '@/resources/ModelResource'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, ArrowLeft, FileText, Database, Trash2, Edit } from 'lucide-react'
-import { toast } from 'sonner'
-import type { Schema } from '@/services'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, ArrowLeft, FileText, Database, Trash2, Edit, Calendar, Clock, Tag } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { normalizeSchema } from '../hooks'
+import { useModelDetail } from '../hooks/useModelDetail'
 
 export default function ViewModelPage () {
-  const params = useParams()
-  const router = useRouter()
-  const { data: session } = useSession()
-  const modelId = params.id as string
-
-  const [schema, setSchema] = useState<Schema | null>(null)
-
-  const isAdmin = session?.user?.role === 'ADMIN'
-
-  // React Query hooks
-  const { data: modelData, isLoading, error } = resourceHooks.models.useSingle(modelId)
-  const deleteModel = resourceHooks.models.useDelete()
-
-  // useResource extracts data from API response { model: Model } -> { data: Model }
-  const model = modelData?.data as Model | undefined
-
-  // Derive schema from model - use useMemo to compute schema
-  const computedSchema = useMemo(() => {
-    if (!model) return null
-    
-    // If schemaJson exists, normalize it first
-    if (model.schemaJson) {
-      return normalizeSchema(model.schemaJson)
-    }
-    
-    return null
-  }, [model])
-
-  // Handle MD conversion - only run when model changes and no computed schema
-  useEffect(() => {
-    if (!model || computedSchema) return
-
-    // If only MD exists, try to convert it via API
-    if (model.schemaMd) {
-      const convertMd = async () => {
-        try {
-          const convertResponse = await fetch(`/api/models/${modelId}/convert-md`, {
-            method: 'POST'
-          })
-          if (convertResponse.ok) {
-            const convertData = await convertResponse.json()
-            if (convertData.schema) {
-              const normalized = normalizeSchema(convertData.schema)
-              setSchema(normalized)
-            } else {
-              toast.error('Failed to convert Markdown schema to JSON')
-            }
-          } else {
-            toast.error('Failed to convert Markdown schema. Please use JSON format.')
-          }
-        } catch (error) {
-          console.error('Error converting MD schema:', error)
-          toast.error('Failed to convert Markdown schema. Please use JSON format.')
-        }
-      }
-      convertMd()
-    }
-  }, [model, modelId, computedSchema])
-
-  // Use computed schema or state schema
-  const displaySchema = computedSchema || schema
-
-  useEffect(() => {
-    if (error) {
-      router.push(ModelResource.LIST_PATH)
-    }
-  }, [error, router])
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-
-  const handleDelete = async () => {
-    try {
-      await deleteModel.mutateAsync(modelId)
-      setDeleteDialogOpen(false)
-      router.push(ModelResource.LIST_PATH)
-    } catch (error) {
-      console.error('Error deleting model:', error)
-      // Dialog will stay open on error so user can retry
-    }
-  }
+  const {
+    model,
+    displaySchema,
+    isLoading,
+    deleteModel,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    handleDelete,
+    handleEdit,
+    handleBack
+  } = useModelDetail()
 
   if (isLoading) {
     return (
@@ -120,7 +46,7 @@ export default function ViewModelPage () {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(ModelResource.LIST_PATH)}
+              onClick={handleBack}
               className="h-7 text-xs hover:bg-muted/40"
             >
               <ArrowLeft className="h-3 w-3 mr-1.5" />
@@ -136,19 +62,34 @@ export default function ViewModelPage () {
               </h1>
               <p className="text-xs mt-1.5 text-muted-foreground/70">
                 {model.description || 'No description'}
-                {isAdmin && model.user && (
+                {model.creator && (
                   <span className="ml-2">
-                    • Created by {model.user.email}
+                    • Created by {model.creator.name ? model.creator.name : model.creator.email}
                   </span>
                 )}
               </p>
+
+              <div className="flex items-center gap-2 mt-3">
+                <Badge variant="secondary" className="h-5 text-[10px] font-bold px-2 bg-primary/5 text-primary/80 border-primary/10 gap-1">
+                  <Tag className="h-2.5 w-2.5" />
+                  v{model.version}
+                </Badge>
+                <Badge variant="outline" className="h-5 text-[10px] font-medium px-2 gap-1 border-border/40 text-muted-foreground/80">
+                  <Calendar className="h-2.5 w-2.5" />
+                  Created: {new Date(model.createdAt).toLocaleDateString()}
+                </Badge>
+                <Badge variant="outline" className="h-5 text-[10px] font-medium px-2 gap-1 border-border/40 text-muted-foreground/80">
+                  <Clock className="h-2.5 w-2.5" />
+                  Updated: {new Date(model.updatedAt).toLocaleDateString()}
+                </Badge>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(`${ModelResource.VIEW_PATH}/${modelId}/edit`)}
+              onClick={handleEdit}
               className="h-7 text-xs border-border/40 bg-muted/30 hover:bg-muted/50 backdrop-blur-sm"
             >
               <Edit className="h-3 w-3 mr-1.5" />
@@ -178,20 +119,6 @@ export default function ViewModelPage () {
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-4 text-xs">
-          <div className="p-3 bg-muted/20 rounded-md border border-border/20 backdrop-blur-sm">
-            <div className="text-muted-foreground/70 mb-1">Version</div>
-            <div className="font-semibold">{model.version}</div>
-          </div>
-          <div className="p-3 bg-muted/20 rounded-md border border-border/20 backdrop-blur-sm">
-            <div className="text-muted-foreground/70 mb-1">Created</div>
-            <div className="font-semibold">{new Date(model.createdAt).toLocaleDateString()}</div>
-          </div>
-          <div className="p-3 bg-muted/20 rounded-md border border-border/20 backdrop-blur-sm">
-            <div className="text-muted-foreground/70 mb-1">Updated</div>
-            <div className="font-semibold">{new Date(model.updatedAt).toLocaleDateString()}</div>
-          </div>
-        </div>
 
         {!displaySchema && (
           <Alert className="py-2 bg-muted/30 border-border/40">
@@ -202,7 +129,7 @@ export default function ViewModelPage () {
           </Alert>
         )}
 
-        <div className="h-[calc(100vh-400px)] min-h-[600px] rounded-lg border border-border/20 bg-muted/10 backdrop-blur-sm overflow-hidden">
+        <div className="h-[calc(100vh-280px)] min-h-[750px] rounded-lg border border-border/20 bg-muted/10 backdrop-blur-sm overflow-hidden">
           {displaySchema ? (
             <ModelVisualization schema={displaySchema} />
           ) : (

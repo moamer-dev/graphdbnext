@@ -138,25 +138,60 @@ const ModelBuilderCanvasInner = ({
   // Focus API registration
   const { setCenter } = useReactFlow()
   
+  const selectNode = useModelBuilderStore((state) => state.selectNode)
+
   const focusNode = useCallback((nodeId: string) => {
+    selectNode(nodeId)
     const node = nodes.find(n => n.id === nodeId)
     if (node) {
       setCenter(node.position.x + 100, node.position.y + 40, { zoom: 1.2, duration: 800 })
     }
-  }, [nodes, setCenter])
+  }, [nodes, setCenter, selectNode])
 
-  const focusRelationship = useCallback((relId: string) => {
-    const edge = edges.find(e => e.id === relId)
-    if (edge) {
-      const source = nodes.find(n => n.id === edge.source)
-      const target = nodes.find(n => n.id === edge.target)
+  const selectRelationship = useModelBuilderStore((state) => state.selectRelationship)
+
+  const focusRelationship = useCallback((relIdOrFrom: string, toNodeId?: string) => {
+    let targetRelId: string | null = null
+    let sourceNodeId: string | null = null
+    let targetNodeId: string | null = null
+
+    if (toNodeId) {
+      const rel = storeRelationships.find(r => r.from === relIdOrFrom && r.to === toNodeId)
+      if (rel) {
+        targetRelId = rel.id
+        sourceNodeId = rel.from
+        targetNodeId = rel.to
+      }
+    } else {
+      const edge = edges.find(e => e.id === relIdOrFrom)
+      if (edge) {
+        targetRelId = edge.id
+        sourceNodeId = edge.source
+        targetNodeId = edge.target
+      } else {
+        const rel = storeRelationships.find(r => r.id === relIdOrFrom)
+        if (rel) {
+          targetRelId = rel.id
+          sourceNodeId = rel.from
+          targetNodeId = rel.to
+        }
+      }
+    }
+
+    if (targetRelId) {
+      selectRelationship(targetRelId)
+    }
+
+    if (sourceNodeId && targetNodeId) {
+      const source = nodes.find(n => n.id === sourceNodeId)
+      const target = nodes.find(n => n.id === targetNodeId)
       if (source && target) {
         const x = (source.position.x + target.position.x) / 2
         const y = (source.position.y + target.position.y) / 2
         setCenter(x + 100, y + 40, { zoom: 1.2, duration: 800 })
       }
     }
-  }, [edges, nodes, setCenter])
+  }, [edges, nodes, setCenter, selectRelationship, storeRelationships])
 
   useEffect(() => {
     onRegisterFocusApi?.(focusNode)

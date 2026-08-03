@@ -4,8 +4,8 @@ export function parseFilters(filters: Record<string, any>): Record<string, any> 
   const parsedFilters: Record<string, any> = {}
 
   Object.entries(filters).forEach(([key, value]) => {
-    // Skip empty values
-    if (value === '' || value === null || value === undefined || value === 'all') {
+    // Skip empty values or instructional frontend-only flags
+    if (value === '' || value === null || value === undefined || value === 'all' || key === 'isGlobal' || key === 'scope') {
       return
     }
 

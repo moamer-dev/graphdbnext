@@ -555,7 +555,7 @@ export const useModelBuilderStore = create<ModelBuilderStore>()(
     })
   },
 
-  organizeLayout: (type: 'hierarchical' | 'grid' | 'circular' = 'hierarchical'): void => {
+  organizeLayout: (type: 'hierarchical' | 'grid' | 'circular' = 'grid'): void => {
     const state = get()
     // Import layout utility dynamically to avoid circular dependencies
     import('../utils/layout').then(({ calculateHierarchicalLayout, calculateGridLayout, calculateCircularLayout }) => {
