@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   DEFAULT_AI_SETTINGS
 } from '@plexus/builder'
@@ -11,6 +12,7 @@ import type {
   ModelBuilderRef
 } from '@plexus/builder'
 import type { Model } from '@/resources/ModelResource'
+import { ModelResource } from '@/resources/ModelResource'
 import { DataSourceResource } from '@/resources/DataSourceResource'
 import { toast } from 'sonner'
 import { useDatabaseStore } from '@/stores/databaseStore'
@@ -37,8 +39,10 @@ export function useModelBuilderAdapter({
   aiPersistence: passedAiPersistence,
   onPushToDB: passedOnPushToDB
 }: UseModelBuilderAdapterProps) {
+  const router = useRouter()
   const loadedRef = useRef(false)
   const lastModelIdRef = useRef<string | null>(model?.id || null)
+  const lastSavedWorkflowIdRef = useRef<string | null>(null)
   const [aiSettings, setAiSettings] = useState<AISettings | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [existingWorkflows, setExistingWorkflows] = useState<any[]>([])
@@ -55,18 +59,35 @@ export function useModelBuilderAdapter({
   const defaultPersistence = useMemo<WorkflowPersistence>(() => {
     return {
       modelId: model?.id || 'new',
-      onSaveWorkflow: async (workflow) => {
+      onSaveWorkflow: async (workflow: any) => {
+        const targetModelId = workflow.modelId || model?.id
+        if (!targetModelId || targetModelId === 'new') {
+          throw new Error('Cannot save workflow without a valid modelId')
+        }
         const response = await fetch('/api/workflows', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modelId: model?.id, ...workflow })
+          body: JSON.stringify({
+            modelId: targetModelId,
+            name: workflow.name,
+            description: workflow.description,
+            config: workflow.config
+          })
         })
-        if (!response.ok) throw new Error('Failed to save workflow')
+        if (!response.ok) {
+          const errData = await response.json()
+          throw new Error(errData.error || 'Failed to save workflow')
+        }
         const data = await response.json()
+        const createdId = data.workflow?.id || data.data?.id
+        if (createdId) {
+          lastSavedWorkflowIdRef.current = createdId
+        }
         setRefreshTrigger(prev => prev + 1)
-        return { id: data.workflow.id }
+        return { id: createdId }
       },
       onUpdateWorkflow: async (id, workflow) => {
+        lastSavedWorkflowIdRef.current = id
         const response = await fetch(`/api/workflows/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -306,20 +327,53 @@ export function useModelBuilderAdapter({
     }
   }
 
-  const handleSaveModel = async (data: { schemaJson: any; schemaMd: string; metadata: any }) => {
+  const handleSaveModel = async (data: { schemaJson: any; schemaMd: string; metadata: any; pendingWorkflow?: any }) => {
     if (!onSave) return
 
     try {
-      await onSave({
+      const savedModel = await onSave({
         schemaJson: data.schemaJson,
         schemaMd: data.schemaMd,
         name: data.metadata.name,
         description: data.metadata.description
       })
+      const savedModelId = savedModel && typeof savedModel === 'object' && 'id' in savedModel ? (savedModel as any).id : null
+      const targetModelId = savedModelId || model?.id
+      
+      if (targetModelId && data.pendingWorkflow) {
+        const pw = data.pendingWorkflow
+        if (pw.action === 'create' && pw.name && defaultPersistence.onSaveWorkflow) {
+          const createdWf = await defaultPersistence.onSaveWorkflow({
+            modelId: targetModelId,
+            name: pw.name,
+            description: pw.description,
+            config: pw.config
+          })
+          if (createdWf?.id) {
+            localStorage.setItem(`plexus-builder:selected-workflow:${targetModelId}`, createdWf.id)
+          }
+        } else if (pw.action === 'update' && pw.workflowId && defaultPersistence.onUpdateWorkflow) {
+          await defaultPersistence.onUpdateWorkflow(pw.workflowId, {
+            name: pw.name,
+            description: pw.description,
+            config: pw.config
+          })
+          localStorage.setItem(`plexus-builder:selected-workflow:${targetModelId}`, pw.workflowId)
+        }
+      }
+
       toast.success('Model saved successfully')
+
+      if (savedModelId && (!model?.id || model.id === 'new')) {
+        router.push(ModelResource.EDIT_PATH(savedModelId))
+      }
     } catch (error) {
       console.error('Error saving model:', error)
       toast.error('Failed to save model')
+    } finally {
+      if (typeof window !== 'undefined') {
+        delete (window as any).__workflowSaveInProgress
+      }
     }
   }
 

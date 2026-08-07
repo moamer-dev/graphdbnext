@@ -72,7 +72,9 @@ export function SaveWorkflowDialog({
     if (open && currentWorkflowConfig) {
       const hasTools = currentWorkflowConfig.tools && currentWorkflowConfig.tools.length > 0
       const hasActions = currentWorkflowConfig.actions && currentWorkflowConfig.actions.length > 0
-      setHasWorkflow(hasTools || hasActions)
+      const hasWf = hasTools || hasActions
+      setHasWorkflow(hasWf)
+      setSaveWorkflow(hasWf)
       
       // For editing: default to update the currently selected workflow (if available)
       if (!isNewModel && existingWorkflows.length > 0) {
@@ -84,10 +86,8 @@ export function SaveWorkflowDialog({
         setWorkflowName(defaultWorkflow?.name ?? '')
         setWorkflowDescription(defaultWorkflow?.description || '')
         setAction('update')
-        setSaveWorkflow(true)
       } else {
-        setSaveWorkflow(false)
-        setWorkflowName('')
+        setWorkflowName(currentWorkflowConfig?.metadata?.name || 'Main Workflow')
         setWorkflowDescription('')
         setSelectedWorkflowId(null)
         setAction('create')
@@ -282,31 +282,35 @@ export function SaveWorkflowDialog({
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="workflow-name">
-                  Workflow Name {action === 'create' && '*'}
-                </Label>
-                <Input
-                  id="workflow-name"
-                  value={workflowName}
-                  onChange={(e) => setWorkflowName(e.target.value)}
-                  placeholder="Enter workflow name"
-                  disabled={saving || (action === 'update' && existingWorkflows.length > 0)}
-                  required={action === 'create'}
-                />
-              </div>
+              {action === 'create' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="workflow-name">
+                      Workflow Name *
+                    </Label>
+                    <Input
+                      id="workflow-name"
+                      value={workflowName}
+                      onChange={(e) => setWorkflowName(e.target.value)}
+                      placeholder="Enter workflow name"
+                      disabled={saving}
+                      required
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="workflow-description">Description (Optional)</Label>
-                <Textarea
-                  id="workflow-description"
-                  value={workflowDescription}
-                  onChange={(e) => setWorkflowDescription(e.target.value)}
-                  placeholder="Enter workflow description"
-                  rows={3}
-                  disabled={saving}
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="workflow-description">Description (Optional)</Label>
+                    <Textarea
+                      id="workflow-description"
+                      value={workflowDescription}
+                      onChange={(e) => setWorkflowDescription(e.target.value)}
+                      placeholder="Enter workflow description"
+                      rows={3}
+                      disabled={saving}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

@@ -83,7 +83,7 @@ export async function DELETE(
     }
 
     const { id } = await params
-    await ModelService.updateWithRBAC(session.user.id, id, { isActive: false })
+    await ModelService.deleteWithRBAC(session.user.id, id)
 
     return new NextResponse(null, { status: 204 })
   } catch (error: any) {

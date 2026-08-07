@@ -30,45 +30,19 @@ import {
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import type { Node, Relationship, Property } from '../../types'
+import { workflowRegistry } from '../../registry'
 
-export const PREDEFINED_TOOLS = [
-  { type: 'tool:if', label: 'If / Else Conditional', category: 'Logic' },
-  { type: 'tool:switch', label: 'Switch Branch', category: 'Logic' },
-  { type: 'tool:fetch-api', label: 'Fetch API', category: 'Integration' },
-  { type: 'tool:http', label: 'HTTP Request', category: 'Integration' },
-  { type: 'tool:webhook', label: 'Webhook Endpoint', category: 'Integration' },
-  { type: 'tool:delay', label: 'Delay Execution', category: 'Utility' }
-]
+export const PREDEFINED_TOOLS = workflowRegistry.getAllTools().map(t => ({
+  type: t.id,
+  label: t.metadata.label,
+  category: workflowRegistry.getToolCategory(t.metadata.category)?.label || t.metadata.category
+}))
 
-export const PREDEFINED_ACTIONS = [
-  // Node Actions
-  { type: 'action:create-node-complete', label: 'Create Complete Node', category: 'Node Actions' },
-  { type: 'action:update-node', label: 'Update Node', category: 'Node Actions' },
-  { type: 'action:delete-node', label: 'Delete Node', category: 'Node Actions' },
-  { type: 'action:create-text-node', label: 'Create Text Node', category: 'Node Actions' },
-  { type: 'action:create-token-nodes', label: 'Create Token Nodes', category: 'Node Actions' },
-  { type: 'action:clone-node', label: 'Clone Node', category: 'Node Actions' },
-  { type: 'action:merge-nodes', label: 'Merge Nodes', category: 'Node Actions' },
-  // Property Actions
-  { type: 'action:set-property', label: 'Set Property', category: 'Property Actions' },
-  { type: 'action:copy-property', label: 'Copy Property', category: 'Property Actions' },
-  { type: 'action:extract-and-normalize-attributes', label: 'Bulk Attribute Mapper', category: 'Property Actions' },
-  { type: 'action:format-property', label: 'Format Property', category: 'Property Actions' },
-  { type: 'action:merge-properties', label: 'Merge Properties', category: 'Property Actions' },
-  { type: 'action:split-property', label: 'Split Property', category: 'Property Actions' },
-  { type: 'action:extract-and-compute-property', label: 'Extract & Compute Property', category: 'Property Actions' },
-  // Relationship Actions
-  { type: 'action:create-relationship', label: 'Create Relationship', category: 'Relationship Actions' },
-  { type: 'action:update-relationship', label: 'Update Relationship', category: 'Relationship Actions' },
-  { type: 'action:create-reference-chain', label: 'Create Reference Chain', category: 'Relationship Actions' },
-  { type: 'action:delete-relationship', label: 'Delete Relationship', category: 'Relationship Actions' },
-  { type: 'action:reverse-relationship', label: 'Reverse Relationship', category: 'Relationship Actions' },
-  { type: 'action:defer-relationship', label: 'Defer Relationship', category: 'Relationship Actions' },
-  // Workflow & Control
-  { type: 'action:group', label: 'Action Group', category: 'Workflow & Control' },
-  { type: 'action:skip', label: 'Skip Element', category: 'Workflow & Control' },
-  { type: 'action:merge-children-text', label: 'Merge Children Text', category: 'Workflow & Control' }
-]
+export const PREDEFINED_ACTIONS = workflowRegistry.getAllActions().map(a => ({
+  type: a.id,
+  label: a.metadata.label,
+  category: workflowRegistry.getActionCategory(a.metadata.category)?.label || a.metadata.category
+}))
 
 interface ModelExplorerProps {
   className?: string
@@ -227,17 +201,27 @@ export function ModelExplorer({ className, onSwitchTab, onOpenSidebar }: ModelEx
     selectRelationship(null)
 
     if (attachCategory === 'tool') {
-      const selectedDef = PREDEFINED_TOOLS.find(t => t.type === selectedToolType)
-      const label = selectedDef ? selectedDef.label : selectedToolType
+      const toolDef = workflowRegistry.getTool(selectedToolType)
+      const label = toolDef?.metadata.label || selectedToolType
+      const defaultConfig = toolDef?.defaultConfig ? JSON.parse(JSON.stringify(toolDef.defaultConfig)) : {}
+
+      let outputs: any[] = [{ id: 'output', label: 'Output' }]
+      if (selectedToolType === 'tool:if') {
+        outputs = [{ id: 'true', label: 'True' }, { id: 'false', label: 'False' }]
+      } else if (selectedToolType === 'tool:switch') {
+        outputs = [
+          { id: 'case_1', label: 'Case 1' },
+          { id: 'default', label: 'Default' }
+        ]
+      }
+
       const toolId = addToolNode({
         type: selectedToolType as any,
         label,
         position: { x: 0, y: 0 },
-        config: {},
+        config: defaultConfig,
         inputs: 1,
-        outputs: selectedToolType === 'tool:if' 
-          ? [{ id: 'true', label: 'True' }, { id: 'false', label: 'False' }]
-          : [{ id: 'output', label: 'Output' }]
+        outputs
       })
 
       if (attachSourceType === 'main-node') {
@@ -260,13 +244,15 @@ export function ModelExplorer({ className, onSwitchTab, onOpenSidebar }: ModelEx
       useActionCanvasStore.getState().selectNode(null)
       useToolCanvasStore.getState().selectNode(toolId)
     } else {
-      const selectedDef = PREDEFINED_ACTIONS.find(a => a.type === selectedActionType)
-      const label = selectedDef ? selectedDef.label : selectedActionType
+      const actionDef = workflowRegistry.getAction(selectedActionType)
+      const label = actionDef?.metadata.label || selectedActionType
+      const defaultConfig = actionDef?.defaultConfig ? JSON.parse(JSON.stringify(actionDef.defaultConfig)) : {}
+
       const actionId = addActionNode({
         type: selectedActionType as any,
         label,
         position: { x: 0, y: 0 },
-        config: {}
+        config: defaultConfig
       })
 
       if (attachSourceType === 'main-node') {
@@ -680,406 +666,322 @@ export function ModelExplorer({ className, onSwitchTab, onOpenSidebar }: ModelEx
                   <div className="space-y-2">
                     {/* Attached Tools */}
                     {attachedTools.map((tool) => {
-                      const isIfElse = tool.type === 'tool:if'
-                      const isSwitch = tool.type === 'tool:switch'
+                      const renderToolItem = (toolNode: typeof tool, depth: number = 0): React.ReactNode => {
+                        const isIfElse = toolNode.type === 'tool:if'
+                        const isSwitch = toolNode.type === 'tool:switch'
 
-                      // Actions connected to True and False handles
-                      const trueActions = actionNodes.filter(an => {
-                        const edge = actionEdges.find(e => e.source === tool.id && e.target === an.id && (e.sourceHandle === 'true' || !e.sourceHandle))
-                        return !!edge
-                      })
-                      const falseActions = actionNodes.filter(an => {
-                        const edge = actionEdges.find(e => e.source === tool.id && e.target === an.id && e.sourceHandle === 'false')
-                        return !!edge
-                      })
+                        // Actions connected to True and False handles
+                        const trueActions = actionNodes.filter(an => {
+                          const edge = actionEdges.find(e => e.source === toolNode.id && e.target === an.id && (e.sourceHandle === 'true' || !e.sourceHandle))
+                          return !!edge
+                        })
+                        const falseActions = actionNodes.filter(an => {
+                          const edge = actionEdges.find(e => e.source === toolNode.id && e.target === an.id && e.sourceHandle === 'false')
+                          return !!edge
+                        })
 
-                      // Child tools connected to True and False handles
-                      const trueChildTools = toolNodes.filter(tn => {
-                        const edge = toolEdges.find(e => e.source === tool.id && e.target === tn.id && (e.sourceHandle === 'true' || !e.sourceHandle))
-                        return !!edge
-                      })
-                      const falseChildTools = toolNodes.filter(tn => {
-                        const edge = toolEdges.find(e => e.source === tool.id && e.target === tn.id && e.sourceHandle === 'false')
-                        return !!edge
-                      })
+                        // Child tools connected to True and False handles
+                        const trueChildTools = toolNodes.filter(tn => {
+                          const edge = toolEdges.find(e => e.source === toolNode.id && e.target === tn.id && (e.sourceHandle === 'true' || !e.sourceHandle))
+                          return !!edge
+                        })
+                        const falseChildTools = toolNodes.filter(tn => {
+                          const edge = toolEdges.find(e => e.source === toolNode.id && e.target === tn.id && e.sourceHandle === 'false')
+                          return !!edge
+                        })
 
-                      // Default output actions/tools for non-if/non-switch tools
-                      const defaultOutputActions = actionNodes.filter(an => {
-                        const edge = actionEdges.find(e => e.source === tool.id && e.target === an.id)
-                        return !!edge
-                      })
-                      const defaultOutputTools = toolNodes.filter(tn => {
-                        const edge = toolEdges.find(e => e.source === tool.id && e.target === tn.id)
-                        return !!edge
-                      })
+                        // Default output actions/tools for non-if/non-switch tools
+                        const defaultOutputActions = actionNodes.filter(an => {
+                          const edge = actionEdges.find(e => e.source === toolNode.id && e.target === an.id)
+                          return !!edge
+                        })
+                        const defaultOutputTools = toolNodes.filter(tn => {
+                          const edge = toolEdges.find(e => e.source === toolNode.id && e.target === tn.id)
+                          return !!edge
+                        })
 
-                      return (
-                        <div key={tool.id} className="border rounded-md bg-muted/20 border-border overflow-hidden space-y-1.5 p-2">
-                          {/* Tool Header Card */}
-                          <div
-                            onClick={() => handleSelectTool(tool.id)}
-                            className="flex items-center justify-between p-1.5 rounded bg-muted/50 hover:bg-muted/80 border border-border/60 cursor-pointer transition-colors group"
-                            title="Click to configure tool settings"
-                          >
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Wrench className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="font-semibold text-xs text-foreground truncate">{tool.label}</span>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Badge variant="outline" className="text-[9px] bg-background font-mono border-border">
-                                {isIfElse ? 'If / Else' : isSwitch ? 'Switch' : tool.type.replace('tool:', '')}
-                              </Badge>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-muted"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  useToolCanvasStore.getState().deleteNode(tool.id)
-                                }}
-                                title="Remove tool"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* IF / ELSE BRANCHES */}
-                          {isIfElse ? (
-                            <div className="space-y-2 pt-1">
-                              {/* TRUE BRANCH (✓) */}
-                              <div className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-semibold text-foreground flex items-center gap-1">
-                                    <Sparkles className="h-3 w-3 text-muted-foreground" /> True Branch (✓)
-                                  </span>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                    onClick={() => {
-                                      setAttachTargetId(tool.id)
-                                      setAttachSourceType('tool')
-                                      setAttachSourceHandle('true')
-                                      setAttachDialogOpen(true)
-                                    }}
-                                  >
-                                    <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
-                                  </Button>
-                                </div>
-
-                                <div className="space-y-1">
-                                  {trueActions.map((act) => (
-                                    <div
-                                      key={act.id}
-                                      onClick={() => handleSelectAction(act.id)}
-                                      className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                    >
-                                      <div className="flex items-center gap-1 min-w-0">
-                                        <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
-                                        <span className="truncate font-medium text-foreground">{act.label}</span>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          useActionCanvasStore.getState().deleteNode(act.id)
-                                        }}
-                                      >
-                                        <X className="h-2.5 w-2.5" />
-                                      </Button>
-                                    </div>
-                                  ))}
-
-                                  {trueChildTools.map((ctool) => (
-                                    <div
-                                      key={ctool.id}
-                                      onClick={() => handleSelectTool(ctool.id)}
-                                      className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                    >
-                                      <div className="flex items-center gap-1 min-w-0">
-                                        <Wrench className="h-3 w-3 text-muted-foreground shrink-0" />
-                                        <span className="truncate font-medium text-foreground">{ctool.label}</span>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          useToolCanvasStore.getState().deleteNode(ctool.id)
-                                        }}
-                                      >
-                                        <X className="h-2.5 w-2.5" />
-                                      </Button>
-                                    </div>
-                                  ))}
-
-                                  {trueActions.length === 0 && trueChildTools.length === 0 && (
-                                    <p className="text-[10px] text-muted-foreground italic px-1">
-                                      No actions attached to True branch.
-                                    </p>
-                                  )}
-                                </div>
+                        return (
+                          <div key={toolNode.id} className={cn("border rounded-md bg-muted/20 border-border overflow-hidden space-y-1.5 p-2", depth > 0 && "ml-2 border-l-2")}>
+                            {/* Tool Header Card */}
+                            <div
+                              onClick={() => handleSelectTool(toolNode.id)}
+                              className="flex items-center justify-between p-1.5 rounded bg-muted/50 hover:bg-muted/80 border border-border/60 cursor-pointer transition-colors group"
+                              title="Click to configure tool settings"
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <Wrench className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className="font-semibold text-xs text-foreground truncate">{toolNode.label}</span>
                               </div>
-
-                              {/* FALSE BRANCH (✗) */}
-                              <div className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-semibold text-foreground flex items-center gap-1">
-                                    <X className="h-3 w-3 text-muted-foreground" /> False Branch (✗)
-                                  </span>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                    onClick={() => {
-                                      setAttachTargetId(tool.id)
-                                      setAttachSourceType('tool')
-                                      setAttachSourceHandle('false')
-                                      setAttachDialogOpen(true)
-                                    }}
-                                  >
-                                    <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
-                                  </Button>
-                                </div>
-
-                                <div className="space-y-1">
-                                  {falseActions.map((act) => (
-                                    <div
-                                      key={act.id}
-                                      onClick={() => handleSelectAction(act.id)}
-                                      className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                    >
-                                      <div className="flex items-center gap-1 min-w-0">
-                                        <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
-                                        <span className="truncate font-medium text-foreground">{act.label}</span>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          useActionCanvasStore.getState().deleteNode(act.id)
-                                        }}
-                                      >
-                                        <X className="h-2.5 w-2.5" />
-                                      </Button>
-                                    </div>
-                                  ))}
-
-                                  {falseChildTools.map((ctool) => (
-                                    <div
-                                      key={ctool.id}
-                                      onClick={() => handleSelectTool(ctool.id)}
-                                      className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                    >
-                                      <div className="flex items-center gap-1 min-w-0">
-                                        <Wrench className="h-3 w-3 text-muted-foreground shrink-0" />
-                                        <span className="truncate font-medium text-foreground">{ctool.label}</span>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          useToolCanvasStore.getState().deleteNode(ctool.id)
-                                        }}
-                                      >
-                                        <X className="h-2.5 w-2.5" />
-                                      </Button>
-                                    </div>
-                                  ))}
-
-                                  {falseActions.length === 0 && falseChildTools.length === 0 && (
-                                    <p className="text-[10px] text-muted-foreground italic px-1">
-                                      No actions attached to False branch.
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ) : isSwitch ? (
-                            /* SWITCH CASES BRANCHES */
-                            <div className="space-y-2 pt-1">
-                              {(tool.outputs && tool.outputs.length > 0 ? tool.outputs : [{ id: 'default', label: 'Default' }]).map((caseOut) => {
-                                const isDefaultCase = caseOut.id === 'default'
-                                const caseActions = actionNodes.filter(an => {
-                                  const edge = actionEdges.find(e => e.source === tool.id && e.target === an.id && (e.sourceHandle === caseOut.id || (isDefaultCase && !e.sourceHandle)))
-                                  return !!edge
-                                })
-                                const caseChildTools = toolNodes.filter(tn => {
-                                  const edge = toolEdges.find(e => e.source === tool.id && e.target === tn.id && (e.sourceHandle === caseOut.id || (isDefaultCase && !e.sourceHandle)))
-                                  return !!edge
-                                })
-
-                                return (
-                                  <div
-                                    key={caseOut.id}
-                                    className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[11px] font-semibold text-foreground flex items-center gap-1">
-                                        <Layers className="h-3 w-3 text-muted-foreground" />
-                                        {isDefaultCase ? 'Default Fallback' : `Case: ${caseOut.label}`}
-                                      </span>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                        onClick={() => {
-                                          setAttachTargetId(tool.id)
-                                          setAttachSourceType('tool')
-                                          setAttachSourceHandle(caseOut.id)
-                                          setAttachDialogOpen(true)
-                                        }}
-                                      >
-                                        <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
-                                      </Button>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                      {caseActions.map((act) => (
-                                        <div
-                                          key={act.id}
-                                          onClick={() => handleSelectAction(act.id)}
-                                          className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                        >
-                                          <div className="flex items-center gap-1 min-w-0">
-                                            <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
-                                            <span className="truncate font-medium text-foreground">{act.label}</span>
-                                          </div>
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              useActionCanvasStore.getState().deleteNode(act.id)
-                                            }}
-                                          >
-                                            <X className="h-2.5 w-2.5" />
-                                          </Button>
-                                        </div>
-                                      ))}
-
-                                      {caseChildTools.map((ctool) => (
-                                        <div
-                                          key={ctool.id}
-                                          onClick={() => handleSelectTool(ctool.id)}
-                                          className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                        >
-                                          <div className="flex items-center gap-1 min-w-0">
-                                            <Wrench className="h-3 w-3 text-muted-foreground shrink-0" />
-                                            <span className="truncate font-medium text-foreground">{ctool.label}</span>
-                                          </div>
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              useToolCanvasStore.getState().deleteNode(ctool.id)
-                                            }}
-                                          >
-                                            <X className="h-2.5 w-2.5" />
-                                          </Button>
-                                        </div>
-                                      ))}
-
-                                      {caseActions.length === 0 && caseChildTools.length === 0 && (
-                                        <p className="text-[10px] text-muted-foreground italic px-1">
-                                          No actions attached to {isDefaultCase ? 'Default' : caseOut.label} branch.
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          ) : (
-                            /* REGULAR TOOL OUTPUT BRANCH */
-                            <div className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-foreground">Output Actions</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Badge variant="outline" className="text-[9px] bg-background font-mono border-border">
+                                  {isIfElse ? 'If / Else' : isSwitch ? 'Switch' : toolNode.type.replace('tool:', '')}
+                                </Badge>
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                  onClick={() => {
-                                    setAttachTargetId(tool.id)
-                                    setAttachSourceType('tool')
-                                    setAttachSourceHandle('output')
-                                    setAttachDialogOpen(true)
+                                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:bg-muted"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    useToolCanvasStore.getState().deleteNode(toolNode.id)
                                   }}
+                                  title="Remove tool"
                                 >
-                                  <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
+                                  <X className="h-3 w-3" />
                                 </Button>
                               </div>
-
-                              <div className="space-y-1">
-                                {defaultOutputActions.map((act) => (
-                                  <div
-                                    key={act.id}
-                                    onClick={() => handleSelectAction(act.id)}
-                                    className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                  >
-                                    <div className="flex items-center gap-1 min-w-0">
-                                      <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
-                                      <span className="truncate font-medium text-foreground">{act.label}</span>
-                                    </div>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        useActionCanvasStore.getState().deleteNode(act.id)
-                                      }}
-                                    >
-                                      <X className="h-2.5 w-2.5" />
-                                    </Button>
-                                  </div>
-                                ))}
-
-                                {defaultOutputTools.map((ctool) => (
-                                  <div
-                                    key={ctool.id}
-                                    onClick={() => handleSelectTool(ctool.id)}
-                                    className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
-                                  >
-                                    <div className="flex items-center gap-1 min-w-0">
-                                      <Wrench className="h-3 w-3 text-muted-foreground shrink-0" />
-                                      <span className="truncate font-medium text-foreground">{ctool.label}</span>
-                                    </div>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        useToolCanvasStore.getState().deleteNode(ctool.id)
-                                      }}
-                                    >
-                                      <X className="h-2.5 w-2.5" />
-                                    </Button>
-                                  </div>
-                                ))}
-
-                                {defaultOutputActions.length === 0 && defaultOutputTools.length === 0 && (
-                                  <p className="text-[10px] text-muted-foreground italic px-1">
-                                    No output actions or tools attached.
-                                  </p>
-                                )}
-                              </div>
                             </div>
-                          )}
-                        </div>
-                      )
+
+                            {/* IF / ELSE BRANCHES */}
+                            {isIfElse ? (
+                              <div className="space-y-2 pt-1">
+                                {/* TRUE BRANCH (✓) */}
+                                <div className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                                      <Sparkles className="h-3 w-3 text-muted-foreground" /> True Branch (✓)
+                                    </span>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                      onClick={() => {
+                                        setAttachTargetId(toolNode.id)
+                                        setAttachSourceType('tool')
+                                        setAttachSourceHandle('true')
+                                        setAttachDialogOpen(true)
+                                      }}
+                                    >
+                                      <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
+                                    </Button>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    {trueActions.map((act) => (
+                                      <div
+                                        key={act.id}
+                                        onClick={() => handleSelectAction(act.id)}
+                                        className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
+                                      >
+                                        <div className="flex items-center gap-1 min-w-0">
+                                          <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
+                                          <span className="truncate font-medium text-foreground">{act.label}</span>
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            useActionCanvasStore.getState().deleteNode(act.id)
+                                          }}
+                                        >
+                                          <X className="h-2.5 w-2.5" />
+                                        </Button>
+                                      </div>
+                                    ))}
+
+                                    {trueChildTools.map((ctool) => renderToolItem(ctool, depth + 1))}
+
+                                    {trueActions.length === 0 && trueChildTools.length === 0 && (
+                                      <p className="text-[10px] text-muted-foreground italic px-1">
+                                        No actions attached to True branch.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* FALSE BRANCH (✗) */}
+                                <div className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                                      <X className="h-3 w-3 text-muted-foreground" /> False Branch (✗)
+                                    </span>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                      onClick={() => {
+                                        setAttachTargetId(toolNode.id)
+                                        setAttachSourceType('tool')
+                                        setAttachSourceHandle('false')
+                                        setAttachDialogOpen(true)
+                                      }}
+                                    >
+                                      <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
+                                    </Button>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    {falseActions.map((act) => (
+                                      <div
+                                        key={act.id}
+                                        onClick={() => handleSelectAction(act.id)}
+                                        className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
+                                      >
+                                        <div className="flex items-center gap-1 min-w-0">
+                                          <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
+                                          <span className="truncate font-medium text-foreground">{act.label}</span>
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            useActionCanvasStore.getState().deleteNode(act.id)
+                                          }}
+                                        >
+                                          <X className="h-2.5 w-2.5" />
+                                        </Button>
+                                      </div>
+                                    ))}
+
+                                    {falseChildTools.map((ctool) => renderToolItem(ctool, depth + 1))}
+
+                                    {falseActions.length === 0 && falseChildTools.length === 0 && (
+                                      <p className="text-[10px] text-muted-foreground italic px-1">
+                                        No actions attached to False branch.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : isSwitch ? (
+                              /* SWITCH CASES BRANCHES */
+                              <div className="space-y-2 pt-1">
+                                {(toolNode.outputs && toolNode.outputs.length > 0 ? toolNode.outputs : [{ id: 'default', label: 'Default' }]).map((caseOut) => {
+                                  const isDefaultCase = caseOut.id === 'default'
+                                  const caseActions = actionNodes.filter(an => {
+                                    const edge = actionEdges.find(e => e.source === toolNode.id && e.target === an.id && (e.sourceHandle === caseOut.id || (isDefaultCase && !e.sourceHandle)))
+                                    return !!edge
+                                  })
+                                  const caseChildTools = toolNodes.filter(tn => {
+                                    const edge = toolEdges.find(e => e.source === toolNode.id && e.target === tn.id && (e.sourceHandle === caseOut.id || (isDefaultCase && !e.sourceHandle)))
+                                    return !!edge
+                                  })
+
+                                  return (
+                                    <div
+                                      key={caseOut.id}
+                                      className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                                          <Layers className="h-3 w-3 text-muted-foreground" />
+                                          {isDefaultCase ? 'Default Fallback' : `Case: ${caseOut.label}`}
+                                        </span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                          onClick={() => {
+                                            setAttachTargetId(toolNode.id)
+                                            setAttachSourceType('tool')
+                                            setAttachSourceHandle(caseOut.id)
+                                            setAttachDialogOpen(true)
+                                          }}
+                                        >
+                                          <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
+                                        </Button>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        {caseActions.map((act) => (
+                                          <div
+                                            key={act.id}
+                                            onClick={() => handleSelectAction(act.id)}
+                                            className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
+                                          >
+                                            <div className="flex items-center gap-1 min-w-0">
+                                              <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
+                                              <span className="truncate font-medium text-foreground">{act.label}</span>
+                                            </div>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                useActionCanvasStore.getState().deleteNode(act.id)
+                                              }}
+                                            >
+                                              <X className="h-2.5 w-2.5" />
+                                            </Button>
+                                          </div>
+                                        ))}
+
+                                        {caseChildTools.map((ctool) => renderToolItem(ctool, depth + 1))}
+
+                                        {caseActions.length === 0 && caseChildTools.length === 0 && (
+                                          <p className="text-[10px] text-muted-foreground italic px-1">
+                                            No actions attached to {isDefaultCase ? 'Default' : caseOut.label} branch.
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ) : (
+                              /* REGULAR TOOL OUTPUT BRANCH */
+                              <div className="p-2 border rounded border-border/60 bg-muted/20 space-y-1.5 text-xs">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-semibold text-foreground">Output Actions</span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-5 text-[10px] px-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    onClick={() => {
+                                      setAttachTargetId(toolNode.id)
+                                      setAttachSourceType('tool')
+                                      setAttachSourceHandle('output')
+                                      setAttachDialogOpen(true)
+                                    }}
+                                  >
+                                    <Plus className="h-2.5 w-2.5 mr-0.5" /> Add Action/Tool
+                                  </Button>
+                                </div>
+
+                                <div className="space-y-1">
+                                  {defaultOutputActions.map((act) => (
+                                    <div
+                                      key={act.id}
+                                      onClick={() => handleSelectAction(act.id)}
+                                      className="flex items-center justify-between p-1.5 rounded bg-background border border-border hover:bg-muted/40 cursor-pointer text-[11px] group"
+                                    >
+                                      <div className="flex items-center gap-1 min-w-0">
+                                        <Zap className="h-3 w-3 text-muted-foreground shrink-0" />
+                                        <span className="truncate font-medium text-foreground">{act.label}</span>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          useActionCanvasStore.getState().deleteNode(act.id)
+                                        }}
+                                      >
+                                        <X className="h-2.5 w-2.5" />
+                                      </Button>
+                                    </div>
+                                  ))}
+
+                                  {defaultOutputTools.map((ctool) => renderToolItem(ctool, depth + 1))}
+
+                                  {defaultOutputActions.length === 0 && defaultOutputTools.length === 0 && (
+                                    <p className="text-[10px] text-muted-foreground italic px-1">
+                                      No output actions or tools attached.
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
+
+                      return renderToolItem(tool, 0)
                     })}
 
                     {/* Direct Node Actions */}
@@ -1262,10 +1164,10 @@ export function ModelExplorer({ className, onSwitchTab, onOpenSidebar }: ModelEx
                   onChange={(e) => setSelectedToolType(e.target.value)}
                   className="h-8 text-xs border rounded px-2 bg-background"
                 >
-                  {Array.from(new Set(PREDEFINED_TOOLS.map(t => t.category))).map(cat => (
-                    <optgroup key={cat} label={cat}>
-                      {PREDEFINED_TOOLS.filter(t => t.category === cat).map(t => (
-                        <option key={t.type} value={t.type}>{t.label}</option>
+                  {workflowRegistry.getGroupedTools().map(group => (
+                    <optgroup key={group.category} label={group.config.label}>
+                      {group.tools.map(t => (
+                        <option key={t.id} value={t.id}>{t.metadata.label}</option>
                       ))}
                     </optgroup>
                   ))}
@@ -1280,10 +1182,10 @@ export function ModelExplorer({ className, onSwitchTab, onOpenSidebar }: ModelEx
                   onChange={(e) => setSelectedActionType(e.target.value)}
                   className="h-8 text-xs border rounded px-2 bg-background"
                 >
-                  {Array.from(new Set(PREDEFINED_ACTIONS.map(a => a.category))).map(cat => (
-                    <optgroup key={cat} label={cat}>
-                      {PREDEFINED_ACTIONS.filter(a => a.category === cat).map(a => (
-                        <option key={a.type} value={a.type}>{a.label}</option>
+                  {workflowRegistry.getGroupedActions().map(group => (
+                    <optgroup key={group.category} label={group.config.label}>
+                      {group.actions.map(a => (
+                        <option key={a.id} value={a.id}>{a.metadata.label}</option>
                       ))}
                     </optgroup>
                   ))}

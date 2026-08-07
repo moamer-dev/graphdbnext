@@ -32,8 +32,10 @@ export const useWorkflowLifecycle = ({
   const xmlFileFromWizard = useXmlImportWizardStore((state: any) => state.selectedFile)
   const xmlFileToLoad = xmlFileFromWizard || xmlFile
 
-  const handleLoadWorkflowFromConfig = useCallback((config: WorkflowConfigExport) => {
+  const handleLoadWorkflowFromConfig = useCallback((wf: any) => {
     try {
+      const config = wf?.config || wf
+      if (!config) return
       const imported = importWorkflowConfig(
         typeof config === 'string' ? config : JSON.stringify(config), 
         nodes
@@ -86,9 +88,8 @@ export const useWorkflowLifecycle = ({
   // Initial workflow loading
   useEffect(() => {
     if (initialWorkflow && nodes.length > 0) {
-      // Create a stable workflow ID using hash of key properties
-      const workflowData = `${initialWorkflow.version}_${initialWorkflow.rootNodeLabel || 'null'}_${initialWorkflow.createdAt}_${initialWorkflow.type || 'workflow-config'}`
-      const workflowId = createHash('md5').update(workflowData).digest('hex')
+      const config = (initialWorkflow as any)?.config || initialWorkflow
+      const workflowId = (initialWorkflow as any)?.id || `${config?.version}_${config?.createdAt}_${JSON.stringify(config?.tools || [])}`
       const isDifferentWorkflow = lastWorkflowIdRef.current !== workflowId
 
       if (isDifferentWorkflow) {

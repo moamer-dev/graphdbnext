@@ -149,15 +149,25 @@ export function useModelBuilderInternal(props: any, ref: any) {
   const [pendingWorkflowId, setPendingWorkflowId] = useState<string | null>(null)
   
   const isSavingRef = useRef(false)
-  const pendingSaveRef = useRef<(() => Promise<void>) | null>(null)
+  const pendingSaveRef = useRef<((extraData?: any) => Promise<void>) | null>(null)
   const initialStateRef = useRef<any>(null)
 
   // Sync currentWorkflow with initialWorkflow if it changes externally
   useEffect(() => {
     if (initialWorkflow) {
       setCurrentWorkflow(initialWorkflow)
-      const normalized = JSON.parse(JSON.stringify(initialWorkflow.config))
-      setSavedWorkflowConfig(normalized)
+      const timer = setTimeout(() => {
+        const currentConfig = workflowService.getCurrentWorkflowConfig()
+        if (currentConfig && (currentConfig.tools?.length || currentConfig.actions?.length)) {
+          setSavedWorkflowConfig(JSON.parse(JSON.stringify(currentConfig)))
+        } else {
+          const config = (initialWorkflow as any).config || initialWorkflow
+          if (config) {
+            setSavedWorkflowConfig(JSON.parse(JSON.stringify(config)))
+          }
+        }
+      }, 250)
+      return () => clearTimeout(timer)
     }
   }, [initialWorkflow])
 
@@ -232,24 +242,44 @@ export function useModelBuilderInternal(props: any, ref: any) {
     toast.success('Workflow cleared')
   }
 
-  const handleWorkflowSave = async (workflowAction: any) => {
-    if (!workflowPersistence) {
-      if (pendingSaveRef.current) {
-        await pendingSaveRef.current()
-        pendingSaveRef.current = null
+  const handleWorkflowSave = async (workflowAction: {
+    action: 'skip' | 'create' | 'update'
+    workflowId?: string
+    name?: string
+    description?: string
+  }) => {
+    if (pendingSaveRef.current) {
+      const config = workflowService.getCurrentWorkflowConfig()
+      await pendingSaveRef.current({
+        pendingWorkflow: workflowAction.action !== 'skip' ? {
+          action: workflowAction.action,
+          workflowId: workflowAction.workflowId,
+          name: workflowAction.name,
+          description: workflowAction.description,
+          config
+        } : null
+      })
+      if (workflowAction.action !== 'skip' && config) {
+        setSavedWorkflowConfig(JSON.parse(JSON.stringify(config)))
+        if (currentWorkflow) {
+          setCurrentWorkflow({
+            ...currentWorkflow,
+            name: workflowAction.name || currentWorkflow.name,
+            description: workflowAction.description !== undefined ? workflowAction.description : currentWorkflow.description,
+            config
+          })
+        }
       }
+      pendingSaveRef.current = null
       return
     }
 
     try {
       const config = workflowService.getCurrentWorkflowConfig()
-      if (!config) {
-        if (pendingSaveRef.current) await pendingSaveRef.current()
-        return
-      }
+      if (!config) return
 
       if (workflowAction.action === 'create' && workflowAction.name) {
-        const result = await workflowPersistence.onSaveWorkflow?.({
+        const result = await workflowPersistence?.onSaveWorkflow?.({
           name: workflowAction.name,
           description: workflowAction.description,
           config
@@ -265,7 +295,7 @@ export function useModelBuilderInternal(props: any, ref: any) {
         }
         toast.success('Workflow created successfully')
       } else if (workflowAction.action === 'update' && workflowAction.workflowId) {
-        await workflowPersistence.onUpdateWorkflow?.(workflowAction.workflowId, {
+        await workflowPersistence?.onUpdateWorkflow?.(workflowAction.workflowId, {
           name: workflowAction.name,
           description: workflowAction.description,
           config
@@ -281,18 +311,9 @@ export function useModelBuilderInternal(props: any, ref: any) {
         }
         toast.success('Workflow updated successfully')
       }
-
-      if (pendingSaveRef.current) {
-        await pendingSaveRef.current()
-        pendingSaveRef.current = null
-      }
     } catch (error) {
       console.error('Error in handleWorkflowSave:', error)
       toast.error('Failed to save workflow')
-      if (pendingSaveRef.current) {
-        await pendingSaveRef.current()
-        pendingSaveRef.current = null
-      }
     }
   }
 
@@ -335,9 +356,10 @@ export function useModelBuilderInternal(props: any, ref: any) {
     if (isSavingRef.current) return
     
     const config = workflowService.getCurrentWorkflowConfig()
-    const hasWorkflow = config && (config.tools?.length || config.actions?.length)
+    const hasWorkflow = config && ((config.tools && config.tools.length > 0) || (config.actions && config.actions.length > 0))
+    const isNew = props.isNewModel || !currentWorkflow
 
-    pendingSaveRef.current = async () => {
+    pendingSaveRef.current = async (extraData?: any) => {
       if (isSavingRef.current) return
       isSavingRef.current = true
       try {
@@ -348,7 +370,8 @@ export function useModelBuilderInternal(props: any, ref: any) {
           }
           await onSaveModel({
             ...exportResult,
-            metadata
+            metadata,
+            ...(extraData || {})
           })
         } else if (onSave) {
           onSave()
@@ -360,7 +383,12 @@ export function useModelBuilderInternal(props: any, ref: any) {
       }
     }
 
-    if (hasWorkflow) {
+    // Only open workflow dialog for existing models if structural changes exist (ignoring position changes)
+    const hasWorkflowChanges = isNew
+      ? hasWorkflow
+      : (hasWorkflow && workflowService.hasUnsavedChanges(savedWorkflowConfig as any))
+
+    if (hasWorkflowChanges) {
       setCurrentWorkflowConfig(config)
       setSaveWorkflowDialogOpen(true)
     } else {

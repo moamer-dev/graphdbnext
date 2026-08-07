@@ -28,7 +28,7 @@ import type { WorkflowConfigExport } from '../utils/workflowConfigExport'
 
 export interface WorkflowPersistence {
   modelId?: string
-  onSaveWorkflow?: (workflow: { name: string; description?: string; config: unknown }) => Promise<{ id: string }>
+  onSaveWorkflow?: (workflow: { name: string; description?: string; config: unknown; modelId?: string }) => Promise<{ id: string }>
   onUpdateWorkflow?: (id: string, workflow: { name?: string; description?: string; config?: unknown }) => Promise<void>
   onLoadWorkflows?: (modelId: string) => Promise<Array<{ id: string; name: string; description?: string; version: string; createdAt: string; updatedAt: string }>>
   onLoadWorkflow?: (id: string) => Promise<{ id: string; name: string; description?: string; config: unknown }>

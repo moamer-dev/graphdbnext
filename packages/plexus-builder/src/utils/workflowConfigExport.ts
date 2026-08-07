@@ -120,7 +120,7 @@ export function exportWorkflowConfig(
       const targetAction = actionIdToNode.get(edge.target)
 
       // Check if source is a node (when connecting node to tool)
-      if (sourceNode && edge.sourceHandle === 'tools') {
+      if (sourceNode) {
         // Source is a node, not a tool
         if (targetTool) {
           const targetTargetNode = targetTool.targetNodeId
