@@ -63,6 +63,9 @@ interface ModelBuilderHeaderProps {
   isPushingXml?: boolean
   viewMode?: 'canvas' | 'explorer'
   setViewMode?: (mode: 'canvas' | 'explorer') => void
+  hasGraphResults?: boolean
+  showLiveResults?: boolean
+  setShowLiveResults?: (show: boolean) => void
 }
 
 export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
@@ -88,6 +91,9 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   agentsPanelOpen,
   setAgentsPanelOpen,
   onSave,
+  hasGraphResults,
+  showLiveResults,
+  setShowLiveResults,
   hasWorkflowItems,
   isWorkflowVisible,
   setIsWorkflowVisible,
@@ -209,17 +215,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
 
         <div className="w-px h-6 bg-border mx-1" />
 
-        {!!xmlContent && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">XML:</span>
-            <Switch
-              id="show-xml-preview"
-              checked={xmlPanelOpen}
-              onCheckedChange={setXmlPanelOpen}
-              className="scale-75"
-            />
-          </div>
-        )}
+
 
         {hasWorkflowItems && (
           <div className="flex items-center gap-2">
@@ -360,89 +356,16 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
           </Button>
         )}
 
-        <input
-          ref={xmlUploadInputRef}
-          type="file"
-          accept=".xml"
-          className="hidden"
-          onChange={handleUploadWithToggle}
-        />
-        <div className="flex items-center rounded-md border bg-background p-0.5">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-[10px] px-2"
-                title={xmlFile ? `Current XML: ${xmlFile.name}` : "Manage structural definitions"}
-              >
-                <FileUp className="h-3.5 w-3.5 lg:mr-1" />
-                <span className="hidden lg:inline">{xmlFile ? t('builder.selectXml') : t('builder.xmlLibrary')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold">{t('builder.localOperations') || 'Local Operations'}</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => xmlUploadInputRef.current?.click()}>
-                <Upload className="h-3.5 w-3.5 mr-2" />
-                {t('builder.uploadFromComputer')}
-              </DropdownMenuItem>
-              
-              {!!xmlFile && onPushXmlToWorkspace && (
-                <DropdownMenuItem 
-                  onSelect={onPushXmlToWorkspace} 
-                  disabled={isPushingXml}
-                  className="text-primary font-medium"
-                >
-                  <Share2 className="h-3.5 w-3.5 mr-2" />
-                  {isPushingXml ? t('builder.pushingToWorkspace') : t('builder.pushToWorkspace')}
-                </DropdownMenuItem>
-              )}
-
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground font-bold flex items-center justify-between">
-                Workspace Library
-                <Globe className="h-3 w-3" />
-              </DropdownMenuLabel>
-              
-              {workspaceXmls.length === 0 ? (
-                <div className="p-4 text-center">
-                  <p className="text-[10px] text-muted-foreground italic">{t('builder.noSharedXmls')}</p>
-                </div>
-              ) : (
-                <div className="max-h-[200px] overflow-y-auto pt-1">
-                  {workspaceXmls.map((xml) => (
-                    <DropdownMenuItem 
-                      key={xml.id} 
-                      onSelect={() => handleSelectWithToggle(xml)}
-                      className={cn(
-                        "flex items-center justify-between",
-                        xmlFile?.name === xml.name && "bg-blue-50 text-blue-700 font-medium focus:bg-blue-100 focus:text-blue-800"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <FileJson className={cn("h-3.5 w-3.5 shrink-0", xmlFile?.name === xml.name ? "text-blue-600" : "text-blue-500")} />
-                        <span className="truncate">{xml.name}</span>
-                      </div>
-                      {xmlFile?.name === xml.name && <CheckCircle2 className="h-3 w-3 text-blue-600 shrink-0 ml-2" />}
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div className="w-px h-4 bg-border mx-0.5" />
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onRunWorkflow}
-            className="h-7 text-[10px] px-2"
-            disabled={!hasContent || !hasWorkflowItems}
-          >
-            <PlayCircle className="h-3.5 w-3.5 lg:mr-1" />
-            <span className="hidden lg:inline">{t('builder.buildGraph')}</span>
-          </Button>
-        </div>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onRunWorkflow}
+          className="h-7 text-[10px] px-2"
+          disabled={!hasContent || !hasWorkflowItems}
+        >
+          <PlayCircle className="h-3.5 w-3.5 lg:mr-1" />
+          <span className="hidden lg:inline">{t('builder.buildGraph')}</span>
+        </Button>
       </div>
       
       <SemanticValidationDialog 

@@ -8,12 +8,12 @@ import { EditorView, Decoration } from '@codemirror/view'
 import { StateField, StateEffect } from '@codemirror/state'
 import { foldAll, unfoldAll } from '@codemirror/language'
 import { cn } from '../../utils/cn'
-import { 
-  WrapText, 
-  ChevronUp, 
-  ChevronDown, 
-  Copy, 
-  CheckCircle2 
+import {
+  WrapText,
+  ChevronUp,
+  ChevronDown,
+  Copy,
+  CheckCircle2
 } from 'lucide-react'
 import { Button } from '../ui/button'
 
@@ -42,8 +42,8 @@ const TypedCodeMirror = CodeMirror as any as React.ForwardRefExoticComponent<
   ExtendedCodeMirrorProps & React.RefAttributes<ReactCodeMirrorRef>
 >
 
-// Effect to set highlight position
-const setHighlight = StateEffect.define<number | null>()
+// Effect to set highlight ranges
+const setHighlight = StateEffect.define<Array<{ start: number; end: number }> | null>()
 
 // State field to manage highlight decorations
 const highlightField = StateField.define({
@@ -54,32 +54,19 @@ const highlightField = StateField.define({
     decorations = decorations.map(tr.changes)
     for (const effect of tr.effects) {
       if (effect.is(setHighlight)) {
-        if (effect.value === null) {
+        if (effect.value === null || effect.value.length === 0) {
           decorations = Decoration.none
         } else {
-          const pos = effect.value
-          const doc = tr.state.doc
-          if (pos >= 0 && pos < doc.length) {
-            // Find the end of the opening tag
-            let endPos = pos
-            while (endPos < doc.length) {
-              const char = doc.sliceString(endPos, endPos + 1)
-              if (char === '>') {
-                endPos++
-                break
-              }
-              endPos++
+          const mark = Decoration.mark({
+            class: 'cm-highlighted-xml-element',
+            attributes: {
+              style: 'background-color: rgba(254, 240, 138, 0.85) !important; color: #000 !important; font-weight: 600; padding: 1px 3px; border-radius: 3px; box-shadow: 0 0 0 2px #fbbf24, 0 2px 4px rgba(251, 191, 36, 0.3);'
             }
-            if (endPos > pos) {
-              const mark = Decoration.mark({
-                class: 'cm-highlighted-xml-element',
-                attributes: {
-                  style: 'background-color: #fef08a !important; padding: 2px 0; border-radius: 2px; transition: background-color 0.2s; display: inline-block; box-shadow: 0 0 0 2px #fbbf24;'
-                }
-              })
-              decorations = Decoration.set([mark.range(pos, endPos)])
-            }
-          }
+          })
+          const ranges = effect.value.map(r => mark.range(r.start, r.end))
+          // CodeMirror requires range sets to be sorted
+          ranges.sort((a, b) => a.from - b.from)
+          decorations = Decoration.set(ranges, true)
         }
       }
     }
@@ -87,6 +74,13 @@ const highlightField = StateField.define({
   },
   provide: f => EditorView.decorations.from(f)
 })
+
+interface MatchedTag {
+  start: number
+  end: number
+  line: number
+  text: string
+}
 
 export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>(
   ({ value, height = '500px', wrapWord = false, scrollToPosition, scrollToId, onChange }, ref) => {
@@ -96,6 +90,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
     const [isWrapping, setIsWrapping] = React.useState(wrapWord)
     const [isAllCollapsed, setIsAllCollapsed] = React.useState(false)
     const [isCopied, setIsCopied] = React.useState(false)
+    const [matchedElements, setMatchedElements] = React.useState<MatchedTag[]>([])
 
     const handleToggleFold = () => {
       if (codeMirrorRef.current?.view) {
@@ -119,7 +114,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
     }
 
     const extensions = [
-      xmlLang(), 
+      xmlLang(),
       highlightField,
       EditorView.theme({
         "&": { height: "100%" },
@@ -148,7 +143,7 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
       return null
     }, [])
 
-    // Function to scroll to position
+    // Function to scroll to position (Persistent highlight without auto-clear)
     const scrollToPos = useCallback((position: number) => {
       const view = getEditorView()
       if (view) {
@@ -157,7 +152,6 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
           try {
             view.dispatch({
               effects: [
-                setHighlight.of(position),
                 EditorView.scrollIntoView(position, {
                   y: 'center',
                   x: 'start'
@@ -165,15 +159,6 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
               ],
               selection: { anchor: position, head: position }
             })
-
-            // Clear highlight after 3 seconds
-            setTimeout(() => {
-              if (view) {
-                view.dispatch({
-                  effects: setHighlight.of(null)
-                })
-              }
-            }, 3000)
           } catch (error) {
             console.error('Error scrolling to position:', error)
           }
@@ -181,104 +166,85 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
       }
     }, [getEditorView])
 
-    // Function to scroll to ID (simple and reliable - IDs are unique)
-    const scrollToIdPos = useCallback((id: string) => {
-      if (!value) return
+    // Function to scroll to ID and highlight ALL matching elements
+    const scrollToIdPos = useCallback((id: string | null) => {
+      if (!value || !id) {
+        setMatchedElements([])
+        const view = getEditorView()
+        if (view) {
+          view.dispatch({ effects: setHighlight.of(null) })
+        }
+        return
+      }
 
-      console.log('Searching for ID:', id)
+      const cleanId = id.trim()
+      const lowerId = cleanId.toLowerCase()
 
-      // Since IDs are unique, we can search for the ID value directly
-      // Look for patterns: xml:id="id" or id="id" (with double or single quotes)
-      const patterns = [
-        `xml:id="${id}"`,
-        `id="${id}"`,
-        `xml:id='${id}'`,
-        `id='${id}'`
-      ]
+      const foundRanges: Array<{ start: number; end: number }> = []
+      const foundMatches: MatchedTag[] = []
+      const seenStarts = new Set<number>()
 
-      let tagStart: number | null = null
-      let tagEnd: number | null = null
+      // 1. Search for element tags: <Tag ...>, <tag ...>, <Tag>, <tag>
+      const tagRegex = new RegExp(`<(${cleanId}|${lowerId})[\\s/>]`, 'gi')
+      let match: RegExpExecArray | null
 
-      // Try each pattern
-      for (const pattern of patterns) {
-        const index = value.indexOf(pattern)
-        if (index !== -1) {
-          // Check if this is in a reference (like corresp="#id")
-          // Look for # before the pattern
-          if (index > 0 && value[index - 1] === '#') {
-            console.log('Skipping - ID is in a reference (corresp="#id")')
-            continue
+      while ((match = tagRegex.exec(value)) !== null) {
+        const start = match.index
+        if (seenStarts.has(start)) continue
+        seenStarts.add(start)
+
+        let end = start
+        while (end < value.length && value[end] !== '>') {
+          end++
+        }
+        if (end < value.length && value[end] === '>') {
+          end++ // include closing '>'
+        } else {
+          end = Math.min(start + match[0].length, value.length)
+        }
+
+        const lineNumber = value.substring(0, start).split('\n').length
+        const previewText = value.substring(start, Math.min(start + 40, value.length)).replace(/\n/g, ' ')
+
+        foundRanges.push({ start, end })
+        foundMatches.push({ start, end, line: lineNumber, text: previewText })
+      }
+
+      // 2. Search for unique IDs: xml:id="id" or id="id"
+      const idRegex = new RegExp(`(xml:id|id)=["']${cleanId}["']`, 'gi')
+      while ((match = idRegex.exec(value)) !== null) {
+        // Find opening '<' of tag
+        let start = match.index
+        while (start > 0 && value[start] !== '<') {
+          start--
+        }
+        if (start >= 0 && value[start] === '<' && !seenStarts.has(start)) {
+          seenStarts.add(start)
+          let end = start
+          while (end < value.length && value[end] !== '>') {
+            end++
           }
+          if (end < value.length) end++
 
-          // Found the pattern, now find the opening < of the tag
-          let start = index
-          while (start > 0 && value[start] !== '<') {
-            start--
-          }
+          const lineNumber = value.substring(0, start).split('\n').length
+          const previewText = value.substring(start, Math.min(start + 40, value.length)).replace(/\n/g, ' ')
 
-          if (start >= 0 && value[start] === '<') {
-            // Find the closing > of the tag
-            let end = start
-            while (end < value.length && value[end] !== '>') {
-              end++
-            }
-            if (end < value.length && value[end] === '>') {
-              tagStart = start
-              tagEnd = end + 1
-              console.log('Found ID at position:', tagStart, 'to', tagEnd, 'pattern:', pattern)
-              break
-            }
-          }
+          foundRanges.push({ start, end })
+          foundMatches.push({ start, end, line: lineNumber, text: previewText })
         }
       }
 
-      if (tagStart !== null) {
-        // Verify the position by checking what's at that location
-        const tagPreview = value.substring(tagStart, Math.min(tagStart + 100, value.length))
+      setMatchedElements(foundMatches)
 
-        // Add a small delay to ensure CodeMirror is ready, then scroll
-        setTimeout(() => {
-          const view = getEditorView()
-          if (view) {
-            const doc = view.state.doc
-            console.log('CodeMirror doc length:', doc.length, 'value length:', value.length)
-
-            // Verify the position is valid
-            if (tagStart >= 0 && tagStart <= doc.length) {
-              // Double-check: verify the content at this position matches
-              const docContent = doc.sliceString(tagStart, Math.min(tagStart + 50, doc.length))
-              console.log('CodeMirror content at position:', docContent)
-
-              if (docContent.includes(id)) {
-                console.log('Position verified, scrolling...')
-                scrollToPos(tagStart)
-              } else {
-                console.warn('Position mismatch! Expected ID at position, but found:', docContent)
-                // Try to find the ID in the CodeMirror document
-                const docString = doc.toString()
-                const docIndex = docString.indexOf(`xml:id="${id}"`)
-                if (docIndex !== -1) {
-                  // Find the opening <
-                  let docStart = docIndex
-                  while (docStart > 0 && docString[docStart] !== '<') {
-                    docStart--
-                  }
-                  if (docStart >= 0 && docString[docStart] === '<') {
-                    console.log('Found ID in CodeMirror doc at position:', docStart)
-                    scrollToPos(docStart)
-                  }
-                }
-              }
-            } else {
-              console.warn('Position out of bounds:', tagStart, 'doc length:', doc.length)
-            }
-          } else {
-            console.warn('Editor view not available')
-          }
-        }, 100)
-      } else {
-        console.warn('Could not find ID in XML:', id)
-      }
+      setTimeout(() => {
+        const view = getEditorView()
+        if (view && foundRanges.length > 0) {
+          view.dispatch({
+            effects: [setHighlight.of(foundRanges)]
+          })
+          scrollToPos(foundRanges[0].start)
+        }
+      }, 100)
     }, [value, getEditorView, scrollToPos])
 
     // Expose methods via ref
@@ -306,9 +272,9 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
     }, [scrollToId, scrollToIdPos])
 
     return (
-      <div 
-        ref={containerRef} 
-        className="flex flex-col flex-1 min-h-0 overflow-hidden" 
+      <div
+        ref={containerRef}
+        className="flex flex-col flex-1 min-h-0 overflow-hidden"
         style={{ height, width: '100%' }}
       >
         <div className="h-9 border-b border-border/40 bg-muted/5 flex items-center justify-between px-3 relative z-10 flex-shrink-0">
@@ -363,23 +329,47 @@ export const XmlCodePreview = forwardRef<XmlCodePreviewRef, XmlCodePreviewProps>
             box-shadow: 0 0 0 2px ${theme === 'dark' ? 'rgba(250, 204, 21, 0.4)' : '#fbbf24'};
           }
         `}</style>
-        <TypedCodeMirror
-          ref={codeMirrorRef}
-          value={value}
-          height="100%"
-          editable={true}
-          className="flex-1 min-h-0"
-          onChange={onChange}
-          basicSetup={{
-            lineNumbers: true,
-            highlightActiveLine: false,
-            foldGutter: true,
-            bracketMatching: true,
-            searchKeymap: true
-          } as any}
-          extensions={extensions}
-          theme={theme === 'dark' ? 'dark' : 'light'}
-        />
+        <div className="relative flex-1 min-h-0 overflow-hidden">
+          <TypedCodeMirror
+            ref={codeMirrorRef}
+            value={value}
+            height="100%"
+            editable={true}
+            className="flex-1 min-h-0 h-full"
+            onChange={onChange}
+            basicSetup={{
+              lineNumbers: true,
+              highlightActiveLine: false,
+              foldGutter: true,
+              bracketMatching: true,
+              searchKeymap: true
+            } as any}
+            extensions={extensions}
+            theme={theme === 'dark' ? 'dark' : 'light'}
+          />
+
+          {matchedElements.length > 0 && (
+            <div className="absolute right-0 top-0 bottom-0 w-5 bg-background/80 backdrop-blur-xs border-l border-border/40 z-20 flex flex-col items-center select-none">
+              <div className="text-[9px] font-bold text-amber-600 dark:text-amber-400 py-1" title={`${matchedElements.length} elements matched`}>
+                {matchedElements.length}
+              </div>
+              <div className="relative flex-1 w-full overflow-hidden">
+                {matchedElements.map((match, idx) => {
+                  const topPercent = Math.min(98, Math.max(1, (match.start / (value.length || 1)) * 100))
+                  return (
+                    <div
+                      key={idx}
+                      title={`Line ${match.line}: ${match.text}`}
+                      onClick={() => scrollToPos(match.start)}
+                      className="absolute left-0.5 right-0.5 h-1.5 bg-amber-400 dark:bg-amber-500 hover:bg-amber-600 hover:scale-y-150 cursor-pointer shadow-sm rounded-xs transition-all"
+                      style={{ top: `${topPercent}%` }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     )
   }

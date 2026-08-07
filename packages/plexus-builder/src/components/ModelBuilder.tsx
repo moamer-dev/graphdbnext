@@ -1,8 +1,9 @@
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, useState, useEffect } from 'react'
 import { ModelBuilderCanvas } from './canvas/ModelBuilderCanvas'
 import { ModelExplorer } from './explorer/ModelExplorer'
+import { LiveResultsPanel } from './workflow/LiveResultsPanel'
 import { useModelBuilderStore } from '../stores/modelBuilderStore'
 import { useToolCanvasStore } from '../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../stores/actionCanvasStore'
@@ -13,7 +14,7 @@ import { ModelBuilderSidebar } from './ModelBuilderSidebar'
 import { ModelBuilderDialogs } from './ModelBuilderDialogs'
 import { cn } from '../utils/cn'
 import { Button } from './ui/button'
-import { PanelLeftOpen, X } from 'lucide-react'
+import { PanelLeftOpen, X, FileText, Code2, PlayCircle, Sparkles } from 'lucide-react'
 import { ResizablePanel } from './ui/resizable-panel'
 import { XmlCodePreview } from './editor/XmlCodePreview'
 import { ExecutionProgress } from './workflow/ExecutionProgress'
@@ -184,6 +185,28 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
 
   const viewMode = useModelBuilderStore((state) => state.viewMode)
   const setViewMode = useModelBuilderStore((state) => state.setViewMode)
+  const selectedNodeId = useModelBuilderStore((state) => state.selectedNode)
+
+  const activeSelectedNode = nodes.find((n) => n.id === selectedNodeId)
+  const activeSearchTag = activeSelectedNode?.label || activeSelectedNode?.type || null
+
+  const [showLiveResults, setShowLiveResults] = useState(false)
+  const hasGraphResults = Boolean(ui.graphPreview?.items && ui.graphPreview.items.length > 0)
+  const [inspectorTab, setInspectorTab] = useState<'properties' | 'xml' | 'results' | 'ai'>('properties')
+
+  useEffect(() => {
+    if (xmlPanelOpen) setInspectorTab('xml')
+  }, [xmlPanelOpen])
+
+  useEffect(() => {
+    if (showLiveResults) setInspectorTab('results')
+  }, [showLiveResults])
+
+  useEffect(() => {
+    if (agentsPanelOpen) setInspectorTab('ai')
+  }, [agentsPanelOpen])
+
+  const isInspectorOpen = ui.sidebarOpen || xmlPanelOpen || showLiveResults || agentsPanelOpen
 
   return (
     <div className={cn("flex flex-col h-full bg-background select-none", className)}>
@@ -231,19 +254,27 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         setShowToolbar={setShowToolbar}
         onOpenCredentials={() => ui.setCredentialsDialogOpen(true)}
         isNewModel={isNewModel}
-        // Collaborative Workspace Assets
         workspaceXmls={workspaceXmls}
         onSelectWorkspaceXml={onSelectWorkspaceXml}
         onPushXmlToWorkspace={onPushXmlToWorkspace}
         isPushingXml={isPushingXml}
         viewMode={viewMode || 'canvas'}
         setViewMode={setViewMode}
+        hasGraphResults={hasGraphResults}
+        showLiveResults={showLiveResults}
+        setShowLiveResults={setShowLiveResults}
       />
 
-      <div className="flex h-[calc(100%-56px)] relative">
+      <div className="flex-1 min-h-0 relative flex overflow-hidden">
         {!ui.nodesSidebarOpen && (
-          <div className="absolute left-0 top-2 z-10">
-            <Button variant="ghost" size="sm" onClick={() => ui.setNodesSidebarOpen(true)} className="h-8 w-8 p-0 bg-background/95 backdrop-blur-sm border shadow-sm">
+          <div className="absolute left-2 top-2 z-20">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => ui.setNodesSidebarOpen(true)}
+              className="h-8 w-8 p-0 bg-background/95 backdrop-blur-sm border shadow-sm hover:bg-muted"
+              title="Open Palette & Files"
+            >
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           </div>
@@ -258,6 +289,15 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
           setLeftTab={setLeftTab}
           onFocusNode={(id) => ui.focusNodeFnRef.current?.(id)}
           onFocusRelationship={(from, to) => ui.focusRelationshipFnRef.current?.(from, to)}
+          onSelectWorkspaceXml={onSelectWorkspaceXml}
+          onUploadXml={(file: File) => {
+            ui.setXmlFile(file)
+          }}
+          xmlContent={xmlContent}
+          setXmlContent={setXmlContent}
+          xmlPanelOpen={xmlPanelOpen}
+          setXmlPanelOpen={setXmlPanelOpen}
+          dataSourcesPersistence={props.dataSourcesPersistence}
         />
 
         <div className="flex-1 min-w-0 relative flex h-full overflow-hidden">
@@ -281,31 +321,105 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
             )}
           </div>
 
-          {agentsPanelOpen && (!!isSchemaDesignEnabled || !!isWorkflowGenerationEnabled) && (
-            <ResizablePanel side="right" defaultWidth={agentsPanelWidth} minWidth={300} maxWidth={800} onWidthChange={setAgentsPanelWidth} className="h-full border-l bg-background">
-              <AIAgentsPanel className="h-full" />
-            </ResizablePanel>
-          )}
-
-          {xmlPanelOpen && xmlContent && (
-            <ResizablePanel side="right" defaultWidth={xmlPanelWidth} minWidth={350} maxWidth={1000} onWidthChange={setXmlPanelWidth} className="h-full border-l bg-background">
-              <div className="h-full flex flex-col">
-                <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
-                  <h3 className="text-xs font-semibold">{t('builder.xmlPreview')}</h3>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setXmlPanelOpen(false)}>
-                      <X className="h-3 w-3" />
+          {isInspectorOpen && (
+            <ResizablePanel
+              side="right"
+              defaultWidth={rightSidebarWidth}
+              minWidth={320}
+              maxWidth={800}
+              onWidthChange={setRightSidebarWidth}
+              className="h-full border-l bg-background flex flex-col shrink-0"
+            >
+              {/* Unified Inspector Header Tabs */}
+              <div className="h-10 px-2 border-b bg-muted/20 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                  <Button
+                    variant={inspectorTab === 'properties' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-2.5 text-xs font-semibold gap-1.5"
+                    onClick={() => setInspectorTab('properties')}
+                  >
+                    <FileText className="h-3.5 w-3.5 text-primary" />
+                    Properties
+                  </Button>
+                  {!!xmlContent && (
+                    <Button
+                      variant={inspectorTab === 'xml' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-2.5 text-xs font-semibold gap-1.5"
+                      onClick={() => setInspectorTab('xml')}
+                    >
+                      <Code2 className="h-3.5 w-3.5 text-blue-500" />
+                      XML Code
                     </Button>
-                  </div>
+                  )}
+                  <Button
+                    variant={inspectorTab === 'results' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-2.5 text-xs font-semibold gap-1.5"
+                    onClick={() => setInspectorTab('results')}
+                  >
+                    <PlayCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    Live Results
+                  </Button>
+                  {(!!isSchemaDesignEnabled || !!isWorkflowGenerationEnabled) && (
+                    <Button
+                      variant={inspectorTab === 'ai' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-2.5 text-xs font-semibold gap-1.5"
+                      onClick={() => setInspectorTab('ai')}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                      AI Assistant
+                    </Button>
+                  )}
                 </div>
-                <div className="flex-1 relative overflow-hidden">
-                  <XmlCodePreview 
-                    value={xmlContent} 
-                    height="100%" 
-                    wrapWord={xmlWrapWord} 
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    ui.setSidebarOpen(false)
+                    setXmlPanelOpen(false)
+                    setShowLiveResults(false)
+                    setAgentsPanelOpen(false)
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Inspector Content View */}
+              <div className="flex-1 min-h-0 relative overflow-hidden">
+                {inspectorTab === 'properties' && (
+                  selectedRelationship ? <RelationshipEditor className="h-full" onClose={() => ui.setSidebarOpen(false)} /> :
+                  selectedToolNodeId ? <ToolConfigurationSidebar toolNodeId={selectedToolNodeId} xmlContent={xmlContent} onClose={() => { useToolCanvasStore.getState().selectNode(null); ui.setSidebarOpen(false); }} className="h-full" /> :
+                  selectedActionNodeId ? <ActionConfigurationSidebar actionNodeId={selectedActionNodeId} xmlContent={xmlContent} onClose={() => { useActionCanvasStore.getState().selectNode(null); ui.setSidebarOpen(false); }} className="h-full" /> :
+                  <NodeEditor className="h-full" onFocusNode={(id) => ui.focusNodeFnRef.current?.(id)} onClose={() => ui.setSidebarOpen(false)} />
+                )}
+
+                {inspectorTab === 'xml' && xmlContent && (
+                  <XmlCodePreview
+                    value={xmlContent}
+                    height="100%"
+                    wrapWord={xmlWrapWord}
+                    scrollToId={activeSearchTag}
                     onChange={(newVal) => setXmlContent(newVal)}
                   />
-                </div>
+                )}
+
+                {inspectorTab === 'results' && (
+                  <LiveResultsPanel
+                    graphPreview={ui.graphPreview}
+                    onClose={() => setShowLiveResults(false)}
+                    className="h-full border-none"
+                  />
+                )}
+
+                {inspectorTab === 'ai' && (
+                  <AIAgentsPanel className="h-full" />
+                )}
               </div>
             </ResizablePanel>
           )}
@@ -315,22 +429,6 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
           <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 w-96 bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-lg">
             <ExecutionProgress {...ui.executionProgress} status={ui.executionProgress.current === ui.executionProgress.total ? 'completed' : 'running'} />
           </div>
-        )}
-
-        {ui.sidebarOpen && (
-          <ResizablePanel 
-            side="right" 
-            defaultWidth={rightSidebarWidth} 
-            minWidth={280} 
-            maxWidth={600} 
-            onWidthChange={setRightSidebarWidth}
-            className="h-full border-l bg-muted/10 shrink-0"
-          >
-            {selectedRelationship ? <RelationshipEditor className="h-full" onClose={() => ui.setSidebarOpen(false)} /> :
-             selectedToolNodeId ? <ToolConfigurationSidebar toolNodeId={selectedToolNodeId} xmlContent={xmlContent} onClose={() => { useToolCanvasStore.getState().selectNode(null); ui.setSidebarOpen(false); }} className="h-full" /> :
-             selectedActionNodeId ? <ActionConfigurationSidebar actionNodeId={selectedActionNodeId} xmlContent={xmlContent} onClose={() => { useActionCanvasStore.getState().selectNode(null); ui.setSidebarOpen(false); }} className="h-full" /> :
-             <NodeEditor className="h-full" onFocusNode={(id) => ui.focusNodeFnRef.current?.(id)} onClose={() => ui.setSidebarOpen(false)} />}
-          </ResizablePanel>
         )}
       </div>
 

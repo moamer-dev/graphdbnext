@@ -14,10 +14,12 @@ import { ViewSwitcher } from '@/components/data-table/ViewSwitcher'
 import { DataGrid } from '@/components/data-table/DataGrid'
 import { ResourceCard } from '@/components/dashboard/ResourceCard'
 import { SchemaUploadDialog } from '@/components/dashboard/graph/SchemaUploadDialog'
+import { CreateModelDialog } from '@/components/dashboard/graph/CreateModelDialog'
 
 function ModelsPageContent() {
   const searchParams = useSearchParams()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -68,7 +70,7 @@ function ModelsPageContent() {
                 <Button
                   size="sm"
                   variant="default"
-                  onClick={() => router.push(`${ModelResource.VIEW_PATH}/new`)}
+                  onClick={() => setCreateDialogOpen(true)}
                   className="h-7 text-xs bg-primary hover:bg-primary/90"
                 >
                   <Plus className="h-3 w-3 mr-1.5" />
@@ -95,6 +97,11 @@ function ModelsPageContent() {
                 <Upload className="h-3 w-3 mr-1.5" />
                 Upload Schema
             </Button>
+
+            <CreateModelDialog
+                open={createDialogOpen}
+                onOpenChange={setCreateDialogOpen}
+            />
 
             <SchemaUploadDialog 
                 open={uploadDialogOpen} 

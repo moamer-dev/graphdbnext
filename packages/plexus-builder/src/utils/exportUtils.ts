@@ -8,6 +8,7 @@ export function exportToJson (state: ModelBuilderState): string {
     version?: string
     lastUpdated?: string
     source?: string
+    metadata?: any
     isSemanticEnabled?: boolean
     selectedOntologyId?: string | null
     rootNodeLabel?: string | null
@@ -41,6 +42,7 @@ export function exportToJson (state: ModelBuilderState): string {
     version: state.metadata.version || '1.0.0',
     lastUpdated: new Date().toISOString(),
     source: state.metadata.name || 'Model Builder',
+    metadata: state.metadata,
     isSemanticEnabled: state.isSemanticEnabled,
     selectedOntologyId: state.selectedOntologyId,
     rootNodeLabel: state.nodes.find(n => n.id === state.rootNodeId)?.label || null,

@@ -58,6 +58,9 @@ export interface ModelBuilderState {
     name: string
     description: string
     version: string
+    selectedXmlName?: string
+    selectedXmlId?: string
+    xmlContent?: string
   }
 }
 

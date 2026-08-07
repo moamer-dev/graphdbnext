@@ -64,15 +64,35 @@ import type { Node, NodeGroup } from '../../types'
 import { ToolsPaletteSection } from './sections/ToolsPaletteSection'
 import { ActionsPaletteSection } from './sections/ActionsPaletteSection'
 import { RelationshipsPaletteSection } from './sections/RelationshipsPaletteSection'
+import { DataSourcesPaletteSection } from './sections/DataSourcesPaletteSection'
 
 interface NodePaletteProps {
   className?: string
-  mode?: 'nodes' | 'relationships' | 'tools' | 'actions'
+  mode?: 'nodes' | 'relationships' | 'tools' | 'actions' | 'data-sources'
   onFocusNode?: (id: string) => void
   onFocusRelationship?: (fromNodeId: string, toNodeId: string) => void
+  xmlContent?: string
+  setXmlContent?: (content: string) => void
+  xmlPanelOpen?: boolean
+  setXmlPanelOpen?: (open: boolean) => void
+  onSelectWorkspaceXml?: (source: any) => void
+  onUploadXml?: (file: File) => void
+  dataSourcesPersistence?: any
 }
 
-export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRelationship }: NodePaletteProps) {
+export function NodePalette({
+  className,
+  mode = 'nodes',
+  onFocusNode,
+  onFocusRelationship,
+  xmlContent,
+  setXmlContent,
+  xmlPanelOpen,
+  setXmlPanelOpen,
+  onSelectWorkspaceXml,
+  onUploadXml,
+  dataSourcesPersistence
+}: NodePaletteProps) {
   const t = useBuilderTranslations()
   const viewMode = mode
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -626,6 +646,19 @@ export function NodePalette({ className, mode = 'nodes', onFocusNode, onFocusRel
           {/* Actions Section - only show when actions tab is active */}
           {viewMode === 'actions' && (
             <ActionsPaletteSection />
+          )}
+
+          {/* Data Sources Section - only show when data-sources tab is active */}
+          {viewMode === 'data-sources' && (
+            <DataSourcesPaletteSection
+              xmlContent={xmlContent}
+              setXmlContent={setXmlContent}
+              xmlPanelOpen={xmlPanelOpen}
+              setXmlPanelOpen={setXmlPanelOpen}
+              onSelectWorkspaceXml={onSelectWorkspaceXml}
+              onUploadXml={onUploadXml}
+              dataSourcesPersistence={dataSourcesPersistence}
+            />
           )}
         </div>
       </div>

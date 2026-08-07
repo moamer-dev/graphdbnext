@@ -25,39 +25,41 @@ export const sidebarNavItems: SidebarNavItem[] = [
     icon: LayoutDashboard
   },
   {
-    title: 'API Credentials',
-    url: '/dashboard/credentials',
-    icon: Network,
-    resource: 'CREDENTIAL'
-  },
-  {
-    title: 'Data Sources',
-    url: '/dashboard/data-sources',
-    icon: Database,
-    resource: 'DATA_SOURCE_PAGE',
-    action: 'ACCESS'
-  },
-  {
-    title: 'Workspace Hub',
-    url: '/dashboard/workspaces/hub',
+    title: 'Workspaces & Projects',
+    url: '/dashboard/workspaces',
     icon: LayoutGrid,
-    resource: 'WORKSPACE_HUB',
-    action: 'ACCESS'
+    resource: 'WORKSPACE',
+    items: [
+      {
+        title: 'Workspace Hub',
+        url: '/dashboard/workspaces/hub',
+        resource: 'WORKSPACE_HUB',
+        action: 'ACCESS'
+      },
+      {
+        title: 'All Workspaces',
+        url: '/dashboard/workspaces',
+        resource: 'WORKSPACE'
+      },
+      {
+        title: 'Projects',
+        url: '/dashboard/projects',
+        resource: 'PROJECT'
+      },
+      {
+        title: 'Teams',
+        url: '/dashboard/teams',
+        resource: 'TEAM'
+      }
+    ]
   },
-
   {
-    title: 'Plexus',
-    url: '/dashboard/graph',
+    title: 'Plexus Builder',
+    url: '/dashboard/graph/model',
     icon: Network,
     resource: 'MODEL',
     action: 'READ',
     items: [
-      {
-        title: 'Create Model',
-        url: '/dashboard/graph/model/new',
-        section: 'create-model',
-        moduleId: 'plexus-builder'
-      },
       {
         title: 'Schema Models',
         url: '/dashboard/graph/model',
@@ -65,34 +67,60 @@ export const sidebarNavItems: SidebarNavItem[] = [
         resource: 'MODEL'
       },
       {
-        title: 'XML Importer',
+        title: 'Create Model',
+        url: '/dashboard/graph/model/new',
+        section: 'create-model',
+        moduleId: 'plexus-builder'
+      },
+      {
+        title: 'XML Importer Wizard',
         url: '/dashboard/graph/model/new/from-xml',
         section: 'xml-importer',
         moduleId: 'plexus-builder'
-      },
+      }
     ]
   },
   {
-    title: 'Database',
+    title: 'Data & API Assets',
+    url: '/dashboard/data-sources',
+    icon: Database,
+    resource: 'DATA_SOURCE_PAGE',
+    action: 'ACCESS',
+    items: [
+      {
+        title: 'Data Sources (XML Library)',
+        url: '/dashboard/data-sources',
+        resource: 'DATA_SOURCE_PAGE',
+        action: 'ACCESS'
+      },
+      {
+        title: 'API Credentials',
+        url: '/dashboard/credentials',
+        resource: 'CREDENTIAL'
+      }
+    ]
+  },
+  {
+    title: 'Graph Database',
     url: '/dashboard/database',
     icon: Database,
     resource: 'DATABASE',
     action: 'ACCESS',
     items: [
       {
-        title: 'Management',
+        title: 'Database Explorer',
         url: '/dashboard/database',
         resource: 'DATABASE',
         action: 'ACCESS'
       },
       {
-        title: 'Queries',
+        title: 'Query Studio (Cypher)',
         url: '/dashboard/database/queries',
         section: 'queries',
         resource: 'QUERY'
       },
       {
-        title: 'Analytics',
+        title: 'Graph Analytics',
         url: '/dashboard/database/analytics',
         section: 'analytics',
         resource: 'ANALYTICS'
@@ -100,7 +128,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
     ]
   },
   {
-    title: 'Admin',
+    title: 'Administration',
     url: '/dashboard/admin',
     icon: Users,
     adminOnly: true,
@@ -144,23 +172,5 @@ export const sidebarNavItems: SidebarNavItem[] = [
         section: 'ai'
       }
     ]
-  },
-  {
-    title: 'Teams',
-    url: '/dashboard/teams',
-    icon: Users,
-    resource: 'TEAM'
-  },
-  {
-    title: 'Projects',
-    url: '/dashboard/projects',
-    icon: FolderKanban,
-    resource: 'PROJECT'
-  },
-  {
-    title: 'Workspaces',
-    url: '/dashboard/workspaces',
-    icon: LayoutGrid,
-    resource: 'WORKSPACE'
   }
 ]

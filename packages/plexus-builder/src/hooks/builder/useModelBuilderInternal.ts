@@ -111,8 +111,8 @@ export function useModelBuilderInternal(props: any, ref: any) {
     initialWorkflow, nodes, relationships, ui
   })
 
-  const [leftTab, setLeftTab] = useTabPersistence<'nodes' | 'relationships' | 'tools' | 'actions'>(
-    'plexus-builder-left-tab', 'nodes', ['nodes', 'relationships', 'tools', 'actions']
+  const [leftTab, setLeftTab] = useTabPersistence<'nodes' | 'relationships' | 'tools' | 'actions' | 'data-sources'>(
+    'plexus-builder-left-tab', 'nodes', ['nodes', 'relationships', 'tools', 'actions', 'data-sources']
   )
   const [sidebarWidth, setSidebarWidth] = useState(260)
   const [agentsPanelOpen, setAgentsPanelOpen] = useState(false)
@@ -364,6 +364,10 @@ export function useModelBuilderInternal(props: any, ref: any) {
       isSavingRef.current = true
       try {
         if (onSaveModel) {
+          useModelBuilderStore.getState().updateMetadata({
+            xmlContent,
+            selectedXmlName: ui.xmlFile?.name || metadata.selectedXmlName || 'linked.xml'
+          })
           const exportResult = {
             schemaJson: JSON.parse(exportToJson(useModelBuilderStore.getState())),
             schemaMd: exportToMarkdown(useModelBuilderStore.getState())
@@ -408,14 +412,29 @@ export function useModelBuilderInternal(props: any, ref: any) {
       if (data.nodes && data.relations && !Array.isArray(data.nodes)) {
         try {
           const converted = convertSchemaJsonToBuilder(data)
+          const effectiveMetadata = converted.metadata || data.metadata || {}
           useModelBuilderStore.getState().loadState({
             nodes: converted.nodes,
             relationships: converted.relationships,
             isSemanticEnabled: converted.isSemanticEnabled,
             selectedOntologyId: converted.selectedOntologyId,
-            rootNodeId: converted.rootNodeId
+            rootNodeId: converted.rootNodeId,
+            metadata: effectiveMetadata
           })
           
+          // Restore linked XML file if stored in metadata
+          if (effectiveMetadata.xmlContent || data.xmlContent) {
+            const content = effectiveMetadata.xmlContent || data.xmlContent
+            const fileName = effectiveMetadata.selectedXmlName || data.selectedXmlName || 'linked.xml'
+            setXmlContent(content)
+            setXmlPanelOpen(true)
+            ui.setXmlFile(new File([content], fileName, { type: 'text/xml' }))
+            useModelBuilderStore.getState().updateMetadata({
+              selectedXmlName: fileName,
+              xmlContent: content
+            })
+          }
+
           const state = useModelBuilderStore.getState()
           const toolState = useToolCanvasStore.getState()
           const actionState = useActionCanvasStore.getState()

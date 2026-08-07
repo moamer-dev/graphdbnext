@@ -1,7 +1,7 @@
 import React from 'react'
 import { ResizablePanel } from './ui/resizable-panel'
 import { Button } from './ui/button'
-import { PanelLeftClose, Circle, Link2, Wrench, Zap } from 'lucide-react'
+import { PanelLeftClose, Circle, Link2, Wrench, Zap, Database } from 'lucide-react'
 import { NodePalette } from './palette/NodePalette'
 import { cn } from '../utils/cn'
 import { useBuilderTranslations } from '../i18n'
@@ -11,10 +11,17 @@ interface ModelBuilderSidebarProps {
   setNodesSidebarOpen: (val: boolean) => void
   sidebarWidth: number
   setSidebarWidth: (val: number) => void
-  leftTab: 'nodes' | 'relationships' | 'tools' | 'actions'
-  setLeftTab: (tab: 'nodes' | 'relationships' | 'tools' | 'actions') => void
+  leftTab: 'nodes' | 'relationships' | 'tools' | 'actions' | 'data-sources'
+  setLeftTab: (tab: 'nodes' | 'relationships' | 'tools' | 'actions' | 'data-sources') => void
   onFocusNode: (id: string) => void
   onFocusRelationship: (fromId: string, toId: string) => void
+  xmlContent?: string
+  setXmlContent?: (content: string) => void
+  xmlPanelOpen?: boolean
+  setXmlPanelOpen?: (open: boolean) => void
+  onSelectWorkspaceXml?: (source: any) => void
+  onUploadXml?: (file: File) => void
+  dataSourcesPersistence?: any
 }
 
 export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
@@ -25,7 +32,14 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
   leftTab,
   setLeftTab,
   onFocusNode,
-  onFocusRelationship
+  onFocusRelationship,
+  xmlContent,
+  setXmlContent,
+  xmlPanelOpen,
+  setXmlPanelOpen,
+  onSelectWorkspaceXml,
+  onUploadXml,
+  dataSourcesPersistence
 }) => {
   const t = useBuilderTranslations()
   if (!nodesSidebarOpen) return null
@@ -34,7 +48,7 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
     <ResizablePanel
       side="left"
       defaultWidth={sidebarWidth}
-      minWidth={200}
+      minWidth={220}
       maxWidth={600}
       onWidthChange={setSidebarWidth}
       className="h-full border-r bg-muted/10 shrink-0"
@@ -53,34 +67,41 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
               <PanelLeftClose className="h-3.5 w-3.5" />
             </Button>
           </div>
-          <div className="grid grid-cols-4 gap-1 p-2 pt-1">
+          <div className="grid grid-cols-5 gap-1 p-2 pt-1">
             <TabButton 
               active={leftTab === 'nodes'} 
               onClick={() => setLeftTab('nodes')} 
-              icon={<Circle className="h-4 w-4" />} 
+              icon={<Circle className="h-3.5 w-3.5" />} 
               label={t('common.nodes')} 
               colorClass="text-blue-600"
             />
             <TabButton 
               active={leftTab === 'relationships'} 
               onClick={() => setLeftTab('relationships')} 
-              icon={<Link2 className="h-4 w-4" />} 
+              icon={<Link2 className="h-3.5 w-3.5" />} 
               label={t('builder.rels')} 
               colorClass="text-indigo-600"
             />
             <TabButton 
               active={leftTab === 'tools'} 
               onClick={() => setLeftTab('tools')} 
-              icon={<Wrench className="h-4 w-4" />} 
+              icon={<Wrench className="h-3.5 w-3.5" />} 
               label={t('common.tools')} 
               colorClass="text-purple-600"
             />
             <TabButton 
               active={leftTab === 'actions'} 
               onClick={() => setLeftTab('actions')} 
-              icon={<Zap className="h-4 w-4" />} 
+              icon={<Zap className="h-3.5 w-3.5" />} 
               label={t('common.actions')} 
               colorClass="text-amber-600"
+            />
+            <TabButton 
+              active={leftTab === 'data-sources'} 
+              onClick={() => setLeftTab('data-sources')} 
+              icon={<Database className="h-3.5 w-3.5" />} 
+              label="Files" 
+              colorClass="text-teal-600"
             />
           </div>
         </div>
@@ -89,6 +110,19 @@ export const ModelBuilderSidebar: React.FC<ModelBuilderSidebarProps> = ({
           {leftTab === 'relationships' && <NodePalette className="h-full" mode="relationships" onFocusRelationship={onFocusRelationship} />}
           {leftTab === 'tools' && <NodePalette className="h-full" mode="tools" />}
           {leftTab === 'actions' && <NodePalette className="h-full" mode="actions" />}
+          {leftTab === 'data-sources' && (
+            <NodePalette
+              className="h-full"
+              mode="data-sources"
+              xmlContent={xmlContent}
+              setXmlContent={setXmlContent}
+              xmlPanelOpen={xmlPanelOpen}
+              setXmlPanelOpen={setXmlPanelOpen}
+              onSelectWorkspaceXml={onSelectWorkspaceXml}
+              onUploadXml={onUploadXml}
+              dataSourcesPersistence={dataSourcesPersistence}
+            />
+          )}
         </div>
       </div>
     </ResizablePanel>
