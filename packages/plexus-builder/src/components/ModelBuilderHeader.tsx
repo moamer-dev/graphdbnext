@@ -5,7 +5,7 @@ import { Switch } from './ui/switch'
 import { OntologyCombobox } from './wizard/XmlImportWizard/components/OntologyCombobox'
 import { Button } from './ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu'
-import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck, Globe, FileJson, Share2 } from 'lucide-react'
+import { Settings, Key, Upload, FileUp, Download, Layout, Sparkles, CheckCircle2, Trash2, PlayCircle, ShieldCheck, Globe, FileJson, Share2, Folder } from 'lucide-react'
 import { cn } from '../utils/cn'
 import { SemanticValidationDialog } from './semantic/SemanticValidationDialog'
 import { useBuilderTranslations } from '../i18n'
@@ -61,6 +61,8 @@ interface ModelBuilderHeaderProps {
   onSelectWorkspaceXml?: (xmlSource: any) => void
   onPushXmlToWorkspace?: () => void
   isPushingXml?: boolean
+  viewMode?: 'canvas' | 'explorer'
+  setViewMode?: (mode: 'canvas' | 'explorer') => void
 }
 
 export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
@@ -111,7 +113,9 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
   workspaceXmls = [],
   onSelectWorkspaceXml,
   onPushXmlToWorkspace,
-  isPushingXml = false
+  isPushingXml = false,
+  viewMode = 'canvas',
+  setViewMode
 }) => {
   const t = useBuilderTranslations()
   const [semanticValidationOpen, setSemanticValidationOpen] = React.useState(false)
@@ -151,6 +155,37 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
           <span>{currentWorkflowName}</span>
         </div>
       )}
+      <div className="flex items-center rounded-lg border bg-muted/30 p-0.5">
+        <button
+          type="button"
+          onClick={() => setViewMode?.('canvas')}
+          className={cn(
+            "flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all",
+            viewMode === 'canvas'
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          )}
+          title="Canvas Diagram View"
+        >
+          <Layout className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Canvas</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode?.('explorer')}
+          className={cn(
+            "flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all",
+            viewMode === 'explorer'
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+          )}
+          title="Miller Columns Explorer View"
+        >
+          <Folder className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Explorer</span>
+        </button>
+      </div>
+
       <div className="flex-1" />
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2">
@@ -174,7 +209,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
 
         <div className="w-px h-6 bg-border mx-1" />
 
-        {xmlContent && (
+        {!!xmlContent && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">XML:</span>
             <Switch
@@ -352,7 +387,7 @@ export const ModelBuilderHeader: React.FC<ModelBuilderHeaderProps> = ({
                 {t('builder.uploadFromComputer')}
               </DropdownMenuItem>
               
-              {xmlFile && onPushXmlToWorkspace && (
+              {!!xmlFile && onPushXmlToWorkspace && (
                 <DropdownMenuItem 
                   onSelect={onPushXmlToWorkspace} 
                   disabled={isPushingXml}

@@ -3,7 +3,7 @@ import { exportToJson, exportToMarkdown, downloadFile } from '../../utils/export
 import { exportToRdf, exportToTtl } from '../../utils/rdfExportUtils'
 
 export function useSchemaExport() {
-  const { nodes, relationships, metadata, groups, relationshipTypes, selectedNode, selectedRelationship, hideUnconnectedNodes, rootNodeId, selectedOntologyId } = useModelBuilderStore()
+  const { nodes, relationships, metadata, groups, relationshipTypes, selectedNode, selectedRelationship, hideUnconnectedNodes, rootNodeId, selectedOntologyId, locale } = useModelBuilderStore()
 
   const exportToJsonFile = () => {
     const jsonContent = exportToJson({
@@ -16,7 +16,8 @@ export function useSchemaExport() {
       selectedRelationship,
       hideUnconnectedNodes,
       rootNodeId,
-      selectedOntologyId
+      selectedOntologyId,
+      locale
     })
     const filename = metadata.name
       ? `${metadata.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`
@@ -35,7 +36,8 @@ export function useSchemaExport() {
       selectedRelationship,
       hideUnconnectedNodes,
       rootNodeId,
-      selectedOntologyId
+      selectedOntologyId,
+      locale
     })
     const filename = metadata.name
       ? `${metadata.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`
@@ -45,7 +47,7 @@ export function useSchemaExport() {
 
   const exportToRdfFile = () => {
     const rdfContent = exportToRdf({
-      nodes, relationships, metadata, groups, relationshipTypes, selectedNode, selectedRelationship, hideUnconnectedNodes, rootNodeId, selectedOntologyId
+      nodes, relationships, metadata, groups, relationshipTypes, selectedNode, selectedRelationship, hideUnconnectedNodes, rootNodeId, selectedOntologyId, locale
     })
     const filename = metadata.name
       ? `${metadata.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.rdf`
@@ -55,7 +57,7 @@ export function useSchemaExport() {
 
   const exportToTtlFile = () => {
     const ttlContent = exportToTtl({
-      nodes, relationships, metadata, groups, relationshipTypes, selectedNode, selectedRelationship, hideUnconnectedNodes, rootNodeId, selectedOntologyId
+      nodes, relationships, metadata, groups, relationshipTypes, selectedNode, selectedRelationship, hideUnconnectedNodes, rootNodeId, selectedOntologyId, locale
     })
     const filename = metadata.name
       ? `${metadata.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ttl`

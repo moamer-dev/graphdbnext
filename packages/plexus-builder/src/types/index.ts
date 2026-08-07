@@ -50,6 +50,7 @@ export interface ModelBuilderState {
   selectedOntologyId: string | null // Global ontology selection for the model
   isSemanticEnabled?: boolean // Whether semantic enrichment is enabled
   isWorkflowVisible?: boolean // Whether workflow items should be visible
+  viewMode?: 'canvas' | 'explorer' // Active visualization view mode
   hideUnconnectedNodes: boolean
   rootNodeId: string | null // ID of the root node for workflow execution
   locale: string // Active language for the builder

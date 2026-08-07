@@ -57,6 +57,7 @@ export interface WorkflowConfigExport {
     enabled?: boolean
   }>
   actionEdges: Array<{
+    sourceNodeLabel?: string
     sourceToolLabel?: string
     sourceActionLabel?: string
     targetActionLabel: string
@@ -211,14 +212,18 @@ export function exportWorkflowConfig(
         }
       }),
     actionEdges: actionEdges.map(edge => {
+      const sourceNode = nodes.find(n => n.id === edge.source)
       const sourceTool = toolIdToNode.get(edge.source)
       const sourceAction = actionIdToNode.get(edge.source)
       const targetAction = actionIdToNode.get(edge.target)
 
+      let sourceNodeLabel = ''
       let sourceToolLabel = ''
       let sourceActionLabel = ''
 
-      if (sourceTool) {
+      if (sourceNode) {
+        sourceNodeLabel = sourceNode.label
+      } else if (sourceTool) {
         const sourceTargetNode = sourceTool.targetNodeId
           ? nodes.find(n => n.id === sourceTool.targetNodeId)
           : null
@@ -230,13 +235,14 @@ export function exportWorkflowConfig(
       }
 
       return {
+        sourceNodeLabel: sourceNodeLabel || undefined,
         sourceToolLabel: sourceToolLabel || undefined,
         sourceActionLabel: sourceActionLabel || undefined,
         targetActionLabel: targetAction?.label || '',
         sourceHandle: edge.sourceHandle,
         targetHandle: edge.targetHandle
       }
-    }).filter(edge => (edge.sourceToolLabel || edge.sourceActionLabel) && edge.targetActionLabel)
+    }).filter(edge => (edge.sourceNodeLabel || edge.sourceToolLabel || edge.sourceActionLabel) && edge.targetActionLabel)
   }
 
   return JSON.stringify(config, null, 2)
@@ -255,6 +261,7 @@ export interface ImportedWorkflowConfig {
   }>
   actions: Array<Omit<ActionCanvasNode, 'id'> & { _childActions?: Array<Omit<ActionCanvasNode, 'id'>> }>
   actionEdges: Array<{
+    sourceNodeLabel?: string
     sourceToolLabel?: string
     sourceActionLabel?: string
     targetActionLabel: string
@@ -440,6 +447,7 @@ export function importWorkflowConfig(
 
   // Import action edges - return with labels for matching during import
   const actionEdges = workflowConfig.actionEdges.map(edge => ({
+    sourceNodeLabel: edge.sourceNodeLabel,
     sourceToolLabel: edge.sourceToolLabel,
     sourceActionLabel: edge.sourceActionLabel,
     targetActionLabel: edge.targetActionLabel,

@@ -22,33 +22,12 @@ interface ToolSelectorDialogProps {
 }
 
 const allTools: Array<{ label: string; type: ToolNodeType }> = [
-  { label: 'If / Else', type: 'tool:if' },
-  { label: 'Switch', type: 'tool:switch' },
-  { label: 'Loop', type: 'tool:loop' },
-  { label: 'Merge', type: 'tool:merge' },
-  { label: 'Filter', type: 'tool:filter' },
-  { label: 'Delay', type: 'tool:delay' },
-  { label: 'Transform', type: 'tool:transform' },
-  { label: 'Lookup', type: 'tool:lookup' },
-  { label: 'Traverse', type: 'tool:traverse' },
-  { label: 'Aggregate', type: 'tool:aggregate' },
-  { label: 'Sort', type: 'tool:sort' },
-  { label: 'Limit', type: 'tool:limit' },
-  { label: 'Collect', type: 'tool:collect' },
-  { label: 'Split', type: 'tool:split' },
-  { label: 'Validate', type: 'tool:validate' },
-  { label: 'Map', type: 'tool:map' },
-  { label: 'Reduce', type: 'tool:reduce' },
-  { label: 'Partition', type: 'tool:partition' },
-  { label: 'Distinct', type: 'tool:distinct' },
-  { label: 'Window', type: 'tool:window' },
-  { label: 'Join', type: 'tool:join' },
-  { label: 'Union', type: 'tool:union' },
-  { label: 'Intersect', type: 'tool:intersect' },
-  { label: 'Diff', type: 'tool:diff' },
-  { label: 'Exists', type: 'tool:exists' },
-  { label: 'Range', type: 'tool:range' },
-  { label: 'Batch', type: 'tool:batch' }
+  { label: 'If / Else Conditional', type: 'tool:if' },
+  { label: 'Switch Branch', type: 'tool:switch' },
+  { label: 'Delay Execution', type: 'tool:delay' },
+  { label: 'HTTP Request', type: 'tool:http' },
+  { label: 'Fetch API', type: 'tool:fetch-api' },
+  { label: 'Webhook Endpoint', type: 'tool:webhook' }
 ]
 
 export function ToolSelectorDialog ({ open, onClose, onSelect, existingToolTypes = [] }: ToolSelectorDialogProps) {

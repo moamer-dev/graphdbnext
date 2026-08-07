@@ -56,6 +56,11 @@ export function useCanvasConnections({
       return connection.sourceHandle === 'tools' && connection.targetHandle?.startsWith('input')
     }
 
+    // Main node to Action or Action Group
+    if (sourceIsMain && (targetIsAction || targetIsActionGroup)) {
+      return connection.sourceHandle === 'tools' && connection.targetHandle === 'input'
+    }
+
     // Tool output to Action Group
     if (sourceIsTool && targetIsActionGroup) {
       if (connection.targetHandle !== 'input') return false
@@ -73,6 +78,10 @@ export function useCanvasConnections({
         )
 
         if (existingStoreEdge || existingReactFlowEdge) return false
+      }
+      if (sourceTool?.type === 'tool:switch') {
+        const validSwitchHandles = sourceTool.outputs?.map(o => o.id) || ['default']
+        if (connection.sourceHandle && !validSwitchHandles.includes(connection.sourceHandle)) return false
       }
       return true
     }
@@ -119,6 +128,17 @@ export function useCanvasConnections({
         target: params.target,
         sourceHandle: params.sourceHandle || undefined,
         targetHandle: params.targetHandle || undefined
+      })
+      return
+    }
+
+    const targetIsAction = isActionNodeId(params.target)
+    if (sourceIsMain && (targetIsAction || targetIsActionGroup)) {
+      addActionEdge({
+        source: params.source,
+        target: params.target,
+        sourceHandle: params.sourceHandle || 'tools',
+        targetHandle: params.targetHandle || 'input'
       })
       return
     }

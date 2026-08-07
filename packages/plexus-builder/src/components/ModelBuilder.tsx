@@ -2,6 +2,8 @@
 
 import { forwardRef } from 'react'
 import { ModelBuilderCanvas } from './canvas/ModelBuilderCanvas'
+import { ModelExplorer } from './explorer/ModelExplorer'
+import { useModelBuilderStore } from '../stores/modelBuilderStore'
 import { useToolCanvasStore } from '../stores/toolCanvasStore'
 import { useActionCanvasStore } from '../stores/actionCanvasStore'
 import { downloadFile } from '../utils/exportUtils'
@@ -180,6 +182,9 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
     setSaveXmlToWorkspaceName
   } = useModelBuilderInternal(props, ref)
 
+  const viewMode = useModelBuilderStore((state) => state.viewMode)
+  const setViewMode = useModelBuilderStore((state) => state.setViewMode)
+
   return (
     <div className={cn("flex flex-col h-full bg-background select-none", className)}>
       <ModelBuilderHeader
@@ -231,6 +236,8 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
         onSelectWorkspaceXml={onSelectWorkspaceXml}
         onPushXmlToWorkspace={onPushXmlToWorkspace}
         isPushingXml={isPushingXml}
+        viewMode={viewMode || 'canvas'}
+        setViewMode={setViewMode}
       />
 
       <div className="flex h-[calc(100%-56px)] relative">
@@ -255,15 +262,23 @@ const ModelBuilderContent = forwardRef<ModelBuilderRef, ModelBuilderProps>((prop
 
         <div className="flex-1 min-w-0 relative flex h-full overflow-hidden">
           <div className="flex-1 relative h-full">
-            <ModelBuilderCanvas
-              className="h-full"
-              sidebarOpen={ui.sidebarOpen}
-              onToggleSidebar={(open) => ui.setSidebarOpen(open !== undefined ? open : !ui.sidebarOpen)}
-              onRegisterFocusApi={setFocusNodeFn}
-              onRegisterFocusRelationshipApi={setFocusRelationshipFn}
-              onSwitchTab={setLeftTab}
-              showToolbar={showToolbar}
-            />
+            {viewMode === 'explorer' ? (
+              <ModelExplorer
+                className="h-full"
+                onSwitchTab={setLeftTab}
+                onOpenSidebar={() => ui.setSidebarOpen(true)}
+              />
+            ) : (
+              <ModelBuilderCanvas
+                className="h-full"
+                sidebarOpen={ui.sidebarOpen}
+                onToggleSidebar={(open) => ui.setSidebarOpen(open !== undefined ? open : !ui.sidebarOpen)}
+                onRegisterFocusApi={setFocusNodeFn}
+                onRegisterFocusRelationshipApi={setFocusRelationshipFn}
+                onSwitchTab={setLeftTab}
+                showToolbar={showToolbar}
+              />
+            )}
           </div>
 
           {agentsPanelOpen && (!!isSchemaDesignEnabled || !!isWorkflowGenerationEnabled) && (

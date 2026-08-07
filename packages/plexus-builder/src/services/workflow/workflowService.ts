@@ -300,12 +300,22 @@ export const workflowService = {
       config.actionEdges.forEach((edge) => {
         let sourceId: string | undefined
 
-        if (edge.sourceToolLabel) {
+        if (edge.sourceNodeLabel) {
+          const sourceNode = nodes.find(n => n.label === edge.sourceNodeLabel)
+          if (sourceNode) {
+            sourceId = sourceNode.id
+          }
+        } else if (edge.sourceToolLabel) {
           sourceId = toolKeyToId.get(edge.sourceToolLabel)
+        } else if (edge.sourceActionLabel) {
+          const candidateSourceIds = actionLabelToIds.get(edge.sourceActionLabel) || []
+          if (candidateSourceIds.length > 0) {
+            sourceId = candidateSourceIds[0]
+          }
         }
 
         if (!sourceId) {
-          console.warn('Action edge skipped - source tool not found:', edge.sourceToolLabel)
+          console.warn('Action edge skipped - source not found:', edge.sourceNodeLabel || edge.sourceToolLabel || edge.sourceActionLabel)
           return
         }
 
@@ -315,8 +325,9 @@ export const workflowService = {
           return
         }
 
-        // Create a unique key for this tool+action combination
-        const toolActionKey = `${edge.sourceToolLabel}::${edge.targetActionLabel}`
+        // Create a unique key for this source+action combination
+        const sourceKey = edge.sourceNodeLabel || edge.sourceToolLabel || edge.sourceActionLabel || ''
+        const toolActionKey = `${sourceKey}::${edge.targetActionLabel}`
         let actionIndex = toolLabelToActionIndex.get(toolActionKey)
 
         if (actionIndex === undefined) {
@@ -470,13 +481,15 @@ export const workflowService = {
 
         // Normalize actionEdges
         normalized.actionEdges = normalized.actionEdges.map((edge: any) => ({
+          sourceNodeLabel: edge.sourceNodeLabel,
           sourceToolLabel: edge.sourceToolLabel,
+          sourceActionLabel: edge.sourceActionLabel,
           targetActionLabel: edge.targetActionLabel,
           sourceHandle: edge.sourceHandle,
           targetHandle: edge.targetHandle
         })).sort((a: any, b: any) => {
-          const aKey = `${a.sourceToolLabel || ''}-${a.targetActionLabel || ''}`
-          const bKey = `${b.sourceToolLabel || ''}-${b.targetActionLabel || ''}`
+          const aKey = `${a.sourceNodeLabel || a.sourceToolLabel || a.sourceActionLabel || ''}-${a.targetActionLabel || ''}`
+          const bKey = `${b.sourceNodeLabel || b.sourceToolLabel || b.sourceActionLabel || ''}-${b.targetActionLabel || ''}`
           return aKey.localeCompare(bKey)
         })
 
